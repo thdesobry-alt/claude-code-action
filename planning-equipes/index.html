@@ -873,6 +873,7 @@
         border-spacing: 2px;
       }
       .preview th {
+        white-space: nowrap;
         font-weight: 600;
         font-size: 12px;
         color: var(--muted);
@@ -1022,9 +1023,9 @@
         };
         const LABEL = { ...SHIFT, ...ABS };
         const DEFAULT_CYCLE = {
-          pattern: ["J", "J", "N", "N", "R", "R", "R", "R"],
+          pattern: "RJJJRRRRRRRNNNRRRRJJJRNNNRRR".split(""),
           ref: "2026-01-05",
-          offsets: { A: 0, B: 2, C: 4, D: 6 },
+          offsets: { A: 0, B: 7, C: 14, D: 21 },
           target: 11,
           nightSplit: true,
           maxWeek: 48,
@@ -1810,13 +1811,17 @@
             d.pattern[
               mod(dnum(ds) - dnum(d.ref) - (Number(d.offsets[t]) || 0), n)
             ] || "R";
-          const bad = pdays.filter((ds) => {
+          const badDays = pdays.filter((ds) => {
             const cs = TEAMS.map((t) => code(t, ds));
             return (
               cs.filter((c) => c === "J").length !== 1 ||
               cs.filter((c) => c === "N").length !== 1
             );
-          }).length;
+          });
+          const bad = badDays.length;
+          const badNames = [
+            ...new Set(badDays.map((ds) => DAYS_LONG[dow(ds)] + "s")),
+          ].join(", ");
           const dirty = JSON.stringify(d) !== JSON.stringify(S.cycle);
           return `<div class="cols">
     <div class="panel">
@@ -1827,6 +1832,7 @@
         ${
           S.canWrite
             ? `<div class="choices"><span class="note">Modèles :</span>
+          <button class="btn sm" data-act="preset" data-p="RJJJRRRRRRRNNNRRRRJJJRNNNRRR">Cycle 28 j (lundi au dimanche)</button>
           <button class="btn sm" data-act="preset" data-p="JJNNRRRR">2 J · 2 N · 4 R (8 j)</button>
           <button class="btn sm" data-act="preset" data-p="JJJNNNRRRRRR">3 J · 3 N · 6 R (12 j)</button>
           <button class="btn sm" data-act="preset" data-p="JNRR">1 J · 1 N · 2 R (4 j)</button></div>`
@@ -1834,7 +1840,7 @@
         }
       </div>
       <div class="range">
-        <label>Date de départ du motif<input type="date" id="cy-ref" value="${d.ref}" ${ro}></label>
+        <label>Date de départ du motif (1er jour du motif pour l'équipe A)<input type="date" id="cy-ref" value="${d.ref}" ${ro}></label>
         ${TEAMS.map((t) => `<label>Décalage ${t}<input type="number" id="cy-off-${t}" data-team="${t}" value="${d.offsets[t] ?? 0}" min="0" max="${n - 1}" style="width:72px" ${ro}></label>`).join("")}
       </div>
       <div class="range">
@@ -1859,7 +1865,7 @@
               .join("")}</tr>`,
         ).join("")}</tbody>
       </table></div>
-      <p class="note" style="color:${bad ? "var(--bad)" : "var(--good)"}">${bad ? `${bad} jour(s) sur 21 n'ont pas exactement une équipe de jour et une équipe de nuit.` : "Chaque jour a une équipe de jour, une équipe de nuit et deux équipes en repos."}</p>
+      <p class="note" style="color:${bad ? "var(--bad)" : "var(--good)"}">${bad ? `${bad} jour(s) sur 21 n'ont pas exactement une équipe de jour et une équipe de nuit (${badNames}). Ces jours-là, couvrez les postes avec des remplacements ou en modifiant la ligne d'une équipe.` : "Chaque jour a une équipe de jour, une équipe de nuit et deux équipes en repos."}</p>
     </div>
   </div>`;
         }
@@ -2122,6 +2128,7 @@
             d.pattern = b.dataset.p.split("");
             const q = d.pattern.length / 4;
             TEAMS.forEach((t, i) => (d.offsets[t] = q * i));
+            if (d.pattern.length % 7 === 0) d.ref = mondayOf(d.ref);
             render();
             return;
           }
