@@ -1,0 +1,2288 @@
+<title>Planning des équipes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+/>
+<style>
+  /* Layout : barre de commande en haut, onglets, grille mensuelle défilante à colonne agent figée, tiroir latéral pour éditer une journée. */
+  :root {
+    --bg: #f3f5f3;
+    --surface: #ffffff;
+    --surface-2: #eceff0;
+    --line: #d9dedc;
+    --line-strong: #b9c1be;
+    --fg: #182024;
+    --muted: #5d6a6f;
+    --accent: #0e6a5b;
+    --accent-fg: #ffffff;
+    --accent-soft: #d6ece6;
+    --day-fg: #7a4800;
+    --day-bg: #ffe2a8;
+    --night-fg: #eef0ff;
+    --night-bg: #2f347a;
+    --cp-fg: #1c6a33;
+    --cp-bg: #d3eedb;
+    --rtt-fg: #1d5b71;
+    --rtt-bg: #d4eaf3;
+    --mal-fg: #982a1f;
+    --mal-bg: #f8d8d4;
+    --abs-fg: #5a3b7a;
+    --abs-bg: #e9def4;
+    --weekend: #e7ebe9;
+    --bad: #c2321f;
+    --warn: #a66300;
+    --good: #1c7a3c;
+    --shadow: 0 10px 40px rgba(20, 30, 30, 0.18);
+    --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --f-body: "Barlow Semi Condensed", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111618;
+      --surface: #192023;
+      --surface-2: #20282c;
+      --line: #2c373b;
+      --line-strong: #43514f;
+      --fg: #e4eae7;
+      --muted: #92a09b;
+      --accent: #4cc0a6;
+      --accent-fg: #0b1513;
+      --accent-soft: #173a33;
+      --day-fg: #ffd28a;
+      --day-bg: #4a3410;
+      --night-fg: #d3d6ff;
+      --night-bg: #2c3172;
+      --cp-fg: #93dcaa;
+      --cp-bg: #173b23;
+      --rtt-fg: #94d1e8;
+      --rtt-bg: #15374a;
+      --mal-fg: #f5a69c;
+      --mal-bg: #4a1c18;
+      --abs-fg: #cfb5ec;
+      --abs-bg: #33264a;
+      --weekend: #1d2427;
+      --bad: #ff7a66;
+      --warn: #f0b04a;
+      --good: #6fd391;
+      --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111618;
+    --surface: #192023;
+    --surface-2: #20282c;
+    --line: #2c373b;
+    --line-strong: #43514f;
+    --fg: #e4eae7;
+    --muted: #92a09b;
+    --accent: #4cc0a6;
+    --accent-fg: #0b1513;
+    --accent-soft: #173a33;
+    --day-fg: #ffd28a;
+    --day-bg: #4a3410;
+    --night-fg: #d3d6ff;
+    --night-bg: #2c3172;
+    --cp-fg: #93dcaa;
+    --cp-bg: #173b23;
+    --rtt-fg: #94d1e8;
+    --rtt-bg: #15374a;
+    --mal-fg: #f5a69c;
+    --mal-bg: #4a1c18;
+    --abs-fg: #cfb5ec;
+    --abs-bg: #33264a;
+    --weekend: #1d2427;
+    --bad: #ff7a66;
+    --warn: #f0b04a;
+    --good: #6fd391;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .app {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 16px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h1 {
+    font-size: 30px;
+    line-height: 1;
+  }
+  h2 {
+    font-size: 22px;
+  }
+  h3 {
+    font-size: 17px;
+  }
+  .muted {
+    color: var(--muted);
+  }
+  .mono {
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* En-tête */
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-right: auto;
+  }
+  .brand .rot {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .monthnav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .monthnav .m {
+    font-family: var(--f-display);
+    font-size: 22px;
+    font-weight: 700;
+    min-width: 170px;
+    text-align: center;
+    text-transform: capitalize;
+  }
+  .btn {
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: 600;
+  }
+  .btn:hover {
+    border-color: var(--accent);
+  }
+  .btn.primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+  }
+  .btn.ghost {
+    border-color: transparent;
+    background: transparent;
+  }
+  .btn.danger {
+    color: var(--bad);
+  }
+  .btn.sm {
+    padding: 3px 8px;
+    font-size: 13px;
+  }
+  .btn[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .iconbtn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+    font-size: 18px;
+  }
+  .tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+  }
+  .tab {
+    border: 0;
+    background: none;
+    padding: 8px 14px;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+  }
+  .tab[aria-selected="true"] {
+    color: var(--fg);
+    border-bottom-color: var(--accent);
+  }
+  .banner {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    font-size: 14px;
+  }
+
+  /* Codes de poste */
+  .c {
+    display: inline-grid;
+    place-items: center;
+    font-family: var(--f-mono);
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 4px;
+  }
+  .c-J {
+    background: var(--day-bg);
+    color: var(--day-fg);
+  }
+  .c-N {
+    background: var(--night-bg);
+    color: var(--night-fg);
+  }
+  .c-R {
+    color: var(--muted);
+  }
+  .c-CP {
+    background: var(--cp-bg);
+    color: var(--cp-fg);
+  }
+  .c-RTT {
+    background: var(--rtt-bg);
+    color: var(--rtt-fg);
+  }
+  .c-MAL {
+    background: var(--mal-bg);
+    color: var(--mal-fg);
+  }
+  .c-ABS {
+    background: var(--abs-bg);
+    color: var(--abs-fg);
+  }
+
+  /* Bandeau résumé */
+  .summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .todo {
+    flex: 1 1 420px;
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .todo-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .todo-item {
+    border: 1px solid var(--bad);
+    color: var(--fg);
+    background: var(--surface);
+    border-radius: 999px;
+    padding: 3px 10px 3px 4px;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .todo-item .c {
+    width: 30px;
+    height: 20px;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--muted);
+    padding-top: 4px;
+  }
+  .legend .c {
+    width: 30px;
+    height: 20px;
+  }
+  .legend span {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  /* Grille */
+  .gridwrap {
+    overflow: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    max-height: calc(100vh - 210px);
+    min-height: 320px;
+  }
+  table.plan {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .plan th,
+  .plan td {
+    padding: 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .plan thead th {
+    position: sticky;
+    top: 0;
+    height: 20px;
+    z-index: 3;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .plan .name {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    text-align: left;
+    min-width: 210px;
+    max-width: 210px;
+    padding: 4px 10px;
+    border-right: 1px solid var(--line-strong);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .plan thead tr + tr th {
+    top: 20px;
+  }
+  .plan thead .name {
+    z-index: 4;
+  }
+  .plan .name .mat {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-right: 6px;
+  }
+  .plan .dh {
+    width: 34px;
+    min-width: 34px;
+    text-align: center;
+    font-weight: 500;
+    padding: 4px 0;
+  }
+  .plan .dh small {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .plan .dh b {
+    font-family: var(--f-mono);
+    font-size: 13px;
+  }
+  .plan .dh.today b {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+  .plan .wkstart {
+    border-left: 2px solid var(--line-strong);
+  }
+  .plan .we {
+    background: var(--weekend);
+  }
+  .plan td.d {
+    text-align: center;
+    height: 30px;
+  }
+  .plan .tot {
+    min-width: 64px;
+    text-align: right;
+    padding: 0 10px;
+    font-family: var(--f-mono);
+    font-size: 13px;
+    border-left: 1px solid var(--line-strong);
+  }
+  .plan .wkno {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-align: left;
+    padding: 2px 4px;
+  }
+  .plan tr.team th,
+  .plan tr.team td {
+    background: var(--surface-2);
+    border-top: 1px solid var(--line-strong);
+  }
+  .plan tr.team .name {
+    font-family: var(--f-display);
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .plan tr.team .name small {
+    font-family: var(--f-body);
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-left: 6px;
+  }
+  .cell {
+    width: 30px;
+    height: 24px;
+    border: 0;
+    padding: 0;
+    position: relative;
+  }
+  button.c-R {
+    background: transparent;
+  }
+  .cell.c-R::after {
+    content: "·";
+    font-size: 16px;
+    line-height: 1;
+  }
+  .plan button.cell:hover {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  .cell.ovr {
+    box-shadow: inset 0 -3px 0 var(--accent);
+  }
+  .cell.rp {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .cell.need::before {
+    content: "";
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--bad);
+    border: 2px solid var(--surface);
+  }
+  .cell.cov::before {
+    content: "";
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--good);
+    border: 2px solid var(--surface);
+  }
+  .plan tr.staff th,
+  .plan tr.staff td {
+    background: var(--surface-2);
+  }
+  .plan tr.staff:first-of-type th {
+    border-top: 2px solid var(--line-strong);
+  }
+  .staffn {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .staffn.low {
+    color: var(--bad);
+  }
+  .staffn.high {
+    color: var(--warn);
+  }
+  .staffn.ok {
+    color: var(--good);
+  }
+  .empty {
+    padding: 32px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .empty p {
+    max-width: 52ch;
+    margin: 0;
+  }
+
+  /* Popover équipe */
+  .pop {
+    position: fixed;
+    z-index: 30;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 220px;
+  }
+  .pop .row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* Tiroir */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 16, 16, 0.35);
+    z-index: 20;
+  }
+  .drawer {
+    position: fixed;
+    z-index: 21;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(440px, 100%);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .drawer header {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .drawer header > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .drawer .body {
+    overflow-y: auto;
+    padding: 14px 18px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .sec {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .choice {
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 6px 10px;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .choice .c {
+    min-width: 30px;
+    height: 22px;
+    padding: 0 4px;
+  }
+  .choice[aria-pressed="true"] {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .choice:hover {
+    border-color: var(--accent);
+  }
+  .kv {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    font-size: 14px;
+  }
+  .kv dt {
+    color: var(--muted);
+  }
+  .kv dd {
+    margin: 0;
+  }
+  .range {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: end;
+  }
+  .range label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  input[type="date"],
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    padding: 5px 8px;
+  }
+  textarea {
+    width: 100%;
+    min-height: 110px;
+    font-family: var(--f-mono);
+    font-size: 13px;
+  }
+  .check {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 14px;
+  }
+  .cands {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .cand {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .cand > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .cand .who {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cand .meta {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .flag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 6px;
+    border-radius: 4px;
+    margin-right: 4px;
+  }
+  .flag.bad {
+    color: var(--bad);
+    border: 1px solid var(--bad);
+  }
+  .flag.warn {
+    color: var(--warn);
+    border: 1px solid var(--warn);
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .seg button {
+    border: 0;
+    background: var(--surface);
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .seg button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  .note {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .linkbtn {
+    border: 0;
+    background: none;
+    color: var(--accent);
+    padding: 0;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  /* Panneaux */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+  .tablewrap {
+    overflow-x: auto;
+  }
+  table.list {
+    border-collapse: collapse;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+  .list th,
+  .list td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .list th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .list td.num,
+  .list th.num {
+    text-align: right;
+    font-family: var(--f-mono);
+  }
+  .list input[type="text"] {
+    width: 100%;
+    min-width: 90px;
+  }
+  .list tr.grp td {
+    background: var(--surface-2);
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .over {
+    color: var(--bad);
+    font-weight: 700;
+  }
+  .addrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: end;
+  }
+  .addrow label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .pattern {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+  }
+  .pattern .c {
+    width: 36px;
+    height: 30px;
+    border: 1px solid var(--line-strong);
+    font-size: 13px;
+  }
+  .pattern .c.c-R::after {
+    content: "R";
+  }
+  .preview {
+    border-collapse: separate;
+    border-spacing: 2px;
+  }
+  .preview th {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 4px;
+    text-align: left;
+  }
+  .preview td .c {
+    width: 28px;
+    height: 22px;
+  }
+  .preview td .c.c-R::after {
+    content: "·";
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    background: var(--fg);
+    color: var(--bg);
+    padding: 8px 14px;
+    border-radius: 6px;
+    z-index: 40;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+    max-width: calc(100% - 32px);
+  }
+  .confirm {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+  }
+  @media (max-width: 640px) {
+    h1 {
+      font-size: 24px;
+    }
+    .monthnav .m {
+      min-width: 130px;
+      font-size: 19px;
+    }
+    .plan .name {
+      min-width: 140px;
+      max-width: 140px;
+    }
+    .drawer {
+      top: auto;
+      height: 88%;
+      width: 100%;
+      border-radius: 12px 12px 0 0;
+    }
+    .gridwrap {
+      max-height: none;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .drawer {
+      animation: slide 0.18s ease-out;
+    }
+    @keyframes slide {
+      from {
+        transform: translateX(24px);
+        opacity: 0.6;
+      }
+    }
+  }
+</style>
+
+<div class="app" id="app">
+  <div class="top">
+    <div class="brand">
+      <h1>Planning des équipes</h1>
+      <span class="rot" id="rot">4 équipes · 12 h</span>
+    </div>
+    <div class="monthnav">
+      <button class="btn iconbtn ghost" id="prev" aria-label="Mois précédent">
+        ‹
+      </button>
+      <div class="m" id="mlabel"></div>
+      <button class="btn iconbtn ghost" id="next" aria-label="Mois suivant">
+        ›
+      </button>
+      <button class="btn sm" id="today">Aujourd'hui</button>
+    </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button
+      class="tab"
+      role="tab"
+      data-act="tab"
+      data-tab="planning"
+      aria-selected="true"
+    >
+      Planning
+    </button>
+    <button
+      class="tab"
+      role="tab"
+      data-act="tab"
+      data-tab="heures"
+      aria-selected="false"
+    >
+      Heures
+    </button>
+    <button
+      class="tab"
+      role="tab"
+      data-act="tab"
+      data-tab="agents"
+      aria-selected="false"
+    >
+      Agents
+    </button>
+    <button
+      class="tab"
+      role="tab"
+      data-act="tab"
+      data-tab="cycle"
+      aria-selected="false"
+    >
+      Cycle
+    </button>
+  </div>
+  <div id="banner" hidden class="banner"></div>
+  <main id="view">
+    <div class="panel"><p class="muted">Chargement du planning…</p></div>
+  </main>
+</div>
+<div id="overlay"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+  (() => {
+    "use strict";
+
+    /* ---------- Constantes ---------- */
+    const TEAMS = ["A", "B", "C", "D"];
+    const SHIFT = { J: "Jour 8h–20h", N: "Nuit 20h–8h", R: "Repos" };
+    const ABS = {
+      CP: "Congé payé",
+      RTT: "RTT",
+      MAL: "Maladie",
+      ABS: "Autre absence",
+    };
+    const LABEL = { ...SHIFT, ...ABS };
+    const DEFAULT_CYCLE = {
+      pattern: ["J", "J", "N", "N", "R", "R", "R", "R"],
+      ref: "2026-01-05",
+      offsets: { A: 0, B: 2, C: 4, D: 6 },
+      target: 11,
+      nightSplit: true,
+      maxWeek: 48,
+    };
+    const DOW = ["D", "L", "M", "M", "J", "V", "S"];
+    const MONTHS = [
+      "janvier",
+      "février",
+      "mars",
+      "avril",
+      "mai",
+      "juin",
+      "juillet",
+      "août",
+      "septembre",
+      "octobre",
+      "novembre",
+      "décembre",
+    ];
+    const DAYS_LONG = [
+      "dimanche",
+      "lundi",
+      "mardi",
+      "mercredi",
+      "jeudi",
+      "vendredi",
+      "samedi",
+    ];
+
+    /* ---------- Dates (en jours UTC, sans fuseau) ---------- */
+    const DAY = 864e5;
+    const dnum = (ds) => {
+      const [y, m, d] = ds.split("-").map(Number);
+      return Math.round(Date.UTC(y, m - 1, d) / DAY);
+    };
+    const dstr = (n) => new Date(n * DAY).toISOString().slice(0, 10);
+    const addDays = (ds, k) => dstr(dnum(ds) + k);
+    const dow = (ds) => new Date(dnum(ds) * DAY).getUTCDay();
+    const ymOf = (ds) => ds.slice(0, 7);
+    const ymAdd = (ym, k) => {
+      let [y, m] = ym.split("-").map(Number);
+      m += k;
+      while (m > 12) {
+        m -= 12;
+        y++;
+      }
+      while (m < 1) {
+        m += 12;
+        y--;
+      }
+      return `${y}-${String(m).padStart(2, "0")}`;
+    };
+    const daysIn = (ym) => {
+      const [y, m] = ym.split("-").map(Number);
+      return new Date(Date.UTC(y, m, 0)).getUTCDate();
+    };
+    const monthDays = (ym) =>
+      Array.from(
+        { length: daysIn(ym) },
+        (_, i) => `${ym}-${String(i + 1).padStart(2, "0")}`,
+      );
+    const mondayOf = (ds) => addDays(ds, -((dow(ds) + 6) % 7));
+    const isoWeek = (ds) => {
+      const thu = addDays(mondayOf(ds), 3);
+      return 1 + Math.floor((dnum(thu) - dnum(`${thu.slice(0, 4)}-01-01`)) / 7);
+    };
+    const todayStr = () => {
+      const t = new Date();
+      return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    };
+    const fmtShort = (ds) => `${ds.slice(8)}/${ds.slice(5, 7)}`;
+    const fmtLong = (ds) =>
+      `${DAYS_LONG[dow(ds)]} ${Number(ds.slice(8))} ${MONTHS[Number(ds.slice(5, 7)) - 1]} ${ds.slice(0, 4)}`;
+    const mod = (a, n) => ((a % n) + n) % n;
+
+    /* ---------- Utilitaires ---------- */
+    const esc = (s) =>
+      String(s ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+    const clone = (o) => JSON.parse(JSON.stringify(o ?? {}));
+    const $ = (s, el = document) => el.querySelector(s);
+    const fullName = (a) =>
+      a
+        ? `${(a.nom || "").toUpperCase()} ${a.prenom || ""}`.trim() ||
+          "Agent sans nom"
+        : "Agent supprimé";
+    const LS_UI = "planning-equipes-ui";
+    const uiGet = () => {
+      try {
+        return JSON.parse(localStorage.getItem(LS_UI)) || {};
+      } catch {
+        return {};
+      }
+    };
+    const uiSet = (patch) => {
+      try {
+        localStorage.setItem(LS_UI, JSON.stringify({ ...uiGet(), ...patch }));
+      } catch {}
+    };
+    let toastT;
+    function toast(msg) {
+      const t = $("#toast");
+      t.textContent = msg;
+      t.hidden = false;
+      clearTimeout(toastT);
+      toastT = setTimeout(() => (t.hidden = true), 2600);
+    }
+
+    /* ---------- Stockage : base partagée de l'artefact, sinon navigateur ---------- */
+    function localStore() {
+      const KEY = "planning-equipes-data-v1";
+      let data;
+      try {
+        data = JSON.parse(localStorage.getItem(KEY)) || {};
+      } catch {
+        data = {};
+      }
+      const subs = new Set();
+      const persist = () => {
+        try {
+          localStorage.setItem(KEY, JSON.stringify(data));
+        } catch {}
+        subs.forEach((f) => f());
+      };
+      return {
+        kind: "local",
+        newId: () => Math.random().toString(36).slice(2, 12),
+        watchCol(col, cb) {
+          const f = () =>
+            cb(
+              Object.keys(data)
+                .filter(
+                  (p) => p.startsWith(col + "/") && p.split("/").length === 2,
+                )
+                .map((p) => ({ id: p.split("/")[1], ...data[p] })),
+            );
+          subs.add(f);
+          f();
+          return () => subs.delete(f);
+        },
+        watchDoc(path, cb) {
+          const f = () => cb(data[path] || null);
+          subs.add(f);
+          f();
+          return () => subs.delete(f);
+        },
+        async get(path) {
+          return data[path] || null;
+        },
+        async set(path, v) {
+          data[path] = clone(v);
+          persist();
+        },
+        async del(path) {
+          delete data[path];
+          persist();
+        },
+      };
+    }
+    function dbStore(db) {
+      const queues = {};
+      const queue = (path, fn) =>
+        (queues[path] = (queues[path] || Promise.resolve())
+          .then(fn)
+          .catch((e) => {
+            if (e && e.code === "invalid_argument") {
+              S.canWrite = false;
+              render();
+              toast("Modification refusée : accès en lecture seule.");
+            } else if (e && e.code === "quota_exceeded")
+              toast("La base est pleine : supprimez des données anciennes.");
+            else toast("Enregistrement impossible, réessayez.");
+          }));
+      const onErr = () =>
+        toast("Synchronisation interrompue. Rechargez la page.");
+      return {
+        kind: "db",
+        newId: () => db.collection("agents").doc().id,
+        watchCol: (col, cb) =>
+          db
+            .collection(col)
+            .onSnapshot(
+              (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))),
+              onErr,
+            ),
+        watchDoc: (path, cb) =>
+          db.doc(path).onSnapshot((s) => cb(s.exists ? s.data() : null), onErr),
+        async get(path) {
+          const s = await db.doc(path).get();
+          return s.exists ? s.data() : null;
+        },
+        set: (path, v) => queue(path, () => db.doc(path).set(v)),
+        del: (path) => queue(path, () => db.doc(path).delete()),
+      };
+    }
+
+    /* ---------- État ---------- */
+    const now = todayStr();
+    const S = {
+      store: null,
+      ready: { agents: false, cycle: false },
+      agents: [],
+      cycle: clone(DEFAULT_CYCLE),
+      months: {},
+      monthSubs: {},
+      ym: ymOf(now),
+      tab: uiGet().tab || "planning",
+      canWrite: true,
+      drawer: null,
+      pop: null,
+      delAsk: null,
+      cycleDraft: null,
+    };
+
+    /* ---------- Calcul du planning ---------- */
+    let memo = new Map();
+    const agentById = (id) => S.agents.find((a) => a.id === id);
+    function cycleCode(team, ds) {
+      const c = S.cycle,
+        n = c.pattern.length || 1;
+      return (
+        c.pattern[
+          mod(dnum(ds) - dnum(c.ref) - (Number(c.offsets?.[team]) || 0), n)
+        ] || "R"
+      );
+    }
+    const teamOverride = (team, ds) =>
+      S.months[ymOf(ds)]?.eq?.[team]?.[ds] || null;
+    const teamCode = (team, ds) =>
+      teamOverride(team, ds) || cycleCode(team, ds);
+    const entryOf = (id, ds) => S.months[ymOf(ds)]?.j?.[id]?.[ds] || null;
+    function codeOf(a, ds) {
+      const k = a.id + ds;
+      if (memo.has(k)) return memo.get(k);
+      const e = entryOf(a.id, ds);
+      const v = (e && e.c) || teamCode(a.eq, ds);
+      memo.set(k, v);
+      return v;
+    }
+    const isWork = (c) => c === "J" || c === "N";
+    function hoursBetween(a, from, to) {
+      const f = dnum(from),
+        t = dnum(to);
+      let h = 0;
+      for (let n = f - 1; n <= t; n++) {
+        const c = codeOf(a, dstr(n));
+        if (c === "J") {
+          if (n >= f) h += 12;
+        } else if (c === "N") {
+          if (S.cycle.nightSplit) {
+            if (n >= f) h += 4;
+            if (n + 1 <= t) h += 8;
+          } else if (n >= f) h += 12;
+        }
+      }
+      return h;
+    }
+    const weekHours = (a, ds) => {
+      const m = mondayOf(ds);
+      return hoursBetween(a, m, addDays(m, 6));
+    };
+    function needsCover(a, ds) {
+      const e = entryOf(a.id, ds);
+      return !!(e && ABS[e.c] && isWork(teamCode(a.eq, ds)) && !e.r);
+    }
+    const sortedAgents = () =>
+      [...S.agents].sort(
+        (x, y) =>
+          (x.eq || "").localeCompare(y.eq || "") ||
+          (x.nom || "").localeCompare(y.nom || "", "fr") ||
+          (x.prenom || "").localeCompare(y.prenom || "", "fr") ||
+          (x.mat || "").localeCompare(y.mat || ""),
+      );
+
+    /* ---------- Écritures groupées par mois ---------- */
+    async function ensureMonths(yms) {
+      for (const ym of yms)
+        if (!(ym in S.months))
+          S.months[ym] = (await S.store.get("mois/" + ym)) || null;
+    }
+    function tx() {
+      const work = {};
+      const m = (ds) => (work[ymOf(ds)] ??= clone(S.months[ymOf(ds)] || {}));
+      return {
+        entry: (id, ds) => m(ds).j?.[id]?.[ds] || null,
+        put(id, ds, e) {
+          const mm = m(ds);
+          mm.j ??= {};
+          if (e) (mm.j[id] ??= {})[ds] = e;
+          else if (mm.j[id]) {
+            delete mm.j[id][ds];
+            if (!Object.keys(mm.j[id]).length) delete mm.j[id];
+          }
+        },
+        team(t, ds, v) {
+          const mm = m(ds);
+          mm.eq ??= {};
+          if (v) (mm.eq[t] ??= {})[ds] = v;
+          else if (mm.eq[t]) {
+            delete mm.eq[t][ds];
+            if (!Object.keys(mm.eq[t]).length) delete mm.eq[t];
+          }
+        },
+        commit() {
+          for (const ym in work) {
+            S.months[ym] = work[ym];
+            S.store.set("mois/" + ym, work[ym]);
+          }
+          render();
+        },
+      };
+    }
+    // Défait le lien de remplacement d'une entrée (côté absent ou côté remplaçant).
+    function unlink(t, id, ds) {
+      const e = t.entry(id, ds);
+      if (!e) return;
+      if (e.r) {
+        const o = t.entry(e.r, ds);
+        if (o && o.rp === id) t.put(e.r, ds, null);
+      }
+      if (e.rp) {
+        const o = t.entry(e.rp, ds);
+        if (o && o.r === id) {
+          const { r, ...rest } = o;
+          t.put(e.rp, ds, rest);
+        }
+      }
+    }
+    async function setShift(id, ds, code) {
+      const t = tx();
+      unlink(t, id, ds);
+      t.put(id, ds, code ? { c: code } : null);
+      t.commit();
+    }
+    async function setAbsence(id, from, to, code, onlyWork) {
+      const a = agentById(id);
+      if (!a) return;
+      const days = [];
+      for (let n = dnum(from); n <= dnum(to); n++) days.push(dstr(n));
+      await ensureMonths([...new Set(days.map(ymOf))]);
+      const t = tx();
+      let k = 0;
+      for (const ds of days) {
+        if (onlyWork && !isWork(teamCode(a.eq, ds))) continue;
+        unlink(t, id, ds);
+        t.put(id, ds, { c: code });
+        k++;
+      }
+      t.commit();
+      toast(
+        k
+          ? `${LABEL[code]} posé sur ${k} jour${k > 1 ? "s" : ""}`
+          : "Aucun jour travaillé sur cette période",
+      );
+    }
+    async function assignRepl(absentId, days, replId) {
+      const absent = agentById(absentId);
+      const t = tx();
+      for (const ds of days) {
+        const e = t.entry(absentId, ds);
+        if (!e || !ABS[e.c]) continue;
+        if (e.r) {
+          const o = t.entry(e.r, ds);
+          if (o && o.rp === absentId) t.put(e.r, ds, null);
+        }
+        const shift = teamCode(absent.eq, ds);
+        unlink(t, replId, ds);
+        t.put(absentId, ds, { ...e, r: replId });
+        t.put(replId, ds, { c: shift, rp: absentId });
+      }
+      t.commit();
+      toast(
+        `${fullName(agentById(replId))} remplace ${fullName(absent)} (${days.length} j)`,
+      );
+    }
+    function removeRepl(absentId, ds) {
+      const t = tx();
+      const e = t.entry(absentId, ds);
+      if (!e) return;
+      if (e.r) {
+        const o = t.entry(e.r, ds);
+        if (o && o.rp === absentId) t.put(e.r, ds, null);
+      }
+      const { r, ...rest } = e;
+      t.put(absentId, ds, rest);
+      t.commit();
+    }
+    function setTeam(team, ds, v) {
+      const t = tx();
+      t.team(team, ds, v);
+      t.commit();
+    }
+
+    /* ---------- Remplacement : candidats ---------- */
+    function absenceBlock(a, ds) {
+      // Jours travaillés consécutifs (selon le cycle) couverts par la même absence non remplacée.
+      const e = entryOf(a.id, ds);
+      if (!e || !ABS[e.c]) return [ds];
+      const same = (d) => {
+        const x = entryOf(a.id, d);
+        return x && x.c === e.c && !x.r;
+      };
+      const days = [];
+      for (let k = -40; k <= 40; k++) {
+        const d = addDays(ds, k);
+        if (isWork(teamCode(a.eq, d)) && same(d)) days.push(d);
+      }
+      // garder le bloc contigu (en ignorant les jours de repos) qui contient ds
+      let i = days.indexOf(ds);
+      if (i < 0) return [ds];
+      let lo = i,
+        hi = i;
+      const contiguous = (d1, d2) => {
+        for (let n = dnum(d1) + 1; n < dnum(d2); n++) {
+          const d = dstr(n);
+          if (isWork(teamCode(a.eq, d)) && !same(d)) return false;
+        }
+        return true;
+      };
+      while (lo > 0 && contiguous(days[lo - 1], days[lo])) lo--;
+      while (hi < days.length - 1 && contiguous(days[hi], days[hi + 1])) hi++;
+      return days.slice(lo, hi + 1);
+    }
+    function candidates(absent, days) {
+      const out = [];
+      for (const c of S.agents) {
+        if (c.id === absent.id) continue;
+        let ok = true;
+        const flags = [];
+        for (const ds of days) {
+          const code = codeOf(c, ds);
+          const e = entryOf(c.id, ds);
+          if (code !== "R" || (e && e.c && e.c !== "R")) {
+            ok = false;
+            break;
+          }
+          const shift = teamCode(absent.eq, ds);
+          const before = codeOf(c, addDays(ds, -1)),
+            after = codeOf(c, addDays(ds, 1));
+          if (shift === "J" && before === "N")
+            flags.push(["bad", `sort de nuit le ${fmtShort(ds)}`]);
+          if (shift === "N" && after === "J")
+            flags.push([
+              "bad",
+              `travaille de jour le ${fmtShort(addDays(ds, 1))}`,
+            ]);
+        }
+        if (!ok) continue;
+        // Heures projetées par semaine touchée
+        const weeks = [...new Set(days.map(mondayOf))];
+        let worst = 0,
+          worstNow = 0;
+        for (const w of weeks) {
+          const cur = hoursBetween(c, w, addDays(w, 6));
+          const add = days.filter((d) => mondayOf(d) === w).length * 12;
+          if (cur + add > worst) {
+            worst = cur + add;
+            worstNow = cur;
+          }
+        }
+        if (worst > S.cycle.maxWeek)
+          flags.push(["warn", `${worst} h sur la semaine`]);
+        out.push({ a: c, now: worstNow, after: worst, flags });
+      }
+      out.sort(
+        (x, y) =>
+          x.flags.some((f) => f[0] === "bad") -
+            y.flags.some((f) => f[0] === "bad") ||
+          x.flags.length - y.flags.length ||
+          x.after - y.after ||
+          fullName(x.a).localeCompare(fullName(y.a), "fr"),
+      );
+      return out;
+    }
+
+    /* ---------- Rendu ---------- */
+    function render() {
+      memo = new Map();
+      const [y, m] = S.ym.split("-").map(Number);
+      $("#mlabel").textContent = `${MONTHS[m - 1]} ${y}`;
+      document
+        .querySelectorAll(".tab")
+        .forEach((b) =>
+          b.setAttribute("aria-selected", String(b.dataset.tab === S.tab)),
+        );
+      $("#rot").textContent =
+        `4 équipes · ${S.agents.length} agents · cycle ${S.cycle.pattern.length} j`;
+      const v = $("#view");
+      const fid = document.activeElement && document.activeElement.id;
+      const scroll = $(".gridwrap")
+        ? { l: $(".gridwrap").scrollLeft, t: $(".gridwrap").scrollTop }
+        : null;
+      if (!S.ready.agents || !S.ready.cycle) {
+        v.innerHTML = `<div class="panel"><p class="muted">Chargement du planning…</p></div>`;
+        return;
+      }
+      v.innerHTML =
+        S.tab === "planning"
+          ? viewPlanning()
+          : S.tab === "heures"
+            ? viewHours()
+            : S.tab === "agents"
+              ? viewAgents()
+              : viewCycle();
+      if (scroll && $(".gridwrap")) {
+        $(".gridwrap").scrollLeft = scroll.l;
+        $(".gridwrap").scrollTop = scroll.t;
+      } else if (S.tab === "planning" && $(".gridwrap") && ymOf(now) === S.ym) {
+        const th = $(".dh.today");
+        if (th) $(".gridwrap").scrollLeft = Math.max(0, th.offsetLeft - 260);
+      }
+      renderOverlay();
+      refocus(fid);
+    }
+
+    // Rend le focus au champ en cours de saisie après un rafraîchissement (ids stables).
+    function refocus(fid) {
+      if (!fid || (document.activeElement && document.activeElement.id === fid))
+        return;
+      const el = document.getElementById(fid);
+      if (el && typeof el.focus === "function")
+        el.focus({ preventScroll: true });
+    }
+
+    function viewPlanning() {
+      const days = monthDays(S.ym);
+      const agents = sortedAgents();
+      if (!agents.length) return emptyAgents();
+      const head = days
+        .map((ds) => {
+          const w = dow(ds);
+          return `<th class="dh${w === 0 || w === 6 ? " we" : ""}${w === 1 ? " wkstart" : ""}${ds === now ? " today" : ""}"><small>${DOW[w]}</small><b>${Number(ds.slice(8))}</b></th>`;
+        })
+        .join("");
+      const wkrow = days
+        .map((ds, i) => {
+          const w = dow(ds);
+          return w === 1 || i === 0
+            ? `<th class="wkno${w === 1 ? " wkstart" : ""}" colspan="${Math.min(w === 1 ? 7 : (8 - w) % 7 || 7, days.length - i)}">S${isoWeek(ds)}</th>`
+            : "";
+        })
+        .join("");
+      const cls = (ds) => {
+        const w = dow(ds);
+        return `d${w === 0 || w === 6 ? " we" : ""}${w === 1 ? " wkstart" : ""}`;
+      };
+      let body = "";
+      const todo = [];
+      for (const t of TEAMS) {
+        const list = agents.filter((a) => a.eq === t);
+        body +=
+          `<tr class="team"><th class="name">Équipe ${t}<small>${list.length} agent${list.length > 1 ? "s" : ""}</small></th>` +
+          days
+            .map((ds) => {
+              const c = teamCode(t, ds),
+                o = teamOverride(t, ds);
+              return `<td class="${cls(ds)}"><button class="cell c c-${c}${o ? " ovr" : ""}" data-act="team" data-team="${t}" data-date="${ds}" title="Équipe ${t} · ${fmtShort(ds)} · ${LABEL[c]}${o ? " (modifié)" : ""}" ${S.canWrite ? "" : "disabled"}>${c === "R" ? "" : c}</button></td>`;
+            })
+            .join("") +
+          `<td class="tot"></td></tr>`;
+        for (const a of list) {
+          body +=
+            `<tr><th class="name" title="${esc(a.mat)} ${esc(fullName(a))}"><span class="mat">${esc(a.mat || "—")}</span>${esc(fullName(a))}</th>` +
+            days
+              .map((ds) => {
+                const e = entryOf(a.id, ds),
+                  c = codeOf(a, ds);
+                const need = needsCover(a, ds);
+                if (need) todo.push({ a, ds });
+                const k = ["cell", "c", "c-" + c];
+                let tip = `${fullName(a)} · ${fmtShort(ds)} · ${LABEL[c] || c}`;
+                if (e?.rp) {
+                  k.push("rp");
+                  tip += ` · remplace ${fullName(agentById(e.rp))}`;
+                } else if (e && e.c && !ABS[e.c] && e.c !== teamCode(a.eq, ds))
+                  k.push("ovr");
+                if (need) {
+                  k.push("need");
+                  tip += " · à remplacer";
+                }
+                if (e?.r) {
+                  k.push("cov");
+                  tip += ` · remplacé par ${fullName(agentById(e.r))}`;
+                }
+                return `<td class="${cls(ds)}"><button class="${k.join(" ")}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(tip)}">${c === "R" ? "" : c}</button></td>`;
+              })
+              .join("") +
+            `<td class="tot">${hoursBetween(a, days[0], days[days.length - 1])} h</td></tr>`;
+        }
+      }
+      const staff = (code) =>
+        `<tr class="staff"><th class="name">Effectif ${code === "J" ? "jour" : "nuit"} <small class="muted">/ ${S.cycle.target}</small></th>` +
+        days
+          .map((ds) => {
+            const n = agents.filter((a) => codeOf(a, ds) === code).length;
+            const k =
+              n < S.cycle.target ? "low" : n > S.cycle.target ? "high" : "ok";
+            return `<td class="${cls(ds)}"><span class="staffn ${k}" title="${n} agent(s) en ${LABEL[code]} le ${fmtShort(ds)}">${n}</span></td>`;
+          })
+          .join("") +
+        `<td class="tot"></td></tr>`;
+
+      const todoHtml = todo.length
+        ? `<div class="label">${todo.length} poste${todo.length > 1 ? "s" : ""} à remplacer ce mois</div><div class="todo-list">${todo
+            .slice(0, 40)
+            .map(({ a, ds }) => {
+              const s = teamCode(a.eq, ds);
+              return `<button class="todo-item" data-act="cell" data-id="${a.id}" data-date="${ds}"><span class="c c-${s}">${s}</span>${fmtShort(ds)} · ${esc(fullName(a))}</button>`;
+            })
+            .join(
+              "",
+            )}${todo.length > 40 ? `<span class="muted">+ ${todo.length - 40} autres</span>` : ""}</div>`
+        : `<div class="label">Remplacements</div><div class="muted">Toutes les absences du mois sont couvertes.</div>`;
+      return `<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="summary"><div class="todo">${todoHtml}</div></div>
+    <div class="gridwrap"><table class="plan">
+      <thead><tr><th class="name" rowspan="2">Agent</th>${wkrow}<th class="tot" rowspan="2">H mois</th></tr><tr>${head}</tr></thead>
+      <tbody>${body}${staff("J")}${staff("N")}</tbody>
+    </table></div>
+    <div class="legend">
+      <span><i class="c c-J">J</i>Jour 8h–20h</span><span><i class="c c-N">N</i>Nuit 20h–8h</span><span><i class="c c-R" style="width:30px">·</i>Repos</span>
+      <span><i class="c c-CP">CP</i>Congé</span><span><i class="c c-RTT">RTT</i>RTT</span><span><i class="c c-MAL">MAL</i>Maladie</span><span><i class="c c-ABS">ABS</i>Autre</span>
+      <span><i class="c cell need" style="width:14px;height:14px"></i>à remplacer</span><span><i class="c cell cov" style="width:14px;height:14px"></i>remplacé</span>
+      <span><i class="c c-J cell rp">J</i>en remplacement</span><span><i class="c c-J cell ovr">J</i>modifié hors cycle</span>
+    </div>
+    <p class="note">Cliquez une case agent pour poser un congé, changer un poste ou choisir un remplaçant. Cliquez la ligne d'une équipe pour la passer en jour, nuit ou repos sur une date.</p>
+  </div>`;
+    }
+
+    function emptyAgents() {
+      return `<div class="panel empty">
+    <h2>Aucun agent enregistré</h2>
+    <p class="muted">Le planning se remplit dès que les agents sont rattachés à leur équipe. Vous pouvez créer 44 fiches vierges (11 par équipe) puis compléter matricule, nom et prénom, ou coller votre liste dans l'onglet Agents.</p>
+    ${S.canWrite ? `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn primary" data-act="gen">Créer 4 × 11 fiches à compléter</button><button class="btn" data-act="tab" data-tab="agents">Saisir ou importer les agents</button></div>` : ""}
+  </div>`;
+    }
+
+    function viewHours() {
+      const days = monthDays(S.ym);
+      const agents = sortedAgents();
+      if (!agents.length) return emptyAgents();
+      const weeks = [...new Set(days.map(mondayOf))];
+      const max = S.cycle.maxWeek;
+      let rows = "",
+        tsv = [
+          "Matricule\tNom\tPrénom\tÉquipe\t" +
+            weeks.map((w) => `S${isoWeek(w)}`).join("\t") +
+            "\tMois\tJours d'absence",
+        ];
+      for (const t of TEAMS) {
+        const list = agents.filter((a) => a.eq === t);
+        if (!list.length) continue;
+        rows += `<tr class="grp"><td colspan="${weeks.length + 4}">Équipe ${t}</td></tr>`;
+        for (const a of list) {
+          const wh = weeks.map((w) => hoursBetween(a, w, addDays(w, 6)));
+          const mh = hoursBetween(a, days[0], days[days.length - 1]);
+          const absd = days.filter((d) => ABS[codeOf(a, d)]).length;
+          rows += `<tr><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}</td>${wh.map((h) => `<td class="num${h > max ? " over" : ""}">${h}</td>`).join("")}<td class="num"><b>${mh}</b></td><td class="num">${absd || ""}</td></tr>`;
+          tsv.push(
+            [
+              a.mat || "",
+              a.nom || "",
+              a.prenom || "",
+              a.eq,
+              ...wh,
+              mh,
+              absd,
+            ].join("\t"),
+          );
+        }
+      }
+      S.hoursTsv = tsv.join("\n");
+      return `<div class="panel">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
+      <h2>Heures travaillées par semaine</h2>
+      <button class="btn" data-act="copytsv">Copier pour Excel</button>
+    </div>
+    <p class="note">Semaines calendaires du lundi 0 h au dimanche 24 h. Jour = 12 h. Nuit = 12 h ${S.cycle.nightSplit ? "réparties à minuit (4 h le soir de prise de poste, 8 h le lendemain)" : "comptées sur le jour de prise de poste"}. Les absences ne comptent pas comme heures travaillées. En rouge : plus de ${max} h dans la semaine. Les semaines à cheval sur deux mois sont comptées en entier.</p>
+    <div class="tablewrap"><table class="list">
+      <thead><tr><th>Matr.</th><th>Agent</th>${weeks.map((w) => `<th class="num" title="du ${fmtShort(w)} au ${fmtShort(addDays(w, 6))}">S${isoWeek(w)}<br><span style="text-transform:none;letter-spacing:0;font-weight:400">${fmtShort(w)}</span></th>`).join("")}<th class="num">Mois</th><th class="num">Abs. (j)</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>`;
+    }
+
+    function viewAgents() {
+      const agents = sortedAgents();
+      const ro = S.canWrite ? "" : "disabled";
+      const rows = TEAMS.map((t) => {
+        const list = agents.filter((a) => a.eq === t);
+        return (
+          `<tr class="grp"><td colspan="5">Équipe ${t} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${list.length} / 11</span></td></tr>` +
+          list
+            .map(
+              (a) => `<tr>
+        <td><input type="text" id="mat-${a.id}" data-f="mat" data-id="${a.id}" value="${esc(a.mat)}" placeholder="Matricule" ${ro}></td>
+        <td><input type="text" id="nom-${a.id}" data-f="nom" data-id="${a.id}" value="${esc(a.nom)}" placeholder="Nom" ${ro}></td>
+        <td><input type="text" id="pre-${a.id}" data-f="prenom" data-id="${a.id}" value="${esc(a.prenom)}" placeholder="Prénom" ${ro}></td>
+        <td><select id="eq-${a.id}" data-f="eq" data-id="${a.id}" ${ro}>${TEAMS.map((x) => `<option ${x === a.eq ? "selected" : ""}>${x}</option>`).join("")}</select></td>
+        <td>${S.canWrite ? (S.delAsk === a.id ? `<span class="confirm">Supprimer ?<button class="btn sm danger" data-act="delyes" data-id="${a.id}">Oui</button><button class="btn sm" data-act="delno">Non</button></span>` : `<button class="btn sm ghost danger" data-act="del" data-id="${a.id}">Supprimer</button>`) : ""}</td>
+      </tr>`,
+            )
+            .join("")
+        );
+      }).join("");
+      return `<div class="cols">
+    <div class="panel">
+      <h2>Agents</h2>
+      <p class="note">Les modifications sont enregistrées dès que vous quittez le champ. Changer l'équipe d'un agent l'aligne sur le cycle de sa nouvelle équipe.</p>
+      <div class="tablewrap"><table class="list"><thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>
+    ${
+      S.canWrite
+        ? `<div style="display:flex;flex-direction:column;gap:16px">
+      <form class="panel" id="addform">
+        <h3>Ajouter un agent</h3>
+        <div class="addrow">
+          <label>Matricule<input type="text" id="add-mat" required></label>
+          <label>Nom<input type="text" id="add-nom" required></label>
+          <label>Prénom<input type="text" id="add-pre"></label>
+          <label>Équipe<select id="add-eq">${TEAMS.map((x) => `<option>${x}</option>`).join("")}</select></label>
+          <button class="btn primary" type="submit">Ajouter</button>
+        </div>
+      </form>
+      <div class="panel">
+        <h3>Importer une liste</h3>
+        <p class="note">Collez une ligne par agent : matricule ; nom ; prénom ; équipe (A, B, C ou D). Le point-virgule, la virgule et la tabulation (copie depuis Excel) sont acceptés. Un matricule déjà présent est mis à jour.</p>
+        <textarea id="importtxt" placeholder="10234;MARTIN;Julie;A&#10;10235;BERNARD;Karim;A"></textarea>
+        <div><button class="btn primary" data-act="import">Importer</button></div>
+      </div>
+      ${agents.length ? "" : `<div class="panel"><h3>Démarrer vite</h3><button class="btn" data-act="gen">Créer 4 × 11 fiches à compléter</button></div>`}
+    </div>`
+        : ""
+    }
+  </div>`;
+    }
+
+    function viewCycle() {
+      const d = (S.cycleDraft ||= clone(S.cycle));
+      const ro = S.canWrite ? "" : "disabled";
+      const n = d.pattern.length;
+      const start = mondayOf(now);
+      const pdays = Array.from({ length: 21 }, (_, i) => addDays(start, i));
+      const code = (t, ds) =>
+        d.pattern[
+          mod(dnum(ds) - dnum(d.ref) - (Number(d.offsets[t]) || 0), n)
+        ] || "R";
+      const bad = pdays.filter((ds) => {
+        const cs = TEAMS.map((t) => code(t, ds));
+        return (
+          cs.filter((c) => c === "J").length !== 1 ||
+          cs.filter((c) => c === "N").length !== 1
+        );
+      }).length;
+      const dirty = JSON.stringify(d) !== JSON.stringify(S.cycle);
+      return `<div class="cols">
+    <div class="panel">
+      <h2>Cycle de rotation</h2>
+      <div class="sec"><div class="label">Motif répété par chaque équipe (cliquez une case pour changer J → N → R)</div>
+        <div class="pattern">${d.pattern.map((c, i) => `<button class="c c-${c}" data-act="pat" data-i="${i}" ${ro}>${c === "R" ? "" : c}</button>`).join("")}
+          ${S.canWrite ? `<button class="btn sm" data-act="patadd">+ jour</button><button class="btn sm" data-act="patdel" ${n <= 1 ? "disabled" : ""}>− jour</button>` : ""}</div>
+        ${
+          S.canWrite
+            ? `<div class="choices"><span class="note">Modèles :</span>
+          <button class="btn sm" data-act="preset" data-p="JJNNRRRR">2 J · 2 N · 4 R (8 j)</button>
+          <button class="btn sm" data-act="preset" data-p="JJJNNNRRRRRR">3 J · 3 N · 6 R (12 j)</button>
+          <button class="btn sm" data-act="preset" data-p="JNRR">1 J · 1 N · 2 R (4 j)</button></div>`
+            : ""
+        }
+      </div>
+      <div class="range">
+        <label>Date de départ du motif<input type="date" id="cy-ref" value="${d.ref}" ${ro}></label>
+        ${TEAMS.map((t) => `<label>Décalage ${t}<input type="number" id="cy-off-${t}" data-team="${t}" value="${d.offsets[t] ?? 0}" min="0" max="${n - 1}" style="width:72px" ${ro}></label>`).join("")}
+      </div>
+      <div class="range">
+        <label>Effectif cible par poste<input type="number" id="cy-target" value="${d.target}" min="1" style="width:90px" ${ro}></label>
+        <label>Alerte au-delà de (h/semaine)<input type="number" id="cy-max" value="${d.maxWeek}" min="1" style="width:110px" ${ro}></label>
+      </div>
+      <label class="check"><input type="checkbox" id="cy-split" ${d.nightSplit ? "checked" : ""} ${ro}> Répartir les heures de nuit à minuit (4 h + 8 h) dans le décompte hebdomadaire</label>
+      ${S.canWrite ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn primary" data-act="cysave" ${dirty ? "" : "disabled"}>Enregistrer le cycle</button>${dirty ? `<button class="btn" data-act="cyreset">Annuler</button><span class="note">Modifications non enregistrées</span>` : ""}</div>` : ""}
+      <p class="note">Les postes modifiés à la main (équipe ou agent), les congés et les remplacements restent en place quand le cycle change.</p>
+    </div>
+    <div class="panel">
+      <h3>Aperçu sur 3 semaines</h3>
+      <div class="tablewrap"><table class="preview">
+        <thead><tr><th></th>${pdays.map((ds) => `<th style="text-align:center">${DOW[dow(ds)]}<br>${Number(ds.slice(8))}</th>`).join("")}</tr></thead>
+        <tbody>${TEAMS.map(
+          (t) =>
+            `<tr><th>Éq. ${t}</th>${pdays
+              .map((ds) => {
+                const c = code(t, ds);
+                return `<td><span class="c c-${c}">${c === "R" ? "" : c}</span></td>`;
+              })
+              .join("")}</tr>`,
+        ).join("")}</tbody>
+      </table></div>
+      <p class="note" style="color:${bad ? "var(--bad)" : "var(--good)"}">${bad ? `${bad} jour(s) sur 21 n'ont pas exactement une équipe de jour et une équipe de nuit.` : "Chaque jour a une équipe de jour, une équipe de nuit et deux équipes en repos."}</p>
+    </div>
+  </div>`;
+    }
+
+    /* ---------- Superpositions : tiroir et popover ---------- */
+    function renderOverlay() {
+      const fid = document.activeElement && document.activeElement.id;
+      drawOverlay();
+      refocus(fid);
+    }
+    function drawOverlay() {
+      const o = $("#overlay");
+      if (S.pop) {
+        const { team, ds, x, y } = S.pop;
+        const cur = teamOverride(team, ds);
+        o.innerHTML = `<div class="scrim" data-act="close" style="background:transparent"></div><div class="pop" style="left:${Math.min(x, innerWidth - 240)}px;top:${Math.min(y, innerHeight - 170)}px">
+      <div><b>Équipe ${team}</b> · ${fmtLong(ds)}</div>
+      <div class="note">Selon le cycle : ${LABEL[cycleCode(team, ds)]}</div>
+      <div class="row">${["J", "N", "R"].map((c) => `<button class="choice" data-act="teamset" data-v="${c}" aria-pressed="${teamCode(team, ds) === c}"><span class="c c-${c}">${c}</span>${c === "R" ? "Repos" : c === "J" ? "Jour" : "Nuit"}</button>`).join("")}</div>
+      ${cur ? `<button class="btn sm" data-act="teamset" data-v="">Revenir au cycle</button>` : ""}
+    </div>`;
+        return;
+      }
+      if (!S.drawer) {
+        o.innerHTML = "";
+        return;
+      }
+      const { id, ds } = S.drawer;
+      const a = agentById(id);
+      if (!a) {
+        S.drawer = null;
+        o.innerHTML = "";
+        return;
+      }
+      const e = entryOf(id, ds),
+        code = codeOf(a, ds),
+        base = teamCode(a.eq, ds);
+      const wk = weekHours(a, ds),
+        mon = mondayOf(ds);
+      const can = S.canWrite;
+      let repl = "";
+      if (e && ABS[e.c] && isWork(base)) {
+        if (e.r) {
+          repl = `<div class="sec"><div class="label">Remplacement</div><div class="cand"><span class="c c-${base}" style="width:30px;height:22px">${base}</span><div><div class="who">${esc(fullName(agentById(e.r)))}</div><div class="meta">Équipe ${esc(agentById(e.r)?.eq || "?")} · remplace sur ce poste</div></div>${can ? `<button class="btn sm" data-act="unrepl">Retirer</button>` : ""}</div></div>`;
+        } else if (can) {
+          const block = absenceBlock(a, ds);
+          const scope =
+            S.drawer.scope === "block" && block.length > 1 ? "block" : "day";
+          const days = scope === "block" ? block : [ds];
+          const list = candidates(a, days);
+          repl = `<div class="sec"><div class="label">Choisir un remplaçant · ${LABEL[base]}</div>
+        ${block.length > 1 ? `<div class="seg"><button data-act="scope" data-v="day" aria-pressed="${scope === "day"}">Ce jour</button><button data-act="scope" data-v="block" aria-pressed="${scope === "block"}">Toute l'absence · ${block.length} postes (${fmtShort(block[0])} → ${fmtShort(block[block.length - 1])})</button></div>` : ""}
+        <p class="note">Agents en repos ${days.length > 1 ? "sur tous ces jours" : "ce jour-là"}, du plus disponible au moins disponible. Heures : semaine actuelle → après remplacement.</p>
+        <div class="cands">${
+          list.length
+            ? list
+                .slice(0, 30)
+                .map(
+                  (c) =>
+                    `<div class="cand"><div><div class="who">${esc(fullName(c.a))} <span class="muted mono" style="font-size:12px">${esc(c.a.mat || "")}</span></div><div class="meta">Équipe ${c.a.eq} · <span class="mono">${c.now} h → ${c.after} h</span></div>${
+                      c.flags.length
+                        ? `<div>${[
+                            ...new Map(c.flags.map((f) => [f[1], f])).values(),
+                          ]
+                            .slice(0, 3)
+                            .map(
+                              (f) =>
+                                `<span class="flag ${f[0]}">${esc(f[1])}</span>`,
+                            )
+                            .join("")}</div>`
+                        : ""
+                    }</div><button class="btn sm primary" data-act="repl" data-r="${c.a.id}" data-days="${days.join(",")}">Choisir</button></div>`,
+                )
+                .join("")
+            : `<p class="muted">Aucun agent en repos disponible ${days.length > 1 ? "sur toute la période. Essayez « Ce jour »." : "ce jour-là."}</p>`
+        }</div></div>`;
+        }
+      }
+      const rp = e?.rp
+        ? `<div class="banner">En remplacement de <b>${esc(fullName(agentById(e.rp)))}</b> (équipe ${esc(agentById(e.rp)?.eq || "?")}).</div>`
+        : "";
+      const dr = S.drawer;
+      dr.from ||= ds;
+      dr.to ||= ds;
+      if (dr.onlyWork === undefined) dr.onlyWork = true;
+      o.innerHTML = `<div class="scrim" data-act="close"></div>
+  <aside class="drawer" role="dialog" aria-label="Journée de ${esc(fullName(a))}">
+    <header><div><div class="label">Équipe ${a.eq} · ${esc(a.mat || "sans matricule")}</div><h2>${esc(fullName(a))}</h2><div class="muted" style="text-transform:capitalize">${fmtLong(ds)}</div></div>
+      <button class="btn iconbtn ghost" data-act="close" aria-label="Fermer">✕</button></header>
+    <div class="body">
+      <dl class="kv"><dt>Prévu pour l'équipe</dt><dd><span class="c c-${base}" style="width:30px;height:20px">${base === "R" ? "·" : base}</span> ${LABEL[base]}</dd>
+        <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : code}</span> ${LABEL[code]}</dd>
+        <dt>Semaine S${isoWeek(ds)}</dt><dd class="mono">${wk} h <span class="muted">(${fmtShort(mon)} → ${fmtShort(addDays(mon, 6))})</span></dd></dl>
+      ${rp}
+      ${repl}
+      ${
+        can
+          ? `<div class="sec"><div class="label">Poste de la journée</div><div class="choices">
+        ${["J", "N", "R"].map((c) => `<button class="choice" data-act="shift" data-v="${c}" aria-pressed="${code === c}"><span class="c c-${c}">${c === "R" ? "·" : c}</span>${c === "J" ? "Jour" : c === "N" ? "Nuit" : "Repos"}</button>`).join("")}
+        ${e ? `<button class="choice" data-act="shift" data-v="">Revenir au cycle</button>` : ""}</div></div>
+      <div class="sec"><div class="label">Congé ou absence</div>
+        <div class="range"><label>Du<input type="date" id="ab-from" value="${dr.from}"></label><label>Au<input type="date" id="ab-to" value="${dr.to}"></label></div>
+        <label class="check"><input type="checkbox" id="ab-only" ${dr.onlyWork ? "checked" : ""}> Seulement les jours travaillés selon le cycle</label>
+        <div class="choices">${Object.keys(ABS)
+          .map(
+            (c) =>
+              `<button class="choice" data-act="abs" data-v="${c}" aria-pressed="${code === c}"><span class="c c-${c}">${c}</span>${ABS[c]}</button>`,
+          )
+          .join("")}</div>
+      </div>`
+          : ""
+      }
+    </div>
+  </aside>`;
+    }
+
+    /* ---------- Événements ---------- */
+    document.addEventListener("click", async (ev) => {
+      const b = ev.target.closest("[data-act]");
+      if (!b) return;
+      const act = b.dataset.act;
+      if (act === "close") {
+        S.drawer = null;
+        S.pop = null;
+        renderOverlay();
+        return;
+      }
+      if (act === "tab") {
+        S.tab = b.dataset.tab;
+        uiSet({ tab: S.tab });
+        render();
+        return;
+      }
+      if (act === "cell") {
+        S.pop = null;
+        S.drawer = { id: b.dataset.id, ds: b.dataset.date };
+        renderOverlay();
+        return;
+      }
+      if (act === "team") {
+        const r = b.getBoundingClientRect();
+        S.drawer = null;
+        S.pop = {
+          team: b.dataset.team,
+          ds: b.dataset.date,
+          x: r.left,
+          y: r.bottom + 4,
+        };
+        renderOverlay();
+        return;
+      }
+      if (act === "teamset") {
+        setTeam(S.pop.team, S.pop.ds, b.dataset.v || null);
+        S.pop = null;
+        renderOverlay();
+        return;
+      }
+      if (act === "shift") {
+        await setShift(S.drawer.id, S.drawer.ds, b.dataset.v || null);
+        return;
+      }
+      if (act === "abs") {
+        const from = $("#ab-from").value,
+          to = $("#ab-to").value;
+        if (!from || !to || to < from) {
+          toast("La date de fin doit suivre la date de début.");
+          return;
+        }
+        if (dnum(to) - dnum(from) > 120) {
+          toast("Période limitée à 4 mois.");
+          return;
+        }
+        await setAbsence(
+          S.drawer.id,
+          from,
+          to,
+          b.dataset.v,
+          $("#ab-only").checked,
+        );
+        S.drawer.from = from;
+        S.drawer.to = to;
+        renderOverlay();
+        return;
+      }
+      if (act === "scope") {
+        S.drawer.scope = b.dataset.v;
+        renderOverlay();
+        return;
+      }
+      if (act === "repl") {
+        await assignRepl(S.drawer.id, b.dataset.days.split(","), b.dataset.r);
+        return;
+      }
+      if (act === "unrepl") {
+        removeRepl(S.drawer.id, S.drawer.ds);
+        return;
+      }
+      if (act === "gen") {
+        await genAgents();
+        return;
+      }
+      if (act === "import") {
+        await importAgents($("#importtxt").value);
+        return;
+      }
+      if (act === "del") {
+        S.delAsk = b.dataset.id;
+        render();
+        return;
+      }
+      if (act === "delno") {
+        S.delAsk = null;
+        render();
+        return;
+      }
+      if (act === "delyes") {
+        await S.store.del("agents/" + b.dataset.id);
+        S.delAsk = null;
+        toast("Agent supprimé");
+        return;
+      }
+      if (act === "copytsv") {
+        try {
+          await navigator.clipboard.writeText(S.hoursTsv);
+          toast("Tableau copié : collez-le dans Excel");
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = S.hoursTsv;
+          ta.style.height = "200px";
+          b.after(ta);
+          ta.select();
+          toast("Sélectionnez le texte puis copiez-le");
+        }
+        return;
+      }
+      const d = S.cycleDraft;
+      if (act === "pat") {
+        const i = +b.dataset.i;
+        d.pattern[i] = { J: "N", N: "R", R: "J" }[d.pattern[i]];
+        render();
+        return;
+      }
+      if (act === "patadd") {
+        d.pattern.push("R");
+        render();
+        return;
+      }
+      if (act === "patdel") {
+        d.pattern.pop();
+        render();
+        return;
+      }
+      if (act === "preset") {
+        d.pattern = b.dataset.p.split("");
+        const q = d.pattern.length / 4;
+        TEAMS.forEach((t, i) => (d.offsets[t] = q * i));
+        render();
+        return;
+      }
+      if (act === "cyreset") {
+        S.cycleDraft = null;
+        render();
+        return;
+      }
+      if (act === "cysave") {
+        S.cycle = clone(d);
+        S.cycleDraft = null;
+        await S.store.set("config/cycle", S.cycle);
+        toast("Cycle enregistré");
+        render();
+        return;
+      }
+    });
+    document.addEventListener("change", async (ev) => {
+      const el = ev.target;
+      if (el.dataset.f && el.dataset.id) {
+        const a = agentById(el.dataset.id);
+        if (!a) return;
+        const v = el.value.trim();
+        if ((a[el.dataset.f] || "") === v) return;
+        const { id, ...rest } = a;
+        await S.store.set("agents/" + id, { ...rest, [el.dataset.f]: v });
+        return;
+      }
+      if (el.id === "ab-from" && S.drawer) {
+        S.drawer.from = el.value;
+        if (S.drawer.to < el.value) {
+          S.drawer.to = el.value;
+          $("#ab-to").value = el.value;
+        }
+      }
+      if (el.id === "ab-to" && S.drawer) S.drawer.to = el.value;
+      if (el.id === "ab-only" && S.drawer) S.drawer.onlyWork = el.checked;
+      const d = S.cycleDraft;
+      if (!d) return;
+      if (el.id === "cy-ref" && el.value) d.ref = el.value;
+      else if (el.id.startsWith("cy-off-"))
+        d.offsets[el.dataset.team] = Math.max(0, parseInt(el.value, 10) || 0);
+      else if (el.id === "cy-target")
+        d.target = Math.max(1, parseInt(el.value, 10) || 11);
+      else if (el.id === "cy-max")
+        d.maxWeek = Math.max(1, parseInt(el.value, 10) || 48);
+      else if (el.id === "cy-split") d.nightSplit = el.checked;
+      else return;
+      render();
+    });
+    document.addEventListener("submit", async (ev) => {
+      if (ev.target.id !== "addform") return;
+      ev.preventDefault();
+      const mat = $("#add-mat").value.trim(),
+        nom = $("#add-nom").value.trim();
+      if (!mat || !nom) {
+        toast("Matricule et nom sont obligatoires.");
+        return;
+      }
+      if (S.agents.some((a) => a.mat === mat)) {
+        toast(`Le matricule ${mat} existe déjà.`);
+        return;
+      }
+      await S.store.set("agents/" + S.store.newId(), {
+        mat,
+        nom,
+        prenom: $("#add-pre").value.trim(),
+        eq: $("#add-eq").value,
+      });
+      toast(`${nom.toUpperCase()} ajouté à l'équipe ${$("#add-eq").value}`);
+      ev.target.reset();
+      $("#add-mat").focus();
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && (S.drawer || S.pop)) {
+        S.drawer = null;
+        S.pop = null;
+        renderOverlay();
+      }
+    });
+    $("#prev").onclick = () => goMonth(ymAdd(S.ym, -1));
+    $("#next").onclick = () => goMonth(ymAdd(S.ym, 1));
+    $("#today").onclick = () => goMonth(ymOf(now));
+
+    async function genAgents() {
+      for (const t of TEAMS) {
+        const have = S.agents.filter((a) => a.eq === t).length;
+        for (let i = have; i < 11; i++)
+          await S.store.set("agents/" + S.store.newId(), {
+            mat: "",
+            nom: "À compléter",
+            prenom: `${t}${String(i + 1).padStart(2, "0")}`,
+            eq: t,
+          });
+      }
+      toast("Fiches créées : complétez-les dans l'onglet Agents");
+      S.tab = "agents";
+      uiSet({ tab: "agents" });
+      render();
+    }
+    async function importAgents(txt) {
+      const lines = txt
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+      let add = 0,
+        upd = 0;
+      const errs = [];
+      for (const [i, l] of lines.entries()) {
+        const p = l.split(/\t|;|,/).map((x) => x.trim());
+        const [mat, nom, prenom = "", eqRaw = ""] = p;
+        const eq = eqRaw.toUpperCase().replace(/^ÉQUIPE\s*|^EQUIPE\s*/, "");
+        if (!mat || !nom || !TEAMS.includes(eq)) {
+          if (!/matricule/i.test(l)) errs.push(i + 1);
+          continue;
+        }
+        const ex = S.agents.find((a) => a.mat === mat);
+        if (ex) {
+          const { id, ...rest } = ex;
+          await S.store.set("agents/" + id, { ...rest, nom, prenom, eq });
+          upd++;
+        } else {
+          await S.store.set("agents/" + S.store.newId(), {
+            mat,
+            nom,
+            prenom,
+            eq,
+          });
+          add++;
+        }
+      }
+      toast(
+        `${add} ajouté(s), ${upd} mis à jour${errs.length ? ` · lignes ignorées : ${errs.slice(0, 6).join(", ")}` : ""}`,
+      );
+      if (!errs.length) {
+        const ta = $("#importtxt");
+        if (ta) ta.value = "";
+      }
+    }
+
+    /* ---------- Abonnements ---------- */
+    function goMonth(ym) {
+      S.ym = ym;
+      S.drawer = null;
+      S.pop = null;
+      watchMonths();
+      render();
+    }
+    function watchMonths() {
+      const need = [ymAdd(S.ym, -1), S.ym, ymAdd(S.ym, 1)];
+      for (const ym of Object.keys(S.monthSubs))
+        if (!need.includes(ym)) {
+          S.monthSubs[ym]();
+          delete S.monthSubs[ym];
+        }
+      for (const ym of need)
+        if (!S.monthSubs[ym])
+          S.monthSubs[ym] = S.store.watchDoc("mois/" + ym, (d) => {
+            S.months[ym] = d;
+            render();
+          });
+    }
+
+    async function boot() {
+      let db = null,
+        user = null;
+      for (let i = 0; i < 15 && !(window.claude && window.claude.use); i++)
+        await new Promise((r) => setTimeout(r, 100));
+      if (window.claude && typeof window.claude.use === "function") {
+        try {
+          [db, user] = await Promise.all([
+            window.claude.use("db"),
+            window.claude.use("user"),
+          ]);
+        } catch {
+          db = null;
+        }
+      }
+      if (db) {
+        S.store = dbStore(db);
+        if (user) {
+          try {
+            const w = await user.can("data.write");
+            if (w === false) S.canWrite = false;
+          } catch {}
+        }
+        if (!S.canWrite) {
+          const b = $("#banner");
+          b.hidden = false;
+          b.textContent =
+            "Consultation seule : vous pouvez voir le planning mais pas le modifier.";
+        }
+      } else {
+        S.store = localStore();
+        const b = $("#banner");
+        b.hidden = false;
+        b.textContent =
+          "Les données sont enregistrées dans ce navigateur uniquement. Ouvrez l'application depuis son lien claude.ai pour les partager entre appareils.";
+      }
+      S.store.watchCol("agents", (list) => {
+        S.agents = list.filter((a) => TEAMS.includes(a.eq));
+        S.ready.agents = true;
+        render();
+      });
+      S.store.watchDoc("config/cycle", (c) => {
+        S.cycle = { ...clone(DEFAULT_CYCLE), ...(c ? clone(c) : {}) };
+        S.ready.cycle = true;
+        render();
+      });
+      watchMonths();
+    }
+    boot();
+  })();
+</script>
