@@ -8,6 +8,7 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 - **Cycle** : motif de rotation répété par chaque équipe (par défaut le cycle de 28 jours du lundi au dimanche : 6 jours 8h–20h, 6 nuits 20h–8h, 16 repos, les équipes décalées d'une semaine), date de départ et décalage par équipe, avec aperçu et contrôle de couverture.
 - **Planning mensuel** : grille jour par jour de toutes les équipes. Un clic sur la ligne d'une équipe la passe en jour, nuit ou repos à une date donnée ; un clic sur la case d'un agent ouvre sa journée.
 - **Congés et absences** : CP, RTT, maladie ou autre, sur un jour ou une période (option « seulement les jours travaillés »).
+- **Absences partielles** : sur un poste de jour ou de nuit, une absence de quelques heures (par exemple 8h–10h) avec son motif ; ces heures sont retirées des heures travaillées.
 - **Remplacements** : pour une absence sur un poste travaillé, la liste des agents en repos disponibles, triés par heures de la semaine, avec alertes (sortie de nuit, enchaînement nuit → jour, dépassement du plafond hebdomadaire). Remplacement sur un jour ou sur toute l'absence. Les postes restant à remplacer sont listés en haut du planning.
 - **Effectifs** : nombre d'agents en jour et en nuit pour chaque date, comparé à l'effectif cible.
 - **Heures** : heures travaillées par agent et par semaine calendaire (lundi–dimanche), total du mois, nuits comptées en entier le jour de prise de poste (option : réparties à minuit, 4 h + 8 h), export vers Excel par copier-coller.

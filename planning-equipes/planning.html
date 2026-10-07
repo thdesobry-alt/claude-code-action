@@ -514,6 +514,16 @@
     background: var(--bad);
     border: 2px solid var(--surface);
   }
+  .cell.part::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--bad);
+  }
   .cell.cov::before {
     content: "";
     position: absolute;
@@ -1260,23 +1270,57 @@
       return v;
     }
     const isWork = (c) => c === "J" || c === "N";
+    // "08:30" -> 8.5 ; sur un poste de nuit, les heures après minuit sont ramenées à 24 h et plus.
+    const toH = (hm) => {
+      const [h, m] = String(hm || "")
+        .split(":")
+        .map(Number);
+      return h + (m || 0) / 60;
+    };
+    function partialSpan(c, pa) {
+      if (!pa || !isWork(c)) return null;
+      let a = toH(pa.from),
+        b = toH(pa.to);
+      if (Number.isNaN(a) || Number.isNaN(b)) return null;
+      if (c === "N") {
+        if (a < 20) a += 24;
+        if (b <= 20) b += 24;
+      }
+      return [a, b];
+    }
+    // Heures travaillées d'un poste : [le jour de prise de poste avant minuit, le lendemain].
+    function shiftParts(c, pa) {
+      if (!isWork(c)) return [0, 0];
+      const sp = partialSpan(c, pa);
+      const ov = (x, y) =>
+        sp ? Math.max(0, Math.min(sp[1], y) - Math.max(sp[0], x)) : 0;
+      return c === "J" ? [12 - ov(8, 20), 0] : [4 - ov(20, 24), 8 - ov(24, 32)];
+    }
+    const partialHours = (c, pa) => {
+      if (!pa || !isWork(c)) return 0;
+      const p = shiftParts(c, pa);
+      return 12 - p[0] - p[1];
+    };
     function hoursBetween(a, from, to) {
       const f = dnum(from),
         t = dnum(to);
       let h = 0;
       for (let n = f - 1; n <= t; n++) {
-        const c = codeOf(a, dstr(n));
-        if (c === "J") {
-          if (n >= f) h += 12;
-        } else if (c === "N") {
-          if (S.cycle.nightSplit) {
-            if (n >= f) h += 4;
-            if (n + 1 <= t) h += 8;
-          } else if (n >= f) h += 12;
-        }
+        const ds = dstr(n);
+        const c = codeOf(a, ds);
+        if (!isWork(c)) continue;
+        const [p0, p1] = shiftParts(c, entryOf(a.id, ds)?.pa);
+        if (S.cycle.nightSplit) {
+          if (n >= f) h += p0;
+          if (n + 1 <= t) h += p1;
+        } else if (n >= f) h += p0 + p1;
       }
       return h;
     }
+    const fmtH = (h) =>
+      Number.isInteger(h)
+        ? String(h)
+        : (Math.round(h * 100) / 100).toString().replace(".", ",");
     const weekHours = (a, ds) => {
       const m = mondayOf(ds);
       return hoursBetween(a, m, addDays(m, 6));
@@ -1347,6 +1391,13 @@
           t.put(e.rp, ds, rest);
         }
       }
+    }
+    function setPartial(id, ds, pa) {
+      const t = tx();
+      const { pa: _old, ...rest } = t.entry(id, ds) || {};
+      const next = pa ? { ...rest, pa } : rest;
+      t.put(id, ds, Object.keys(next).length ? next : null);
+      t.commit();
     }
     async function setShift(id, ds, code) {
       const t = tx();
@@ -1481,7 +1532,7 @@
           }
         }
         if (worst > S.cycle.maxWeek)
-          flags.push(["warn", `${worst} h sur la semaine`]);
+          flags.push(["warn", `${fmtH(worst)} h sur la semaine`]);
         out.push({ a: c, now: worstNow, after: worst, flags });
       }
       out.sort(
@@ -1600,6 +1651,10 @@
                   k.push("need");
                   tip += " · à remplacer";
                 }
+                if (e?.pa && isWork(c)) {
+                  k.push("part");
+                  tip += ` · ${ABS[e.pa.m] || "absence"} ${e.pa.from}–${e.pa.to} · ${fmtH(12 - partialHours(c, e.pa))} h travaillées`;
+                }
                 if (e?.r) {
                   k.push("cov");
                   tip += ` · remplacé par ${fullName(agentById(e.r))}`;
@@ -1607,7 +1662,7 @@
                 return `<td class="${cls(ds)}"><button class="${k.join(" ")}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(tip)}">${c === "R" ? "" : c}</button></td>`;
               })
               .join("") +
-            `<td class="tot">${hoursBetween(a, days[0], days[days.length - 1])} h</td></tr>`;
+            `<td class="tot">${fmtH(hoursBetween(a, days[0], days[days.length - 1]))} h</td></tr>`;
         }
       }
       const staff = (code) =>
@@ -1643,7 +1698,7 @@
       <span><i class="c c-J">J</i>Jour 8h–20h</span><span><i class="c c-N">N</i>Nuit 20h–8h</span><span><i class="c c-R" style="width:30px">·</i>Repos</span>
       <span><i class="c c-CP">CP</i>Congé</span><span><i class="c c-RTT">RTT</i>RTT</span><span><i class="c c-MAL">MAL</i>Maladie</span><span><i class="c c-ABS">ABS</i>Autre</span>
       <span><i class="c cell need" style="width:14px;height:14px"></i>à remplacer</span><span><i class="c cell cov" style="width:14px;height:14px"></i>remplacé</span>
-      <span><i class="c c-J cell rp">J</i>en remplacement</span><span><i class="c c-J cell ovr">J</i>modifié hors cycle</span>
+      <span><i class="c c-J cell rp">J</i>en remplacement</span><span><i class="c c-J cell ovr">J</i>modifié hors cycle</span><span><i class="c c-J cell part">J</i>absence partielle</span>
     </div>
     <p class="note">Cliquez une case agent pour poser un congé, changer un poste ou choisir un remplaçant. Cliquez la ligne d'une équipe pour la passer en jour, nuit ou repos sur une date.</p>
   </div>`;
@@ -1667,26 +1722,31 @@
         tsv = [
           "Matricule\tNom\tPrénom\tÉquipe\t" +
             weeks.map((w) => `S${isoWeek(w)}`).join("\t") +
-            "\tMois\tJours d'absence",
+            "\tMois\tJours d'absence\tHeures d'absence partielle",
         ];
       for (const t of TEAMS) {
         const list = agents.filter((a) => a.eq === t);
         if (!list.length) continue;
-        rows += `<tr class="grp"><td colspan="${weeks.length + 4}">Équipe ${t}</td></tr>`;
+        rows += `<tr class="grp"><td colspan="${weeks.length + 5}">Équipe ${t}</td></tr>`;
         for (const a of list) {
           const wh = weeks.map((w) => hoursBetween(a, w, addDays(w, 6)));
           const mh = hoursBetween(a, days[0], days[days.length - 1]);
           const absd = days.filter((d) => ABS[codeOf(a, d)]).length;
-          rows += `<tr><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}</td>${wh.map((h) => `<td class="num${h > max ? " over" : ""}">${h}</td>`).join("")}<td class="num"><b>${mh}</b></td><td class="num">${absd || ""}</td></tr>`;
+          const parth = days.reduce(
+            (s, d) => s + partialHours(codeOf(a, d), entryOf(a.id, d)?.pa),
+            0,
+          );
+          rows += `<tr><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}</td>${wh.map((h) => `<td class="num${h > max ? " over" : ""}">${fmtH(h)}</td>`).join("")}<td class="num"><b>${fmtH(mh)}</b></td><td class="num">${absd || ""}</td><td class="num">${parth ? fmtH(parth) : ""}</td></tr>`;
           tsv.push(
             [
               a.mat || "",
               a.nom || "",
               a.prenom || "",
               a.eq,
-              ...wh,
-              mh,
+              ...wh.map(fmtH),
+              fmtH(mh),
               absd,
+              fmtH(parth),
             ].join("\t"),
           );
         }
@@ -1697,9 +1757,9 @@
       <h2>Heures travaillées par semaine</h2>
       <button class="btn" data-act="copytsv">Copier pour Excel</button>
     </div>
-    <p class="note">Semaines calendaires du lundi 0 h au dimanche 24 h. Jour = 12 h. Nuit = 12 h ${S.cycle.nightSplit ? "réparties à minuit (4 h le soir de prise de poste, 8 h le lendemain)" : "comptées sur le jour de prise de poste"}. Les absences ne comptent pas comme heures travaillées. En rouge : plus de ${max} h dans la semaine. Les semaines à cheval sur deux mois sont comptées en entier.</p>
+    <p class="note">Semaines calendaires du lundi 0 h au dimanche 24 h. Jour = 12 h. Nuit = 12 h ${S.cycle.nightSplit ? "réparties à minuit (4 h le soir de prise de poste, 8 h le lendemain)" : "comptées sur le jour de prise de poste"}. Les absences, y compris les absences partielles, ne comptent pas comme heures travaillées. En rouge : plus de ${max} h dans la semaine. Les semaines à cheval sur deux mois sont comptées en entier.</p>
     <div class="tablewrap"><table class="list">
-      <thead><tr><th>Matr.</th><th>Agent</th>${weeks.map((w) => `<th class="num" title="du ${fmtShort(w)} au ${fmtShort(addDays(w, 6))}">S${isoWeek(w)}<br><span style="text-transform:none;letter-spacing:0;font-weight:400">${fmtShort(w)}</span></th>`).join("")}<th class="num">Mois</th><th class="num">Abs. (j)</th></tr></thead>
+      <thead><tr><th>Matr.</th><th>Agent</th>${weeks.map((w) => `<th class="num" title="du ${fmtShort(w)} au ${fmtShort(addDays(w, 6))}">S${isoWeek(w)}<br><span style="text-transform:none;letter-spacing:0;font-weight:400">${fmtShort(w)}</span></th>`).join("")}<th class="num">Mois</th><th class="num">Abs. (j)</th><th class="num">Abs. part. (h)</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
   </div>`;
@@ -1881,7 +1941,7 @@
                 .slice(0, 30)
                 .map(
                   (c) =>
-                    `<div class="cand"><div><div class="who">${esc(fullName(c.a))} <span class="muted mono" style="font-size:12px">${esc(c.a.mat || "")}</span></div><div class="meta">Équipe ${c.a.eq} · <span class="mono">${c.now} h → ${c.after} h</span></div>${
+                    `<div class="cand"><div><div class="who">${esc(fullName(c.a))} <span class="muted mono" style="font-size:12px">${esc(c.a.mat || "")}</span></div><div class="meta">Équipe ${c.a.eq} · <span class="mono">${fmtH(c.now)} h → ${fmtH(c.after)} h</span></div>${
                       c.flags.length
                         ? `<div>${[
                             ...new Map(c.flags.map((f) => [f[1], f])).values(),
@@ -1914,7 +1974,7 @@
     <div class="body">
       <dl class="kv"><dt>Prévu pour l'équipe</dt><dd><span class="c c-${base}" style="width:30px;height:20px">${base === "R" ? "·" : base}</span> ${LABEL[base]}</dd>
         <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : code}</span> ${LABEL[code]}</dd>
-        <dt>Semaine S${isoWeek(ds)}</dt><dd class="mono">${wk} h <span class="muted">(${fmtShort(mon)} → ${fmtShort(addDays(mon, 6))})</span></dd></dl>
+        <dt>Semaine S${isoWeek(ds)}</dt><dd class="mono">${fmtH(wk)} h <span class="muted">(${fmtShort(mon)} → ${fmtShort(addDays(mon, 6))})</span></dd></dl>
       ${rp}
       ${repl}
       ${
@@ -1922,7 +1982,22 @@
           ? `<div class="sec"><div class="label">Poste de la journée</div><div class="choices">
         ${["J", "N", "R"].map((c) => `<button class="choice" data-act="shift" data-v="${c}" aria-pressed="${code === c}"><span class="c c-${c}">${c === "R" ? "·" : c}</span>${c === "J" ? "Jour" : c === "N" ? "Nuit" : "Repos"}</button>`).join("")}
         ${e ? `<button class="choice" data-act="shift" data-v="">Revenir au cycle</button>` : ""}</div></div>
-      <div class="sec"><div class="label">Congé ou absence</div>
+      ${
+        isWork(code)
+          ? `<div class="sec"><div class="label">Absence partielle sur le poste${e?.pa ? ` · ${fmtH(12 - partialHours(code, e.pa))} h travaillées` : ""}</div>
+        <div class="range"><label>De<input type="time" id="pa-from" step="900" value="${esc(e?.pa?.from || (code === "J" ? "08:00" : "20:00"))}"></label><label>À<input type="time" id="pa-to" step="900" value="${esc(e?.pa?.to || "")}"></label>
+          <label>Motif<select id="pa-m">${Object.keys(ABS)
+            .map(
+              (m) =>
+                `<option value="${m}" ${(e?.pa?.m || "ABS") === m ? "selected" : ""}>${ABS[m]}</option>`,
+            )
+            .join("")}</select></label></div>
+        <div class="choices"><button class="btn sm primary" data-act="partial">${e?.pa ? "Modifier" : "Enregistrer"}</button>${e?.pa ? `<button class="btn sm" data-act="unpartial">Retirer l'absence partielle</button>` : ""}</div>
+        <p class="note">Horaires compris dans le poste (${code === "J" ? "8h–20h" : "20h–8h"}). Les heures d'absence sont retirées des heures travaillées.</p>
+      </div>`
+          : ""
+      }
+      <div class="sec"><div class="label">Congé ou absence sur la journée entière</div>
         <div class="range"><label>Du<input type="date" id="ab-from" value="${dr.from}"></label><label>Au<input type="date" id="ab-to" value="${dr.to}"></label></div>
         <label class="check"><input type="checkbox" id="ab-only" ${dr.onlyWork ? "checked" : ""}> Seulement les jours travaillés selon le cycle</label>
         <div class="choices">${Object.keys(ABS)
@@ -1981,6 +2056,41 @@
       }
       if (act === "shift") {
         await setShift(S.drawer.id, S.drawer.ds, b.dataset.v || null);
+        return;
+      }
+      if (act === "partial") {
+        const a = agentById(S.drawer.id),
+          ds = S.drawer.ds,
+          c = codeOf(a, ds);
+        const pa = {
+          from: $("#pa-from").value,
+          to: $("#pa-to").value,
+          m: $("#pa-m").value,
+        };
+        const sp = partialSpan(c, pa);
+        const lo = c === "J" ? 8 : 20;
+        if (!pa.from || !pa.to || !sp) {
+          toast("Indiquez l'heure de début et l'heure de fin.");
+          return;
+        }
+        if (sp[0] < lo || sp[1] > lo + 12 || sp[1] <= sp[0]) {
+          toast(
+            `Les horaires doivent être compris dans le poste (${c === "J" ? "8h–20h" : "20h–8h"}).`,
+          );
+          return;
+        }
+        if (sp[1] - sp[0] >= 12) {
+          toast(
+            "Absence sur tout le poste : utilisez une absence sur la journée entière.",
+          );
+          return;
+        }
+        setPartial(a.id, ds, pa);
+        toast(`Absence partielle ${pa.from}–${pa.to} enregistrée`);
+        return;
+      }
+      if (act === "unpartial") {
+        setPartial(S.drawer.id, S.drawer.ds, null);
         return;
       }
       if (act === "abs") {
