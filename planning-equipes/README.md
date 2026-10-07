@@ -10,7 +10,7 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 - **Congés et absences** : CP, RTT, maladie ou autre, sur un jour ou une période (option « seulement les jours travaillés »).
 - **Remplacements** : pour une absence sur un poste travaillé, la liste des agents en repos disponibles, triés par heures de la semaine, avec alertes (sortie de nuit, enchaînement nuit → jour, dépassement du plafond hebdomadaire). Remplacement sur un jour ou sur toute l'absence. Les postes restant à remplacer sont listés en haut du planning.
 - **Effectifs** : nombre d'agents en jour et en nuit pour chaque date, comparé à l'effectif cible.
-- **Heures** : heures travaillées par agent et par semaine calendaire (lundi–dimanche), total du mois, nuits réparties à minuit (4 h + 8 h) ou comptées le jour de prise de poste, export vers Excel par copier-coller.
+- **Heures** : heures travaillées par agent et par semaine calendaire (lundi–dimanche), total du mois, nuits comptées en entier le jour de prise de poste (option : réparties à minuit, 4 h + 8 h), export vers Excel par copier-coller.
 
 ## Utilisation
 
