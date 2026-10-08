@@ -34,6 +34,10 @@
     --bad: #c2321f;
     --warn: #a66300;
     --good: #1c7a3c;
+    --pv-m: #1e8a43;
+    --pv-f: #f29a1f;
+    --pv-n: #d23a26;
+    --pv-x: #111414;
     --shadow: 0 10px 40px rgba(20, 30, 30, 0.18);
     --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
     --f-body: "Barlow Semi Condensed", "Segoe UI", system-ui, sans-serif;
@@ -67,6 +71,10 @@
       --bad: #ff7a66;
       --warn: #f0b04a;
       --good: #6fd391;
+      --pv-m: #23944a;
+      --pv-f: #f0a43a;
+      --pv-n: #d9452f;
+      --pv-x: #000000;
       --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
       color-scheme: dark;
     }
@@ -98,6 +106,10 @@
     --bad: #ff7a66;
     --warn: #f0b04a;
     --good: #6fd391;
+    --pv-m: #23944a;
+    --pv-f: #f0a43a;
+    --pv-n: #d9452f;
+    --pv-x: #000000;
     --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
   }
@@ -939,6 +951,117 @@
     color: var(--muted);
     max-width: 360px;
   }
+  .poly {
+    border-collapse: separate;
+    border-spacing: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+  .poly th.pname {
+    text-align: left;
+    padding: 2px 10px 2px 0;
+    font-weight: 500;
+    white-space: nowrap;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .poly thead th.pname {
+    font-family: var(--f-display);
+    font-size: 18px;
+    font-weight: 700;
+    vertical-align: bottom;
+  }
+  .poly th.pf {
+    vertical-align: bottom;
+    height: 120px;
+    min-width: 40px;
+    padding: 0 0 6px;
+  }
+  .poly th.pf span {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .poly .pnum {
+    text-align: center;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 6px;
+  }
+  .poly th.pnum {
+    vertical-align: bottom;
+    font-family: var(--f-body);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+  }
+  .poly .pfoot th,
+  .poly .pfoot td {
+    border-top: 1px solid var(--line-strong);
+    padding-top: 4px;
+  }
+  .poly .pfoot small {
+    color: var(--warn);
+  }
+  .pv {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 0;
+  }
+  i.pv,
+  .legend i {
+    font-style: normal;
+  }
+  .legend .pv {
+    width: 34px;
+    height: 20px;
+  }
+  button.pv:not([disabled]):hover {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .pv-M {
+    background: var(--pv-m);
+    border-color: var(--pv-m);
+    color: #fff;
+  }
+  .pv-F {
+    background: var(--pv-f);
+    border-color: var(--pv-f);
+    color: #1b1300;
+  }
+  .pv-N {
+    background: var(--pv-n);
+    border-color: var(--pv-n);
+    color: #fff;
+  }
+  .pv-X {
+    background: var(--pv-x);
+    border-color: var(--line-strong);
+    color: #d6d6d6;
+  }
+  .fnchip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 2px 4px 2px 12px;
+    font-weight: 600;
+    font-size: 14px;
+  }
   .ordcell {
     display: flex;
     align-items: center;
@@ -1122,6 +1245,15 @@
       aria-selected="false"
     >
       Cycle
+    </button>
+    <button
+      class="tab"
+      role="tab"
+      data-act="tab"
+      data-tab="poly"
+      aria-selected="false"
+    >
+      Polyvalence
     </button>
   </div>
   <div id="banner" hidden class="banner"></div>
@@ -1399,6 +1531,7 @@
       modifie_par: null,
       verrou: null,
       cycle: null,
+      polyvalence: null,
       agents: {},
       mois: {},
     });
@@ -1418,6 +1551,7 @@
     function fileSlot(data, path) {
       const [col, id] = path.split("/");
       if (col === "config" && id === "cycle") return [data, "cycle"];
+      if (col === "config" && id === "poly") return [data, "polyvalence"];
       if (col === "agents") return [data.agents, id];
       if (col === "mois") return [data.mois, id];
       return [null, null];
@@ -2327,6 +2461,163 @@
       return out;
     }
 
+    /* ---------- Polyvalence ---------- */
+    // Niveaux : M maîtrisé (vert), F en formation (orange), N non maîtrisé (rouge), X non concerné (noir).
+    const POLY = {
+      M: { label: "Maîtrisé", short: "M" },
+      F: { label: "En cours de formation", short: "F" },
+      N: { label: "Non maîtrisé", short: "NM" },
+      X: { label: "Non concerné", short: "NC" },
+    };
+    const POLY_NEXT = { "": "M", M: "F", F: "N", N: "X", X: "" };
+    const polyFns = () =>
+      S.poly && Array.isArray(S.poly.fonctions) ? S.poly.fonctions : [];
+    const polyOf = (id, f) => S.poly?.niveaux?.[id]?.[f] || "";
+    function savePoly(next) {
+      S.poly = next;
+      render();
+      S.store.set("config/poly", next);
+    }
+    function setPolyLevel(id, f, v) {
+      const p = clone(S.poly || { fonctions: [], niveaux: {} });
+      p.niveaux ??= {};
+      if (v) (p.niveaux[id] ??= {})[f] = v;
+      else if (p.niveaux[id]) {
+        delete p.niveaux[id][f];
+        if (!Object.keys(p.niveaux[id]).length) delete p.niveaux[id];
+      }
+      savePoly(p);
+    }
+    function addPolyFns(names) {
+      const p = clone(S.poly || { fonctions: [], niveaux: {} });
+      p.fonctions ??= [];
+      let k = 0;
+      for (const n of names) {
+        const v = n.trim();
+        if (v && !p.fonctions.some((x) => norm(x) === norm(v))) {
+          p.fonctions.push(v);
+          k++;
+        }
+      }
+      if (k) savePoly(p);
+      return k;
+    }
+    function removePolyFn(f) {
+      const p = clone(S.poly || { fonctions: [], niveaux: {} });
+      p.fonctions = (p.fonctions || []).filter((x) => x !== f);
+      for (const id in p.niveaux || {}) {
+        delete p.niveaux[id][f];
+        if (!Object.keys(p.niveaux[id]).length) delete p.niveaux[id];
+      }
+      savePoly(p);
+    }
+    function movePolyFn(f, dir) {
+      const p = clone(S.poly || { fonctions: [], niveaux: {} });
+      const i = p.fonctions.indexOf(f),
+        j = i + dir;
+      if (i < 0 || j < 0 || j >= p.fonctions.length) return;
+      [p.fonctions[i], p.fonctions[j]] = [p.fonctions[j], p.fonctions[i]];
+      savePoly(p);
+    }
+    function viewPoly() {
+      const agents = sortedAgents();
+      const fns = polyFns();
+      const can = S.canWrite;
+      const fromAgents = [
+        ...new Set(S.agents.map((a) => (a.fn || "").trim()).filter(Boolean)),
+      ].filter((f) => !fns.some((x) => norm(x) === norm(f)));
+      const legend = `<div class="legend">${Object.entries(POLY)
+        .map(
+          ([k, v]) =>
+            `<span><i class="pv pv-${k}">${v.short}</i>${v.label}</span>`,
+        )
+        .join("")}<span><i class="pv pv-">·</i>Non renseigné</span></div>`;
+      const manage = `<div class="panel">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
+          <h2>Polyvalence</h2>
+          ${fns.length && agents.length ? `<button class="btn" data-act="polytsv">Copier pour Excel</button>` : ""}
+        </div>
+        <p class="note">Une matrice par équipe : une ligne par opérateur, une colonne par fonction. ${can ? "Cliquez une case pour passer d'un niveau à l'autre : vide → maîtrisé → en formation → non maîtrisé → non concerné → vide." : ""}</p>
+        ${legend}
+        <div class="sec"><div class="label">Fonctions (colonnes)</div>
+          <div class="choices">${
+            fns.length
+              ? fns
+                  .map(
+                    (f, i) =>
+                      `<span class="fnchip">${esc(f)}${
+                        can
+                          ? `<button class="btn sm ghost mv" data-act="pfmove" data-f="${esc(f)}" data-d="-1" aria-label="Déplacer ${esc(f)} à gauche" ${i === 0 ? "disabled" : ""}>←</button><button class="btn sm ghost mv" data-act="pfmove" data-f="${esc(f)}" data-d="1" aria-label="Déplacer ${esc(f)} à droite" ${i === fns.length - 1 ? "disabled" : ""}>→</button>${
+                              S.pfDel === f
+                                ? `<span class="confirm">Supprimer la colonne et ses niveaux ?<button class="btn sm danger" data-act="pfdelyes" data-f="${esc(f)}">Oui</button><button class="btn sm" data-act="pfdelno">Non</button></span>`
+                                : `<button class="btn sm ghost danger mv" data-act="pfdel" data-f="${esc(f)}" aria-label="Supprimer ${esc(f)}">✕</button>`
+                            }`
+                          : ""
+                      }</span>`,
+                  )
+                  .join("")
+              : `<span class="muted">Aucune fonction pour l'instant.</span>`
+          }</div>
+          ${
+            can
+              ? `<form class="addrow" id="pfform"><label>Nouvelle fonction<input type="text" id="pf-name" placeholder="ex. Pontier, Lamineur, Cariste…" list="pf-list"></label><button class="btn primary" type="submit">Ajouter la colonne</button>${
+                  fromAgents.length
+                    ? `<button class="btn" type="button" data-act="pffromagents">Ajouter les fonctions des fiches agents (${fromAgents.length})</button>`
+                    : ""
+                }</form><datalist id="pf-list">${fromAgents.map((f) => `<option value="${esc(f)}">`).join("")}</datalist>`
+              : ""
+          }
+        </div>
+      </div>`;
+      if (!agents.length) return manage + emptyAgents();
+      if (!fns.length) return manage;
+      const tables = GROUPS.map((g) => {
+        const list = agents.filter((a) => a.eq === g);
+        if (!list.length) return "";
+        const head = `<tr><th class="pname">${groupName(g)}</th>${fns.map((f) => `<th class="pf"><span>${esc(f)}</span></th>`).join("")}<th class="pnum" title="Fonctions maîtrisées">Maîtrisées</th></tr>`;
+        const rows = list
+          .map((a) => {
+            let m = 0;
+            const cells = fns
+              .map((f) => {
+                const v = polyOf(a.id, f);
+                if (v === "M") m++;
+                const tip = `${fullName(a)} · ${f} : ${v ? POLY[v].label : "non renseigné"}`;
+                return `<td><button class="pv pv-${v}" data-act="pv" data-id="${a.id}" data-f="${esc(f)}" title="${esc(tip)}" aria-label="${esc(tip)}" ${can ? "" : "disabled"}>${v ? POLY[v].short : "·"}</button></td>`;
+              })
+              .join("");
+            return `<tr><th class="pname" title="${esc(fullName(a))}">${a.fn ? `<span class="fn">${esc(a.fn)}</span>` : ""}${esc(fullName(a))}</th>${cells}<td class="pnum">${m}</td></tr>`;
+          })
+          .join("");
+        const foot = `<tr class="pfoot"><th class="pname">Maîtrisé par</th>${fns
+          .map((f) => {
+            const n = list.filter((a) => polyOf(a.id, f) === "M").length;
+            const fo = list.filter((a) => polyOf(a.id, f) === "F").length;
+            return `<td class="pnum${n === 0 ? " over" : ""}" title="${n} maîtrisé(s), ${fo} en formation">${n}${fo ? `<small> +${fo}F</small>` : ""}</td>`;
+          })
+          .join("")}<td></td></tr>`;
+        return `<div class="panel"><div class="tablewrap"><table class="poly"><thead>${head}</thead><tbody>${rows}${foot}</tbody></table></div></div>`;
+      }).join("");
+      return `<div style="display:flex;flex-direction:column;gap:16px">${manage}${tables}</div>`;
+    }
+    function polyTsv() {
+      const fns = polyFns();
+      const out = [["Équipe", "Matricule", "Nom", "Prénom", ...fns].join("\t")];
+      for (const a of sortedAgents())
+        out.push(
+          [
+            groupShort(a.eq),
+            a.mat || "",
+            a.nom || "",
+            a.prenom || "",
+            ...fns.map((f) =>
+              polyOf(a.id, f) ? POLY[polyOf(a.id, f)].label : "",
+            ),
+          ].join("\t"),
+        );
+      return out.join("\n");
+    }
+
     /* ---------- Rendu ---------- */
     function render() {
       memo = new Map();
@@ -2359,7 +2650,9 @@
             ? viewHours()
             : S.tab === "agents"
               ? viewAgents()
-              : viewCycle();
+              : S.tab === "poly"
+                ? viewPoly()
+                : viewCycle();
       if (scroll && $(".gridwrap")) {
         $(".gridwrap").scrollLeft = scroll.l;
         $(".gridwrap").scrollTop = scroll.t;
@@ -3052,6 +3345,52 @@
         toast("Agent supprimé");
         return;
       }
+      if (act === "pv") {
+        setPolyLevel(
+          b.dataset.id,
+          b.dataset.f,
+          POLY_NEXT[polyOf(b.dataset.id, b.dataset.f)],
+        );
+        const nb = document.querySelector(
+          `[data-act="pv"][data-id="${b.dataset.id}"][data-f="${CSS.escape(b.dataset.f)}"]`,
+        );
+        if (nb) nb.focus();
+        return;
+      }
+      if (act === "pfmove") {
+        movePolyFn(b.dataset.f, +b.dataset.d);
+        return;
+      }
+      if (act === "pfdel") {
+        S.pfDel = b.dataset.f;
+        render();
+        return;
+      }
+      if (act === "pfdelno") {
+        S.pfDel = null;
+        render();
+        return;
+      }
+      if (act === "pfdelyes") {
+        S.pfDel = null;
+        removePolyFn(b.dataset.f);
+        toast(`Colonne « ${b.dataset.f} » supprimée`);
+        return;
+      }
+      if (act === "pffromagents") {
+        const k = addPolyFns(S.agents.map((a) => a.fn || ""));
+        toast(`${k} fonction(s) ajoutée(s)`);
+        return;
+      }
+      if (act === "polytsv") {
+        try {
+          await navigator.clipboard.writeText(polyTsv());
+          toast("Matrice copiée : collez-la dans Excel");
+        } catch {
+          toast("Copie impossible dans ce navigateur");
+        }
+        return;
+      }
       if (act === "copytsv") {
         try {
           await navigator.clipboard.writeText(S.hoursTsv);
@@ -3142,6 +3481,17 @@
       else if (el.id === "cy-split") d.nightSplit = el.checked;
       else return;
       render();
+    });
+    document.addEventListener("submit", (ev) => {
+      if (ev.target.id !== "pfform") return;
+      ev.preventDefault();
+      const v = $("#pf-name").value.trim();
+      if (!v) return;
+      if (!addPolyFns([v])) toast(`La fonction « ${v} » existe déjà.`);
+      else {
+        toast(`Colonne « ${v} » ajoutée`);
+        setTimeout(() => $("#pf-name")?.focus(), 0);
+      }
     });
     document.addEventListener("submit", async (ev) => {
       if (ev.target.id !== "addform") return;
@@ -3413,6 +3763,10 @@
         S.agents = list.filter((a) => GROUPS.includes(a.eq));
         S.ready.agents = true;
         migrateOrder();
+        render();
+      });
+      S.store.watchDoc("config/poly", (p) => {
+        S.poly = p ? clone(p) : null;
         render();
       });
       S.store.watchDoc("config/cycle", (c) => {
