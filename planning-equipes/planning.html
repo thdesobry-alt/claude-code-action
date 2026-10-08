@@ -547,6 +547,10 @@
     font-size: 12px;
     font-weight: 600;
   }
+  .hrs .staffn {
+    font-size: 10.5px;
+    letter-spacing: -0.02em;
+  }
   .staffn.low {
     color: var(--bad);
   }
@@ -1749,6 +1753,28 @@
           .join("") +
         `<td class="tot"></td></tr>`;
 
+      // Heures réalisées sur les postes de jour / de nuit commençant ce jour-là (absences partielles déduites).
+      const shiftHours = (code, ds) =>
+        agents.reduce((h, a) => {
+          if (codeOf(a, ds) !== code) return h;
+          const p = shiftParts(code, entryOf(a.id, ds)?.pa);
+          return h + p[0] + p[1];
+        }, 0);
+      const hoursRow = (code) => {
+        const vals = days.map((ds) => shiftHours(code, ds));
+        const full = S.cycle.target * 12;
+        return (
+          `<tr class="staff hrs"><th class="name">Heures ${code === "J" ? "jour" : "nuit"} <small class="muted">/ ${full}</small></th>` +
+          vals
+            .map((h, i) => {
+              const k = h < full ? "low" : h > full ? "high" : "ok";
+              return `<td class="${cls(days[i])}"><span class="staffn ${k}" title="${fmtH(h)} h réalisées en ${LABEL[code]} le ${fmtShort(days[i])}">${fmtH(h)}</span></td>`;
+            })
+            .join("") +
+          `<td class="tot"><b>${fmtH(vals.reduce((x, y) => x + y, 0))} h</b></td></tr>`
+        );
+      };
+
       const todoHtml = todo.length
         ? `<div class="label">${todo.length} poste${todo.length > 1 ? "s" : ""} à remplacer ce mois</div><div class="todo-list">${todo
             .slice(0, 40)
@@ -1764,7 +1790,7 @@
     <div class="summary"><div class="todo">${todoHtml}</div></div>
     <div class="gridwrap"><table class="plan">
       <thead><tr><th class="name" rowspan="2">Agent</th>${wkrow}<th class="tot" rowspan="2">H mois</th></tr><tr>${head}</tr></thead>
-      <tbody>${body}${staff("J")}${staff("N")}</tbody>
+      <tbody>${body}${staff("J")}${staff("N")}${hoursRow("J")}${hoursRow("N")}</tbody>
     </table></div>
     <div class="legend">
       <span><i class="c c-J">J</i>Jour 8h–20h</span><span><i class="c c-N">N</i>Nuit 20h–8h</span><span><i class="c c-R" style="width:30px">·</i>Repos</span>
