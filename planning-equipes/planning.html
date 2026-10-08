@@ -550,6 +550,13 @@
     padding: 0;
     position: relative;
   }
+  .plan tr.team.pool th,
+  .plan tr.team.pool td {
+    background: var(--accent-soft);
+  }
+  .cell.pool.c-R::after {
+    content: none;
+  }
   button.c-R {
     background: transparent;
   }
@@ -1131,6 +1138,11 @@
 
     /* ---------- Constantes ---------- */
     const TEAMS = ["A", "B", "C", "D"];
+    // Remplaçants : renforts de production sans cycle, appelés sur les absences des équipes.
+    const POOL = "REMP";
+    const GROUPS = [...TEAMS, POOL];
+    const groupName = (g) => (g === POOL ? "Remplaçants" : "Équipe " + g);
+    const groupShort = (g) => (g === POOL ? "Remplaçant" : "Équipe " + g);
     const SHIFT = { J: "Jour 8h–20h", N: "Nuit 20h–8h", R: "Repos" };
     const ABS = {
       CP: "Congé payé",
@@ -1907,6 +1919,7 @@
     let memo = new Map();
     const agentById = (id) => S.agents.find((a) => a.id === id);
     function cycleCode(team, ds) {
+      if (team === POOL) return "R";
       const c = S.cycle,
         n = c.pattern.length || 1;
       return (
@@ -2049,7 +2062,7 @@
       ordMigrated = true;
       const all = sortedAgents();
       setTimeout(
-        () => TEAMS.forEach((t) => saveOrder(all.filter((a) => a.eq === t))),
+        () => GROUPS.forEach((t) => saveOrder(all.filter((a) => a.eq === t))),
         0,
       );
     }
@@ -2298,6 +2311,7 @@
           !!x.nd - !!y.nd ||
           x.flags.some((f) => f[0] === "bad") -
             y.flags.some((f) => f[0] === "bad") ||
+          (y.a.eq === POOL) - (x.a.eq === POOL) ||
           x.flags.length - y.flags.length ||
           x.after - y.after ||
           fullName(x.a).localeCompare(fullName(y.a), "fr"),
@@ -2316,7 +2330,7 @@
           b.setAttribute("aria-selected", String(b.dataset.tab === S.tab)),
         );
       $("#rot").textContent =
-        `4 équipes · ${S.agents.length} agents · cycle ${S.cycle.pattern.length} j`;
+        `4 équipes · ${S.agents.filter((a) => a.eq !== POOL).length} agents · ${S.agents.filter((a) => a.eq === POOL).length} remplaçants · cycle ${S.cycle.pattern.length} j`;
       const v = $("#view");
       const fid = document.activeElement && document.activeElement.id;
       const scroll = $(".gridwrap")
@@ -2382,18 +2396,21 @@
       };
       let body = "";
       const todo = [];
-      for (const t of TEAMS) {
+      for (const t of GROUPS) {
         const list = agents.filter((a) => a.eq === t);
-        body +=
-          `<tr class="team"><th class="name">Équipe ${t}<small>${list.length} agent${list.length > 1 ? "s" : ""}</small></th>` +
-          days
-            .map((ds) => {
-              const c = teamCode(t, ds),
-                o = teamOverride(t, ds);
-              return `<td class="${cls(ds)}"><button class="cell c c-${c}${o ? " ovr" : ""}" data-act="team" data-team="${t}" data-date="${ds}" title="Équipe ${t} · ${fmtShort(ds)} · ${LABEL[c]}${o ? " (modifié)" : ""}" ${S.canWrite ? "" : "disabled"}>${c === "R" ? "" : c}</button></td>`;
-            })
-            .join("") +
-          `<td class="tot"></td></tr>`;
+        if (t === POOL) {
+          body += `<tr class="team pool"><th class="name">Remplaçants<small>${list.length ? `renfort production · ${list.length}` : "aucun : ajoutez-les dans l'onglet Agents"}</small></th>${days.map((ds) => `<td class="${cls(ds)}"></td>`).join("")}<td class="tot"></td></tr>`;
+        } else
+          body +=
+            `<tr class="team"><th class="name">Équipe ${t}<small>${list.length} agent${list.length > 1 ? "s" : ""}</small></th>` +
+            days
+              .map((ds) => {
+                const c = teamCode(t, ds),
+                  o = teamOverride(t, ds);
+                return `<td class="${cls(ds)}"><button class="cell c c-${c}${o ? " ovr" : ""}" data-act="team" data-team="${t}" data-date="${ds}" title="Équipe ${t} · ${fmtShort(ds)} · ${LABEL[c]}${o ? " (modifié)" : ""}" ${S.canWrite ? "" : "disabled"}>${c === "R" ? "" : c}</button></td>`;
+              })
+              .join("") +
+            `<td class="tot"></td></tr>`;
         for (const a of list) {
           body +=
             `<tr><th class="name" title="${a.fn ? esc(a.fn) + " · " : ""}${esc(a.mat)} ${esc(fullName(a))}">${a.fn ? `<span class="fn">${esc(a.fn)}</span>` : ""}<span class="mat">${esc(a.mat || "—")}</span>${esc(fullName(a))}</th>` +
@@ -2404,7 +2421,8 @@
                 const need = needsCover(a, ds);
                 if (need) todo.push({ a, ds });
                 const k = ["cell", "c", "c-" + c];
-                let tip = `${fullName(a)} · ${fmtShort(ds)} · ${LABEL[c] || c}`;
+                if (a.eq === POOL) k.push("pool");
+                let tip = `${fullName(a)} · ${fmtShort(ds)} · ${a.eq === POOL && c === "R" ? "Disponible (sans poste)" : LABEL[c] || c}`;
                 if (e?.rp) {
                   k.push("rp");
                   tip += ` · remplace ${fullName(agentById(e.rp))}`;
@@ -2511,10 +2529,10 @@
             weeks.map((w) => `S${isoWeek(w)}`).join("\t") +
             "\tMois\tJours d'absence\tHeures d'absence partielle",
         ];
-      for (const t of TEAMS) {
+      for (const t of GROUPS) {
         const list = agents.filter((a) => a.eq === t);
         if (!list.length) continue;
-        rows += `<tr class="grp"><td colspan="${weeks.length + 6}">Équipe ${t}</td></tr>`;
+        rows += `<tr class="grp"><td colspan="${weeks.length + 6}">${groupName(t)}</td></tr>`;
         for (const a of list) {
           const wh = weeks.map((w) =>
             w <= lastDone() ? doneHours(a, w, addDays(w, 6)) : null,
@@ -2559,10 +2577,10 @@
     function viewAgents() {
       const agents = sortedAgents();
       const ro = S.canWrite ? "" : "disabled";
-      const rows = TEAMS.map((t) => {
+      const rows = GROUPS.map((t) => {
         const list = agents.filter((a) => a.eq === t);
         return (
-          `<tr class="grp"><td colspan="7">Équipe ${t} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${list.length} / 11</span></td></tr>` +
+          `<tr class="grp"><td colspan="7">${groupName(t)} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${t === POOL ? `${list.length} · renfort de production, sans cycle : ils remplacent les absents des équipes` : `${list.length} / 11`}</span></td></tr>` +
           list
             .map(
               (a, i) => `<tr data-row="${a.id}" data-team="${t}">
@@ -2575,7 +2593,7 @@
         <td><input type="text" id="mat-${a.id}" data-f="mat" data-id="${a.id}" value="${esc(a.mat)}" placeholder="Matricule" ${ro}></td>
         <td><input type="text" id="nom-${a.id}" data-f="nom" data-id="${a.id}" value="${esc(a.nom)}" placeholder="Nom" ${ro}></td>
         <td><input type="text" id="pre-${a.id}" data-f="prenom" data-id="${a.id}" value="${esc(a.prenom)}" placeholder="Prénom" ${ro}></td>
-        <td><select id="eq-${a.id}" data-f="eq" data-id="${a.id}" ${ro}>${TEAMS.map((x) => `<option ${x === a.eq ? "selected" : ""}>${x}</option>`).join("")}</select></td>
+        <td><select id="eq-${a.id}" data-f="eq" data-id="${a.id}" ${ro}>${GROUPS.map((x) => `<option value="${x}" ${x === a.eq ? "selected" : ""}>${x === POOL ? "Remplaçant" : x}</option>`).join("")}</select></td>
         <td>${S.canWrite ? (S.delAsk === a.id ? `<span class="confirm">Supprimer ?<button class="btn sm danger" data-act="delyes" data-id="${a.id}">Oui</button><button class="btn sm" data-act="delno">Non</button></span>` : `<button class="btn sm ghost danger" data-act="del" data-id="${a.id}">Supprimer</button>`) : ""}</td>
       </tr>`,
             )
@@ -2604,13 +2622,13 @@
           <label>Matricule<input type="text" id="add-mat" required></label>
           <label>Nom<input type="text" id="add-nom" required></label>
           <label>Prénom<input type="text" id="add-pre"></label>
-          <label>Équipe<select id="add-eq">${TEAMS.map((x) => `<option>${x}</option>`).join("")}</select></label>
+          <label>Équipe<select id="add-eq">${GROUPS.map((x) => `<option value="${x}">${x === POOL ? "Remplaçant" : x}</option>`).join("")}</select></label>
           <button class="btn primary" type="submit">Ajouter</button>
         </div>
       </form>
       <div class="panel">
         <h3>Importer une liste</h3>
-        <p class="note">Collez une ligne par agent : matricule ; nom ; prénom ; équipe (A, B, C ou D) ; fonction (facultative). Le point-virgule, la virgule et la tabulation (copie depuis Excel) sont acceptés. Un matricule déjà présent est mis à jour.</p>
+        <p class="note">Collez une ligne par agent : matricule ; nom ; prénom ; équipe (A, B, C, D ou REMP pour un remplaçant) ; fonction (facultative). Le point-virgule, la virgule et la tabulation (copie depuis Excel) sont acceptés. Un matricule déjà présent est mis à jour.</p>
         <textarea id="importtxt" placeholder="10234;MARTIN;Julie;A;Pontier&#10;10235;BERNARD;Karim;A"></textarea>
         <div><button class="btn primary" data-act="import">Importer</button></div>
       </div>
@@ -2729,7 +2747,7 @@
       let repl = "";
       if (e && ABS[e.c] && isWork(base)) {
         if (e.r) {
-          repl = `<div class="sec"><div class="label">Remplacement</div><div class="cand"><span class="c c-${base}" style="width:30px;height:22px">${base}</span><div><div class="who">${esc(fullName(agentById(e.r)))}</div><div class="meta">Équipe ${esc(agentById(e.r)?.eq || "?")} · remplace sur ce poste</div></div>${can ? `<button class="btn sm" data-act="unrepl">Retirer</button>` : ""}</div></div>`;
+          repl = `<div class="sec"><div class="label">Remplacement</div><div class="cand"><span class="c c-${base}" style="width:30px;height:22px">${base}</span><div><div class="who">${esc(fullName(agentById(e.r)))}</div><div class="meta">${esc(groupShort(agentById(e.r)?.eq || "?"))} · remplace sur ce poste</div></div>${can ? `<button class="btn sm" data-act="unrepl">Retirer</button>` : ""}</div></div>`;
         } else if (can) {
           const block = absenceBlock(a, ds);
           const scope =
@@ -2738,14 +2756,14 @@
           const list = candidates(a, days);
           repl = `<div class="sec"><div class="label">Choisir un remplaçant · ${LABEL[base]}</div>
         ${block.length > 1 ? `<div class="seg"><button data-act="scope" data-v="day" aria-pressed="${scope === "day"}">Ce jour</button><button data-act="scope" data-v="block" aria-pressed="${scope === "block"}">Toute l'absence · ${block.length} postes (${fmtShort(block[0])} → ${fmtShort(block[block.length - 1])})</button></div>` : ""}
-        <p class="note">Agents en repos ${days.length > 1 ? "sur tous ces jours" : "ce jour-là"}, du plus disponible au moins disponible. Heures : semaine actuelle → après remplacement.</p>
+        <p class="note">Remplaçants et agents en repos ${days.length > 1 ? "sur tous ces jours" : "ce jour-là"}, du plus disponible au moins disponible (remplaçants en premier). Heures : semaine actuelle → après remplacement.</p>
         <div class="cands">${
           list.length
             ? list
                 .slice(0, 30)
                 .map(
                   (c) =>
-                    `<div class="cand"><div><div class="who">${esc(fullName(c.a))} <span class="muted mono" style="font-size:12px">${esc(c.a.mat || "")}</span></div><div class="meta">Équipe ${c.a.eq}${c.a.fn ? ` · ${esc(c.a.fn)}` : ""} · <span class="mono">${fmtH(c.now)} h → ${fmtH(c.after)} h</span></div>${
+                    `<div class="cand"><div><div class="who">${esc(fullName(c.a))} <span class="muted mono" style="font-size:12px">${esc(c.a.mat || "")}</span></div><div class="meta">${esc(groupShort(c.a.eq))}${c.a.fn ? ` · ${esc(c.a.fn)}` : ""} · <span class="mono">${fmtH(c.now)} h → ${fmtH(c.after)} h</span></div>${
                       c.flags.length
                         ? `<div>${[
                             ...new Map(c.flags.map((f) => [f[1], f])).values(),
@@ -2774,14 +2792,14 @@
       const dr = S.drawer;
       dr.from ||= ds;
       dr.to ||= ds;
-      if (dr.onlyWork === undefined) dr.onlyWork = true;
+      if (dr.onlyWork === undefined) dr.onlyWork = a.eq !== POOL;
       o.innerHTML = `<div class="scrim" data-act="close"></div>
   <aside class="drawer" role="dialog" aria-label="Journée de ${esc(fullName(a))}">
-    <header><div><div class="label">Équipe ${a.eq}${a.fn ? ` · ${esc(a.fn)}` : ""} · ${esc(a.mat || "sans matricule")}</div><h2>${esc(fullName(a))}</h2><div class="muted" style="text-transform:capitalize">${fmtLong(ds)}</div></div>
+    <header><div><div class="label">${esc(groupShort(a.eq))}${a.fn ? ` · ${esc(a.fn)}` : ""} · ${esc(a.mat || "sans matricule")}</div><h2>${esc(fullName(a))}</h2><div class="muted" style="text-transform:capitalize">${fmtLong(ds)}</div></div>
       <button class="btn iconbtn ghost" data-act="close" aria-label="Fermer">✕</button></header>
     <div class="body">
-      <dl class="kv"><dt>Prévu pour l'équipe</dt><dd><span class="c c-${base}" style="width:30px;height:20px">${base === "R" ? "·" : base}</span> ${LABEL[base]}</dd>
-        <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : code}</span> ${LABEL[code]}</dd>
+      <dl class="kv">${a.eq === POOL ? `<dt>Prévu</dt><dd>Remplaçant : pas de cycle, disponible pour renforcer les équipes</dd>` : `<dt>Prévu pour l'équipe</dt><dd><span class="c c-${base}" style="width:30px;height:20px">${base === "R" ? "·" : base}</span> ${LABEL[base]}</dd>`}
+        <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : code}</span> ${a.eq === POOL && code === "R" ? "Disponible (sans poste)" : LABEL[code]}</dd>
         <dt>Semaine S${isoWeek(ds)}</dt><dd class="mono">${fmtH(wk)} h réalisées · ${fmtH(hoursBetween(a, mon, addDays(mon, 6)))} h prévues <span class="muted">(${fmtShort(mon)} → ${fmtShort(addDays(mon, 6))})</span></dd></dl>
       ${rp}
       ${
@@ -3138,7 +3156,11 @@
         eq: $("#add-eq").value,
         ord: nextOrd($("#add-eq").value),
       });
-      toast(`${nom.toUpperCase()} ajouté à l'équipe ${$("#add-eq").value}`);
+      toast(
+        $("#add-eq").value === POOL
+          ? `${nom.toUpperCase()} ajouté aux remplaçants`
+          : `${nom.toUpperCase()} ajouté à l'équipe ${$("#add-eq").value}`,
+      );
       ev.target.reset();
       $("#add-fn").focus();
     });
@@ -3249,8 +3271,9 @@
         const p = l.split(/\t|;|,/).map((x) => x.trim());
         const [mat, nom, prenom = "", eqRaw = "", fnRaw = ""] = p;
         const fnv = fnRaw ? { fn: fnRaw } : {};
-        const eq = eqRaw.toUpperCase().replace(/^ÉQUIPE\s*|^EQUIPE\s*/, "");
-        if (!mat || !nom || !TEAMS.includes(eq)) {
+        let eq = eqRaw.toUpperCase().replace(/^ÉQUIPE\s*|^EQUIPE\s*/, "");
+        if (/^REMP/.test(eq)) eq = POOL;
+        if (!mat || !nom || !GROUPS.includes(eq)) {
           if (!/matricule/i.test(l)) errs.push(i + 1);
           continue;
         }
@@ -3360,7 +3383,7 @@
     function startStore(store) {
       S.store = store;
       S.store.watchCol("agents", (list) => {
-        S.agents = list.filter((a) => TEAMS.includes(a.eq));
+        S.agents = list.filter((a) => GROUPS.includes(a.eq));
         S.ready.agents = true;
         migrateOrder();
         render();
