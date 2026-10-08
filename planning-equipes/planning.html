@@ -1257,6 +1257,12 @@
             "'": "&#39;",
           })[c],
       );
+    // Texte sans accents ni majuscules, pour la recherche.
+    const norm = (t) =>
+      String(t ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
     const clone = (o) => JSON.parse(JSON.stringify(o ?? {}));
     const $ = (s, el = document) => el.querySelector(s);
     const fullName = (a) =>
@@ -2269,13 +2275,15 @@
           const shift = teamCode(absent.eq, ds);
           const before = codeOf(c, addDays(ds, -1)),
             after = codeOf(c, addDays(ds, 1));
-          if (shift === "J" && before === "N")
-            flags.push(["bad", `sort de nuit le ${fmtShort(ds)}`]);
-          if (shift === "N" && after === "J")
-            flags.push([
-              "bad",
-              `travaille de jour le ${fmtShort(addDays(ds, 1))}`,
-            ]);
+          // Repos obligatoire de 11 h entre deux postes : pas de jour (8h) en sortant de nuit,
+          // pas de nuit (jusqu'à 8h) la veille d'un poste de jour.
+          if (
+            (shift === "J" && before === "N") ||
+            (shift === "N" && after === "J")
+          ) {
+            ok = false;
+            break;
+          }
         }
         if (!ok) continue;
         // Heures projetées par semaine touchée
@@ -2712,6 +2720,7 @@
     function renderOverlay() {
       const fid = document.activeElement && document.activeElement.id;
       drawOverlay();
+      applyCandFilter();
       refocus(fid);
     }
     function drawOverlay() {
@@ -2756,14 +2765,14 @@
           const list = candidates(a, days);
           repl = `<div class="sec"><div class="label">Choisir un remplaçant · ${LABEL[base]}</div>
         ${block.length > 1 ? `<div class="seg"><button data-act="scope" data-v="day" aria-pressed="${scope === "day"}">Ce jour</button><button data-act="scope" data-v="block" aria-pressed="${scope === "block"}">Toute l'absence · ${block.length} postes (${fmtShort(block[0])} → ${fmtShort(block[block.length - 1])})</button></div>` : ""}
-        <p class="note">Remplaçants et agents en repos ${days.length > 1 ? "sur tous ces jours" : "ce jour-là"}, du plus disponible au moins disponible (remplaçants en premier). Heures : semaine actuelle → après remplacement.</p>
+        <p class="note">Remplaçants et agents en repos ${days.length > 1 ? "sur tous ces jours" : "ce jour-là"}, du plus disponible au moins disponible (remplaçants en premier). Sont exclus les agents qui travaillent ce jour-là et ceux qui n'auraient pas 11 h de repos (sortie de nuit avant un poste de jour, ou poste de jour le lendemain d'une nuit). Heures : semaine actuelle → après remplacement.</p>
+        ${list.length ? `<input type="search" id="cand-q" placeholder="Filtrer : nom, matricule, fonction, équipe…" value="${esc(S.drawer.q || "")}" autocomplete="off" aria-label="Filtrer les remplaçants possibles">` : ""}
         <div class="cands">${
           list.length
             ? list
-                .slice(0, 30)
                 .map(
                   (c) =>
-                    `<div class="cand"><div><div class="who">${esc(fullName(c.a))} <span class="muted mono" style="font-size:12px">${esc(c.a.mat || "")}</span></div><div class="meta">${esc(groupShort(c.a.eq))}${c.a.fn ? ` · ${esc(c.a.fn)}` : ""} · <span class="mono">${fmtH(c.now)} h → ${fmtH(c.after)} h</span></div>${
+                    `<div class="cand" data-q="${esc(norm([fullName(c.a), c.a.prenom, c.a.nom, c.a.mat, c.a.fn, groupShort(c.a.eq)].join(" ")))}"><div><div class="who">${esc(fullName(c.a))} <span class="muted mono" style="font-size:12px">${esc(c.a.mat || "")}</span></div><div class="meta">${esc(groupShort(c.a.eq))}${c.a.fn ? ` · ${esc(c.a.fn)}` : ""} · <span class="mono">${fmtH(c.now)} h → ${fmtH(c.after)} h</span></div>${
                       c.flags.length
                         ? `<div>${[
                             ...new Map(c.flags.map((f) => [f[1], f])).values(),
@@ -2783,7 +2792,7 @@
                 )
                 .join("")
             : `<p class="muted">Aucun agent en repos disponible ${days.length > 1 ? "sur toute la période. Essayez « Ce jour »." : "ce jour-là."}</p>`
-        }</div></div>`;
+        }<p class="muted" id="cand-none" hidden>Aucune personne ne correspond au filtre.</p></div></div>`;
         }
       }
       const rp = e?.rp
@@ -3224,6 +3233,24 @@
         .forEach((x) =>
           x.classList.remove("dragging", "dropbefore", "dropafter"),
         );
+    });
+    // Filtre de la liste des remplaçants possibles, sans redessiner le tiroir.
+    function applyCandFilter() {
+      const q = norm(S.drawer?.q || "").trim();
+      let shown = 0;
+      document.querySelectorAll(".cand[data-q]").forEach((el) => {
+        el.hidden =
+          !!q && !q.split(/\s+/).every((w) => el.dataset.q.includes(w));
+        if (!el.hidden) shown++;
+      });
+      const none = $("#cand-none");
+      if (none)
+        none.hidden = shown > 0 || !document.querySelector(".cand[data-q]");
+    }
+    document.addEventListener("input", (ev) => {
+      if (ev.target.id !== "cand-q" || !S.drawer) return;
+      S.drawer.q = ev.target.value;
+      applyCandFilter();
     });
     document.addEventListener("keydown", (ev) => {
       if (ev.key === "Escape" && (S.drawer || S.pop)) {
