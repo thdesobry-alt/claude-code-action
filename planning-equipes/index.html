@@ -850,6 +850,33 @@
         font-weight: 700;
         font-size: 16px;
       }
+      .filebar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .warnbar {
+        color: var(--fg);
+      }
+      #banner:has(.warnbar) {
+        background: var(--day-bg);
+      }
+      .connect {
+        max-width: 720px;
+      }
+      .connect p {
+        margin: 0;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 14px;
+        color: var(--muted);
+        max-width: 360px;
+      }
       .ordcell {
         display: flex;
         align-items: center;
@@ -1280,6 +1307,450 @@
           };
         }
 
+        /* ---------- Fichier JSON partagé (version autonome, Chrome ou Edge) ---------- */
+        // Structure du fichier : { application, format, revision, modifie_le, modifie_par,
+        // verrou: {par, session, depuis, actif} | null, cycle, agents: {id: agent}, mois: {"AAAA-MM": mois} }
+        const FILE_FORMAT = 1;
+        const LOCK_STALE_MS = 15 * 60 * 1000; // verrou abandonné après 15 min sans signe de vie
+        const HEARTBEAT_MS = 4 * 60 * 1000;
+        const POLL_MS = 30 * 1000;
+        const SESSION = Math.random().toString(36).slice(2, 10);
+        const FS_OK = typeof window.showOpenFilePicker === "function";
+        const emptyFile = () => ({
+          application: "planning-equipes",
+          format: FILE_FORMAT,
+          revision: 0,
+          modifie_le: null,
+          modifie_par: null,
+          verrou: null,
+          cycle: null,
+          agents: {},
+          mois: {},
+        });
+        function normalizeFile(o) {
+          if (
+            !o ||
+            typeof o !== "object" ||
+            o.application !== "planning-equipes"
+          )
+            throw new Error(
+              "Ce fichier n'est pas une base de planning des équipes.",
+            );
+          return {
+            ...emptyFile(),
+            ...o,
+            agents: o.agents || {},
+            mois: o.mois || {},
+          };
+        }
+        // Chemins de l'application <-> emplacements dans le fichier.
+        function fileSlot(data, path) {
+          const [col, id] = path.split("/");
+          if (col === "config" && id === "cycle") return [data, "cycle"];
+          if (col === "agents") return [data.agents, id];
+          if (col === "mois") return [data.mois, id];
+          return [null, null];
+        }
+        const lockAlive = (v) =>
+          v && v.actif && Date.now() - Date.parse(v.actif) < LOCK_STALE_MS;
+        const fmtTime = (iso) => {
+          const d = new Date(iso);
+          return `${d.toLocaleDateString("fr-FR")} à ${d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+        };
+
+        // Mémorise le dernier fichier ouvert (IndexedDB) pour le rouvrir en un clic.
+        function idb(mode, value) {
+          return new Promise((resolve) => {
+            try {
+              const rq = indexedDB.open("planning-equipes", 1);
+              rq.onupgradeneeded = () => rq.result.createObjectStore("kv");
+              rq.onerror = () => resolve(null);
+              rq.onsuccess = () => {
+                try {
+                  const tr = rq.result.transaction(
+                    "kv",
+                    mode === "get" ? "readonly" : "readwrite",
+                  );
+                  const st = tr.objectStore("kv");
+                  const r =
+                    mode === "get"
+                      ? st.get("fichier")
+                      : st.put(value, "fichier");
+                  r.onsuccess = () =>
+                    resolve(mode === "get" ? r.result || null : true);
+                  r.onerror = () => resolve(null);
+                } catch {
+                  resolve(null);
+                }
+              };
+            } catch {
+              resolve(null);
+            }
+          });
+        }
+
+        function fileStore(handle, initial, me, writable) {
+          let data = initial;
+          let known = data.revision || 0;
+          let lastMod = 0;
+          let saving = Promise.resolve();
+          let timer = null;
+          let skipCheck = false;
+          let lastWrite = 0;
+          const subs = new Set();
+          const notify = () => setTimeout(() => subs.forEach((f) => f()), 0);
+          const st = {
+            kind: "file",
+            handle,
+            me,
+            writable,
+            status: "",
+            get data() {
+              return data;
+            },
+            newId: () => Math.random().toString(36).slice(2, 12),
+            watchCol(col, cb) {
+              const f = () =>
+                cb(
+                  Object.entries(col === "agents" ? data.agents : {}).map(
+                    ([id, v]) => ({ id, ...v }),
+                  ),
+                );
+              subs.add(f);
+              f();
+              return () => subs.delete(f);
+            },
+            watchDoc(path, cb) {
+              const f = () => {
+                const [o, k] = fileSlot(data, path);
+                cb((o && o[k]) || null);
+              };
+              subs.add(f);
+              f();
+              return () => subs.delete(f);
+            },
+            async get(path) {
+              const [o, k] = fileSlot(data, path);
+              return (o && o[k]) || null;
+            },
+            async set(path, v) {
+              if (!st.writable) throw { code: "invalid_argument" };
+              const [o, k] = fileSlot(data, path);
+              if (!o) return;
+              o[k] = clone(v);
+              notify();
+              schedule();
+            },
+            async del(path) {
+              if (!st.writable) throw { code: "invalid_argument" };
+              const [o, k] = fileSlot(data, path);
+              if (o) delete o[k];
+              notify();
+              schedule();
+            },
+            save: () => (saving = saving.then(writeNow)),
+            async release() {
+              if (!st.writable) return;
+              clearTimeout(timer);
+              if (data.verrou && data.verrou.session === SESSION)
+                data.verrou = null;
+              await (saving = saving.then(() => writeNow(true)));
+              st.writable = false;
+            },
+            async takeOver(fresh) {
+              if (!fresh) {
+                const cur = await readFile();
+                data = cur;
+                known = cur.revision || 0;
+              }
+              skipCheck = true;
+              data.verrou = {
+                par: me,
+                session: SESSION,
+                depuis: new Date().toISOString(),
+                actif: new Date().toISOString(),
+              };
+              st.writable = true;
+              notify();
+              await st.save();
+            },
+            async refresh() {
+              const f = await handle.getFile();
+              if (f.lastModified === lastMod) return false;
+              lastMod = f.lastModified;
+              data = normalizeFile(JSON.parse(await f.text()));
+              known = data.revision || 0;
+              notify();
+              return true;
+            },
+          };
+          async function readFile() {
+            const f = await handle.getFile();
+            lastMod = f.lastModified;
+            const txt = await f.text();
+            return txt.trim() ? normalizeFile(JSON.parse(txt)) : emptyFile();
+          }
+          function schedule() {
+            clearTimeout(timer);
+            st.status = "Enregistrement…";
+            fileBanner();
+            timer = setTimeout(() => st.save(), 400);
+          }
+          async function writeNow(releasing) {
+            if (!st.writable) return;
+            try {
+              // Quelqu'un d'autre a-t-il écrit depuis notre dernière lecture ?
+              const cur = await readFile();
+              const mine = cur.verrou && cur.verrou.session === SESSION;
+              const check = !skipCheck;
+              skipCheck = false;
+              if (
+                check &&
+                ((cur.revision || 0) !== known ||
+                  (cur.verrou && !mine && lockAlive(cur.verrou)))
+              ) {
+                st.writable = false;
+                S.canWrite = false;
+                st.status = `Modifications non enregistrées : le fichier a été modifié par ${cur.modifie_par || cur.verrou?.par || "un autre utilisateur"}${cur.modifie_le ? " le " + fmtTime(cur.modifie_le) : ""}. Rechargez le fichier.`;
+                st.conflict = true;
+                fileBanner();
+                render();
+                return;
+              }
+              const now = new Date().toISOString();
+              data.revision = known + 1;
+              data.modifie_le = now;
+              data.modifie_par = me;
+              if (!releasing)
+                data.verrou = {
+                  ...(data.verrou || {
+                    par: me,
+                    session: SESSION,
+                    depuis: now,
+                  }),
+                  actif: now,
+                };
+              const w = await handle.createWritable();
+              await w.write(JSON.stringify(data, null, 1));
+              await w.close();
+              known = data.revision;
+              lastWrite = Date.now();
+              lastMod = (await handle.getFile()).lastModified;
+              st.status = `Enregistré à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+            } catch (e) {
+              st.status =
+                "Échec de l'enregistrement dans le fichier : " +
+                (e && e.message ? e.message : "accès refusé") +
+                ". Vos dernières modifications ne sont pas sauvegardées.";
+            }
+            fileBanner();
+          }
+          // Écriture : signe de vie régulier pour garder le verrou. Lecture seule : relit le fichier.
+          setInterval(() => {
+            if (st.conflict) return;
+            if (st.writable) {
+              if (Date.now() - lastWrite > HEARTBEAT_MS) st.save();
+            } else
+              st.refresh()
+                .then((ch) => ch && fileBanner())
+                .catch(() => {});
+          }, POLL_MS);
+          addEventListener("pagehide", () => {
+            if (st.writable && data.verrou && data.verrou.session === SESSION)
+              st.release();
+          });
+          return st;
+        }
+
+        // Ouvre un fichier : vérifie le verrou, puis le prend si possible.
+        async function openFile(handle, { force = false, create = null } = {}) {
+          const me = S.me;
+          const perm = async (mode) => {
+            if (!handle.queryPermission) return true;
+            if ((await handle.queryPermission({ mode })) === "granted")
+              return true;
+            return (await handle.requestPermission({ mode })) === "granted";
+          };
+          if (!(await perm("read")))
+            throw new Error("Accès au fichier refusé.");
+          let data;
+          if (create) data = create;
+          else {
+            const f = await handle.getFile();
+            const txt = await f.text();
+            data = txt.trim() ? normalizeFile(JSON.parse(txt)) : emptyFile();
+          }
+          const v = data.verrou;
+          const busy = v && v.par !== me && lockAlive(v) && !force;
+          let writable = !busy && (await perm("readwrite"));
+          const st = fileStore(handle, data, me, false);
+          if (writable) await st.takeOver(!!create);
+          await idb("put", handle);
+          return { st, busy: busy ? v : null, writable };
+        }
+
+        function fileBanner() {
+          const b = $("#banner");
+          const st = S.store;
+          if (!st || st.kind !== "file") return;
+          b.hidden = false;
+          const name = esc(st.handle.name || "fichier");
+          const d = st.data;
+          if (st.writable) {
+            b.innerHTML = `<div class="filebar"><span><b>${name}</b> · ouvert par vous (${esc(st.me)}) · les autres utilisateurs le voient en lecture seule · <span class="muted">${esc(st.status || "")}</span></span><button class="btn sm" data-act="fclose">Fermer et libérer le fichier</button></div>`;
+          } else if (st.conflict) {
+            b.innerHTML = `<div class="filebar warnbar"><span>${esc(st.status)}</span><button class="btn sm primary" data-act="freload">Recharger le fichier</button></div>`;
+          } else {
+            const v = d.verrou;
+            const who =
+              v && lockAlive(v)
+                ? `utilisé par <b>${esc(v.par)}</b> depuis le ${fmtTime(v.depuis)}`
+                : "libre";
+            b.innerHTML = `<div class="filebar warnbar"><span><b>${name}</b> · lecture seule · fichier ${who}${d.modifie_le ? ` · dernière modification par ${esc(d.modifie_par || "?")} le ${fmtTime(d.modifie_le)}` : ""}. L'affichage se met à jour tout seul.</span>${
+              S.forceAsk
+                ? `<span class="confirm">Prendre la main ? Les modifications en cours de ${esc(v?.par || "l'autre utilisateur")} non enregistrées seront perdues.<button class="btn sm danger" data-act="fforce">Oui, prendre la main</button><button class="btn sm" data-act="fforceno">Non</button></span>`
+                : st.handle.createWritable
+                  ? `<button class="btn sm primary" data-act="ftake">${v && lockAlive(v) ? "Prendre la main" : "Modifier le planning"}</button>`
+                  : ""
+            }</div>`;
+          }
+        }
+
+        function viewConnect() {
+          const me = esc(S.me || "");
+          const last = S.lastHandle;
+          return `<div class="panel connect">
+        <h2>Ouvrir la base du planning</h2>
+        <p>Le planning est enregistré dans un fichier <b>.json</b> placé dans un dossier partagé (lecteur réseau, OneDrive, SharePoint…). Une seule personne à la fois peut le modifier ; les autres le consultent en lecture seule et peuvent reprendre la main quand il est libéré.</p>
+        <label class="field">Votre nom (affiché aux autres utilisateurs)<input type="text" id="me-name" value="${me}" placeholder="ex. Thomas D." autocomplete="name"></label>
+        ${
+          FS_OK
+            ? `<div class="choices">
+          ${last ? `<button class="btn primary" data-act="freopen">Rouvrir « ${esc(last.name)} »</button>` : ""}
+          <button class="btn ${last ? "" : "primary"}" data-act="fopen">Ouvrir un fichier de planning…</button>
+          <button class="btn" data-act="fnew">Créer un nouveau fichier…</button>
+        </div>
+        <p class="note">« Créer un nouveau fichier » reprend les données déjà saisies dans ce navigateur, s'il y en a.</p>`
+            : `<p class="banner">Ce navigateur ne sait pas enregistrer directement dans un fichier. Utilisez <b>Google Chrome</b> ou <b>Microsoft Edge</b> sur ordinateur pour modifier le planning. Ici, vous pouvez seulement le consulter.</p>
+        <div class="choices"><label class="btn">Consulter un fichier de planning…<input type="file" id="ro-file" accept=".json,application/json" hidden></label></div>`
+        }
+        <p class="note">Sans fichier, vous pouvez aussi <button class="linkbtn" data-act="flocal">travailler dans ce navigateur uniquement</button> (données non partagées).</p>
+        ${S.connectErr ? `<p class="over">${esc(S.connectErr)}</p>` : ""}
+      </div>`;
+        }
+
+        async function fileAction(act) {
+          const nameEl = $("#me-name");
+          if (nameEl) {
+            S.me = nameEl.value.trim();
+            uiSet({ me: S.me });
+          }
+          S.connectErr = "";
+          try {
+            if (act === "fclose") {
+              await S.store.release();
+              location.reload();
+              return;
+            }
+            if (act === "freload") {
+              location.reload();
+              return;
+            }
+            if (act === "fforceno") {
+              S.forceAsk = false;
+              fileBanner();
+              return;
+            }
+            if (act === "ftake" || act === "fforce") {
+              const st = S.store;
+              await st.refresh().catch(() => {});
+              const v = st.data.verrou;
+              if (act === "ftake" && v && v.par !== S.me && lockAlive(v)) {
+                S.forceAsk = true;
+                fileBanner();
+                return;
+              }
+              S.forceAsk = false;
+              if (
+                st.handle.requestPermission &&
+                (await st.handle.requestPermission({ mode: "readwrite" })) !==
+                  "granted"
+              )
+                throw new Error("Écriture dans le fichier refusée.");
+              await st.takeOver();
+              S.canWrite = true;
+              fileBanner();
+              render();
+              return;
+            }
+            if (act === "flocal") {
+              startStore(localStore());
+              const b = $("#banner");
+              b.hidden = false;
+              b.textContent =
+                "Données enregistrées dans ce navigateur uniquement (non partagées). Rechargez la page pour ouvrir un fichier de planning.";
+              return;
+            }
+            if (!S.me) {
+              S.connectErr =
+                "Indiquez votre nom : il permet aux autres utilisateurs de savoir qui modifie le planning.";
+              render();
+              return;
+            }
+            let handle,
+              create = null;
+            if (act === "freopen") handle = S.lastHandle;
+            if (act === "fopen")
+              [handle] = await showOpenFilePicker({
+                types: [
+                  {
+                    description: "Planning (JSON)",
+                    accept: { "application/json": [".json"] },
+                  },
+                ],
+              });
+            if (act === "fnew") {
+              handle = await showSaveFilePicker({
+                suggestedName: "planning-data.json",
+                types: [
+                  {
+                    description: "Planning (JSON)",
+                    accept: { "application/json": [".json"] },
+                  },
+                ],
+              });
+              create = emptyFile();
+              const loc = localStore();
+              const agents = await new Promise((r) =>
+                loc.watchCol("agents", r),
+              );
+              agents.forEach(({ id, ...a }) => (create.agents[id] = a));
+              create.cycle = await loc.get("config/cycle");
+              for (const k of Object.keys(
+                localStorage.getItem("planning-equipes-data-v1")
+                  ? JSON.parse(localStorage.getItem("planning-equipes-data-v1"))
+                  : {},
+              ))
+                if (k.startsWith("mois/"))
+                  create.mois[k.slice(5)] = await loc.get(k);
+            }
+            if (!handle) return;
+            const { st, busy, writable } = await openFile(handle, { create });
+            S.canWrite = writable;
+            startStore(st);
+            if (busy)
+              toast(
+                `Planning utilisé par ${busy.par} : ouverture en lecture seule.`,
+              );
+            fileBanner();
+          } catch (e) {
+            if (e && e.name === "AbortError") return;
+            S.connectErr =
+              e && e.message ? e.message : "Impossible d'ouvrir le fichier.";
+            render();
+          }
+        }
+
         /* ---------- État ---------- */
         const now = todayStr();
         const S = {
@@ -1671,6 +2142,10 @@
           const scroll = $(".gridwrap")
             ? { l: $(".gridwrap").scrollLeft, t: $(".gridwrap").scrollTop }
             : null;
+          if (S.connect && !S.store) {
+            v.innerHTML = viewConnect();
+            return;
+          }
           if (!S.ready.agents || !S.ready.cycle) {
             v.innerHTML = `<div class="panel"><p class="muted">Chargement du planning…</p></div>`;
             return;
@@ -2170,6 +2645,15 @@
         /* ---------- Événements ---------- */
         document.addEventListener("click", async (ev) => {
           const b = ev.target.closest("[data-act]");
+          if (
+            b &&
+            /^f(open|new|reopen|close|reload|take|force|forceno|local)$/.test(
+              b.dataset.act,
+            )
+          ) {
+            await fileAction(b.dataset.act);
+            return;
+          }
           if (!b) return;
           const act = b.dataset.act;
           if (act === "close") {
@@ -2638,13 +3122,25 @@
               b.textContent =
                 "Consultation seule : vous pouvez voir le planning mais pas le modifier.";
             }
-          } else {
-            S.store = localStore();
+          } else if (window.claude) {
+            startStore(localStore());
             const b = $("#banner");
             b.hidden = false;
             b.textContent =
-              "Les données sont enregistrées dans ce navigateur uniquement. Ouvrez l'application depuis son lien claude.ai pour les partager entre appareils.";
+              "Les données sont enregistrées dans ce navigateur uniquement. Connectez-vous à claude.ai pour les partager.";
+            return;
+          } else {
+            // Version autonome : la base est un fichier JSON partagé.
+            S.connect = true;
+            S.me = uiGet().me || "";
+            S.lastHandle = FS_OK ? await idb("get") : null;
+            render();
+            return;
           }
+          startStore(S.store);
+        }
+        function startStore(store) {
+          S.store = store;
           S.store.watchCol("agents", (list) => {
             S.agents = list.filter((a) => TEAMS.includes(a.eq));
             S.ready.agents = true;
@@ -2657,7 +3153,27 @@
             render();
           });
           watchMonths();
+          render();
         }
+        // Consultation seule d'un fichier choisi (navigateurs sans écriture directe).
+        document.addEventListener("change", async (ev) => {
+          if (ev.target.id !== "ro-file" || !ev.target.files[0]) return;
+          try {
+            const data = normalizeFile(
+              JSON.parse(await ev.target.files[0].text()),
+            );
+            const fake = {
+              name: ev.target.files[0].name,
+              getFile: async () => ev.target.files[0],
+            };
+            S.canWrite = false;
+            startStore(fileStore(fake, data, S.me || "", false));
+            fileBanner();
+          } catch (e) {
+            S.connectErr = e.message || "Fichier illisible.";
+            render();
+          }
+        });
         boot();
       })();
     </script>

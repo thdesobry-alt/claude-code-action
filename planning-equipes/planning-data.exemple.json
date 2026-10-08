@@ -1,0 +1,52 @@
+{
+  "application": "planning-equipes",
+  "format": 1,
+  "revision": 0,
+  "modifie_le": null,
+  "modifie_par": null,
+  "verrou": null,
+  "cycle": {
+    "maxWeek": 48,
+    "nightSplit": false,
+    "offsets": {
+      "A": 21,
+      "B": 0,
+      "C": 7,
+      "D": 14
+    },
+    "pattern": [
+      "R",
+      "J",
+      "J",
+      "J",
+      "R",
+      "R",
+      "R",
+      "R",
+      "R",
+      "R",
+      "R",
+      "N",
+      "N",
+      "N",
+      "R",
+      "R",
+      "R",
+      "R",
+      "J",
+      "J",
+      "J",
+      "R",
+      "N",
+      "N",
+      "N",
+      "R",
+      "R",
+      "R"
+    ],
+    "ref": "2026-01-05",
+    "target": 11
+  },
+  "agents": {},
+  "mois": {}
+}

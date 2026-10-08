@@ -13,7 +13,17 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 - **Effectifs** : nombre d'agents en jour et en nuit pour chaque date, comparé à l'effectif cible. Lignes « Heures jour » et « Heures nuit » : heures réalisées chaque jour par les agents en poste (absences partielles déduites), avec le total du mois.
 - **Heures** : heures travaillées par agent et par semaine calendaire (lundi–dimanche), total du mois, nuits comptées en entier le jour de prise de poste (option : réparties à minuit, 4 h + 8 h), export vers Excel par copier-coller.
 
+## Utilisation à plusieurs avec un fichier JSON partagé
+
+1. Placez `index.html` et `planning-data.json` dans un dossier partagé (lecteur réseau, OneDrive ou SharePoint synchronisé…).
+2. Chaque utilisateur ouvre `index.html` avec **Google Chrome** ou **Microsoft Edge**, indique son nom, puis « Ouvrir un fichier de planning… » et choisit `planning-data.json` (ensuite « Rouvrir » suffit).
+3. Le premier qui ouvre le fichier le modifie ; il est verrouillé à son nom. Les autres le voient en lecture seule, mis à jour toutes les 30 secondes, avec le nom de la personne qui l'utilise.
+4. En fin de travail, cliquez « Fermer et libérer le fichier ». Un verrou oublié expire 15 minutes après la fermeture de la page. « Prendre la main » permet de forcer, après confirmation.
+5. Chaque enregistrement relit d'abord le fichier : si quelqu'un d'autre l'a modifié entre-temps, rien n'est écrasé et l'application demande de recharger.
+
+`planning-data.exemple.json` montre la structure du fichier (cycle, agents, mois). Le fichier réel `planning-data.json` contient des données personnelles et n'est pas versionné (`.gitignore`). Firefox et Safari ne peuvent que consulter le fichier.
+
 ## Utilisation
 
 - `planning.html` est la source publiée comme artefact claude.ai : les données y sont enregistrées dans la base partagée de l'artefact.
-- `index.html` est la version autonome à ouvrir dans un navigateur : les données restent dans ce navigateur. Elle se régénère avec `./build.sh` après toute modification de `planning.html`.
+- `index.html` est la version autonome à ouvrir dans un navigateur : ses données sont dans le fichier JSON partagé décrit ci-dessus (ou, au choix, dans le navigateur seulement). Elle se régénère avec `./build.sh` après toute modification de `planning.html`.
