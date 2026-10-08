@@ -4,7 +4,7 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 
 ## Fonctions
 
-- **Agents** : saisie du matricule, du nom, du prénom et de l'équipe (A à D), import par copier-coller depuis Excel (`matricule;nom;prénom;équipe`), création rapide de 4 × 11 fiches à compléter.
+- **Agents** : saisie du matricule, du nom, du prénom et de l'équipe (A à D), import par copier-coller depuis Excel (`matricule;nom;prénom;équipe`), création rapide de 4 × 11 fiches à compléter. L'ordre des agents dans chaque équipe se règle librement (flèches ou glisser-déposer) et s'applique au planning et au tableau des heures.
 - **Cycle** : motif de rotation répété par chaque équipe (par défaut le cycle de 28 jours du lundi au dimanche : 6 jours 8h–20h, 6 nuits 20h–8h, 16 repos, les équipes décalées d'une semaine), date de départ et décalage par équipe, avec aperçu et contrôle de couverture.
 - **Planning mensuel** : grille jour par jour de toutes les équipes. Un clic sur la ligne d'une équipe la passe en jour, nuit ou repos à une date donnée ; un clic sur la case d'un agent ouvre sa journée.
 - **Congés et absences** : CP, RTT, maladie ou autre, sur un jour ou une période (option « seulement les jours travaillés »).

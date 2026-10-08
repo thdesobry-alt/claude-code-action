@@ -846,6 +846,31 @@
         font-weight: 700;
         font-size: 16px;
       }
+      .ordcell {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .grip {
+        cursor: grab;
+        color: var(--muted);
+        font-size: 18px;
+        padding: 0 4px;
+        user-select: none;
+        touch-action: none;
+      }
+      .mv {
+        padding: 2px 6px;
+      }
+      tr.dragging {
+        opacity: 0.4;
+      }
+      tr.dropbefore td {
+        box-shadow: inset 0 2px 0 var(--accent);
+      }
+      tr.dropafter td {
+        box-shadow: inset 0 -2px 0 var(--accent);
+      }
       .over {
         color: var(--bad);
         font-weight: 700;
@@ -1172,7 +1197,7 @@
             try {
               localStorage.setItem(KEY, JSON.stringify(data));
             } catch {}
-            subs.forEach((f) => f());
+            setTimeout(() => subs.forEach((f) => f()), 0);
           };
           return {
             kind: "local",
@@ -1356,14 +1381,64 @@
           const e = entryOf(a.id, ds);
           return !!(e && ABS[e.c] && isWork(teamCode(a.eq, ds)) && !e.r);
         }
+        // Ordre choisi par l'utilisateur dans chaque équipe (champ ord) ; le tri par nom ne sert
+        // qu'aux fiches antérieures à ce champ, le temps de leur attribuer un rang.
+        const ordOf = (a) => (Number.isFinite(a.ord) ? a.ord : Infinity);
         const sortedAgents = () =>
           [...S.agents].sort(
             (x, y) =>
               (x.eq || "").localeCompare(y.eq || "") ||
+              ordOf(x) - ordOf(y) ||
               (x.nom || "").localeCompare(y.nom || "", "fr") ||
               (x.prenom || "").localeCompare(y.prenom || "", "fr") ||
               (x.mat || "").localeCompare(y.mat || ""),
           );
+
+        const nextOrd = (team) =>
+          S.agents
+            .filter((a) => a.eq === team && Number.isFinite(a.ord))
+            .reduce((m, a) => Math.max(m, a.ord + 1), 0);
+        // Range l'agent `id` à la position `to` de son équipe et renumérote l'équipe.
+        async function moveAgent(id, to) {
+          const a = agentById(id);
+          if (!a) return;
+          const list = sortedAgents().filter((x) => x.eq === a.eq);
+          const from = list.findIndex((x) => x.id === id);
+          to = Math.max(0, Math.min(list.length - 1, to));
+          if (from < 0 || from === to) return;
+          list.splice(to, 0, ...list.splice(from, 1));
+          await saveOrder(list);
+        }
+        async function saveOrder(list) {
+          const changed = [];
+          list.forEach((x, i) => {
+            if (x.ord !== i) changed.push({ ...x, ord: i });
+          });
+          if (!changed.length) return;
+          S.agents = S.agents.map(
+            (x) => changed.find((c) => c.id === x.id) || x,
+          );
+          render();
+          for (const { id, ...rest } of changed)
+            await S.store.set("agents/" + id, rest);
+        }
+        // Fiches créées avant l'ordre manuel : on fige une seule fois leur ordre actuel.
+        let ordMigrated = false;
+        function migrateOrder() {
+          if (
+            ordMigrated ||
+            !S.canWrite ||
+            !S.agents.some((a) => !Number.isFinite(a.ord))
+          )
+            return;
+          ordMigrated = true;
+          const all = sortedAgents();
+          setTimeout(
+            () =>
+              TEAMS.forEach((t) => saveOrder(all.filter((a) => a.eq === t))),
+            0,
+          );
+        }
 
         /* ---------- Écritures groupées par mois ---------- */
         async function ensureMonths(yms) {
@@ -1817,10 +1892,15 @@
           const rows = TEAMS.map((t) => {
             const list = agents.filter((a) => a.eq === t);
             return (
-              `<tr class="grp"><td colspan="5">Équipe ${t} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${list.length} / 11</span></td></tr>` +
+              `<tr class="grp"><td colspan="6">Équipe ${t} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${list.length} / 11</span></td></tr>` +
               list
                 .map(
-                  (a) => `<tr>
+                  (a, i) => `<tr data-row="${a.id}" data-team="${t}">
+        <td><div class="ordcell">${
+          S.canWrite
+            ? `<span class="grip" data-grip="${a.id}" title="Glisser pour déplacer" aria-hidden="true">⠿</span><button class="btn sm ghost mv" data-act="up" data-id="${a.id}" aria-label="Monter ${esc(fullName(a))}" ${i === 0 ? "disabled" : ""}>↑</button><button class="btn sm ghost mv" data-act="down" data-id="${a.id}" aria-label="Descendre ${esc(fullName(a))}" ${i === list.length - 1 ? "disabled" : ""}>↓</button>`
+            : `<span class="muted mono">${i + 1}</span>`
+        }</div></td>
         <td><input type="text" id="mat-${a.id}" data-f="mat" data-id="${a.id}" value="${esc(a.mat)}" placeholder="Matricule" ${ro}></td>
         <td><input type="text" id="nom-${a.id}" data-f="nom" data-id="${a.id}" value="${esc(a.nom)}" placeholder="Nom" ${ro}></td>
         <td><input type="text" id="pre-${a.id}" data-f="prenom" data-id="${a.id}" value="${esc(a.prenom)}" placeholder="Prénom" ${ro}></td>
@@ -1834,8 +1914,8 @@
           return `<div class="cols">
     <div class="panel">
       <h2>Agents</h2>
-      <p class="note">Les modifications sont enregistrées dès que vous quittez le champ. Changer l'équipe d'un agent l'aligne sur le cycle de sa nouvelle équipe.</p>
-      <div class="tablewrap"><table class="list"><thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="note">Les modifications sont enregistrées dès que vous quittez le champ. Changer l'équipe d'un agent l'aligne sur le cycle de sa nouvelle équipe. L'ordre des agents (flèches ou poignée ⠿ à faire glisser) est celui du planning et du tableau des heures.</p>
+      <div class="tablewrap"><table class="list"><thead><tr><th>Ordre</th><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>
     ${
       S.canWrite
@@ -2106,6 +2186,18 @@
             await setShift(S.drawer.id, S.drawer.ds, b.dataset.v || null);
             return;
           }
+          if (act === "up" || act === "down") {
+            const list = sortedAgents().filter(
+              (x) => x.eq === agentById(b.dataset.id)?.eq,
+            );
+            const i = list.findIndex((x) => x.id === b.dataset.id);
+            await moveAgent(b.dataset.id, i + (act === "up" ? -1 : 1));
+            const nb = document.querySelector(
+              `[data-act="${act}"][data-id="${b.dataset.id}"]`,
+            );
+            if (nb && !nb.disabled) nb.focus();
+            return;
+          }
           if (act === "partial") {
             const a = agentById(S.drawer.id),
               ds = S.drawer.ds,
@@ -2266,7 +2358,12 @@
             const v = el.value.trim();
             if ((a[el.dataset.f] || "") === v) return;
             const { id, ...rest } = a;
-            await S.store.set("agents/" + id, { ...rest, [el.dataset.f]: v });
+            const extra = el.dataset.f === "eq" ? { ord: nextOrd(v) } : {};
+            await S.store.set("agents/" + id, {
+              ...rest,
+              [el.dataset.f]: v,
+              ...extra,
+            });
             return;
           }
           if (el.id === "ab-from" && S.drawer) {
@@ -2312,10 +2409,73 @@
             nom,
             prenom: $("#add-pre").value.trim(),
             eq: $("#add-eq").value,
+            ord: nextOrd($("#add-eq").value),
           });
           toast(`${nom.toUpperCase()} ajouté à l'équipe ${$("#add-eq").value}`);
           ev.target.reset();
           $("#add-mat").focus();
+        });
+        let dragId = null;
+        document.addEventListener("pointerdown", (ev) => {
+          const g = ev.target.closest("[data-grip]");
+          if (!g) return;
+          const tr = g.closest("tr");
+          tr.draggable = true;
+          dragId = g.dataset.grip;
+        });
+        document.addEventListener("pointerup", () => {
+          dragId = null;
+          document
+            .querySelectorAll("tr[draggable]")
+            .forEach((x) => (x.draggable = false));
+        });
+        document.addEventListener("dragstart", (ev) => {
+          if (!dragId) return ev.preventDefault();
+          ev.dataTransfer.effectAllowed = "move";
+          ev.dataTransfer.setData("text/plain", dragId);
+          ev.target.classList.add("dragging");
+        });
+        const dropRow = (ev) => {
+          const tr = ev.target.closest("tr[data-row]");
+          const a = dragId && agentById(dragId);
+          return tr && a && tr.dataset.team === a.eq ? tr : null;
+        };
+        document.addEventListener("dragover", (ev) => {
+          const tr = dropRow(ev);
+          document
+            .querySelectorAll(".dropbefore,.dropafter")
+            .forEach((x) => x.classList.remove("dropbefore", "dropafter"));
+          if (!tr) return;
+          ev.preventDefault();
+          const r = tr.getBoundingClientRect();
+          tr.classList.add(
+            ev.clientY < r.top + r.height / 2 ? "dropbefore" : "dropafter",
+          );
+        });
+        document.addEventListener("drop", async (ev) => {
+          const tr = dropRow(ev);
+          if (!tr) return;
+          ev.preventDefault();
+          const after = tr.classList.contains("dropafter");
+          const list = sortedAgents().filter((x) => x.eq === tr.dataset.team);
+          const from = list.findIndex((x) => x.id === dragId);
+          let to =
+            list.findIndex((x) => x.id === tr.dataset.row) + (after ? 1 : 0);
+          if (from < to) to--;
+          const id = dragId;
+          dragId = null;
+          await moveAgent(id, to);
+        });
+        document.addEventListener("dragend", () => {
+          dragId = null;
+          document
+            .querySelectorAll("tr[draggable]")
+            .forEach((x) => (x.draggable = false));
+          document
+            .querySelectorAll(".dragging,.dropbefore,.dropafter")
+            .forEach((x) =>
+              x.classList.remove("dragging", "dropbefore", "dropafter"),
+            );
         });
         document.addEventListener("keydown", (ev) => {
           if (ev.key === "Escape" && (S.drawer || S.pop)) {
@@ -2331,12 +2491,14 @@
         async function genAgents() {
           for (const t of TEAMS) {
             const have = S.agents.filter((a) => a.eq === t).length;
+            const base = nextOrd(t);
             for (let i = have; i < 11; i++)
               await S.store.set("agents/" + S.store.newId(), {
                 mat: "",
                 nom: "À compléter",
                 prenom: `${t}${String(i + 1).padStart(2, "0")}`,
                 eq: t,
+                ord: base + i - have,
               });
           }
           toast("Fiches créées : complétez-les dans l'onglet Agents");
@@ -2352,6 +2514,11 @@
           let add = 0,
             upd = 0;
           const errs = [];
+          const ords = {};
+          const nx = (eq) => {
+            ords[eq] ??= nextOrd(eq);
+            return ords[eq]++;
+          };
           for (const [i, l] of lines.entries()) {
             const p = l.split(/\t|;|,/).map((x) => x.trim());
             const [mat, nom, prenom = "", eqRaw = ""] = p;
@@ -2363,7 +2530,15 @@
             const ex = S.agents.find((a) => a.mat === mat);
             if (ex) {
               const { id, ...rest } = ex;
-              await S.store.set("agents/" + id, { ...rest, nom, prenom, eq });
+              const ord =
+                eq === ex.eq && Number.isFinite(ex.ord) ? ex.ord : nx(eq);
+              await S.store.set("agents/" + id, {
+                ...rest,
+                nom,
+                prenom,
+                eq,
+                ord,
+              });
               upd++;
             } else {
               await S.store.set("agents/" + S.store.newId(), {
@@ -2371,6 +2546,7 @@
                 nom,
                 prenom,
                 eq,
+                ord: nx(eq),
               });
               add++;
             }
@@ -2446,6 +2622,7 @@
           S.store.watchCol("agents", (list) => {
             S.agents = list.filter((a) => TEAMS.includes(a.eq));
             S.ready.agents = true;
+            migrateOrder();
             render();
           });
           S.store.watchDoc("config/cycle", (c) => {
