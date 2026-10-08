@@ -11,7 +11,7 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 - **Absences partielles** : sur un poste de jour ou de nuit, une absence de quelques heures (par exemple 8h–10h) avec son motif ; ces heures sont retirées des heures travaillées.
 - **Remplacements** : pour une absence sur un poste travaillé, la liste des agents en repos disponibles, triés par heures de la semaine, avec alertes (sortie de nuit, enchaînement nuit → jour, dépassement du plafond hebdomadaire). Remplacement sur un jour ou sur toute l'absence. Les postes restant à remplacer sont listés en haut du planning.
 - **Effectifs** : nombre d'agents en jour et en nuit pour chaque date, comparé à l'effectif cible. Lignes « Heures jour » et « Heures nuit » : heures réalisées chaque jour par les agents en poste (absences partielles déduites), avec le total du mois.
-- **Heures** : heures travaillées par agent et par semaine calendaire (lundi–dimanche), total du mois, nuits comptées en entier le jour de prise de poste (option : réparties à minuit, 4 h + 8 h), export vers Excel par copier-coller.
+- **Heures** : heures réalisées (jusqu'à la veille incluse ; les jours à venir ne sont pas comptés, les heures prévues apparaissent au survol) par agent et par semaine calendaire (lundi–dimanche), total du mois, nuits comptées en entier le jour de prise de poste (option : réparties à minuit, 4 h + 8 h), export vers Excel par copier-coller.
 
 ## Utilisation à plusieurs avec un fichier JSON partagé
 

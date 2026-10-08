@@ -1807,9 +1807,16 @@
       Number.isInteger(h)
         ? String(h)
         : (Math.round(h * 100) / 100).toString().replace(".", ",");
+    // Heures réalisées : seuls les jours jusqu'à la veille comptent (les jours à venir ne sont pas faits).
+    const lastDone = () => addDays(todayStr(), -1);
+    const isDone = (ds) => ds <= lastDone();
+    function doneHours(a, from, to) {
+      const end = to < lastDone() ? to : lastDone();
+      return end < from ? 0 : hoursBetween(a, from, end);
+    }
     const weekHours = (a, ds) => {
       const m = mondayOf(ds);
-      return hoursBetween(a, m, addDays(m, 6));
+      return doneHours(a, m, addDays(m, 6));
     };
     function needsCover(a, ds) {
       const e = entryOf(a.id, ds);
@@ -2199,7 +2206,7 @@
                 return `<td class="${cls(ds)}"><button class="${k.join(" ")}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(tip)}">${c === "R" ? "" : c}</button></td>`;
               })
               .join("") +
-            `<td class="tot">${fmtH(hoursBetween(a, days[0], days[days.length - 1]))} h</td></tr>`;
+            `<td class="tot" title="Prévu sur le mois : ${fmtH(hoursBetween(a, days[0], days[days.length - 1]))} h">${fmtH(doneHours(a, days[0], days[days.length - 1]))} h</td></tr>`;
         }
       }
       const staff = (code) =>
@@ -2222,17 +2229,21 @@
           return h + p[0] + p[1];
         }, 0);
       const hoursRow = (code) => {
-        const vals = days.map((ds) => shiftHours(code, ds));
+        const vals = days.map((ds) =>
+          isDone(ds) ? shiftHours(code, ds) : null,
+        );
         const full = S.cycle.target * 12;
         return (
           `<tr class="staff hrs"><th class="name">Heures ${code === "J" ? "jour" : "nuit"} <small class="muted">/ ${full}</small></th>` +
           vals
             .map((h, i) => {
+              if (h === null)
+                return `<td class="${cls(days[i])}"><span class="staffn muted" title="Pas encore réalisé (prévu : ${fmtH(shiftHours(code, days[i]))} h)">–</span></td>`;
               const k = h < full ? "low" : h > full ? "high" : "ok";
               return `<td class="${cls(days[i])}"><span class="staffn ${k}" title="${fmtH(h)} h réalisées en ${LABEL[code]} le ${fmtShort(days[i])}">${fmtH(h)}</span></td>`;
             })
             .join("") +
-          `<td class="tot"><b>${fmtH(vals.reduce((x, y) => x + y, 0))} h</b></td></tr>`
+          `<td class="tot"><b>${fmtH(vals.reduce((x, y) => x + (y || 0), 0))} h</b></td></tr>`
         );
       };
 
@@ -2288,21 +2299,24 @@
         if (!list.length) continue;
         rows += `<tr class="grp"><td colspan="${weeks.length + 5}">Équipe ${t}</td></tr>`;
         for (const a of list) {
-          const wh = weeks.map((w) => hoursBetween(a, w, addDays(w, 6)));
-          const mh = hoursBetween(a, days[0], days[days.length - 1]);
+          const wh = weeks.map((w) =>
+            w <= lastDone() ? doneHours(a, w, addDays(w, 6)) : null,
+          );
+          const wp = weeks.map((w) => hoursBetween(a, w, addDays(w, 6)));
+          const mh = doneHours(a, days[0], days[days.length - 1]);
           const absd = days.filter((d) => ABS[codeOf(a, d)]).length;
           const parth = days.reduce(
             (s, d) => s + partialHours(codeOf(a, d), entryOf(a.id, d)?.pa),
             0,
           );
-          rows += `<tr><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}</td>${wh.map((h) => `<td class="num${h > max ? " over" : ""}">${fmtH(h)}</td>`).join("")}<td class="num"><b>${fmtH(mh)}</b></td><td class="num">${absd || ""}</td><td class="num">${parth ? fmtH(parth) : ""}</td></tr>`;
+          rows += `<tr><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}</td>${wh.map((h, i) => (h === null ? `<td class="num muted" title="Semaine à venir (prévu : ${fmtH(wp[i])} h)">–</td>` : `<td class="num${h > max ? " over" : ""}" title="Prévu sur la semaine : ${fmtH(wp[i])} h">${fmtH(h)}</td>`)).join("")}<td class="num"><b>${fmtH(mh)}</b></td><td class="num">${absd || ""}</td><td class="num">${parth ? fmtH(parth) : ""}</td></tr>`;
           tsv.push(
             [
               a.mat || "",
               a.nom || "",
               a.prenom || "",
               a.eq,
-              ...wh.map(fmtH),
+              ...wh.map((h) => (h === null ? "" : fmtH(h))),
               fmtH(mh),
               absd,
               fmtH(parth),
@@ -2313,10 +2327,10 @@
       S.hoursTsv = tsv.join("\n");
       return `<div class="panel">
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
-      <h2>Heures travaillées par semaine</h2>
+      <h2>Heures réalisées par semaine</h2>
       <button class="btn" data-act="copytsv">Copier pour Excel</button>
     </div>
-    <p class="note">Semaines calendaires du lundi 0 h au dimanche 24 h. Jour = 12 h. Nuit = 12 h ${S.cycle.nightSplit ? "réparties à minuit (4 h le soir de prise de poste, 8 h le lendemain)" : "comptées sur le jour de prise de poste"}. Les absences, y compris les absences partielles, ne comptent pas comme heures travaillées. En rouge : plus de ${max} h dans la semaine. Les semaines à cheval sur deux mois sont comptées en entier.</p>
+    <p class="note">Semaines calendaires du lundi 0 h au dimanche 24 h. Jour = 12 h. Nuit = 12 h ${S.cycle.nightSplit ? "réparties à minuit (4 h le soir de prise de poste, 8 h le lendemain)" : "comptées sur le jour de prise de poste"}. Les absences, y compris les absences partielles, ne comptent pas comme heures travaillées. En rouge : plus de ${max} h dans la semaine. Seules les heures réalisées sont comptées, jusqu'à la veille (${fmtShort(lastDone())}) incluse : la semaine en cours est partielle et les semaines à venir affichent « – ». Survolez une valeur pour voir les heures prévues. Les semaines à cheval sur deux mois sont comptées en entier.</p>
     <div class="tablewrap"><table class="list">
       <thead><tr><th>Matr.</th><th>Agent</th>${weeks.map((w) => `<th class="num" title="du ${fmtShort(w)} au ${fmtShort(addDays(w, 6))}">S${isoWeek(w)}<br><span style="text-transform:none;letter-spacing:0;font-weight:400">${fmtShort(w)}</span></th>`).join("")}<th class="num">Mois</th><th class="num">Abs. (j)</th><th class="num">Abs. part. (h)</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -2538,7 +2552,7 @@
     <div class="body">
       <dl class="kv"><dt>Prévu pour l'équipe</dt><dd><span class="c c-${base}" style="width:30px;height:20px">${base === "R" ? "·" : base}</span> ${LABEL[base]}</dd>
         <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : code}</span> ${LABEL[code]}</dd>
-        <dt>Semaine S${isoWeek(ds)}</dt><dd class="mono">${fmtH(wk)} h <span class="muted">(${fmtShort(mon)} → ${fmtShort(addDays(mon, 6))})</span></dd></dl>
+        <dt>Semaine S${isoWeek(ds)}</dt><dd class="mono">${fmtH(wk)} h réalisées · ${fmtH(hoursBetween(a, mon, addDays(mon, 6)))} h prévues <span class="muted">(${fmtShort(mon)} → ${fmtShort(addDays(mon, 6))})</span></dd></dl>
       ${rp}
       ${repl}
       ${
