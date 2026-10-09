@@ -640,6 +640,17 @@
   }
   .chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg); cursor: pointer; padding-bottom: 6px; }
   .codename { display: block; font-size: 11px; color: var(--muted); line-height: 1.3; }
+  /* détail de l'arrêt sur sa propre ligne, sous l'en-tête date / durée */
+  tr.det-head td {
+    border-bottom: 0;
+    padding-bottom: 2px;
+  }
+  tr.det-line td {
+    padding-top: 0;
+    padding-bottom: 10px;
+    color: var(--fg);
+    white-space: normal;
+  }
   .muted {
     color: var(--muted);
   }
@@ -2142,18 +2153,18 @@
           .join(" · ") +
         '</p><div class="scroll" style="max-height: 420px; overflow-y: auto"><table><thead><tr><th>Début</th><th class="num">Durée</th><th>' +
         otherName +
-        "</th><th>Détail</th></tr></thead><tbody>" +
+        "</th></tr></thead><tbody>" +
         det
           .map(function (x) {
             return (
-              '<tr><td class="mono">' +
+              '<tr class="det-head"><td class="mono">' +
               fmtDate(x.s.start) +
               '</td><td class="num">' +
               fmtDur(x.dur) +
               "</td><td>" +
               esc(otherFn(x.s)) +
-              "</td><td>" +
-              esc(x.s.detail) +
+              '</td></tr><tr class="det-line"><td colspan="3">' +
+              (x.s.detail ? esc(x.s.detail) : '<span class="muted">Pas de détail</span>') +
               "</td></tr>"
             );
           })
