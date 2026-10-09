@@ -598,6 +598,8 @@
     z-index: 20;
     max-width: calc(100% - 32px);
   }
+  .chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg); cursor: pointer; padding-bottom: 6px; }
+  .codename { display: block; font-size: 11px; color: var(--muted); line-height: 1.3; }
   .muted {
     color: var(--muted);
   }
@@ -645,6 +647,7 @@
       <button class="btn" id="btnPrevDay">◀ Jour</button>
       <button class="btn" id="btnNextDay">Jour ▶</button>
       <button class="btn" id="btnAll">Toute la période</button>
+      <label class="chk"><input type="checkbox" id="groupByName" /> Regrouper les codes de même nom</label>
     </div>
     <div class="chips-row">
       <div class="chipbox">
@@ -729,6 +732,40 @@
     <div class="panel">
       <h2>Arrêts enregistrés par diamètre</h2>
       <div class="scroll" id="batches"></div>
+    </div>
+
+    <div class="panel stack">
+      <div>
+        <h2>Tables de correspondance des codes</h2>
+        <p class="hint">
+          Les numéros de code FER et de code Macc sont remplacés par leur nom
+          dans les analyses et le plan d'actions. Pour mettre une table à jour,
+          copiez ses deux colonnes (code, nom) depuis Excel, collez-les
+          ci-dessous et remplacez la table choisie. La nouvelle table
+          s'applique à tous les utilisateurs.
+        </p>
+      </div>
+      <div id="codesInfo"></div>
+      <div class="row">
+        <label class="f"
+          >Table à remplacer
+          <select id="codesKind">
+            <option value="fer">Codes FER</option>
+            <option value="macc">Codes Macc</option>
+          </select>
+        </label>
+      </div>
+      <textarea
+        class="paste"
+        id="codesPaste"
+        style="min-height: 120px"
+        placeholder="Code&#9;Nom&#10;300&#9;STATION EAU 1"
+      ></textarea>
+      <div class="row">
+        <button class="btn primary" id="btnCodes" disabled>Remplacer la table</button>
+        <button class="btn" id="btnCodesReset">Restaurer les tables d'origine</button>
+        <span class="muted" id="codesParseInfo"></span>
+      </div>
     </div>
 
     <div class="panel stack">
@@ -865,6 +902,10 @@
       settings = { machineCol: "macc" };
     var loaded = { days: false, acts: false };
     var stops = [];
+    // Tables d'origine (Table_code_fer.xlsx, Table_code_macc.xlsx) ; config/codes dans la base les remplace
+    var DEFAULT_CODES = {"fer": {"1": "X cnl", "2": "X equipmt", "3": "X Ø", "4": "Meca", "5": "Elec", "6": "Manque bill", "7": "Four", "8": "Divers", "9": "X cage", "10": "Rbt train", "11": "Rbt canal", "12": "Rbt curs", "21": "X cnl", "22": "X equipmt", "23": "X long", "24": "Meca", "25": "Elec", "26": "Manque bill", "27": "Four", "28": "Divers", "29": "X cage", "30": "Rbt train", "31": "Rbt canal", "32": "Rbt curs", "50": "EJP", "51": "Cycle", "52": "X longueur non attrib", "53": "Regl train"}, "macc": {"0": "N/A", "300": "STATION EAU 1", "301": "POMPES P8", "302": "POMPES P8A", "303": "VENTILATEURS", "320": "STATION EAU 2 TEMPCORE", "321": "POMPES P5", "322": "POMPES P6", "323": "POMPES P7", "324": "VENTILATEURS", "330": "STATION EAU 2 LAMINOIR", "331": "POMPES P1", "332": "POMPES P2", "333": "POMPES P3", "334": "POMPES BOOSTER", "335": "POMPES P9", "336": "POMPES P10", "337": "POMPES P11", "338": "VENTILATEURS", "340": "POMPES P4", "341": "SURPRESSEUR", "342": "FILTRE FVT1", "343": "FILTRE FVT2", "344": "FILTRE FVT3", "345": "FILTRE FVT4", "346": "FILTRE FVT5", "347": "FILTRE FVL1", "348": "FILTRE FVL2", "349": "FILTRE FVL3", "350": "FILTRE FVL4", "351": "FILTRE FVL5", "353": "TRAITEMENTS D'EAU", "354": "ADDOUCISSEURS", "355": "POMPES A SAUMURE", "357": "EPAICISSEUR IS1", "358": "EPAICISSEUR IS2", "359": "PONT RACLEUR", "360": "BENNE HYDROCICLONE", "370": "COMPRESSEURS", "400": "PONT GH PARC A BILLETES", "401": "PONT ADC PARC A BILLETES", "405": "TABLE D'ENFOURNEMENT", "406": "RIPEURS", "407": "CENTALE HYDRAULIQUE ENFOURNEMENT", "408": "TRANSFERT", "409": "TATEUR D'URGENCE", "410": "VRL CHARGEMENT", "411": "VRL ENFOURNEMENT", "412": "BUTEE ENFOURNEMENT", "415": "ENFOURNEUSE", "420": "POUSSEUSE DX", "421": "POUSSEUSE SX", "422": "PORTE ENFOURNEMENT", "423": "PORTE SECURITE FOUR", "425": "FOUR", "426": "TATEUR 1", "427": "TATEUR 2", "428": "PORTE DEF. COTE DEFORNEUSE", "429": "PORTE DEF. SORTIE FOUR", "430": "DEFOURNEUSE", "431": "CELLULE SORTIE FOUR (PHx)", "435": "TRO 0", "440": "DECALAMINEUSE", "441": "CELLULE SORTIE DECALAMINEUSE (PHb)", "445": "VOIES RLX AV SOUDEUSE VUF1", "446": "VOIES RLX AV SOUDEUSE VUF2", "449": "CELLULE ENTREE SOUDEUSE (PHc)", "450": "SOUDEUSE", "451": "CENTRALE HYDRAULIQUE SOUDEUSE", "452": "TABLE EJECTION BILLETTES", "455": "VOIES RLX AP SOUDEUSE (VAR1)", "458": "EBAVUREUSE", "460": "TRO 1", "465": "CV ARRACHEMENT", "466": "CENTRALE HYDRAULIQUE DEGRO", "467": "CENTRALE LUBRIFICATION DEGRO", "469": "CELLULE ENTREE CAGE 1 (FC1)", "470": "CAGE 1", "471": "CELLULE SORTIE CAGE 1 (FC2)", "472": "CAGE 2", "473": "CAGE 3", "475": "CAGE 4", "476": "CAGE 5", "477": "CAGE 6", "478": "CELLULE SORTIE CAGE 6 (FC3)", "479": "BOUCLEUSE 6-7", "480": "CV 1", "481": "CENTRALE LUB 7-10", "482": "CENTRALE NORTEK LAO1", "483": "CENTRALE NORTEK LAO2 (4-10)", "484": "CELLULE ENTREE CAGE 7 (FC4)", "485": "CAGE 7", "486": "BOUCLEUSE 7-8", "487": "CAGE 8", "490": "BOUCLEUSE 8-9", "495": "CAGE 9", "496": "BOUCLEUSE 9-10", "497": "CAGE 10", "500": "BOUCLEUESE 10-11", "501": "CENTRALE LUB 11-12", "502": "CENTRALE NORTEK LAO3 (11-14)", "505": "CAGE 11", "506": "CAGE 12", "510": "BOUCLEUSE 12-13", "511": "CENTRALE LUB 13-14", "515": "CAGE 13", "516": "BOUCLEUSE 13-14", "517": "CAGE 14", "520": "BOUCLEUSE H 14-15 VEINE 1", "521": "CELLULE SORTIE BOUCLEUSE H VEINE 1 (FC5.1)", "523": "BOUCLEUSE H 14-15 VEINE 2", "524": "CELLULE SORTIE BOUCLEUSE H VEINE 1 (FC5.2)", "525": "TRO 3.1", "526": "CV 3.1", "527": "TRO 3.2", "528": "CV 3.2", "529": "CENTRALE LUBRIFICATION 15-16", "530": "CAGE 15", "531": "BOUCLEUSE 15-16 VEINE 1", "532": "CAGE 16", "533": "BOUCLEUSE 15-16 VEINE 2", "535": "BOUCLEUSE 16-17", "536": "CENTRALE LUBRIFICATION 17-18", "540": "CAGES 17 18", "541": "CELLULE SORTIE FINISSEUR VEINE 1 (FC6.1)", "542": "CELLULE SORTIE FINISSEUR VEINE 2 (FC6.2)", "545": "TRO 4.1", "546": "TRO 4.2", "550": "TEMPCORE 1 (diam 12)", "551": "TEMPCORE 2 (diam 14-16)", "552": "CELLULE AVANT TRO5.1 (FC7.1)", "553": "LASER VEINE 1", "554": "TRO 5.1", "555": "CV 4.1", "556": "CELLULE AVANT TRO5.2 (FC7.2)", "557": "LASER VEINE 2", "558": "TRO 5.2", "559": "CV 4.2", "560": "MORCELEUSE VEINE 1", "561": "MORCELEUSE VEINE 2", "562": "CENTRALE LUBRIFICATION CV4+FQ", "565": "FREIN QUEUE 1.1", "566": "FREIN QUEUE 1.2", "567": "FREIN QUEUE 2.1", "568": "FREIN QUEUE 2.2", "570": "CANALETTE FILE 1-2", "572": "CANALETTE FILE 3-4", "574": "CELLULES ENTREE TEMPCORE GROS DIAM (FC8)", "575": "TEMPCORE 3 (diam 20-28)", "576": "TEMPCORE 4 (diam 32-40)", "577": "CELLULE AVANT TRO7 (FC9)", "580": "TRO 7", "585": "CV 5", "586": "LASER CV5", "587": "CLAPET CONTR?LE QUEUE CV5", "590": "VR1", "591": "VR2", "592": "VR3", "595": "CURSEUR", "596": "DEVIATEUR", "597": "SEPARATEUR", "598": "CENTRALE HYDRAULIQUE CURSEUR", "600": "REFROIDISSOIR", "601": "GRADINS REFROIDISSOIR", "602": "VRL ALIGNEMENT", "605": "TRANSFERT", "606": "CENTRALE HYDRAULIQUE TRANSFERT", "610": "VOIES RLX MAGNETIQUE CM 500 (VR1)", "611": "VOIES RLX AVANT CM 500 (VR2)", "614": "CENTRALE HYDRAULIQUE BOTTELAGE", "615": "CM 500", "616": "BUTEE LAGUNA", "617": "RACLEUR", "618": "TAPIS A CHUTES", "620": "VOIES RLX APRES CM 500 (VR3)", "625": "TRANSPORTEUR 4.1", "626": "TRANSPORTEUR 4.2", "627": "TRANSPORTEUR 6", "630": "COMPTEURS BARRES", "631": "ROUES DEMELEUSES", "635": "SUPPORT DE FARDES", "636": "VRL 6", "637": "VRL 9", "638": "KNCA 1", "639": "MOULEUR 1", "640": "MOULEUR 2", "641": "KNCA 2", "642": "MOULEUR 3", "643": "MOULEUR 4", "644": "KNCA 3", "645": "MOULEUR 5", "646": "BUTEE 6 M", "647": "BUTEE 12 M", "648": "VRL 11", "650": "TRANSPORTEUR 12", "651": "TRANSPORTEUR 12 BIS", "655": "BASCULE", "656": "POSTE A SOUDER", "657": "ETIQUETTEUSE", "660": "PONT ANSELMI", "661": "PONT SAMETO 1", "662": "PONT SAMETO 2", "663": "PONT ADC", "700": "DEFAUTS METAL", "701": "BILLETTES CINTREES", "702": "DELESTAGE GAZ", "703": "FOSSES INNONDEES", "710": "ESSAIS", "720": "SECURITE", "900": "SERVICES GENERAUX"}};
+    var codes = DEFAULT_CODES,
+      codesCustom = false;
     var ui = {
       tab: "machine",
       from: null,
@@ -969,11 +1010,29 @@
     function uid() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     }
+    function normCode(c) {
+      c = String(c == null ? "" : c).trim();
+      return /^\d+([.,]0+)?$/.test(c) ? String(parseInt(c, 10)) : c;
+    }
+    function codeName(kind, c) {
+      return (codes[kind] || {})[normCode(c)] || "";
+    }
+    function codeLabel(kind, c) {
+      if (!c) return "(vide)";
+      var n = codeName(kind, c);
+      if (!n) return String(c);
+      return ui.groupByName ? n : n + " (" + normCode(c) + ")";
+    }
+    // cellule de tableau : nom lisible et code en dessous
+    function codeCell(kind, c) {
+      var n = codeName(kind, c);
+      return n ? esc(n) + '<span class="codename">' + esc(c) + "</span>" : esc(c);
+    }
     function machineOf(s) {
-      return (settings.machineCol === "fer" ? s.fer : s.macc) || "(vide)";
+      return settings.machineCol === "fer" ? codeLabel("fer", s.fer) : codeLabel("macc", s.macc);
     }
     function typeOf(s) {
-      return (settings.machineCol === "fer" ? s.macc : s.fer) || "(vide)";
+      return settings.machineCol === "fer" ? codeLabel("macc", s.macc) : codeLabel("fer", s.fer);
     }
     function diamOf(s) {
       return s.diam || "(sans diamètre)";
@@ -1399,7 +1458,7 @@
         return a.line - b.line;
       });
       $("preview").innerHTML =
-        '<table><thead><tr><th class="num">Ligne</th><th>Début</th><th>Fin</th><th class="num">Durée</th><th>Code FER</th><th>Code Macc</th><th>Détail</th><th>Contrôle</th></tr></thead><tbody>' +
+        '<table><thead><tr><th class="num">Ligne</th><th>Début</th><th>Fin</th><th class="num">Durée</th><th>FER</th><th>Macc</th><th>Détail</th><th>Contrôle</th></tr></thead><tbody>' +
         rows
           .slice(0, 300)
           .map(function (r) {
@@ -1415,9 +1474,9 @@
               '</td><td class="num">' +
               (r.error ? "" : fmtDur(r.end - r.start)) +
               "</td><td>" +
-              esc(r.fer) +
+              codeCell("fer", r.fer) +
               "</td><td>" +
-              esc(r.macc) +
+              codeCell("macc", r.macc) +
               "</td><td>" +
               esc(r.detail) +
               "</td><td>" +
@@ -1544,7 +1603,9 @@
             dateDebut: fmtDate(s.start),
             dateFin: fmtDate(s.end),
             codeFER: s.fer,
+            nomFER: codeName("fer", s.fer),
             codeMacc: s.macc,
+            nomMacc: codeName("macc", s.macc),
             detail: s.detail,
             diametre: s.diam,
             typeAction: s.typeAction,
@@ -2129,7 +2190,7 @@
       }
       var dis = ro ? " disabled" : "";
       $("actTable").innerHTML =
-        '<table class="actions-table"><thead><tr><th>Début</th><th>Fin</th><th class="num">Durée</th><th>Diamètre</th><th>Code FER</th><th>Code Macc</th><th>Détail</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Délai</th><th>Mis à jour</th></tr></thead><tbody>' +
+        '<table class="actions-table"><thead><tr><th>Début</th><th>Fin</th><th class="num">Durée</th><th>Diamètre</th><th>FER</th><th>Macc</th><th>Détail</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Délai</th><th>Mis à jour</th></tr></thead><tbody>' +
         rows
           .map(function (x) {
             var s = x.s,
@@ -2161,9 +2222,9 @@
               "</td><td>" +
               esc(s.diam) +
               "</td><td>" +
-              esc(s.fer) +
+              codeCell("fer", s.fer) +
               "</td><td>" +
-              esc(s.macc) +
+              codeCell("macc", s.macc) +
               '</td><td class="detail">' +
               esc(s.detail) +
               "</td>" +
@@ -2246,7 +2307,9 @@
           "Durée",
           "Diamètre",
           "Code FER",
+          "Nom FER",
           "Code Macc",
+          "Nom Macc",
           "Détail",
           "Type d'action",
           "Action",
@@ -2264,7 +2327,9 @@
             fmtDur(s.end - s.start),
             s.diam,
             s.fer,
+            codeName("fer", s.fer),
             s.macc,
+            codeName("macc", s.macc),
             s.detail,
             s.typeAction,
             s.action,
@@ -2317,6 +2382,7 @@
       renderHeader();
       renderChips();
       renderBatches();
+      renderCodesInfo();
       document.querySelectorAll("nav.tabs button").forEach(function (b) {
         b.setAttribute("aria-selected", b.dataset.tab === tab);
       });
@@ -2542,9 +2608,69 @@
       }, 0);
     });
 
+    // ---------- Tables de correspondance ----------
+    var codesParsed = null;
+    function renderCodesInfo() {
+      var unknown = { fer: {}, macc: {} };
+      stops.forEach(function (s) {
+        if (s.fer && !codeName("fer", s.fer)) unknown.fer[s.fer] = 1;
+        if (s.macc && !codeName("macc", s.macc)) unknown.macc[s.macc] = 1;
+      });
+      var line = function (kind, label) {
+        var u = Object.keys(unknown[kind]);
+        return "<li><strong>" + label + "</strong> : " + Object.keys(codes[kind] || {}).length + " codes" +
+          (u.length ? ' · <span class="pill late">' + u.length + " code(s) des arrêts sans nom : " + esc(u.slice(0, 15).join(", ")) + (u.length > 15 ? "…" : "") + "</span>" : stops.length ? ' · <span class="pill ok">tous les codes des arrêts ont un nom</span>' : "") + "</li>";
+      };
+      $("codesInfo").innerHTML = '<ul style="margin: 0; padding-left: 18px">' + line("fer", "Codes FER") + line("macc", "Codes Macc") + "</ul>" +
+        '<p class="hint" style="margin-top: 6px">' + (codesCustom ? "Tables mises à jour par un Admin." : "Tables d'origine (Table_code_fer.xlsx et Table_code_macc.xlsx).") + "</p>";
+      $("btnCodesReset").hidden = !codesCustom;
+    }
+    function parseCodes() {
+      var txt = $("codesPaste").value, map = {}, n = 0, bad = 0;
+      parseTSV(txt).forEach(function (cells, i) {
+        var c = normCode(cells[0]), name = String(cells[1] || "").trim();
+        if (!c || !name) { bad++; return; }
+        if (i === 0 && !/\d/.test(c)) return; // en-tête
+        map[c] = name; n++;
+      });
+      codesParsed = n ? map : null;
+      $("codesParseInfo").textContent = txt.trim() ? n + " code(s) lus" + (bad ? " · " + bad + " ligne(s) incomplète(s) ignorée(s)" : "") : "";
+      $("btnCodes").disabled = !codesParsed;
+    }
+    async function saveCodes(next) {
+      if (!isAdmin()) return;
+      try {
+        if (mode === "db") await db.doc("config/codes").set(next);
+        else { codes = { fer: next.fer || DEFAULT_CODES.fer, macc: next.macc || DEFAULT_CODES.macc }; codesCustom = !!(next.fer || next.macc); try { localStorage.setItem(LOCAL_KEY + "-codes", JSON.stringify(next)); } catch (e) {} refresh(); }
+        return true;
+      } catch (e) { toast(dbErrorMessage(e)); return false; }
+    }
+    $("codesPaste").addEventListener("input", parseCodes);
+    $("btnCodes").addEventListener("click", async function () {
+      if (!codesParsed) return;
+      var kind = $("codesKind").value, next = { fer: codesCustom ? codes.fer : null, macc: codesCustom ? codes.macc : null };
+      if (!next.fer) next.fer = DEFAULT_CODES.fer;
+      if (!next.macc) next.macc = DEFAULT_CODES.macc;
+      next[kind] = codesParsed;
+      if (await saveCodes(next)) { $("codesPaste").value = ""; parseCodes(); toast("Table " + (kind === "fer" ? "FER" : "Macc") + " remplacée"); }
+    });
+    $("btnCodesReset").addEventListener("click", async function () {
+      if (await saveCodes({})) toast("Tables d'origine restaurées");
+    });
+    $("groupByName").addEventListener("change", function () {
+      ui.groupByName = this.checked;
+      ui.sel.machine = ui.sel.type = null;
+      ui.focus = { machine: null, type: null };
+      renderAll();
+    });
+
     // ---------- Init ----------
     function startLocal() {
       mode = "local";
+      try {
+        var lc = JSON.parse(localStorage.getItem(LOCAL_KEY + "-codes") || "null");
+        if (lc && (lc.fer || lc.macc)) { codes = { fer: lc.fer || DEFAULT_CODES.fer, macc: lc.macc || DEFAULT_CODES.macc }; codesCustom = true; }
+      } catch (e) {}
       role = "admin";
       loadLocal();
       refresh();
@@ -2603,6 +2729,15 @@
           loaded.acts = true;
           refresh();
         }, onErr);
+      db.doc("config/codes").onSnapshot(function (snap) {
+        var d = snap.exists ? snap.data() : null;
+        codesCustom = !!(d && (d.fer || d.macc));
+        codes = {
+          fer: (d && d.fer) || DEFAULT_CODES.fer,
+          macc: (d && d.macc) || DEFAULT_CODES.macc,
+        };
+        refresh();
+      }, onErr);
       db.doc("config/settings").onSnapshot(function (snap) {
         var d = snap.exists ? snap.data() : null;
         if (
