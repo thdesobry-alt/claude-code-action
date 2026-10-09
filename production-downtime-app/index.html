@@ -1,0 +1,2014 @@
+<title>Arrêts de production</title>
+<meta charset="utf-8" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, viewport-fit=cover"
+/>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+/>
+<style>
+  /* Layout: atelier control panel — header band, sticky tab rail, filter strip shared by analysis tabs, content below */
+  :root {
+    --bg: #eef1f4;
+    --surface: #ffffff;
+    --surface-2: #f6f8fa;
+    --fg: #16202a;
+    --muted: #5b6b7a;
+    --line: #d3dbe2;
+    --bar: #2f5d8a;
+    --bar-soft: #a9bfd6;
+    --accent: #c97a00;
+    --accent-soft: #fbecd2;
+    --danger: #b8322a;
+    --danger-soft: #f8dedb;
+    --ok: #2e7d4f;
+    --ok-soft: #dcefe3;
+    --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --font-body:
+      "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-data:
+      "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --radius: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f151b;
+      --surface: #17202a;
+      --surface-2: #1d2833;
+      --fg: #e3e9ef;
+      --muted: #8fa0b0;
+      --line: #2b3844;
+      --bar: #5b8fc4;
+      --bar-soft: #2f4a66;
+      --accent: #f2a93b;
+      --accent-soft: #3d2e14;
+      --danger: #ef6b5b;
+      --danger-soft: #42201d;
+      --ok: #5cc28a;
+      --ok-soft: #173325;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f151b;
+    --surface: #17202a;
+    --surface-2: #1d2833;
+    --fg: #e3e9ef;
+    --muted: #8fa0b0;
+    --line: #2b3844;
+    --bar: #5b8fc4;
+    --bar-soft: #2f4a66;
+    --accent: #f2a93b;
+    --accent-soft: #3d2e14;
+    --danger: #ef6b5b;
+    --danger-soft: #42201d;
+    --ok: #5cc28a;
+    --ok-soft: #173325;
+    color-scheme: dark;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  html,
+  body {
+    margin: 0;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.5 var(--font-body);
+  }
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 0 48px;
+  }
+  header.top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 24px;
+    padding-block: 20px 12px;
+  }
+  header.top h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 30px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin: 0;
+    text-wrap: balance;
+  }
+  header.top h1 span {
+    color: var(--accent);
+  }
+  header.top .sub {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  nav.tabs {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--bg);
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    border-bottom: 2px solid var(--line);
+    margin-bottom: 16px;
+  }
+  nav.tabs button {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    color: var(--muted);
+    padding: 10px 14px 8px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+  }
+  nav.tabs button[aria-selected="true"] {
+    color: var(--fg);
+    border-bottom-color: var(--accent);
+  }
+  nav.tabs button:hover {
+    color: var(--fg);
+  }
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    min-width: 0;
+  }
+  .stack {
+    display: grid;
+    gap: 16px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: end;
+  }
+  label.f {
+    display: grid;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 8px;
+    min-width: 0;
+  }
+  input[type="datetime-local"] {
+    font-family: var(--font-data);
+    font-size: 13px;
+  }
+  textarea.paste {
+    width: 100%;
+    min-height: 180px;
+    font-family: var(--font-data);
+    font-size: 12px;
+    white-space: pre;
+    resize: vertical;
+  }
+  .btn {
+    font: 500 13px var(--font-body);
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--fg);
+    border-radius: 4px;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .btn:hover {
+    border-color: var(--muted);
+  }
+  .btn.primary {
+    background: var(--bar);
+    border-color: var(--bar);
+    color: #fff;
+  }
+  .btn.primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn.danger {
+    color: var(--danger);
+  }
+  .btn.sm {
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+  }
+  h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  p.hint {
+    color: var(--muted);
+    margin: 0;
+    max-width: 70ch;
+  }
+  .filters {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .filters .chips-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .chipbox {
+    min-width: 0;
+  }
+  .chipbox .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .chipbox .head h3 {
+    margin: 0;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 108px;
+    overflow-y: auto;
+  }
+  .chip {
+    font: 500 12px var(--font-data);
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 3px 10px;
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--bar);
+    border-color: var(--bar);
+    color: #fff;
+  }
+  .linkbtn {
+    background: none;
+    border: 0;
+    color: var(--bar);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0 2px;
+  }
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+  }
+  .kpi .v {
+    font-family: var(--font-data);
+    font-size: 22px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi .l {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .scroll {
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 600;
+    background: var(--surface-2);
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+  }
+  td.num,
+  th.num {
+    text-align: right;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  td.mono {
+    font-family: var(--font-data);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  tr.classA td:first-child {
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  tr.err td {
+    background: var(--danger-soft);
+  }
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pill.a {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .pill.late {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+  .pill.ok {
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+  .pill.ex {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--fg);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .chart svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+  }
+  .chart svg text {
+    fill: var(--muted);
+    font-family: var(--font-data);
+    font-size: 11px;
+  }
+  .chart .grid {
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+  .chart .bar {
+    fill: var(--bar);
+  }
+  .chart .bar.b {
+    fill: var(--bar-soft);
+  }
+  .chart .bar:hover {
+    fill: var(--accent);
+  }
+  .chart .cum {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+  .chart .dot {
+    fill: var(--accent);
+  }
+  .chart .p80 {
+    stroke: var(--danger);
+    stroke-dasharray: 5 4;
+    stroke-width: 1.2;
+  }
+  .chart text.p80t {
+    fill: var(--danger);
+  }
+  .chart text.val {
+    fill: var(--fg);
+    font-size: 10px;
+  }
+  .empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .seg button {
+    font: 500 12px var(--font-body);
+    background: var(--surface-2);
+    color: var(--muted);
+    border: 0;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] {
+    background: var(--fg);
+    color: var(--surface);
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 860px) {
+    .grid2 {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .actions-table td input,
+  .actions-table td select,
+  .actions-table td textarea {
+    width: 100%;
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+  .actions-table td textarea {
+    min-height: 34px;
+    resize: vertical;
+    font-family: var(--font-body);
+  }
+  .actions-table td.detail {
+    min-width: 200px;
+  }
+  .actions-table td.act {
+    min-width: 220px;
+  }
+  .actions-table td.typ {
+    min-width: 130px;
+  }
+  .actions-table td.pil {
+    min-width: 110px;
+  }
+  .actions-table td.del {
+    min-width: 130px;
+  }
+  .confirm {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 12px;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    background: var(--fg);
+    color: var(--surface);
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    z-index: 20;
+  }
+  .muted {
+    color: var(--muted);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .chart .bar {
+      transition: fill 0.12s;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Arrêts de <span>production</span></h1>
+    <div class="sub" id="dataSummary"></div>
+  </header>
+
+  <div class="banner" id="exampleBanner" hidden>
+    <span class="pill ex">Exemple</span>
+    <span
+      >Ces arrêts sont des données d'exemple pour montrer l'outil. Collez vos
+      propres arrêts dans l'onglet Saisie.</span
+    >
+    <button class="btn sm" id="clearExample">Effacer l'exemple</button>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="saisie" aria-selected="true">
+      Saisie des arrêts
+    </button>
+    <button role="tab" data-tab="machine" aria-selected="false">
+      Analyse Pareto Machine
+    </button>
+    <button role="tab" data-tab="type" aria-selected="false">
+      Analyse Pareto Type d'arrêts
+    </button>
+    <button role="tab" data-tab="actions" aria-selected="false">Actions</button>
+  </nav>
+
+  <!-- Filtres partagés par les onglets d'analyse -->
+  <section class="panel filters" id="filters" hidden>
+    <div class="row">
+      <label class="f"
+        >Début d'analyse<input type="datetime-local" step="1" id="fFrom"
+      /></label>
+      <label class="f"
+        >Fin d'analyse<input type="datetime-local" step="1" id="fTo"
+      /></label>
+      <button class="btn" id="btnDay">Dernière journée</button>
+      <button class="btn" id="btnPrevDay">◀ Jour</button>
+      <button class="btn" id="btnNextDay">Jour ▶</button>
+      <button class="btn" id="btnAll">Toute la période</button>
+    </div>
+    <div class="chips-row">
+      <div class="chipbox">
+        <div class="head">
+          <h3>Machines</h3>
+          <span
+            ><button class="linkbtn" data-all="machine">Toutes</button> ·
+            <button class="linkbtn" data-none="machine">Aucune</button></span
+          >
+        </div>
+        <div class="chips" id="chipsMachine"></div>
+      </div>
+      <div class="chipbox">
+        <div class="head">
+          <h3>Types d'arrêts</h3>
+          <span
+            ><button class="linkbtn" data-all="type">Tous</button> ·
+            <button class="linkbtn" data-none="type">Aucun</button></span
+          >
+        </div>
+        <div class="chips" id="chipsType"></div>
+      </div>
+      <div class="chipbox">
+        <div class="head">
+          <h3>Diamètres</h3>
+          <span
+            ><button class="linkbtn" data-all="diam">Tous</button> ·
+            <button class="linkbtn" data-none="diam">Aucun</button></span
+          >
+        </div>
+        <div class="chips" id="chipsDiam"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAISIE -->
+  <section data-panel="saisie" class="stack">
+    <div class="panel stack">
+      <div>
+        <h2>Coller des arrêts depuis Excel</h2>
+        <p class="hint">
+          Sélectionnez les 5 colonnes dans Excel (date début, date fin, code
+          FER, code Macc, détail), copiez, puis collez ci-dessous. Format des
+          dates : jj/mm/aaaa hh:mm:ss. Les lignes d'en-tête sont ignorées et les
+          espaces autour du détail sont supprimés.
+        </p>
+      </div>
+      <div class="row">
+        <label class="f"
+          >Diamètre de ces arrêts<input
+            id="diam"
+            placeholder="ex. 350"
+            style="width: 160px"
+        /></label>
+        <label class="f"
+          >Axe « Machine »
+          <select id="machineCol">
+            <option value="macc">
+              Code Macc = machine, code FER = type d'arrêt
+            </option>
+            <option value="fer">
+              Code FER = machine, code Macc = type d'arrêt
+            </option>
+          </select>
+        </label>
+      </div>
+      <textarea
+        class="paste"
+        id="paste"
+        placeholder="01/10/2026 06:12:00&#9;01/10/2026 06:25:30&#9;MEC&#9;EXT01&#9;  Casse courroie  "
+      ></textarea>
+      <div class="row">
+        <button class="btn primary" id="btnImport" disabled>
+          Ajouter les arrêts
+        </button>
+        <button class="btn" id="btnClearPaste">Vider la zone</button>
+        <span class="muted" id="parseInfo"></span>
+      </div>
+      <div class="scroll" id="preview"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Arrêts enregistrés par diamètre</h2>
+      <div class="scroll" id="batches"></div>
+    </div>
+  </section>
+
+  <!-- PARETO MACHINE -->
+  <section data-panel="machine" class="stack" hidden></section>
+  <!-- PARETO TYPE -->
+  <section data-panel="type" class="stack" hidden></section>
+
+  <!-- ACTIONS -->
+  <section data-panel="actions" class="stack" hidden>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between">
+        <div>
+          <h2>Plan d'actions</h2>
+          <p class="hint">
+            Tous les arrêts de la période et des filtres sélectionnés. Les
+            champs Type d'action, Action, Pilote et Délai sont enregistrés au
+            fur et à mesure.
+          </p>
+        </div>
+        <div class="row">
+          <label class="f"
+            >Afficher
+            <select id="actFilter">
+              <option value="all">Tous les arrêts</option>
+              <option value="todo">Sans action</option>
+              <option value="with">Avec action</option>
+              <option value="late">Délai dépassé</option>
+            </select>
+          </label>
+          <button class="btn" id="btnCopy">Copier pour Excel</button>
+        </div>
+      </div>
+      <div class="kpis" id="actKpis"></div>
+      <div class="scroll" id="actTable"></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<datalist id="actionTypes">
+  <option value="Curative"></option>
+  <option value="Corrective"></option>
+  <option value="Préventive"></option>
+  <option value="Amélioration"></option>
+  <option value="Formation"></option>
+  <option value="Organisation"></option>
+</datalist>
+
+<script>
+  (function () {
+    "use strict";
+    var KEY = "arrets-production-v1";
+    var state = { stops: [], machineCol: "macc", example: false };
+    var ui = {
+      tab: "saisie",
+      from: null,
+      to: null,
+      sel: { machine: null, type: null, diam: null },
+      metric: { machine: "dur", type: "dur" },
+      focus: { machine: null, type: null },
+    };
+
+    // ---------- Storage ----------
+    function load() {
+      try {
+        var raw = localStorage.getItem(KEY);
+        if (raw) {
+          var d = JSON.parse(raw);
+          if (d && Array.isArray(d.stops)) state = Object.assign(state, d);
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+    function save() {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    // ---------- Helpers ----------
+    var $ = function (id) {
+      return document.getElementById(id);
+    };
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        }[c];
+      });
+    }
+    function pad(n) {
+      return (n < 10 ? "0" : "") + n;
+    }
+    function fmtDate(ms) {
+      var d = new Date(ms);
+      return (
+        pad(d.getDate()) +
+        "/" +
+        pad(d.getMonth() + 1) +
+        "/" +
+        d.getFullYear() +
+        " " +
+        pad(d.getHours()) +
+        ":" +
+        pad(d.getMinutes()) +
+        ":" +
+        pad(d.getSeconds())
+      );
+    }
+    function toLocalInput(ms) {
+      var d = new Date(ms);
+      return (
+        d.getFullYear() +
+        "-" +
+        pad(d.getMonth() + 1) +
+        "-" +
+        pad(d.getDate()) +
+        "T" +
+        pad(d.getHours()) +
+        ":" +
+        pad(d.getMinutes()) +
+        ":" +
+        pad(d.getSeconds())
+      );
+    }
+    function fromLocalInput(v) {
+      if (!v) return null;
+      var m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+      if (!m) return null;
+      return new Date(
+        +m[1],
+        +m[2] - 1,
+        +m[3],
+        +m[4],
+        +m[5],
+        +(m[6] || 0),
+      ).getTime();
+    }
+    function fmtDur(ms) {
+      var s = Math.round(ms / 1000),
+        h = Math.floor(s / 3600),
+        m = Math.floor((s % 3600) / 60),
+        r = s % 60;
+      return h + ":" + pad(m) + ":" + pad(r);
+    }
+    function fmtMin(ms) {
+      return (ms / 60000).toLocaleString("fr-FR", { maximumFractionDigits: 1 });
+    }
+    function pct(x) {
+      return (
+        (x * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " %"
+      );
+    }
+    function startOfDay(ms) {
+      var d = new Date(ms);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    }
+    function addDays(ms, n) {
+      var d = new Date(ms);
+      d.setDate(d.getDate() + n);
+      return d.getTime();
+    }
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+    function machineOf(s) {
+      return (state.machineCol === "fer" ? s.fer : s.macc) || "(vide)";
+    }
+    function typeOf(s) {
+      return (state.machineCol === "fer" ? s.macc : s.fer) || "(vide)";
+    }
+    function diamOf(s) {
+      return s.diam || "(sans diamètre)";
+    }
+    var toastT;
+    function toast(msg) {
+      var t = $("toast");
+      t.textContent = msg;
+      t.hidden = false;
+      clearTimeout(toastT);
+      toastT = setTimeout(function () {
+        t.hidden = true;
+      }, 2200);
+    }
+
+    // ---------- Parsing ----------
+    function parseFrDate(str) {
+      var m = String(str)
+        .trim()
+        .match(
+          /^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?$/,
+        );
+      if (!m) return null;
+      var d = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5], +(m[6] || 0));
+      if (d.getDate() !== +m[1] || d.getMonth() !== +m[2] - 1) return null;
+      return d.getTime();
+    }
+    // TSV parser that respects Excel's quoting of multi-line cells
+    function parseTSV(text) {
+      var rows = [],
+        row = [],
+        cell = "",
+        i = 0,
+        q = false,
+        sep = text.indexOf("\t") >= 0 ? "\t" : ";";
+      while (i < text.length) {
+        var c = text[i];
+        if (q) {
+          if (c === '"') {
+            if (text[i + 1] === '"') {
+              cell += '"';
+              i++;
+            } else q = false;
+          } else cell += c;
+        } else if (c === '"' && cell === "") q = true;
+        else if (c === sep) {
+          row.push(cell);
+          cell = "";
+        } else if (c === "\n" || c === "\r") {
+          if (c === "\r" && text[i + 1] === "\n") i++;
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
+        } else cell += c;
+        i++;
+      }
+      if (cell !== "" || row.length) {
+        row.push(cell);
+        rows.push(row);
+      }
+      return rows.filter(function (r) {
+        return r.some(function (c) {
+          return c.trim() !== "";
+        });
+      });
+    }
+    function parsePaste(text, diam) {
+      var out = { ok: [], errors: [], headers: 0 };
+      parseTSV(text).forEach(function (cells, idx) {
+        var a = parseFrDate(cells[0] || ""),
+          b = parseFrDate(cells[1] || "");
+        if (a == null && b == null && idx === 0) {
+          out.headers++;
+          return;
+        }
+        var rec = {
+          line: idx + 1,
+          raw: cells,
+          start: a,
+          end: b,
+          fer: (cells[2] || "").trim(),
+          macc: (cells[3] || "").trim(),
+          detail: (cells.slice(4).join(" ") || "").trim(),
+          diam: diam,
+        };
+        var err = [];
+        if (a == null) err.push("date début invalide");
+        if (b == null) err.push("date fin invalide");
+        if (a != null && b != null && b < a) err.push("fin avant début");
+        if (err.length) {
+          rec.error = err.join(", ");
+          out.errors.push(rec);
+        } else out.ok.push(rec);
+      });
+      return out;
+    }
+
+    // ---------- Filtering ----------
+    function allValues(fn) {
+      var set = {};
+      state.stops.forEach(function (s) {
+        set[fn(s)] = 1;
+      });
+      return Object.keys(set).sort(function (a, b) {
+        return a.localeCompare(b, "fr", { numeric: true });
+      });
+    }
+    function isSel(kind, v) {
+      var s = ui.sel[kind];
+      return !s || s.has(v);
+    }
+    function overlap(s) {
+      var a = Math.max(s.start, ui.from),
+        b = Math.min(s.end, ui.to);
+      return b - a;
+    }
+    function filtered() {
+      if (ui.from == null || ui.to == null) return [];
+      return state.stops
+        .filter(function (s) {
+          var o = overlap(s);
+          if (o < 0 || (o === 0 && !(s.start >= ui.from && s.start <= ui.to)))
+            return false;
+          return (
+            isSel("machine", machineOf(s)) &&
+            isSel("type", typeOf(s)) &&
+            isSel("diam", diamOf(s))
+          );
+        })
+        .map(function (s) {
+          return { s: s, dur: Math.max(0, overlap(s)) };
+        });
+    }
+    function setDefaultRange(force) {
+      if (!state.stops.length) {
+        var t = startOfDay(Date.now());
+        ui.from = t;
+        ui.to = addDays(t, 1);
+        return;
+      }
+      if (!force && ui.from != null) return;
+      var last = Math.max.apply(
+        null,
+        state.stops.map(function (s) {
+          return s.start;
+        }),
+      );
+      ui.from = startOfDay(last);
+      ui.to = addDays(ui.from, 1);
+    }
+
+    // ---------- Rendering: header & filters ----------
+    function renderSummary() {
+      var n = state.stops.length;
+      if (!n) {
+        $("dataSummary").textContent = "Aucun arrêt enregistré";
+        return;
+      }
+      var min = Math.min.apply(
+          null,
+          state.stops.map(function (s) {
+            return s.start;
+          }),
+        ),
+        max = Math.max.apply(
+          null,
+          state.stops.map(function (s) {
+            return s.end;
+          }),
+        );
+      $("dataSummary").textContent =
+        n +
+        " arrêts enregistrés · du " +
+        fmtDate(min).slice(0, 10) +
+        " au " +
+        fmtDate(max).slice(0, 10);
+      $("exampleBanner").hidden = !state.example;
+    }
+    function renderChips() {
+      [
+        ["machine", "chipsMachine", machineOf],
+        ["type", "chipsType", typeOf],
+        ["diam", "chipsDiam", diamOf],
+      ].forEach(function (k) {
+        var vals = allValues(k[2]);
+        $(k[1]).innerHTML = vals.length
+          ? vals
+              .map(function (v) {
+                return (
+                  '<button class="chip" data-kind="' +
+                  k[0] +
+                  '" data-v="' +
+                  esc(v) +
+                  '" aria-pressed="' +
+                  isSel(k[0], v) +
+                  '">' +
+                  esc(v) +
+                  "</button>"
+                );
+              })
+              .join("")
+          : '<span class="muted">—</span>';
+      });
+      $("fFrom").value = ui.from != null ? toLocalInput(ui.from) : "";
+      $("fTo").value = ui.to != null ? toLocalInput(ui.to) : "";
+    }
+
+    // ---------- Saisie ----------
+    var parsed = null;
+    function renderPreview() {
+      var txt = $("paste").value;
+      if (!txt.trim()) {
+        parsed = null;
+        $("preview").innerHTML = "";
+        $("parseInfo").textContent = "";
+        $("btnImport").disabled = true;
+        return;
+      }
+      parsed = parsePaste(txt, $("diam").value.trim());
+      var info = parsed.ok.length + " arrêt(s) valides";
+      if (parsed.errors.length)
+        info += " · " + parsed.errors.length + " ligne(s) en erreur ignorée(s)";
+      if (parsed.headers) info += " · en-tête ignoré";
+      if (!$("diam").value.trim()) info += " · indiquez le diamètre";
+      $("parseInfo").textContent = info;
+      $("btnImport").disabled = !parsed.ok.length;
+      var rows = parsed.ok.concat(parsed.errors).sort(function (a, b) {
+        return a.line - b.line;
+      });
+      $("preview").innerHTML =
+        '<table><thead><tr><th class="num">Ligne</th><th>Début</th><th>Fin</th><th class="num">Durée</th><th>Code FER</th><th>Code Macc</th><th>Détail</th><th>Contrôle</th></tr></thead><tbody>' +
+        rows
+          .slice(0, 300)
+          .map(function (r) {
+            return (
+              '<tr class="' +
+              (r.error ? "err" : "") +
+              '"><td class="num">' +
+              r.line +
+              '</td><td class="mono">' +
+              (r.start != null ? fmtDate(r.start) : esc(r.raw[0])) +
+              '</td><td class="mono">' +
+              (r.end != null ? fmtDate(r.end) : esc(r.raw[1])) +
+              '</td><td class="num">' +
+              (r.error ? "" : fmtDur(r.end - r.start)) +
+              "</td><td>" +
+              esc(r.fer) +
+              "</td><td>" +
+              esc(r.macc) +
+              "</td><td>" +
+              esc(r.detail) +
+              "</td><td>" +
+              (r.error
+                ? '<span class="pill late">' + esc(r.error) + "</span>"
+                : '<span class="pill ok">OK</span>') +
+              "</td></tr>"
+            );
+          })
+          .join("") +
+        "</tbody></table>" +
+        (rows.length > 300
+          ? '<p class="hint">Aperçu limité aux 300 premières lignes.</p>'
+          : "");
+    }
+    function doImport() {
+      if (!parsed || !parsed.ok.length) return;
+      if (state.example) {
+        state.stops = [];
+        state.example = false;
+      }
+      var diam = $("diam").value.trim();
+      var keys = {};
+      state.stops.forEach(function (s) {
+        keys[[s.start, s.end, s.fer, s.macc, s.diam].join("|")] = 1;
+      });
+      var added = 0,
+        dup = 0;
+      parsed.ok.forEach(function (r) {
+        var k = [r.start, r.end, r.fer, r.macc, diam].join("|");
+        if (keys[k]) {
+          dup++;
+          return;
+        }
+        keys[k] = 1;
+        added++;
+        state.stops.push({
+          id: uid(),
+          start: r.start,
+          end: r.end,
+          fer: r.fer,
+          macc: r.macc,
+          detail: r.detail,
+          diam: diam,
+          typeAction: "",
+          action: "",
+          pilote: "",
+          delai: "",
+        });
+      });
+      state.stops.sort(function (a, b) {
+        return a.start - b.start;
+      });
+      save();
+      $("paste").value = "";
+      renderPreview();
+      setDefaultRange(true);
+      renderAll();
+      toast(
+        added +
+          " arrêt(s) ajouté(s)" +
+          (dup ? " · " + dup + " doublon(s) ignoré(s)" : ""),
+      );
+    }
+    var pendingDelete = null;
+    function renderBatches() {
+      if (!state.stops.length) {
+        $("batches").innerHTML =
+          '<div class="empty">Aucun arrêt pour l\'instant. Collez un tableau Excel ci-dessus pour commencer.</div>';
+        return;
+      }
+      var g = {};
+      state.stops.forEach(function (s) {
+        var k = diamOf(s);
+        g[k] = g[k] || { n: 0, dur: 0, min: Infinity, max: -Infinity };
+        g[k].n++;
+        g[k].dur += s.end - s.start;
+        g[k].min = Math.min(g[k].min, s.start);
+        g[k].max = Math.max(g[k].max, s.end);
+      });
+      var keys = Object.keys(g).sort(function (a, b) {
+        return a.localeCompare(b, "fr", { numeric: true });
+      });
+      $("batches").innerHTML =
+        '<table><thead><tr><th>Diamètre</th><th class="num">Arrêts</th><th class="num">Durée totale</th><th>Premier arrêt</th><th>Dernier arrêt</th><th></th></tr></thead><tbody>' +
+        keys
+          .map(function (k) {
+            var x = g[k];
+            var act =
+              pendingDelete === k
+                ? '<span class="confirm">Supprimer ' +
+                  x.n +
+                  ' arrêts ? <button class="btn sm danger" data-del-yes="' +
+                  esc(k) +
+                  '">Supprimer</button><button class="btn sm" data-del-no>Annuler</button></span>'
+                : '<button class="btn sm danger" data-del="' +
+                  esc(k) +
+                  '">Supprimer</button>';
+            return (
+              "<tr><td><strong>" +
+              esc(k) +
+              '</strong></td><td class="num">' +
+              x.n +
+              '</td><td class="num">' +
+              fmtDur(x.dur) +
+              '</td><td class="mono">' +
+              fmtDate(x.min) +
+              '</td><td class="mono">' +
+              fmtDate(x.max) +
+              '</td><td style="text-align:right">' +
+              act +
+              "</td></tr>"
+            );
+          })
+          .join("") +
+        "</tbody></table>";
+    }
+
+    // ---------- Pareto ----------
+    function paretoData(keyFn, metric) {
+      var g = {};
+      filtered().forEach(function (x) {
+        var k = keyFn(x.s);
+        g[k] = g[k] || { k: k, n: 0, dur: 0 };
+        g[k].n++;
+        g[k].dur += x.dur;
+      });
+      var arr = Object.keys(g).map(function (k) {
+        return g[k];
+      });
+      var val = function (d) {
+        return metric === "n" ? d.n : d.dur;
+      };
+      arr.sort(function (a, b) {
+        return val(b) - val(a) || b.n - a.n;
+      });
+      var total = arr.reduce(function (t, d) {
+          return t + val(d);
+        }, 0),
+        cum = 0,
+        crossed = false;
+      arr.forEach(function (d) {
+        var prev = cum;
+        cum += val(d);
+        d.v = val(d);
+        d.share = total ? d.v / total : 0;
+        d.cum = total ? cum / total : 0;
+        d.a = !crossed && prev / (total || 1) < 0.8;
+        if (d.cum >= 0.8) crossed = true;
+      });
+      return { rows: arr, total: total };
+    }
+    function niceMax(v) {
+      if (v <= 0) return 1;
+      var p = Math.pow(10, Math.floor(Math.log10(v))),
+        f = v / p;
+      return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+    }
+    function chartSVG(data, metric, kind) {
+      var rows = data.rows,
+        n = rows.length;
+      var maxLabel = Math.max.apply(
+        null,
+        rows
+          .map(function (r) {
+            return r.k.length;
+          })
+          .concat([4]),
+      );
+      var rotate = n > 6 || maxLabel > 10;
+      var W = Math.max(1100, n * 56 + 120),
+        H = 400,
+        ml = 64,
+        mr = 52,
+        mt = 20,
+        mb = rotate ? Math.min(130, 24 + maxLabel * 6.2) : 40;
+      var ph = H - mt - mb,
+        pw = W - ml - mr,
+        bw = pw / n;
+      var unitMin = metric !== "n";
+      var top = rows.length ? (unitMin ? rows[0].v / 60000 : rows[0].v) : 1,
+        ymax = niceMax(top);
+      var y = function (v) {
+          return mt + ph - (v / ymax) * ph;
+        },
+        yc = function (p) {
+          return mt + ph - p * ph;
+        };
+      var s =
+        '<svg viewBox="0 0 ' +
+        W +
+        " " +
+        H +
+        '" role="img" aria-label="Diagramme de Pareto">';
+      for (var i = 0; i <= 5; i++) {
+        var gv = (ymax * i) / 5,
+          gy = y(gv);
+        s +=
+          '<line class="grid" x1="' +
+          ml +
+          '" x2="' +
+          (W - mr) +
+          '" y1="' +
+          gy +
+          '" y2="' +
+          gy +
+          '"></line>';
+        s +=
+          '<text x="' +
+          (ml - 8) +
+          '" y="' +
+          (gy + 4) +
+          '" text-anchor="end">' +
+          gv.toLocaleString("fr-FR", { maximumFractionDigits: 1 }) +
+          "</text>";
+        s +=
+          '<text x="' +
+          (W - mr + 8) +
+          '" y="' +
+          (yc(i / 5) + 4) +
+          '">' +
+          i * 20 +
+          "%</text>";
+      }
+      s +=
+        '<text x="14" y="' +
+        (mt + ph / 2) +
+        '" transform="rotate(-90 14 ' +
+        (mt + ph / 2) +
+        ')" text-anchor="middle">' +
+        (unitMin ? "Durée (min)" : "Nombre d'arrêts") +
+        "</text>";
+      s +=
+        '<line class="p80" x1="' +
+        ml +
+        '" x2="' +
+        (W - mr) +
+        '" y1="' +
+        yc(0.8) +
+        '" y2="' +
+        yc(0.8) +
+        '"></line><text class="p80t" x="' +
+        (W - mr - 4) +
+        '" y="' +
+        (yc(0.8) - 5) +
+        '" text-anchor="end">80 %</text>';
+      var pts = [];
+      rows.forEach(function (r, i) {
+        var v = unitMin ? r.v / 60000 : r.v,
+          x = ml + i * bw,
+          bwi = Math.max(4, bw * 0.72),
+          bx = x + (bw - bwi) / 2,
+          by = y(v);
+        s +=
+          '<rect class="bar' +
+          (r.a ? "" : " b") +
+          '" data-focus="' +
+          kind +
+          '" data-k="' +
+          esc(r.k) +
+          '" x="' +
+          bx +
+          '" y="' +
+          by +
+          '" width="' +
+          bwi +
+          '" height="' +
+          Math.max(0, mt + ph - by) +
+          '" style="cursor:pointer"><title>' +
+          esc(r.k) +
+          " : " +
+          (unitMin ? fmtDur(r.v) : r.v + " arrêt(s)") +
+          " · " +
+          pct(r.share) +
+          "</title></rect>";
+        if (bw > 30)
+          s +=
+            '<text class="val" x="' +
+            (x + bw / 2) +
+            '" y="' +
+            (by - 4) +
+            '" text-anchor="middle">' +
+            (unitMin ? fmtMin(r.v) : r.v) +
+            "</text>";
+        var cx = x + bw / 2,
+          lab = esc(r.k.length > 22 ? r.k.slice(0, 21) + "…" : r.k);
+        s += rotate
+          ? '<text x="' +
+            cx +
+            '" y="' +
+            (mt + ph + 12) +
+            '" text-anchor="end" transform="rotate(-40 ' +
+            cx +
+            " " +
+            (mt + ph + 12) +
+            ')">' +
+            lab +
+            "</text>"
+          : '<text x="' +
+            cx +
+            '" y="' +
+            (mt + ph + 18) +
+            '" text-anchor="middle">' +
+            lab +
+            "</text>";
+        pts.push([cx, yc(r.cum)]);
+      });
+      if (pts.length) {
+        s +=
+          '<polyline class="cum" points="' +
+          pts
+            .map(function (p) {
+              return p.join(",");
+            })
+            .join(" ") +
+          '"></polyline>';
+        pts.forEach(function (p, i) {
+          s +=
+            '<circle class="dot" cx="' +
+            p[0] +
+            '" cy="' +
+            p[1] +
+            '" r="' +
+            (i === pts.length - 1 ? 4 : 3) +
+            '"></circle>';
+        });
+      }
+      s +=
+        '<line class="grid" x1="' +
+        ml +
+        '" x2="' +
+        (W - mr) +
+        '" y1="' +
+        (mt + ph) +
+        '" y2="' +
+        (mt + ph) +
+        '" style="stroke:var(--muted)"></line>';
+      return s + "</svg>";
+    }
+    function renderPareto(kind) {
+      var el = document.querySelector('[data-panel="' + kind + '"]');
+      var keyFn = kind === "machine" ? machineOf : typeOf,
+        otherFn = kind === "machine" ? typeOf : machineOf;
+      var title =
+        kind === "machine"
+          ? "Analyse Pareto Machine"
+          : "Analyse Pareto Type d'arrêts";
+      var colName = kind === "machine" ? "Machine" : "Type d'arrêt",
+        otherName = kind === "machine" ? "Type d'arrêt" : "Machine";
+      var metric = ui.metric[kind],
+        data = paretoData(keyFn, metric),
+        f = filtered();
+      var totDur = f.reduce(function (t, x) {
+          return t + x.dur;
+        }, 0),
+        win = ui.to - ui.from;
+      var head =
+        '<div class="row" style="justify-content:space-between"><div><h2>' +
+        title +
+        '</h2><p class="hint">Du ' +
+        fmtDate(ui.from) +
+        " au " +
+        fmtDate(ui.to) +
+        ". Les arrêts à cheval sur les bornes sont comptés pour la partie comprise dans la période. Cliquez sur une barre pour voir le détail.</p></div>" +
+        '<div class="seg" role="group" aria-label="Critère"><button data-metric="' +
+        kind +
+        '" data-m="dur" aria-pressed="' +
+        (metric === "dur") +
+        '">Durée</button><button data-metric="' +
+        kind +
+        '" data-m="n" aria-pressed="' +
+        (metric === "n") +
+        '">Nombre</button></div></div>';
+      var kpis =
+        '<div class="kpis"><div class="kpi"><div class="l">Temps d\'arrêt</div><div class="v">' +
+        fmtDur(totDur) +
+        '</div></div><div class="kpi"><div class="l">Nombre d\'arrêts</div><div class="v">' +
+        f.length +
+        '</div></div><div class="kpi"><div class="l">Part de la période</div><div class="v">' +
+        (win > 0 ? pct(totDur / win) : "—") +
+        '</div></div><div class="kpi"><div class="l">' +
+        colName +
+        's à 80 %</div><div class="v">' +
+        data.rows.filter(function (r) {
+          return r.a;
+        }).length +
+        " / " +
+        data.rows.length +
+        "</div></div></div>";
+      if (!data.rows.length) {
+        el.innerHTML =
+          '<div class="panel stack">' +
+          head +
+          kpis +
+          '<div class="empty">Aucun arrêt sur cette période avec ces filtres. Élargissez la période ou cochez d\'autres filtres.</div></div>';
+        return;
+      }
+      var table =
+        '<table><thead><tr><th class="num">Rang</th><th>' +
+        colName +
+        '</th><th class="num">Arrêts</th><th class="num">Durée</th><th class="num">Min</th><th class="num">%</th><th class="num">% cumulé</th><th></th></tr></thead><tbody>' +
+        data.rows
+          .map(function (r, i) {
+            return (
+              '<tr class="' +
+              (r.a ? "classA" : "") +
+              '" data-focus="' +
+              kind +
+              '" data-k="' +
+              esc(r.k) +
+              '" style="cursor:pointer"><td class="num">' +
+              (i + 1) +
+              "</td><td><strong>" +
+              esc(r.k) +
+              '</strong></td><td class="num">' +
+              r.n +
+              '</td><td class="num">' +
+              fmtDur(r.dur) +
+              '</td><td class="num">' +
+              fmtMin(r.dur) +
+              '</td><td class="num">' +
+              pct(r.share) +
+              '</td><td class="num">' +
+              pct(r.cum) +
+              "</td><td>" +
+              (r.a ? '<span class="pill a">Priorité</span>' : "") +
+              "</td></tr>"
+            );
+          })
+          .join("") +
+        "</tbody></table>";
+      var focus = ui.focus[kind];
+      if (
+        focus &&
+        !data.rows.some(function (r) {
+          return r.k === focus;
+        })
+      )
+        focus = ui.focus[kind] = null;
+      if (!focus) focus = data.rows[0].k;
+      var det = f
+        .filter(function (x) {
+          return keyFn(x.s) === focus;
+        })
+        .sort(function (a, b) {
+          return b.dur - a.dur;
+        });
+      var sub = {};
+      det.forEach(function (x) {
+        var k = otherFn(x.s);
+        sub[k] = (sub[k] || 0) + x.dur;
+      });
+      var subRows = Object.keys(sub).sort(function (a, b) {
+        return sub[b] - sub[a];
+      });
+      var detail =
+        "<h3>Détail : " +
+        esc(focus) +
+        '</h3><p class="hint" style="margin-bottom:8px">Répartition par ' +
+        otherName.toLowerCase() +
+        " : " +
+        subRows
+          .map(function (k) {
+            return "<strong>" + esc(k) + "</strong> " + fmtDur(sub[k]);
+          })
+          .join(" · ") +
+        '</p><div class="scroll" style="max-height:420px;overflow-y:auto"><table><thead><tr><th>Début</th><th class="num">Durée</th><th>' +
+        otherName +
+        "</th><th>Détail</th></tr></thead><tbody>" +
+        det
+          .map(function (x) {
+            return (
+              '<tr><td class="mono">' +
+              fmtDate(x.s.start) +
+              '</td><td class="num">' +
+              fmtDur(x.dur) +
+              "</td><td>" +
+              esc(otherFn(x.s)) +
+              "</td><td>" +
+              esc(x.s.detail) +
+              "</td></tr>"
+            );
+          })
+          .join("") +
+        "</tbody></table></div>";
+      el.innerHTML =
+        '<div class="panel stack">' +
+        head +
+        kpis +
+        '<div class="chart scroll">' +
+        chartSVG(data, metric, kind) +
+        "</div></div>" +
+        '<div class="grid2"><div class="panel scroll">' +
+        table +
+        '</div><div class="panel">' +
+        detail +
+        "</div></div>";
+    }
+
+    // ---------- Actions ----------
+    var TYPE_ACTIONS = [
+      "",
+      "Curative",
+      "Corrective",
+      "Préventive",
+      "Amélioration",
+      "Formation",
+      "Organisation",
+    ];
+    function actionRows() {
+      var today = startOfDay(Date.now()),
+        mode = $("actFilter").value;
+      return filtered().filter(function (x) {
+        var s = x.s,
+          has = !!(s.action || s.typeAction),
+          late = isLate(s, today);
+        return (
+          mode === "all" ||
+          (mode === "todo" && !has) ||
+          (mode === "with" && has) ||
+          (mode === "late" && late)
+        );
+      });
+    }
+    function isLate(s, today) {
+      if (!s.delai || !s.action) return false;
+      var p = s.delai.split("-");
+      return (
+        new Date(+p[0], +p[1] - 1, +p[2]).getTime() <
+        (today || startOfDay(Date.now()))
+      );
+    }
+    function renderActions() {
+      var all = filtered(),
+        rows = actionRows(),
+        today = startOfDay(Date.now());
+      var withA = all.filter(function (x) {
+          return x.s.action || x.s.typeAction;
+        }).length,
+        late = all.filter(function (x) {
+          return isLate(x.s, today);
+        }).length;
+      $("actKpis").innerHTML =
+        '<div class="kpi"><div class="l">Arrêts sur la période</div><div class="v">' +
+        all.length +
+        '</div></div><div class="kpi"><div class="l">Avec action</div><div class="v">' +
+        withA +
+        '</div></div><div class="kpi"><div class="l">Sans action</div><div class="v">' +
+        (all.length - withA) +
+        '</div></div><div class="kpi"><div class="l">Délais dépassés</div><div class="v" style="color:' +
+        (late ? "var(--danger)" : "inherit") +
+        '">' +
+        late +
+        "</div></div>";
+      if (!rows.length) {
+        $("actTable").innerHTML =
+          '<div class="empty">Aucun arrêt ne correspond. Changez la période, les filtres ou l\'affichage.</div>';
+        return;
+      }
+      $("actTable").innerHTML =
+        '<table class="actions-table"><thead><tr><th>Début</th><th>Fin</th><th class="num">Durée</th><th>Diamètre</th><th>Code FER</th><th>Code Macc</th><th>Détail</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Délai</th></tr></thead><tbody>' +
+        rows
+          .map(function (x) {
+            var s = x.s,
+              opts = TYPE_ACTIONS.slice();
+            if (s.typeAction && opts.indexOf(s.typeAction) < 0)
+              opts.push(s.typeAction);
+            var st = isLate(s, today)
+              ? '<span class="pill late">En retard</span>'
+              : "";
+            return (
+              '<tr data-id="' +
+              s.id +
+              '"><td class="mono">' +
+              fmtDate(s.start) +
+              '</td><td class="mono">' +
+              fmtDate(s.end) +
+              '</td><td class="num">' +
+              fmtDur(s.end - s.start) +
+              "</td><td>" +
+              esc(s.diam) +
+              "</td><td>" +
+              esc(s.fer) +
+              "</td><td>" +
+              esc(s.macc) +
+              '</td><td class="detail">' +
+              esc(s.detail) +
+              "</td>" +
+              '<td class="typ"><select data-field="typeAction" aria-label="Type d\'action">' +
+              opts
+                .map(function (o) {
+                  return (
+                    '<option value="' +
+                    esc(o) +
+                    '"' +
+                    (o === s.typeAction ? " selected" : "") +
+                    ">" +
+                    (o ? esc(o) : "—") +
+                    "</option>"
+                  );
+                })
+                .join("") +
+              "</select></td>" +
+              '<td class="act"><textarea data-field="action" aria-label="Action">' +
+              esc(s.action) +
+              "</textarea></td>" +
+              '<td class="pil"><input data-field="pilote" aria-label="Pilote" value="' +
+              esc(s.pilote) +
+              '"></td>' +
+              '<td class="del"><input type="date" data-field="delai" aria-label="Délai" value="' +
+              esc(s.delai) +
+              '"> ' +
+              st +
+              "</td></tr>"
+            );
+          })
+          .join("") +
+        "</tbody></table>";
+    }
+    function copyActions() {
+      var rows = actionRows();
+      var lines = [
+        [
+          "Date début",
+          "Date fin",
+          "Durée",
+          "Diamètre",
+          "Code FER",
+          "Code Macc",
+          "Détail",
+          "Type d'action",
+          "Action",
+          "Pilote",
+          "Délai",
+        ].join("\t"),
+      ];
+      rows.forEach(function (x) {
+        var s = x.s,
+          d = s.delai ? s.delai.split("-").reverse().join("/") : "";
+        lines.push(
+          [
+            fmtDate(s.start),
+            fmtDate(s.end),
+            fmtDur(s.end - s.start),
+            s.diam,
+            s.fer,
+            s.macc,
+            s.detail,
+            s.typeAction,
+            s.action,
+            s.pilote,
+            d,
+          ]
+            .map(function (v) {
+              v = String(v || "");
+              return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+            })
+            .join("\t"),
+        );
+      });
+      var text = lines.join("\n");
+      try {
+        navigator.clipboard.writeText(text).then(function () {
+          toast(rows.length + " ligne(s) copiée(s) — collez dans Excel");
+        }, fallback);
+      } catch (e) {
+        fallback();
+      }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+          toast("Copié");
+        } catch (e) {
+          toast("Copie refusée par le navigateur");
+        }
+        document.body.removeChild(ta);
+      }
+    }
+
+    // ---------- Global render ----------
+    function renderAll() {
+      renderSummary();
+      renderChips();
+      renderBatches();
+      $("filters").hidden = ui.tab === "saisie";
+      if (ui.tab === "machine") renderPareto("machine");
+      if (ui.tab === "type") renderPareto("type");
+      if (ui.tab === "actions") renderActions();
+    }
+    function setTab(t) {
+      ui.tab = t;
+      document.querySelectorAll("nav.tabs button").forEach(function (b) {
+        b.setAttribute("aria-selected", b.dataset.tab === t);
+      });
+      document.querySelectorAll("[data-panel]").forEach(function (p) {
+        p.hidden = p.dataset.panel !== t;
+      });
+      try {
+        localStorage.setItem(KEY + "-tab", t);
+      } catch (e) {}
+      renderAll();
+    }
+
+    // ---------- Events ----------
+    document.querySelector("nav.tabs").addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-tab]");
+      if (b) setTab(b.dataset.tab);
+    });
+    $("paste").addEventListener("input", renderPreview);
+    $("diam").addEventListener("input", renderPreview);
+    $("btnClearPaste").addEventListener("click", function () {
+      $("paste").value = "";
+      renderPreview();
+    });
+    $("btnImport").addEventListener("click", doImport);
+    $("machineCol").addEventListener("change", function () {
+      state.machineCol = this.value;
+      ui.sel.machine = ui.sel.type = null;
+      ui.focus = { machine: null, type: null };
+      save();
+      renderAll();
+    });
+    $("clearExample").addEventListener("click", function () {
+      state.stops = [];
+      state.example = false;
+      save();
+      setDefaultRange(true);
+      renderAll();
+      toast("Exemple effacé");
+    });
+    $("batches").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      if (b.dataset.del != null) {
+        pendingDelete = b.dataset.del;
+        renderBatches();
+      } else if (b.hasAttribute("data-del-no")) {
+        pendingDelete = null;
+        renderBatches();
+      } else if (b.dataset.delYes != null) {
+        var k = b.dataset.delYes;
+        state.stops = state.stops.filter(function (s) {
+          return diamOf(s) !== k;
+        });
+        if (!state.stops.length) state.example = false;
+        pendingDelete = null;
+        save();
+        renderAll();
+        toast("Arrêts du diamètre " + k + " supprimés");
+      }
+    });
+    function onRange() {
+      var a = fromLocalInput($("fFrom").value),
+        b = fromLocalInput($("fTo").value);
+      if (a != null) ui.from = a;
+      if (b != null) ui.to = b;
+      if (ui.to < ui.from) {
+        var t = ui.to;
+        ui.to = ui.from;
+        ui.from = t;
+      }
+      renderAll();
+    }
+    $("fFrom").addEventListener("change", onRange);
+    $("fTo").addEventListener("change", onRange);
+    $("btnDay").addEventListener("click", function () {
+      setDefaultRange(true);
+      renderAll();
+    });
+    $("btnPrevDay").addEventListener("click", function () {
+      ui.from = addDays(ui.from, -1);
+      ui.to = addDays(ui.to, -1);
+      renderAll();
+    });
+    $("btnNextDay").addEventListener("click", function () {
+      ui.from = addDays(ui.from, 1);
+      ui.to = addDays(ui.to, 1);
+      renderAll();
+    });
+    $("btnAll").addEventListener("click", function () {
+      if (!state.stops.length) return;
+      ui.from = Math.min.apply(
+        null,
+        state.stops.map(function (s) {
+          return s.start;
+        }),
+      );
+      ui.to = Math.max.apply(
+        null,
+        state.stops.map(function (s) {
+          return s.end;
+        }),
+      );
+      renderAll();
+    });
+    $("filters").addEventListener("click", function (e) {
+      var c = e.target.closest(".chip");
+      var fns = { machine: machineOf, type: typeOf, diam: diamOf };
+      if (c) {
+        var kind = c.dataset.kind,
+          v = c.dataset.v;
+        var set = ui.sel[kind] || new Set(allValues(fns[kind]));
+        set.has(v) ? set.delete(v) : set.add(v);
+        ui.sel[kind] = set.size === allValues(fns[kind]).length ? null : set;
+        renderAll();
+        return;
+      }
+      var b = e.target.closest(".linkbtn");
+      if (b && b.dataset.all) {
+        ui.sel[b.dataset.all] = null;
+        renderAll();
+      }
+      if (b && b.dataset.none) {
+        ui.sel[b.dataset.none] = new Set();
+        renderAll();
+      }
+    });
+    document.addEventListener("click", function (e) {
+      var m = e.target.closest("[data-metric]");
+      if (m) {
+        ui.metric[m.dataset.metric] = m.dataset.m;
+        renderAll();
+        return;
+      }
+      var f = e.target.closest("[data-focus]");
+      if (f) {
+        ui.focus[f.dataset.focus] = f.dataset.k;
+        renderAll();
+      }
+    });
+    $("actFilter").addEventListener("change", renderActions);
+    $("btnCopy").addEventListener("click", copyActions);
+    function onActionEdit(e) {
+      var el = e.target,
+        field = el.dataset.field;
+      if (!field) return;
+      var id = el.closest("tr").dataset.id,
+        s = state.stops.find(function (x) {
+          return x.id === id;
+        });
+      if (!s) return;
+      s[field] = el.value;
+      save();
+      if (e.type === "change") renderActions();
+    }
+    $("actTable").addEventListener("input", onActionEdit);
+    $("actTable").addEventListener("change", onActionEdit);
+
+    // ---------- Example data (shown only when nothing is stored) ----------
+    function seedExample() {
+      var base = startOfDay(Date.now()),
+        D = function (h, m, s) {
+          return base + ((h * 60 + m) * 60 + (s || 0)) * 1000;
+        };
+      var ex = [
+        [5, 12, 0, 5, 31, 40, "MEC", "EXT01", "Casse courroie entraînement"],
+        [
+          5,
+          50,
+          10,
+          6,
+          2,
+          0,
+          "QUA",
+          "EXT01",
+          "Contrôle dimensionnel hors tolérance",
+        ],
+        [6, 30, 0, 7, 15, 0, "CHG", "CAL02", "Changement de format"],
+        [7, 40, 0, 7, 48, 30, "ELE", "SCI03", "Défaut variateur"],
+        [8, 5, 0, 8, 41, 0, "MEC", "EXT01", "Bourrage tête extrudeuse"],
+        [9, 10, 0, 9, 18, 0, "APP", "ENR04", "Attente matière"],
+        [9, 55, 0, 10, 20, 0, "MEC", "CAL02", "Fuite hydraulique vérin"],
+        [10, 40, 0, 10, 52, 0, "ELE", "EXT01", "Capteur température HS"],
+        [11, 30, 0, 11, 37, 0, "QUA", "SCI03", "Coupe non conforme"],
+        [12, 15, 0, 12, 58, 0, "MEC", "EXT01", "Remplacement filière"],
+        [13, 20, 0, 13, 26, 0, "APP", "ENR04", "Mandrins manquants"],
+        [14, 5, 0, 14, 30, 0, "ORG", "CAL02", "Absence opérateur"],
+        [15, 0, 0, 15, 9, 0, "ELE", "SCI03", "Arrêt d'urgence déclenché"],
+        [16, 10, 0, 16, 44, 0, "MEC", "SCI03", "Lame usée"],
+        [17, 30, 0, 17, 36, 0, "QUA", "EXT01", "Aspect surface"],
+        [19, 0, 0, 19, 22, 0, "MEC", "ENR04", "Bras enrouleur bloqué"],
+      ];
+      state.stops = ex.map(function (r, i) {
+        return {
+          id: "ex" + i,
+          start: D(r[0], r[1], r[2]),
+          end: D(r[3], r[4], r[5]),
+          fer: r[6],
+          macc: r[7],
+          detail: r[8],
+          diam: i % 3 ? "350" : "250",
+          typeAction: i === 4 ? "Corrective" : "",
+          action: i === 4 ? "Nettoyage tête à chaque changement de lot" : "",
+          pilote: i === 4 ? "Resp. maintenance" : "",
+          delai: i === 4 ? toLocalInput(addDays(base, 7)).slice(0, 10) : "",
+        };
+      });
+      state.example = true;
+    }
+
+    if (!load()) seedExample();
+    $("machineCol").value = state.machineCol;
+    setDefaultRange(true);
+    var savedTab = "saisie";
+    try {
+      savedTab =
+        localStorage.getItem(KEY + "-tab") ||
+        (state.example ? "machine" : "saisie");
+    } catch (e) {
+      savedTab = state.example ? "machine" : "saisie";
+    }
+    if (location.hash && /^#(saisie|machine|type|actions)$/.test(location.hash))
+      savedTab = location.hash.slice(1);
+    setTab(savedTab);
+  })();
+</script>
