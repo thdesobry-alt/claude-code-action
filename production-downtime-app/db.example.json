@@ -1,6 +1,6 @@
 {
   "format": "arrets-production",
-  "version": 1,
+  "version": 2,
   "exportedAt": "2026-10-09T08:00:00.000Z",
   "settings": {
     "machineCol": "macc"
@@ -16,10 +16,20 @@
       "nomMacc": "POMPES P8",
       "detail": "Casse courroie entraînement",
       "diametre": "350",
-      "typeAction": "Corrective",
-      "action": "Remplacer les courroies par le modèle renforcé",
-      "pilote": "Maintenance",
-      "delai": "2026-10-16"
+      "actions": [
+        {
+          "typeAction": "Corrective",
+          "action": "Remplacer les courroies par le modèle renforcé",
+          "pilote": "Maintenance",
+          "delai": "2026-10-16"
+        },
+        {
+          "typeAction": "Préventive",
+          "action": "Contrôler la tension des courroies chaque semaine",
+          "pilote": "Équipe de quart",
+          "delai": "2026-10-23"
+        }
+      ]
     },
     {
       "id": "exemple-2",
@@ -31,10 +41,7 @@
       "nomMacc": "STATION EAU 1",
       "detail": "Fuite hydraulique",
       "diametre": "350",
-      "typeAction": "",
-      "action": "",
-      "pilote": "",
-      "delai": ""
+      "actions": []
     }
   ]
 }
