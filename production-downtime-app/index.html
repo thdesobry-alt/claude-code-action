@@ -796,17 +796,6 @@
             placeholder="ex. 350"
             style="width: 160px"
         /></label>
-        <label class="f"
-          >Axe « Machine »
-          <select id="machineCol">
-            <option value="macc">
-              Code Macc = machine, code FER = type d'arrêt
-            </option>
-            <option value="fer">
-              Code FER = machine, code Macc = type d'arrêt
-            </option>
-          </select>
-        </label>
       </div>
       <textarea
         class="paste"
@@ -904,7 +893,6 @@
           </p>
           <ul>
             <li>Colle et supprime des arrêts</li>
-            <li>Choisit l'axe Machine / Type</li>
             <li>Importe et exporte la base JSON</li>
             <li>Analyse et renseigne les actions</li>
           </ul>
@@ -985,15 +973,14 @@
     ];
 
     // ---------- State ----------
-    // Base: days/{AAAA-MM-JJ} = {stops: {id: arrêt}}, actions/{AAAA-MM-JJ} = {items: {id: action}}, config/settings = {machineCol}
+    // Base: days/{AAAA-MM-JJ} = {stops: {id: arrêt}}, actions/{AAAA-MM-JJ} = {items: {id: action}}, config/codes = tables de correspondance
     var mode = "pending"; // "db" (base partagée) | "local" (fichier ouvert hors claude.ai)
     var db = null,
       user = null,
       myId = null,
       role = "viewer";
     var days = {},
-      acts = {},
-      settings = { machineCol: "macc" };
+      acts = {};
     var loaded = { days: false, acts: false };
     var stops = [];
     // Tables d'origine (Table_code_fer.xlsx, Table_code_macc.xlsx) ; config/codes dans la base les remplace
@@ -1125,10 +1112,10 @@
       return n ? esc(n) + '<span class="codename">' + esc(c) + "</span>" : esc(c);
     }
     function machineOf(s) {
-      return settings.machineCol === "fer" ? codeLabel("fer", s.fer) : codeLabel("macc", s.macc);
+      return codeLabel("macc", s.macc);
     }
     function typeOf(s) {
-      return settings.machineCol === "fer" ? codeLabel("macc", s.macc) : codeLabel("fer", s.fer);
+      return codeLabel("fer", s.fer);
     }
     function diamOf(s) {
       return s.diam || "(sans diamètre)";
@@ -1199,7 +1186,7 @@
       try {
         localStorage.setItem(
           LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts, settings: settings }),
+          JSON.stringify({ days: days, acts: acts }),
         );
       } catch (e) {}
     }
@@ -1209,7 +1196,6 @@
         if (d) {
           days = d.days || {};
           acts = d.acts || {};
-          settings = Object.assign(settings, d.settings || {});
         }
       } catch (e) {}
     }
@@ -1307,16 +1293,6 @@
           toast(dbErrorMessage(e));
         });
       return chains[day];
-    }
-    async function writeSettings() {
-      if (mode === "db")
-        await db
-          .doc("config/settings")
-          .set({ machineCol: settings.machineCol });
-      else {
-        saveLocal();
-        refresh();
-      }
     }
 
     // ---------- Parsing ----------
@@ -1733,7 +1709,6 @@
         format: "arrets-production",
         version: 2,
         exportedAt: new Date().toISOString(),
-        settings: { machineCol: settings.machineCol },
         arrets: stops.map(function (s) {
           return {
             id: s.id,
@@ -1861,14 +1836,6 @@
           for (var w of g[day]) await writeAction(w[0], w[1], w[2], w[3]);
         }
         if (mode === "local") refresh();
-        if (
-          data.settings &&
-          /^(macc|fer)$/.test(data.settings.machineCol) &&
-          !stops.length
-        ) {
-          settings.machineCol = data.settings.machineCol;
-          await writeSettings();
-        }
         ui.rangeSet = false;
         info.textContent =
           toAdd.length +
@@ -2426,7 +2393,6 @@
     }
     function refresh() {
       rebuild();
-      $("machineCol").value = settings.machineCol;
       if (!ui.rangeSet && (mode === "local" || (loaded.days && loaded.acts))) {
         lastDayRange();
         ui.rangeSet = stops.length > 0;
@@ -2453,16 +2419,6 @@
       renderPreview();
     });
     $("btnImport").addEventListener("click", doImport);
-    $("machineCol").addEventListener("change", function () {
-      if (!isAdmin()) return;
-      settings.machineCol = this.value;
-      ui.sel.machine = ui.sel.type = null;
-      ui.focus = { machine: null, type: null };
-      writeSettings().catch(function (e) {
-        toast(dbErrorMessage(e));
-      });
-      refresh();
-    });
     $("btnExport").addEventListener("click", exportJSON);
     $("btnExportTop").addEventListener("click", exportJSON);
     $("jsonFile").addEventListener("change", function () {
@@ -2734,18 +2690,6 @@
           fer: (d && d.fer) || DEFAULT_CODES.fer,
           macc: (d && d.macc) || DEFAULT_CODES.macc,
         };
-        refresh();
-      }, onErr);
-      db.doc("config/settings").onSnapshot(function (snap) {
-        var d = snap.exists ? snap.data() : null;
-        if (
-          d &&
-          /^(macc|fer)$/.test(d.machineCol) &&
-          d.machineCol !== settings.machineCol
-        ) {
-          settings.machineCol = d.machineCol;
-          ui.sel.machine = ui.sel.type = null;
-        }
         refresh();
       }, onErr);
       refresh();

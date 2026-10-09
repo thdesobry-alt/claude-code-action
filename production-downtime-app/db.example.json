@@ -2,9 +2,6 @@
   "format": "arrets-production",
   "version": 2,
   "exportedAt": "2026-10-09T08:00:00.000Z",
-  "settings": {
-    "machineCol": "macc"
-  },
   "arrets": [
     {
       "id": "exemple-1",
