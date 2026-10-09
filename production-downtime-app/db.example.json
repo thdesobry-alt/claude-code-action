@@ -1,0 +1,36 @@
+{
+  "format": "arrets-production",
+  "version": 1,
+  "exportedAt": "2026-10-09T08:00:00.000Z",
+  "settings": {
+    "machineCol": "macc"
+  },
+  "arrets": [
+    {
+      "id": "exemple-1",
+      "dateDebut": "09/10/2026 05:12:00",
+      "dateFin": "09/10/2026 05:31:40",
+      "codeFER": "MEC",
+      "codeMacc": "EXT01",
+      "detail": "Casse courroie entraînement",
+      "diametre": "350",
+      "typeAction": "Corrective",
+      "action": "Remplacer les courroies par le modèle renforcé",
+      "pilote": "Maintenance",
+      "delai": "2026-10-16"
+    },
+    {
+      "id": "exemple-2",
+      "dateDebut": "09/10/2026 06:30:00",
+      "dateFin": "09/10/2026 07:15:00",
+      "codeFER": "CHG",
+      "codeMacc": "CAL02",
+      "detail": "Changement de format",
+      "diametre": "350",
+      "typeAction": "",
+      "action": "",
+      "pilote": "",
+      "delai": ""
+    }
+  ]
+}
