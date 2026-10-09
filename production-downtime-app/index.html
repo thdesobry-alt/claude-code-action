@@ -262,7 +262,8 @@
     gap: 12px;
     align-items: end;
   }
-  label.f {
+  label.f,
+  div.f {
     display: grid;
     gap: 4px;
     font-size: 12px;
@@ -640,6 +641,14 @@
   }
   .chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fg); cursor: pointer; padding-bottom: 6px; }
   .codename { display: block; font-size: 11px; color: var(--muted); line-height: 1.3; }
+  .period {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .period strong {
+    color: var(--bar);
+    font-weight: 500;
+  }
   /* onglet Actions : une fiche par arrêt, présentée comme le détail des Pareto */
   .act-list {
     display: grid;
@@ -718,18 +727,22 @@
   <!-- Filtres partagés par les onglets d'analyse -->
   <section class="panel filters" id="filters" hidden>
     <div class="row">
-      <label class="f"
-        >Début d'analyse<input type="datetime-local" step="1" id="fFrom"
-      /></label>
-      <label class="f"
-        >Fin d'analyse<input type="datetime-local" step="1" id="fTo"
-      /></label>
-      <button class="btn" id="btnDay">Dernière journée</button>
-      <button class="btn" id="btnPrevDay">◀ Jour</button>
-      <button class="btn" id="btnNextDay">Jour ▶</button>
-      <button class="btn" id="btnAll">Toute la période</button>
+      <div class="f">
+        Période
+        <div class="seg" role="group" aria-label="Période d'analyse" id="granSeg">
+          <button data-gran="day" aria-pressed="true">Jour</button>
+          <button data-gran="week" aria-pressed="false">Semaine</button>
+          <button data-gran="month" aria-pressed="false">Mois</button>
+          <button data-gran="all" aria-pressed="false">Tout</button>
+        </div>
+      </div>
+      <label class="f" id="refWrap">Jour de production<input type="date" id="fRef" /></label>
+      <button class="btn" id="btnPrev" aria-label="Période précédente">◀</button>
+      <button class="btn" id="btnNext" aria-label="Période suivante">▶</button>
+      <button class="btn" id="btnLatest">Dernières données</button>
       <label class="chk"><input type="checkbox" id="groupByName" /> Regrouper les codes de même nom</label>
     </div>
+    <div class="period" id="periodLabel"></div>
     <div class="chips-row">
       <div class="chipbox">
         <div class="head">
@@ -992,6 +1005,8 @@
       from: null,
       to: null,
       rangeSet: false,
+      gran: "day",
+      ref: null,
       sel: { machine: null, type: null, diam: null },
       metric: { machine: "dur", type: "dur" },
       focus: { machine: null, type: null },
@@ -1420,21 +1435,62 @@
           return { s: s, dur: Math.max(0, overlap(s)) };
         });
     }
-    function lastDayRange() {
-      if (!stops.length) {
-        var t = startOfDay(Date.now());
-        ui.from = t;
-        ui.to = addDays(t, 1);
+    // Journée de production : de 8h à 8h le lendemain. Semaine : du lundi 8h au
+    // lundi suivant 8h. Mois : du 1er à 8h au 1er du mois suivant à 8h.
+    var DAY_START_HOUR = 8;
+    var MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    function prodDay(ms) {
+      var d = new Date(ms);
+      if (d.getHours() < DAY_START_HOUR) d.setDate(d.getDate() - 1);
+      d.setHours(DAY_START_HOUR, 0, 0, 0);
+      return d;
+    }
+    function isoWeek(d) {
+      var t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      t.setDate(t.getDate() + 3 - ((t.getDay() + 6) % 7));
+      var w1 = new Date(t.getFullYear(), 0, 4);
+      return 1 + Math.round(((t - w1) / 864e5 - 3 + ((w1.getDay() + 6) % 7)) / 7);
+    }
+    function applyPeriod() {
+      if (ui.gran === "all") {
+        if (stops.length) {
+          ui.from = prodDay(Math.min.apply(null, stops.map(function (s) { return s.start; }))).getTime();
+          var e = prodDay(Math.max.apply(null, stops.map(function (s) { return s.end; })));
+          e.setDate(e.getDate() + 1);
+          ui.to = e.getTime();
+        }
         return;
       }
-      var last = Math.max.apply(
-        null,
-        stops.map(function (s) {
-          return s.start;
-        }),
-      );
-      ui.from = startOfDay(last);
-      ui.to = addDays(ui.from, 1);
+      var a = prodDay(ui.ref), b;
+      if (ui.gran === "week") a.setDate(a.getDate() - ((a.getDay() + 6) % 7));
+      if (ui.gran === "month") a.setDate(1);
+      b = new Date(a);
+      if (ui.gran === "day") b.setDate(b.getDate() + 1);
+      else if (ui.gran === "week") b.setDate(b.getDate() + 7);
+      else b.setMonth(b.getMonth() + 1);
+      ui.from = a.getTime();
+      ui.to = b.getTime();
+    }
+    function shiftPeriod(n) {
+      var d = prodDay(ui.ref);
+      if (ui.gran === "day") d.setDate(d.getDate() + n);
+      else if (ui.gran === "week") d.setDate(d.getDate() + 7 * n);
+      else if (ui.gran === "month") { d.setDate(1); d.setMonth(d.getMonth() + n); }
+      ui.ref = d.getTime();
+      applyPeriod();
+    }
+    function periodLabel() {
+      if (ui.from == null) return "";
+      var f = fmtDate(ui.from).slice(0, 16), t = fmtDate(ui.to).slice(0, 16), a = new Date(ui.from), name;
+      if (ui.gran === "day") name = "Journée du " + f.slice(0, 10);
+      else if (ui.gran === "week") name = "Semaine " + isoWeek(a) + " " + a.getFullYear();
+      else if (ui.gran === "month") name = MONTHS[a.getMonth()].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + a.getFullYear();
+      else name = "Toute la période";
+      return "<strong>" + name + "</strong> · du " + f + " au " + t;
+    }
+    function lastDayRange() {
+      ui.ref = stops.length ? Math.max.apply(null, stops.map(function (s) { return s.start; })) : Date.now();
+      applyPeriod();
     }
 
     // ---------- Header & filters ----------
@@ -1508,8 +1564,11 @@
               .join("")
           : '<span class="muted">—</span>';
       });
-      $("fFrom").value = ui.from != null ? toLocalInput(ui.from) : "";
-      $("fTo").value = ui.to != null ? toLocalInput(ui.to) : "";
+      $("fRef").value = ui.ref != null ? toLocalInput(prodDay(ui.ref).getTime()).slice(0, 10) : "";
+      $("refWrap").firstChild.textContent = ui.gran === "week" ? "Un jour de la semaine" : ui.gran === "month" ? "Un jour du mois" : "Jour de production";
+      $("refWrap").hidden = $("btnPrev").hidden = $("btnNext").hidden = ui.gran === "all";
+      document.querySelectorAll("#granSeg button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.gran === ui.gran); });
+      $("periodLabel").innerHTML = periodLabel();
     }
 
     // ---------- Saisie ----------
@@ -2436,55 +2495,22 @@
         );
       }
     });
-    function onRange() {
-      var a = fromLocalInput($("fFrom").value),
-        b = fromLocalInput($("fTo").value);
-      if (a != null) ui.from = a;
-      if (b != null) ui.to = b;
-      if (ui.to < ui.from) {
-        var t = ui.to;
-        ui.to = ui.from;
-        ui.from = t;
-      }
-      ui.rangeSet = true;
-      renderAll();
-    }
-    $("fFrom").addEventListener("change", onRange);
-    $("fTo").addEventListener("change", onRange);
-    $("btnDay").addEventListener("click", function () {
-      lastDayRange();
-      ui.rangeSet = true;
-      renderAll();
+    $("granSeg").addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-gran]");
+      if (!b) return;
+      ui.gran = b.dataset.gran;
+      if (ui.ref == null) ui.ref = Date.now();
+      applyPeriod(); ui.rangeSet = true; renderAll();
     });
-    $("btnPrevDay").addEventListener("click", function () {
-      ui.from = addDays(ui.from, -1);
-      ui.to = addDays(ui.to, -1);
-      ui.rangeSet = true;
-      renderAll();
+    $("fRef").addEventListener("change", function () {
+      var m = this.value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return;
+      ui.ref = new Date(+m[1], +m[2] - 1, +m[3], 12).getTime();
+      applyPeriod(); ui.rangeSet = true; renderAll();
     });
-    $("btnNextDay").addEventListener("click", function () {
-      ui.from = addDays(ui.from, 1);
-      ui.to = addDays(ui.to, 1);
-      ui.rangeSet = true;
-      renderAll();
-    });
-    $("btnAll").addEventListener("click", function () {
-      if (!stops.length) return;
-      ui.from = Math.min.apply(
-        null,
-        stops.map(function (s) {
-          return s.start;
-        }),
-      );
-      ui.to = Math.max.apply(
-        null,
-        stops.map(function (s) {
-          return s.end;
-        }),
-      );
-      ui.rangeSet = true;
-      renderAll();
-    });
+    $("btnPrev").addEventListener("click", function () { shiftPeriod(-1); ui.rangeSet = true; renderAll(); });
+    $("btnNext").addEventListener("click", function () { shiftPeriod(1); ui.rangeSet = true; renderAll(); });
+    $("btnLatest").addEventListener("click", function () { lastDayRange(); ui.rangeSet = true; renderAll(); });
     $("filters").addEventListener("click", function (e) {
       var fns = { machine: machineOf, type: typeOf, diam: diamOf };
       var c = e.target.closest(".chip");
