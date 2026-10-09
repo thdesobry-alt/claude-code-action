@@ -7,69 +7,76 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link
   rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap"
 />
 <style>
   /* Layout: atelier control panel — header band with profile, sticky tab rail, filter strip shared by analysis tabs */
   :root {
-    --bg: #eef1f4;
+    --bg: #f4f5f5;
     --surface: #ffffff;
-    --surface-2: #f6f8fa;
-    --fg: #16202a;
-    --muted: #5b6b7a;
-    --line: #d3dbe2;
-    --bar: #2f5d8a;
-    --bar-soft: #a9bfd6;
+    --surface-2: #f7f8f7;
+    --fg: #333333;
+    --muted: #65706f;
+    --line: #dcdfdd;
+    --bar: #157c79;
+    --bar-soft: #a9cfcd;
     --on-bar: #ffffff;
-    --accent: #c97a00;
-    --accent-soft: #fbecd2;
-    --danger: #b8322a;
-    --danger-soft: #f8dedb;
-    --ok: #2e7d4f;
+    --accent: #9a8a5c;
+    --accent-soft: #f0ebdc;
+    --danger: #b3362c;
+    --danger-soft: #f7dfdb;
+    --ok: #2b7a50;
     --ok-soft: #dcefe3;
-    --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
-    --font-body:
-      "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-data:
-      "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-    --radius: 6px;
+    --brand: #157c79;
+    --brand-ink: #c3b48c;
+    --brand-ink-soft: #e3dcc6;
+    --font-display: "Roboto", "Arial", sans-serif;
+    --font-body: "Roboto", "Arial", system-ui, sans-serif;
+    --font-data: "Roboto Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --radius: 0;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0f151b;
-      --surface: #17202a;
-      --surface-2: #1d2833;
-      --fg: #e3e9ef;
-      --muted: #8fa0b0;
-      --line: #2b3844;
-      --bar: #5b8fc4;
-      --bar-soft: #2f4a66;
-      --on-bar: #0f151b;
-      --accent: #f2a93b;
-      --accent-soft: #3d2e14;
+      --bg: #0d1c1c;
+      --surface: #132927;
+      --surface-2: #17322f;
+      --fg: #e9e9e6;
+      --muted: #a2b1ae;
+      --line: #284845;
+      --bar: #3fa9a5;
+      --bar-soft: #1f5552;
+      --on-bar: #0d1c1c;
+      --accent: #c3b48c;
+      --accent-soft: #38321f;
       --danger: #ef6b5b;
       --danger-soft: #42201d;
       --ok: #5cc28a;
       --ok-soft: #173325;
+      --brand: #11605d;
+      --brand-ink: #c3b48c;
+      --brand-ink-soft: #e3dcc6;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #0f151b;
-    --surface: #17202a;
-    --surface-2: #1d2833;
-    --fg: #e3e9ef;
-    --muted: #8fa0b0;
-    --line: #2b3844;
-    --bar: #5b8fc4;
-    --bar-soft: #2f4a66;
-    --on-bar: #0f151b;
-    --accent: #f2a93b;
-    --accent-soft: #3d2e14;
+    --bg: #0d1c1c;
+    --surface: #132927;
+    --surface-2: #17322f;
+    --fg: #e9e9e6;
+    --muted: #a2b1ae;
+    --line: #284845;
+    --bar: #3fa9a5;
+    --bar-soft: #1f5552;
+    --on-bar: #0d1c1c;
+    --accent: #c3b48c;
+    --accent-soft: #38321f;
     --danger: #ef6b5b;
     --danger-soft: #42201d;
     --ok: #5cc28a;
     --ok-soft: #173325;
+    --brand: #11605d;
+    --brand-ink: #c3b48c;
+    --brand-ink-soft: #e3dcc6;
     color-scheme: dark;
   }
   [hidden] {
@@ -93,25 +100,59 @@
     padding-inline: 16px;
     padding-block: 0 48px;
   }
+  /* bandeau sarcelle, titre sable */
   header.top {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 8px 24px;
-    padding-block: 20px 12px;
+    background: var(--brand);
+    color: var(--brand-ink);
+    padding: 18px 24px 34px;
+    margin-block: 16px 6px;
+    /* bord inférieur incliné, comme le bandeau des diapositives */
+    clip-path: polygon(0 0, 100% 0, 100% 68%, 0 100%);
+  }
+  header.top .sub,
+  header.top .sync {
+    color: var(--brand-ink-soft);
+  }
+  header.top .btn {
+    background: transparent;
+    color: var(--brand-ink);
+    border-color: var(--brand-ink);
+  }
+  header.top .btn:hover {
+    background: var(--brand-ink);
+    color: var(--brand);
+  }
+  header.top .role.admin {
+    background: var(--brand-ink);
+    color: var(--brand);
+    border-color: var(--brand-ink);
+  }
+  header.top .role.user {
+    background: transparent;
+    color: var(--brand-ink);
+    border-color: var(--brand-ink);
+  }
+  header.top .role.viewer {
+    background: transparent;
+    color: var(--brand-ink-soft);
+    border-color: var(--brand-ink-soft);
   }
   header.top h1 {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: 300;
     font-size: 30px;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    color: var(--brand-ink);
     margin: 0;
     text-wrap: balance;
   }
   header.top h1 span {
-    color: var(--accent);
+    color: var(--brand-ink);
   }
   .who {
     display: flex;
@@ -128,7 +169,7 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
     padding: 3px 10px;
-    border-radius: 4px;
+    border-radius: 0;
     border: 1px solid var(--line);
   }
   .role.admin {
@@ -178,10 +219,9 @@
   }
   nav.tabs button {
     font-family: var(--font-display);
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
     background: none;
     border: 0;
     color: var(--muted);
@@ -192,8 +232,8 @@
     white-space: nowrap;
   }
   nav.tabs button[aria-selected="true"] {
-    color: var(--fg);
-    border-bottom-color: var(--accent);
+    color: var(--bar);
+    border-bottom-color: var(--bar);
   }
   nav.tabs button:hover {
     color: var(--fg);
@@ -238,7 +278,7 @@
     color: var(--fg);
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 4px;
+    border-radius: 0;
     padding: 6px 8px;
     min-width: 0;
   }
@@ -266,7 +306,7 @@
     border: 1px solid var(--line);
     background: var(--surface-2);
     color: var(--fg);
-    border-radius: 4px;
+    border-radius: 0;
     padding: 7px 12px;
     cursor: pointer;
   }
@@ -291,10 +331,10 @@
   }
   h2 {
     font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 21px;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: 0;
+    color: var(--fg);
     margin: 0 0 4px;
   }
   h3 {
@@ -345,7 +385,7 @@
     border: 1px solid var(--line);
     background: var(--surface-2);
     color: var(--muted);
-    border-radius: 999px;
+    border-radius: 0;
     padding: 3px 10px;
     cursor: pointer;
   }
@@ -434,7 +474,7 @@
     font-size: 11px;
     font-weight: 600;
     padding: 1px 8px;
-    border-radius: 999px;
+    border-radius: 0;
     white-space: nowrap;
   }
   .pill.a {
@@ -505,7 +545,7 @@
   .seg {
     display: inline-flex;
     border: 1px solid var(--line);
-    border-radius: 4px;
+    border-radius: 0;
     overflow: hidden;
   }
   .seg button {
@@ -593,7 +633,7 @@
     background: var(--fg);
     color: var(--surface);
     padding: 8px 14px;
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 13px;
     z-index: 20;
     max-width: calc(100% - 32px);
