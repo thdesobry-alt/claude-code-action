@@ -371,6 +371,16 @@
     gap: 8px;
     margin-bottom: 6px;
   }
+  .chip-search {
+    width: 100%;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .chip-found {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
   .chipbox .head h3 {
     margin: 0;
   }
@@ -752,6 +762,8 @@
             <button class="linkbtn" data-none="machine">Aucune</button></span
           >
         </div>
+        <input type="search" class="chip-search" id="q-machine" data-kind="machine" placeholder="Rechercher une machine (nom ou code)…" aria-label="Rechercher une machine (nom ou code)" autocomplete="off" />
+        <div class="chip-found" id="found-machine" hidden></div>
         <div class="chips" id="chipsMachine"></div>
       </div>
       <div class="chipbox">
@@ -762,6 +774,8 @@
             <button class="linkbtn" data-none="type">Aucun</button></span
           >
         </div>
+        <input type="search" class="chip-search" id="q-type" data-kind="type" placeholder="Rechercher un type d'arrêt (nom ou code)…" aria-label="Rechercher un type d'arrêt (nom ou code)" autocomplete="off" />
+        <div class="chip-found" id="found-type" hidden></div>
         <div class="chips" id="chipsType"></div>
       </div>
       <div class="chipbox">
@@ -1515,13 +1529,36 @@
       document.querySelector('nav.tabs [data-tab="saisie"]').hidden =
         !isAdmin();
     }
+    function normText(s) {
+      return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+    // tous les mots tapés doivent apparaître dans le nom ou le code
+    function matchValues(kind, vals) {
+      var words = normText($("q-" + kind).value).split(/\s+/).filter(Boolean);
+      return vals.filter(function (v) {
+        var t = normText(v);
+        return words.every(function (w) { return t.indexOf(w) >= 0; });
+      });
+    }
     function renderChips() {
       [
         ["machine", "chipsMachine", machineOf],
         ["type", "chipsType", typeOf],
         ["diam", "chipsDiam", diamOf],
       ].forEach(function (k) {
-        var vals = allValues(k[2]);
+        var vals = allValues(k[2]), q = $("q-" + k[0]), found = $("found-" + k[0]);
+        if (q && q.value.trim()) {
+          var all = vals.length;
+          vals = matchValues(k[0], vals);
+          var nSel = vals.filter(function (v) { return isSel(k[0], v); }).length;
+          found.hidden = false;
+          found.innerHTML = vals.length
+            ? vals.length + " sur " + all + " · " + nSel + " cochée(s) · " +
+              '<button class="linkbtn" data-only="' + k[0] + '">Analyser uniquement celles-ci</button> · ' +
+              '<button class="linkbtn" data-add="' + k[0] + '">Les ajouter</button> · ' +
+              '<button class="linkbtn" data-remove="' + k[0] + '">Les retirer</button>'
+            : "Aucun résultat pour « " + esc(q.value.trim()) + " »";
+        } else if (found) found.hidden = true;
         $(k[1]).innerHTML = vals.length
           ? vals
               .map(function (v) {
@@ -2467,8 +2504,24 @@
     $("btnPrev").addEventListener("click", function () { shiftPeriod(-1); ui.rangeSet = true; renderAll(); });
     $("btnNext").addEventListener("click", function () { shiftPeriod(1); ui.rangeSet = true; renderAll(); });
     $("btnLatest").addEventListener("click", function () { lastDayRange(); ui.rangeSet = true; renderAll(); });
+    document.querySelectorAll(".chip-search").forEach(function (q) {
+      q.addEventListener("input", renderChips);
+    });
     $("filters").addEventListener("click", function (e) {
       var fns = { machine: machineOf, type: typeOf, diam: diamOf };
+      var bulk = e.target.closest("[data-only],[data-add],[data-remove]");
+      if (bulk) {
+        var bk = bulk.dataset.only || bulk.dataset.add || bulk.dataset.remove,
+          allV = allValues(fns[bk]),
+          hits = matchValues(bk, allV),
+          cur = ui.sel[bk] || new Set(allV);
+        if (bulk.dataset.only) cur = new Set(hits);
+        else if (bulk.dataset.add) hits.forEach(function (v) { cur.add(v); });
+        else hits.forEach(function (v) { cur.delete(v); });
+        ui.sel[bk] = cur.size === allV.length ? null : cur;
+        renderAll();
+        return;
+      }
       var c = e.target.closest(".chip");
       if (c) {
         var kind = c.dataset.kind,
