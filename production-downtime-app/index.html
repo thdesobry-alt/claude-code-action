@@ -756,15 +756,13 @@
     <div class="chips-row">
       <div class="chipbox">
         <div class="head">
-          <h3>Machines</h3>
+          <h3>Diamètres</h3>
           <span
-            ><button class="linkbtn" data-all="machine">Toutes</button> ·
-            <button class="linkbtn" data-none="machine">Aucune</button></span
+            ><button class="linkbtn" data-all="diam">Tous</button> ·
+            <button class="linkbtn" data-none="diam">Aucun</button></span
           >
         </div>
-        <input type="search" class="chip-search" id="q-machine" data-kind="machine" placeholder="Rechercher une machine (nom ou code)…" aria-label="Rechercher une machine (nom ou code)" autocomplete="off" />
-        <div class="chip-found" id="found-machine" hidden></div>
-        <div class="chips" id="chipsMachine"></div>
+        <div class="chips" id="chipsDiam"></div>
       </div>
       <div class="chipbox">
         <div class="head">
@@ -780,13 +778,15 @@
       </div>
       <div class="chipbox">
         <div class="head">
-          <h3>Diamètres</h3>
+          <h3>Machines</h3>
           <span
-            ><button class="linkbtn" data-all="diam">Tous</button> ·
-            <button class="linkbtn" data-none="diam">Aucun</button></span
+            ><button class="linkbtn" data-all="machine">Toutes</button> ·
+            <button class="linkbtn" data-none="machine">Aucune</button></span
           >
         </div>
-        <div class="chips" id="chipsDiam"></div>
+        <input type="search" class="chip-search" id="q-machine" data-kind="machine" placeholder="Rechercher une machine (nom ou code)…" aria-label="Rechercher une machine (nom ou code)" autocomplete="off" />
+        <div class="chip-found" id="found-machine" hidden></div>
+        <div class="chips" id="chipsMachine"></div>
       </div>
     </div>
   </section>
