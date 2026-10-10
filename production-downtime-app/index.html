@@ -685,6 +685,14 @@
   .act-detail {
     color: var(--fg);
   }
+  .av-table td.av-action {
+    min-width: 220px;
+    white-space: pre-wrap;
+  }
+  .av-table td.av-detail {
+    min-width: 180px;
+    color: var(--muted);
+  }
   .rex-box {
     border-top: 1px dashed var(--line);
     padding-top: 8px;
@@ -785,6 +793,7 @@
       Analyse Pareto Type d'arrêts
     </button>
     <button role="tab" data-tab="actions" aria-selected="false">Saisie des actions / REX</button>
+    <button role="tab" data-tab="actview" aria-selected="false">Actions</button>
     <button role="tab" data-tab="rex" aria-selected="false">REX</button>
   </nav>
 
@@ -962,7 +971,8 @@
           <ul>
             <li>Colle et supprime des arrêts</li>
             <li>Importe et exporte la base JSON</li>
-            <li>Analyse et renseigne les actions et les REX</li>
+            <li>Saisit et modifie les actions et les REX</li>
+            <li>Consulte les analyses, les actions et les REX</li>
           </ul>
         </div>
         <div>
@@ -971,8 +981,7 @@
             Niveau <strong>Contributeur</strong>.
           </p>
           <ul>
-            <li>Consulte les analyses Pareto</li>
-            <li>Renseigne les actions (type, action, pilote, délai) et les REX</li>
+            <li>Consulte les analyses Pareto, les actions et les REX</li>
             <li>Exporte la base JSON</li>
           </ul>
         </div>
@@ -982,7 +991,7 @@
             Niveau <strong>Lecteur</strong> ou <strong>Commentateur</strong>.
           </p>
           <ul>
-            <li>Consulte analyses et actions sans les modifier</li>
+            <li>Consulte les analyses, les actions et les REX</li>
           </ul>
         </div>
       </div>
@@ -1026,16 +1035,48 @@
     </div>
   </section>
 
+  <!-- ACTIONS (consultation) -->
+  <section data-panel="actview" class="stack" hidden>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between">
+        <div>
+          <h2>Actions</h2>
+          <p class="hint">
+            Toutes les actions des arrêts de la période et des filtres
+            sélectionnés, classées par délai. La saisie et la modification des
+            actions sont réservées aux Admin.
+          </p>
+        </div>
+        <div class="row">
+          <label class="f"
+            >Statut
+            <select id="avStatus">
+              <option value="all">Toutes</option>
+              <option value="late">En retard</option>
+              <option value="soon">Échéance sous 7 jours</option>
+              <option value="nodate">Sans délai</option>
+            </select>
+          </label>
+          <label class="f"
+            >Rechercher<input type="search" id="avQ" placeholder="action, pilote, machine…" autocomplete="off" style="width: 220px"
+          /></label>
+          <button class="btn" id="btnCopyAv">Copier pour Excel</button>
+        </div>
+      </div>
+      <div class="kpis" id="avKpis"></div>
+      <div class="scroll" id="avTable"></div>
+    </div>
+  </section>
+
   <!-- REX -->
   <section data-panel="rex" class="stack" hidden>
     <div class="panel stack">
       <div class="row" style="justify-content: space-between">
         <div>
-          <h2>Retours d'expérience</h2>
+          <h2>REX</h2>
           <p class="hint">
             Les REX saisis sur les arrêts de la période et des filtres
-            sélectionnés, avec leurs actions. Pour saisir ou modifier un REX,
-            utilisez l'onglet Saisie des actions / REX.
+            sélectionnés, avec leurs actions. La saisie et la modification des REX sont réservées aux Admin (onglet Saisie des actions / REX).
           </p>
         </div>
         <div class="row">
@@ -1220,8 +1261,9 @@
     var isAdmin = function () {
       return role === "admin";
     };
+    // actions et REX : saisie réservée aux Admin (règle "actions" de la base)
     var canWriteActions = function () {
-      return role === "admin" || role === "user";
+      return role === "admin";
     };
     var toastT;
     function toast(msg) {
@@ -1631,6 +1673,8 @@
             ? "Utilisateur"
             : "Lecture seule";
       document.querySelector('nav.tabs [data-tab="saisie"]').hidden =
+        !isAdmin();
+      document.querySelector('nav.tabs [data-tab="actions"]').hidden =
         !isAdmin();
     }
     function normText(s) {
@@ -2457,7 +2501,7 @@
     function renderActions() {
       var all = filtered(), rows = actionRows(), today = startOfDay(Date.now()), ro = !canWriteActions();
       $("actHint").textContent = ro
-        ? "Arrêts de la période et des filtres sélectionnés, avec leurs actions. Votre profil Lecture seule permet de les consulter sans les modifier."
+        ? "Arrêts de la période et des filtres sélectionnés, avec leurs actions. La saisie est réservée aux Admin."
         : "Arrêts de la période et des filtres sélectionnés. Ajoutez une ou plusieurs actions par arrêt : elles sont enregistrées automatiquement et visibles par tous.";
       var withA = all.filter(function (x) { return realActions(x.s).length; }).length,
         nAct = all.reduce(function (t, x) { return t + realActions(x.s).length; }, 0),
@@ -2529,6 +2573,59 @@
       } catch (e) { fallback(); }
     }
 
+    // ---------- Onglet Actions (consultation) ----------
+    function actViewRows() {
+      var today = startOfDay(Date.now()), soon = today + 7 * 864e5, st = $("avStatus").value;
+      var words = normText($("avQ").value).split(/\s+/).filter(Boolean), out = [];
+      filtered().forEach(function (x) {
+        realActions(x.s).forEach(function (a) {
+          var d = a.delai ? (function (p) { return new Date(+p[0], +p[1] - 1, +p[2]).getTime(); })(a.delai.split("-")) : null;
+          if (st === "late" && !isLate(a, today)) return;
+          if (st === "soon" && !(d != null && d >= today && d <= soon)) return;
+          if (st === "nodate" && d != null) return;
+          if (words.length) {
+            var t = normText([a.typeAction, a.action, a.pilote, x.s.detail, machineOf(x.s), typeOf(x.s), x.s.diam].join(" "));
+            if (!words.every(function (w) { return t.indexOf(w) >= 0; })) return;
+          }
+          out.push({ s: x.s, a: a, d: d });
+        });
+      });
+      out.sort(function (p, q) { return (p.d == null) - (q.d == null) || (p.d || 0) - (q.d || 0) || p.s.start - q.s.start; });
+      return out;
+    }
+    function renderActView() {
+      var today = startOfDay(Date.now()), soon = today + 7 * 864e5, rows = actViewRows(), all = [];
+      filtered().forEach(function (x) { realActions(x.s).forEach(function (a) { all.push(a); }); });
+      var late = all.filter(function (a) { return isLate(a, today); }).length;
+      var nSoon = all.filter(function (a) { if (!a.delai) return false; var p = a.delai.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]).getTime(); return d >= today && d <= soon; }).length;
+      $("avKpis").innerHTML =
+        '<div class="kpi"><div class="l">Actions</div><div class="v">' + all.length + "</div></div>" +
+        '<div class="kpi"><div class="l">En retard</div><div class="v" style="color: ' + (late ? "var(--danger)" : "inherit") + '">' + late + "</div></div>" +
+        '<div class="kpi"><div class="l">Échéance sous 7 jours</div><div class="v">' + nSoon + "</div></div>" +
+        '<div class="kpi"><div class="l">Sans délai</div><div class="v">' + all.filter(function (a) { return !a.delai; }).length + "</div></div>";
+      if (!rows.length) {
+        $("avTable").innerHTML = '<div class="empty">' + (mode === "pending" ? "Chargement de la base…" : all.length ? "Aucune action ne correspond." : "Aucune action sur cette période.") + "</div>";
+        return;
+      }
+      $("avTable").innerHTML = '<table class="av-table"><thead><tr><th>Délai</th><th>Statut</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Arrêt</th><th>Diamètre</th><th>Type d\'arrêt</th><th>Machine</th><th>Détail</th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          var st = isLate(r.a, today) ? '<span class="pill late">En retard</span>' : r.d != null && r.d <= soon ? '<span class="pill a">Sous 7 j</span>' : r.d == null ? '<span class="muted">Sans délai</span>' : '<span class="pill ok">À venir</span>';
+          return '<tr><td class="mono">' + (r.a.delai ? r.a.delai.split("-").reverse().join("/") : "—") + "</td><td>" + st + "</td><td>" + esc(r.a.typeAction || "—") + '</td><td class="av-action">' + esc(r.a.action) + "</td><td>" + esc(r.a.pilote || "—") +
+            '</td><td class="mono">' + fmtDate(r.s.start).slice(0, 16) + "<br>" + fmtDur(r.s.end - r.s.start) + "</td><td>" + esc(r.s.diam) + "</td><td>" + esc(typeOf(r.s)) + "</td><td>" + esc(machineOf(r.s)) + '</td><td class="av-detail">' + esc(r.s.detail) + "</td></tr>";
+        }).join("") + "</tbody></table>";
+    }
+    function copyActView() {
+      var rows = actViewRows();
+      var lines = [["Délai", "Type d'action", "Action", "Pilote", "Date arrêt", "Durée", "Diamètre", "Type d'arrêt", "Machine", "Détail"].join("\t")];
+      rows.forEach(function (r) {
+        lines.push([r.a.delai ? r.a.delai.split("-").reverse().join("/") : "", r.a.typeAction, r.a.action, r.a.pilote, fmtDate(r.s.start), fmtDur(r.s.end - r.s.start), r.s.diam, typeOf(r.s), machineOf(r.s), r.s.detail]
+          .map(function (v) { v = String(v || ""); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join("\t"));
+      });
+      try {
+        navigator.clipboard.writeText(lines.join("\n")).then(function () { toast(rows.length + " action(s) copiée(s) : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); });
+      } catch (e) { toast("Copie refusée par le navigateur"); }
+    }
+
     // ---------- Onglet REX ----------
     function rexRows() {
       var words = normText($("rexQ").value).split(/\s+/).filter(Boolean);
@@ -2592,7 +2689,7 @@
       );
     }
     function renderAll() {
-      var tab = ui.tab === "saisie" && !isAdmin() ? "machine" : ui.tab;
+      var tab = (ui.tab === "saisie" || ui.tab === "actions") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       renderHeader();
       renderChips();
       renderBatches();
@@ -2608,6 +2705,7 @@
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
       if (tab === "rex") renderRex();
+      if (tab === "actview") renderActView();
       if (tab === "actions") {
         // ne pas écraser un champ en cours de saisie quand un autre utilisateur modifie la base
         if (editingActions()) deferActions = true;
@@ -2748,6 +2846,9 @@
     $("actFilter").addEventListener("change", renderActions);
     $("btnCopy").addEventListener("click", copyActions);
     $("rexQ").addEventListener("input", renderRex);
+    $("avStatus").addEventListener("change", renderActView);
+    $("avQ").addEventListener("input", renderActView);
+    $("btnCopyAv").addEventListener("click", copyActView);
     $("btnCopyRex").addEventListener("click", copyRex);
 
     // Saisie des actions : une écriture par pause de frappe, immédiate à la sortie du champ
@@ -2900,7 +3001,7 @@
       } catch (e) {}
       if (
         location.hash &&
-        /^#(saisie|machine|type|actions|rex)$/.test(location.hash)
+        /^#(saisie|machine|type|actions|actview|rex)$/.test(location.hash)
       )
         ui.tab = location.hash.slice(1);
       renderAll();
