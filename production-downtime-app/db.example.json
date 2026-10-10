@@ -26,7 +26,12 @@
           "pilote": "Équipe de quart",
           "delai": "2026-10-23"
         }
-      ]
+      ],
+      "rex": {
+        "constat": "Arrêt de 20 min sur casse de la courroie d'entraînement",
+        "cause": "Usure non détectée : la tension n'était pas contrôlée",
+        "enseignement": "Ajouter le contrôle de tension des courroies à la tournée hebdomadaire"
+      }
     },
     {
       "id": "exemple-2",
@@ -38,7 +43,8 @@
       "nomMacc": "STATION EAU 1",
       "detail": "Fuite hydraulique",
       "diametre": "350",
-      "actions": []
+      "actions": [],
+      "rex": null
     }
   ]
 }

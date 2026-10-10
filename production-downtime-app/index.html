@@ -685,6 +685,59 @@
   .act-detail {
     color: var(--fg);
   }
+  .rex-box {
+    border-top: 1px dashed var(--line);
+    padding-top: 8px;
+    display: grid;
+    gap: 6px;
+  }
+  .rex-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bar);
+  }
+  .rex-upd {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .rex-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+  }
+  .rex-grid textarea {
+    width: 100%;
+    min-height: 64px;
+    resize: vertical;
+    font: 13px/1.4 var(--font-body);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .rex-view {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 4px 16px;
+    margin: 0;
+  }
+  .rex-view dt {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .rex-view dd {
+    margin: 0;
+    white-space: pre-wrap;
+  }
+  .rex-acts ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+  }
+  .pill.rex {
+    background: var(--bar);
+    color: var(--on-bar);
+  }
   .actions-table td.rm {
     white-space: nowrap;
     text-align: right;
@@ -731,7 +784,8 @@
     <button role="tab" data-tab="type" aria-selected="false">
       Analyse Pareto Type d'arrêts
     </button>
-    <button role="tab" data-tab="actions" aria-selected="false">Actions</button>
+    <button role="tab" data-tab="actions" aria-selected="false">Saisie des actions / REX</button>
+    <button role="tab" data-tab="rex" aria-selected="false">REX</button>
   </nav>
 
   <!-- Filtres partagés par les onglets d'analyse -->
@@ -908,7 +962,7 @@
           <ul>
             <li>Colle et supprime des arrêts</li>
             <li>Importe et exporte la base JSON</li>
-            <li>Analyse et renseigne les actions</li>
+            <li>Analyse et renseigne les actions et les REX</li>
           </ul>
         </div>
         <div>
@@ -918,7 +972,7 @@
           </p>
           <ul>
             <li>Consulte les analyses Pareto</li>
-            <li>Renseigne type d'action, action, pilote et délai</li>
+            <li>Renseigne les actions (type, action, pilote, délai) et les REX</li>
             <li>Exporte la base JSON</li>
           </ul>
         </div>
@@ -945,7 +999,7 @@
     <div class="panel stack">
       <div class="row" style="justify-content: space-between">
         <div>
-          <h2>Plan d'actions</h2>
+          <h2>Saisie des actions / REX</h2>
           <p class="hint" id="actHint">
             Tous les arrêts de la période et des filtres sélectionnés. Type
             d'action, Action, Pilote et Délai sont enregistrés automatiquement
@@ -960,6 +1014,8 @@
               <option value="todo">Sans action</option>
               <option value="with">Avec action</option>
               <option value="late">Délai dépassé</option>
+              <option value="norex">Sans REX</option>
+              <option value="rex">Avec REX</option>
             </select>
           </label>
           <button class="btn" id="btnCopy">Copier pour Excel</button>
@@ -967,6 +1023,30 @@
       </div>
       <div class="kpis" id="actKpis"></div>
       <div class="scroll" id="actTable"></div>
+    </div>
+  </section>
+
+  <!-- REX -->
+  <section data-panel="rex" class="stack" hidden>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between">
+        <div>
+          <h2>Retours d'expérience</h2>
+          <p class="hint">
+            Les REX saisis sur les arrêts de la période et des filtres
+            sélectionnés, avec leurs actions. Pour saisir ou modifier un REX,
+            utilisez l'onglet Saisie des actions / REX.
+          </p>
+        </div>
+        <div class="row">
+          <label class="f"
+            >Rechercher dans les REX<input type="search" id="rexQ" placeholder="ex. courroie, hydraulique…" autocomplete="off" style="width: 240px"
+          /></label>
+          <button class="btn" id="btnCopyRex">Copier pour Excel</button>
+        </div>
+      </div>
+      <div class="kpis" id="rexKpis"></div>
+      <div id="rexList"></div>
     </div>
   </section>
 </div>
@@ -1181,6 +1261,17 @@
       list.sort(function (a, b) { return a.created - b.created || (a.id < b.id ? -1 : 1); });
       return list;
     }
+    // REX d'un arrêt : items[id].rex = {constat, cause, enseignement, by, at}
+    var REX_FIELDS = [
+      ["constat", "Constat", "Ce qui s'est passé, conséquences"],
+      ["cause", "Cause(s)", "Cause racine identifiée"],
+      ["enseignement", "Enseignement", "Ce qu'il faut retenir et refaire / éviter"],
+    ];
+    function rexOf(x) {
+      var r = x && x.rex;
+      if (!r || !(r.constat || r.cause || r.enseignement)) return null;
+      return { constat: r.constat || "", cause: r.cause || "", enseignement: r.enseignement || "", by: r.by || null, at: r.at || null };
+    }
     function rebuild() {
       var out = [];
       Object.keys(days).forEach(function (day) {
@@ -1188,7 +1279,7 @@
           a = (acts[day] && acts[day].items) || {};
         Object.keys(m).forEach(function (id) {
           var s = m[id];
-          out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "", diam: s.diam || "", actions: actionsOf(a[id]) });
+          out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "", diam: s.diam || "", actions: actionsOf(a[id]), rex: rexOf(a[id]) });
         });
       });
       out.sort(function (a, b) { return a.start - b.start; });
@@ -1272,22 +1363,27 @@
       }
     }
     var chains = {};
-    function writeAction(day, stopId, aid, fields) {
-      var body = Object.assign({}, fields, { by: myId, at: Date.now() });
+    function deepMerge(t, s) {
+      Object.keys(s).forEach(function (k) {
+        var v = s[k];
+        if (v && typeof v === "object" && !Array.isArray(v)) t[k] = deepMerge(t[k] && typeof t[k] === "object" ? t[k] : {}, v);
+        else t[k] = v;
+      });
+      return t;
+    }
+    // écrit une partie de items[stopId] (actions ou REX) ; update fusionne les objets imbriqués
+    function writeItem(day, stopId, part) {
       if (mode === "local") {
         acts[day] = acts[day] || { items: {} };
-        var it = (acts[day].items[stopId] = acts[day].items[stopId] || {});
-        it.list = it.list || {};
-        it.list[aid] = Object.assign({}, it.list[aid] || {}, body);
+        acts[day].items[stopId] = deepMerge(acts[day].items[stopId] || {}, part);
         saveLocal();
+        rebuild();
         return Promise.resolve();
       }
       var ref = db.collection("actions").doc(day),
-        patch = {},
-        inner = {};
-      inner[aid] = body;
-      patch[stopId] = { list: inner };
-      // une écriture à la fois par document ; update fusionne les objets imbriqués
+        patch = {};
+      patch[stopId] = part;
+      // une écriture à la fois par document
       chains[day] = (chains[day] || Promise.resolve())
         .then(async function () {
           try {
@@ -1307,6 +1403,14 @@
           toast(dbErrorMessage(e));
         });
       return chains[day];
+    }
+    function writeAction(day, stopId, aid, fields) {
+      var inner = {};
+      inner[aid] = Object.assign({}, fields, { by: myId, at: Date.now() });
+      return writeItem(day, stopId, { list: inner });
+    }
+    function writeRex(day, stopId, fields) {
+      return writeItem(day, stopId, { rex: Object.assign({}, fields, { by: myId, at: Date.now() }) });
     }
 
     // ---------- Parsing ----------
@@ -1760,6 +1864,7 @@
             actions: s.actions.map(function (a) {
               return { typeAction: a.typeAction, action: a.action, pilote: a.pilote, delai: a.delai };
             }),
+            rex: s.rex ? { constat: s.rex.constat, cause: s.rex.cause, enseignement: s.rex.enseignement } : null,
           };
         }),
       };
@@ -1820,6 +1925,7 @@
         byId[s.id] = s;
       });
       var toAdd = [],
+        rexWrites = [],
         actionWrites = [],
         bad = 0;
       rows.forEach(function (r) {
@@ -1846,6 +1952,8 @@
           byKey[stopKey(s)] = s;
           byId[s.id] = s;
         }
+        if (r.rex && (r.rex.constat || r.rex.cause || r.rex.enseignement) && !(existing && existing.rex))
+          rexWrites.push([dayKey(s.start), s.id, { constat: String(r.rex.constat || ""), cause: String(r.rex.cause || ""), enseignement: String(r.rex.enseignement || "") }]);
         // format 2 : liste « actions » ; format 1 : une action à plat
         var list = Array.isArray(r.actions) ? r.actions : [r];
         if (existing && existing.actions && existing.actions.length) return;
@@ -1872,13 +1980,16 @@
         for (var day of Object.keys(g)) {
           for (var w of g[day]) await writeAction(w[0], w[1], w[2], w[3]);
         }
+        for (var rw of rexWrites) await writeRex(rw[0], rw[1], rw[2]);
         if (mode === "local") refresh();
         ui.rangeSet = false;
         info.textContent =
           toAdd.length +
           " arrêt(s) ajouté(s), " +
           actionWrites.length +
-          " action(s) reprise(s)" +
+          " action(s) et " +
+          rexWrites.length +
+          " REX repris" +
           (bad ? ", " + bad + " ligne(s) invalide(s) ignorée(s)" : "") +
           ".";
       } catch (e) {
@@ -2291,8 +2402,38 @@
       return filtered().filter(function (x) {
         var has = realActions(x.s).length > 0;
         return m === "all" || (m === "todo" && !has) || (m === "with" && has) ||
-          (m === "late" && x.s.actions.some(function (a) { return isLate(a, today); }));
+          (m === "late" && x.s.actions.some(function (a) { return isLate(a, today); })) ||
+          (m === "rex" && x.s.rex) || (m === "norex" && !x.s.rex);
       });
+    }
+    function stopHeadHTML(s, badge) {
+      return '<div class="act-head">' +
+        '<span class="mono">' + fmtDate(s.start) + "</span>" +
+        '<span class="mono muted">→ ' + (dayKey(s.end) === dayKey(s.start) ? fmtDate(s.end).slice(11) : fmtDate(s.end)) + "</span>" +
+        '<span class="num"><strong>' + fmtDur(s.end - s.start) + "</strong></span>" +
+        "<span><strong>" + esc(machineOf(s)) + "</strong></span>" +
+        "<span>" + esc(typeOf(s)) + "</span>" +
+        (s.diam ? '<span class="muted">Ø ' + esc(s.diam) + "</span>" : "") +
+        (badge || "") + "</div>" +
+        '<div class="act-detail">' + (s.detail ? esc(s.detail) : '<span class="muted">Pas de détail</span>') + "</div>";
+    }
+    var rexOpen = {};
+    function rexEditHTML(s, ro) {
+      var r = s.rex;
+      if (!r && !rexOpen[s.id]) return ro ? "" : '<div><button class="btn sm" data-rex-open>+ Saisir un REX</button></div>';
+      if (ro) return rexViewHTML(r);
+      r = r || {};
+      return '<div class="rex-box"><div class="rex-title">REX' + (r.at ? ' <span class="muted rex-upd">· <span data-uid="' + esc(r.by || "") + '">' + (r.by ? "…" : "") + "</span> " + fmtDate(r.at).slice(0, 16) + "</span>" : "") + "</div>" +
+        '<div class="rex-grid">' + REX_FIELDS.map(function (f) {
+          return '<label class="f">' + f[1] + '<textarea data-rex="' + f[0] + '" placeholder="' + esc(f[2]) + '">' + esc(r[f[0]] || "") + "</textarea></label>";
+        }).join("") + "</div></div>";
+    }
+    function rexViewHTML(r) {
+      if (!r) return "";
+      return '<div class="rex-box"><div class="rex-title">REX' + (r.at ? ' <span class="muted rex-upd">· <span data-uid="' + esc(r.by || "") + '">' + (r.by ? "…" : "") + "</span> " + fmtDate(r.at).slice(0, 16) + "</span>" : "") + "</div>" +
+        '<dl class="rex-view">' + REX_FIELDS.map(function (f) {
+          return "<dt>" + f[1] + "</dt><dd>" + (r[f[0]] ? esc(r[f[0]]) : '<span class="muted">—</span>') + "</dd>";
+        }).join("") + "</dl></div>";
     }
     var pendingDelAct = null;
     function actionRowHTML(a, today, dis) {
@@ -2333,31 +2474,27 @@
       var dis = ro ? " disabled" : "";
       $("actTable").innerHTML = '<div class="act-list">' + rows.map(function (x) {
         var s = x.s, n = realActions(s).length;
-        var head = '<div class="act-head">' +
-          '<span class="mono">' + fmtDate(s.start) + "</span>" +
-          '<span class="mono muted">→ ' + (dayKey(s.end) === dayKey(s.start) ? fmtDate(s.end).slice(11) : fmtDate(s.end)) + "</span>" +
-          '<span class="num"><strong>' + fmtDur(s.end - s.start) + "</strong></span>" +
-          "<span><strong>" + esc(machineOf(s)) + "</strong></span>" +
-          "<span>" + esc(typeOf(s)) + "</span>" +
-          (s.diam ? '<span class="muted">Ø ' + esc(s.diam) + "</span>" : "") +
-          '<span class="pill ' + (n ? "ok" : "a") + '">' + (n ? n + " action" + (n > 1 ? "s" : "") : "Sans action") + "</span>" +
-          "</div>";
-        var detail = '<div class="act-detail">' + (s.detail ? esc(s.detail) : '<span class="muted">Pas de détail</span>') + "</div>";
+        var head = stopHeadHTML(s, '<span class="pill ' + (n ? "ok" : "a") + '">' + (n ? n + " action" + (n > 1 ? "s" : "") : "Sans action") + "</span>" +
+          (s.rex ? '<span class="pill rex">REX</span>' : "")), detail = "";
         var table = s.actions.length
           ? '<div class="scroll"><table class="actions-table"><thead><tr><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Délai</th><th>Mis à jour</th><th></th></tr></thead><tbody>' +
             s.actions.map(function (a) { return actionRowHTML(a, today, dis); }).join("") + "</tbody></table></div>"
           : "";
         var add = ro ? "" : '<div><button class="btn sm" data-act-add>+ Ajouter une action</button></div>';
-        return '<article class="act-stop" data-id="' + esc(s.id) + '" data-day="' + esc(s.day) + '">' + head + detail + table + add + "</article>";
+        return '<article class="act-stop" data-id="' + esc(s.id) + '" data-day="' + esc(s.day) + '">' + head + detail + table + add + rexEditHTML(s, ro) + "</article>";
       }).join("") + "</div>";
-      fillNames();
+      fillNames("#actTable");
+      if (ui.focusRex) {
+        var r = document.querySelector('#actTable article[data-id="' + ui.focusRex + '"] textarea[data-rex]');
+        if (r) { r.focus(); ui.focusRex = null; }
+      }
       if (ui.focusAction) {
         var t = document.querySelector('#actTable tr[data-aid="' + ui.focusAction + '"] textarea');
         if (t) { t.focus(); ui.focusAction = null; }
       }
     }
-    async function fillNames() {
-      var spans = Array.prototype.slice.call(document.querySelectorAll("#actTable [data-uid]")).filter(function (e) { return e.dataset.uid; });
+    async function fillNames(root) {
+      var spans = Array.prototype.slice.call(document.querySelectorAll(root + " [data-uid]")).filter(function (e) { return e.dataset.uid; });
       if (!spans.length) return;
       if (!user) { spans.forEach(function (e) { e.textContent = ""; }); return; }
       var ids = Array.from(new Set(spans.map(function (e) { return e.dataset.uid; })));
@@ -2369,14 +2506,14 @@
     }
     function copyActions() {
       var rows = actionRows();
-      var lines = [["Date début", "Date fin", "Durée", "Diamètre", "Code FER", "Nom FER", "Code Macc", "Nom Macc", "Détail", "Type d'action", "Action", "Pilote", "Délai"].join("\t")];
+      var lines = [["Date début", "Date fin", "Durée", "Diamètre", "Code FER", "Nom FER", "Code Macc", "Nom Macc", "Détail", "Type d'action", "Action", "Pilote", "Délai", "REX constat", "REX cause(s)", "REX enseignement"].join("\t")];
       var n = 0;
       rows.forEach(function (x) {
         var s = x.s, list = realActions(s).length ? s.actions : [{}];
         list.forEach(function (a) {
           var d = a.delai ? a.delai.split("-").reverse().join("/") : "";
           n++;
-          lines.push([fmtDate(s.start), fmtDate(s.end), fmtDur(s.end - s.start), s.diam, s.fer, codeName("fer", s.fer), s.macc, codeName("macc", s.macc), s.detail, a.typeAction, a.action, a.pilote, d]
+          lines.push([fmtDate(s.start), fmtDate(s.end), fmtDur(s.end - s.start), s.diam, s.fer, codeName("fer", s.fer), s.macc, codeName("macc", s.macc), s.detail, a.typeAction, a.action, a.pilote, d, s.rex ? s.rex.constat : "", s.rex ? s.rex.cause : "", s.rex ? s.rex.enseignement : ""]
             .map(function (v) { v = String(v || ""); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join("\t"));
         });
       });
@@ -2392,6 +2529,57 @@
       } catch (e) { fallback(); }
     }
 
+    // ---------- Onglet REX ----------
+    function rexRows() {
+      var words = normText($("rexQ").value).split(/\s+/).filter(Boolean);
+      return filtered().filter(function (x) {
+        if (!x.s.rex) return false;
+        if (!words.length) return true;
+        var s = x.s, t = normText([s.rex.constat, s.rex.cause, s.rex.enseignement, s.detail, machineOf(s), typeOf(s), s.diam].concat(s.actions.map(function (a) { return a.action + " " + a.pilote; })).join(" "));
+        return words.every(function (w) { return t.indexOf(w) >= 0; });
+      });
+    }
+    function renderRex() {
+      var all = filtered(), withRex = all.filter(function (x) { return x.s.rex; }), rows = rexRows();
+      var durRex = withRex.reduce(function (t, x) { return t + x.dur; }, 0), durAll = all.reduce(function (t, x) { return t + x.dur; }, 0);
+      $("rexKpis").innerHTML =
+        '<div class="kpi"><div class="l">REX sur la période</div><div class="v">' + withRex.length + "</div></div>" +
+        '<div class="kpi"><div class="l">Arrêts sans REX</div><div class="v">' + (all.length - withRex.length) + "</div></div>" +
+        '<div class="kpi"><div class="l">Temps d\'arrêt couvert par un REX</div><div class="v">' + (durAll ? pct(durRex / durAll) : "—") + "</div></div>";
+      if (!rows.length) {
+        $("rexList").innerHTML = '<div class="empty">' + (mode === "pending" ? "Chargement de la base…" : withRex.length ? "Aucun REX ne correspond à cette recherche." : "Aucun REX sur cette période. Saisissez-en un depuis l'onglet Saisie des actions / REX.") + "</div>";
+        return;
+      }
+      var today = startOfDay(Date.now());
+      $("rexList").innerHTML = '<div class="act-list">' + rows.map(function (x) {
+        var s = x.s, acts = realActions(s);
+        var list = acts.length
+          ? '<div class="rex-acts"><div class="rex-title">Actions</div><ul>' + acts.map(function (a) {
+              return "<li>" + (a.typeAction ? "<strong>" + esc(a.typeAction) + "</strong> · " : "") + esc(a.action || "—") +
+                (a.pilote ? ' <span class="muted">· ' + esc(a.pilote) + "</span>" : "") +
+                (a.delai ? ' <span class="muted">· ' + a.delai.split("-").reverse().join("/") + "</span>" : "") +
+                (isLate(a, today) ? ' <span class="pill late">En retard</span>' : "") + "</li>";
+            }).join("") + "</ul></div>"
+          : "";
+        return '<article class="act-stop">' + stopHeadHTML(s) + rexViewHTML(s.rex) + list + "</article>";
+      }).join("") + "</div>";
+      fillNames("#rexList");
+    }
+    function copyRex() {
+      var lines = [["Date début", "Date fin", "Durée", "Diamètre", "Type d'arrêt", "Machine", "Détail", "Constat", "Cause(s)", "Enseignement", "Actions"].join("\t")];
+      var rows = rexRows();
+      rows.forEach(function (x) {
+        var s = x.s;
+        lines.push([fmtDate(s.start), fmtDate(s.end), fmtDur(s.end - s.start), s.diam, typeOf(s), machineOf(s), s.detail, s.rex.constat, s.rex.cause, s.rex.enseignement,
+          realActions(s).map(function (a) { return a.action + (a.pilote ? " (" + a.pilote + ")" : ""); }).join(" ; ")]
+          .map(function (v) { v = String(v || ""); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join("\t"));
+      });
+      var text = lines.join("\n");
+      try {
+        navigator.clipboard.writeText(text).then(function () { toast(rows.length + " REX copié(s) : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); });
+      } catch (e) { toast("Copie refusée par le navigateur"); }
+    }
+
     // ---------- Global render ----------
     var deferActions = false;
     function editingActions() {
@@ -2400,7 +2588,7 @@
         !$("actTable").closest("[data-panel]").hidden &&
         a &&
         $("actTable").contains(a) &&
-        a.dataset.field
+        (a.dataset.field || a.dataset.rex)
       );
     }
     function renderAll() {
@@ -2419,6 +2607,7 @@
       $("btnExportTop").hidden = mode === "pending";
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
+      if (tab === "rex") renderRex();
       if (tab === "actions") {
         // ne pas écraser un champ en cours de saisie quand un autre utilisateur modifie la base
         if (editingActions()) deferActions = true;
@@ -2558,6 +2747,8 @@
     });
     $("actFilter").addEventListener("change", renderActions);
     $("btnCopy").addEventListener("click", copyActions);
+    $("rexQ").addEventListener("input", renderRex);
+    $("btnCopyRex").addEventListener("click", copyRex);
 
     // Saisie des actions : une écriture par pause de frappe, immédiate à la sortie du champ
     var timers = {};
@@ -2577,7 +2768,23 @@
       if (a) Object.assign(a, f);
       writeAction(c.day, c.stopId, c.aid, f);
     }
+    function flushRex(art) {
+      var stopId = art.dataset.id, day = art.dataset.day, key = "rex/" + stopId;
+      clearTimeout(timers[key]);
+      delete timers[key];
+      var f = {};
+      art.querySelectorAll("[data-rex]").forEach(function (el) { f[el.dataset.rex] = el.value.trim(); });
+      var s = stops.find(function (x) { return x.id === stopId; }), r = (s && s.rex) || {};
+      if ((r.constat || "") === f.constat && (r.cause || "") === f.cause && (r.enseignement || "") === f.enseignement) return;
+      writeRex(day, stopId, f);
+    }
     $("actTable").addEventListener("input", function (e) {
+      if (e.target.dataset.rex && canWriteActions()) {
+        var art = e.target.closest("article[data-id]"), key = "rex/" + art.dataset.id;
+        clearTimeout(timers[key]);
+        timers[key] = setTimeout(function () { flushRex(art); }, 800);
+        return;
+      }
       var c = ctx(e.target);
       if (!c || !c.tr || !canWriteActions()) return;
       var key = c.stopId + "/" + c.aid;
@@ -2585,6 +2792,7 @@
       timers[key] = setTimeout(function () { flush(c); }, 800);
     });
     $("actTable").addEventListener("change", function (e) {
+      if (e.target.dataset.rex) { if (canWriteActions()) flushRex(e.target.closest("article[data-id]")); return; }
       var c = ctx(e.target);
       if (c && c.tr && canWriteActions()) flush(c);
     });
@@ -2593,7 +2801,11 @@
       if (!b || !canWriteActions()) return;
       var c = ctx(b);
       if (!c) return;
-      if (b.hasAttribute("data-act-add")) {
+      if (b.hasAttribute("data-rex-open")) {
+        rexOpen[c.stopId] = true;
+        ui.focusRex = c.stopId;
+        renderActions();
+      } else if (b.hasAttribute("data-act-add")) {
         var aid = uid();
         ui.focusAction = aid;
         writeAction(c.day, c.stopId, aid, { typeAction: "", action: "", pilote: "", delai: "", created: Date.now() });
@@ -2688,7 +2900,7 @@
       } catch (e) {}
       if (
         location.hash &&
-        /^#(saisie|machine|type|actions)$/.test(location.hash)
+        /^#(saisie|machine|type|actions|rex)$/.test(location.hash)
       )
         ui.tab = location.hash.slice(1);
       renderAll();
