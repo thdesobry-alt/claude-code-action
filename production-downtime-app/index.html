@@ -813,7 +813,6 @@
       <button class="btn" id="btnPrev" aria-label="Période précédente">◀</button>
       <button class="btn" id="btnNext" aria-label="Période suivante">▶</button>
       <button class="btn" id="btnLatest">Dernières données</button>
-      <label class="chk"><input type="checkbox" id="groupByName" /> Regrouper les codes de même nom</label>
     </div>
     <div class="period" id="periodLabel"></div>
     <div class="chips-row">
@@ -835,7 +834,7 @@
             <button class="linkbtn" data-none="type">Aucun</button></span
           >
         </div>
-        <input type="search" class="chip-search" id="q-type" data-kind="type" placeholder="Rechercher un type d'arrêt (nom ou code)…" aria-label="Rechercher un type d'arrêt (nom ou code)" autocomplete="off" />
+        <input type="search" class="chip-search" id="q-type" data-kind="type" placeholder="Rechercher un type d'arrêt (nom ou numéro)…" aria-label="Rechercher un type d'arrêt (nom ou code)" autocomplete="off" />
         <div class="chip-found" id="found-type" hidden></div>
         <div class="chips" id="chipsType"></div>
       </div>
@@ -847,7 +846,7 @@
             <button class="linkbtn" data-none="machine">Aucune</button></span
           >
         </div>
-        <input type="search" class="chip-search" id="q-machine" data-kind="machine" placeholder="Rechercher une machine (nom ou code)…" aria-label="Rechercher une machine (nom ou code)" autocomplete="off" />
+        <input type="search" class="chip-search" id="q-machine" data-kind="machine" placeholder="Rechercher une machine (nom ou numéro)…" aria-label="Rechercher une machine (nom ou code)" autocomplete="off" />
         <div class="chip-found" id="found-machine" hidden></div>
         <div class="chips" id="chipsMachine"></div>
       </div>
@@ -1237,7 +1236,8 @@
       if (!c) return "(vide)";
       var n = codeName(kind, c);
       if (!n) return String(c);
-      return ui.groupByName ? n : n + " (" + normCode(c) + ")";
+      // les codes de même nom sont toujours regroupés sous ce nom
+      return n;
     }
     // cellule de tableau : nom lisible et code en dessous
     function codeCell(kind, c) {
@@ -1687,8 +1687,9 @@
     // tous les mots tapés doivent apparaître dans le nom ou le code
     function matchValues(kind, vals) {
       var words = normText($("q-" + kind).value).split(/\s+/).filter(Boolean);
+      var table = codes[kind === "machine" ? "macc" : "fer"] || {};
       return vals.filter(function (v) {
-        var t = normText(v);
+        var t = normText(v + " " + Object.keys(table).filter(function (c) { return table[c] === v; }).join(" "));
         return words.every(function (w) { return t.indexOf(w) >= 0; });
       });
     }
@@ -2983,12 +2984,6 @@
     });
     $("btnCodesReset").addEventListener("click", async function () {
       if (await saveCodes({})) toast("Tables d'origine restaurées");
-    });
-    $("groupByName").addEventListener("change", function () {
-      ui.groupByName = this.checked;
-      ui.sel.machine = ui.sel.type = null;
-      ui.focus = { machine: null, type: null };
-      renderAll();
     });
 
     // ---------- Init ----------
