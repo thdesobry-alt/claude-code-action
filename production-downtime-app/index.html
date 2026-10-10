@@ -1042,8 +1042,7 @@
         <div>
           <h2>Actions</h2>
           <p class="hint">
-            Toutes les actions des arrêts de la période et des filtres
-            sélectionnés, classées par délai. La saisie et la modification des
+            Toutes les actions, toutes périodes confondues, selon les filtres diamètre, type d'arrêt et machine. Classées par délai. La saisie et la modification des
             actions sont réservées aux Admin.
           </p>
         </div>
@@ -1075,8 +1074,7 @@
         <div>
           <h2>REX</h2>
           <p class="hint">
-            Les REX saisis sur les arrêts de la période et des filtres
-            sélectionnés, avec leurs actions. La saisie et la modification des REX sont réservées aux Admin (onglet Saisie des actions / REX).
+            Tous les REX, toutes périodes confondues, selon les filtres diamètre, type d'arrêt et machine, avec leurs actions. La saisie et la modification des REX sont réservées aux Admin (onglet Saisie des actions / REX).
           </p>
         </div>
         <div class="row">
@@ -1554,11 +1552,17 @@
     function overlap(s) {
       return Math.min(s.end, ui.to) - Math.max(s.start, ui.from);
     }
+    // onglets Actions et REX : pas de filtre de période, toutes dates confondues
+    var curTab = "machine";
+    function noPeriod() {
+      return curTab === "actview" || curTab === "rex";
+    }
     function filtered() {
-      if (ui.from == null || ui.to == null) return [];
+      var all = noPeriod();
+      if (!all && (ui.from == null || ui.to == null)) return [];
       return stops
         .filter(function (s) {
-          var o = overlap(s);
+          var o = all ? 1 : overlap(s);
           if (o < 0 || (o === 0 && !(s.start >= ui.from && s.start <= ui.to)))
             return false;
           return (
@@ -1568,7 +1572,7 @@
           );
         })
         .map(function (s) {
-          return { s: s, dur: Math.max(0, overlap(s)) };
+          return { s: s, dur: all ? s.end - s.start : Math.max(0, overlap(s)) };
         });
     }
     // Journée de production : de 8h à 8h le lendemain. Semaine : du lundi 8h au
@@ -1727,9 +1731,11 @@
       });
       $("fRef").value = ui.ref != null ? toLocalInput(prodDay(ui.ref).getTime()).slice(0, 10) : "";
       $("refWrap").firstChild.textContent = ui.gran === "week" ? "Un jour de la semaine" : ui.gran === "month" ? "Un jour du mois" : "Jour de production";
-      $("refWrap").hidden = $("btnPrev").hidden = $("btnNext").hidden = ui.gran === "all";
+      var np = noPeriod();
+      $("refWrap").hidden = $("btnPrev").hidden = $("btnNext").hidden = np || ui.gran === "all";
+      $("granSeg").parentNode.hidden = $("btnLatest").hidden = np;
       document.querySelectorAll("#granSeg button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.gran === ui.gran); });
-      $("periodLabel").innerHTML = periodLabel();
+      $("periodLabel").innerHTML = np ? "<strong>Toutes périodes confondues</strong> · seuls les filtres diamètre, type d'arrêt et machine s'appliquent" : periodLabel();
     }
 
     // ---------- Saisie ----------
@@ -2604,7 +2610,7 @@
         '<div class="kpi"><div class="l">Échéance sous 7 jours</div><div class="v">' + nSoon + "</div></div>" +
         '<div class="kpi"><div class="l">Sans délai</div><div class="v">' + all.filter(function (a) { return !a.delai; }).length + "</div></div>";
       if (!rows.length) {
-        $("avTable").innerHTML = '<div class="empty">' + (mode === "pending" ? "Chargement de la base…" : all.length ? "Aucune action ne correspond." : "Aucune action sur cette période.") + "</div>";
+        $("avTable").innerHTML = '<div class="empty">' + (mode === "pending" ? "Chargement de la base…" : all.length ? "Aucune action ne correspond." : "Aucune action avec ces filtres.") + "</div>";
         return;
       }
       $("avTable").innerHTML = '<table class="av-table"><thead><tr><th>Délai</th><th>Statut</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Arrêt</th><th>Diamètre</th><th>Type d\'arrêt</th><th>Machine</th><th>Détail</th></tr></thead><tbody>' +
@@ -2640,11 +2646,11 @@
       var all = filtered(), withRex = all.filter(function (x) { return x.s.rex; }), rows = rexRows();
       var durRex = withRex.reduce(function (t, x) { return t + x.dur; }, 0), durAll = all.reduce(function (t, x) { return t + x.dur; }, 0);
       $("rexKpis").innerHTML =
-        '<div class="kpi"><div class="l">REX sur la période</div><div class="v">' + withRex.length + "</div></div>" +
+        '<div class="kpi"><div class="l">REX</div><div class="v">' + withRex.length + "</div></div>" +
         '<div class="kpi"><div class="l">Arrêts sans REX</div><div class="v">' + (all.length - withRex.length) + "</div></div>" +
         '<div class="kpi"><div class="l">Temps d\'arrêt couvert par un REX</div><div class="v">' + (durAll ? pct(durRex / durAll) : "—") + "</div></div>";
       if (!rows.length) {
-        $("rexList").innerHTML = '<div class="empty">' + (mode === "pending" ? "Chargement de la base…" : withRex.length ? "Aucun REX ne correspond à cette recherche." : "Aucun REX sur cette période. Saisissez-en un depuis l'onglet Saisie des actions / REX.") + "</div>";
+        $("rexList").innerHTML = '<div class="empty">' + (mode === "pending" ? "Chargement de la base…" : withRex.length ? "Aucun REX ne correspond à cette recherche." : "Aucun REX avec ces filtres. Saisissez-en un depuis l'onglet Saisie des actions / REX.") + "</div>";
         return;
       }
       var today = startOfDay(Date.now());
@@ -2690,6 +2696,7 @@
     }
     function renderAll() {
       var tab = (ui.tab === "saisie" || ui.tab === "actions") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      curTab = tab;
       renderHeader();
       renderChips();
       renderBatches();
