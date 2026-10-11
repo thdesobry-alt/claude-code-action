@@ -1058,9 +1058,10 @@
         </div>
         <div>
           <span class="role user">Utilisateur</span>
-          <p class="hint" style="margin-top: 8px">Mot de passe Utilisateur.</p>
+          <p class="hint" style="margin-top: 8px">Mot de passe Utilisateur. Pour clôturer : niveau Contributeur ou plus.</p>
           <ul>
             <li>Consulte les analyses Pareto, les actions et les REX</li>
+            <li>Clôture les actions avec un commentaire</li>
             <li>Exporte la base JSON et copie les tableaux pour Excel</li>
           </ul>
         </div>
@@ -1121,8 +1122,9 @@
         <div>
           <h2>Actions</h2>
           <p class="hint">
-            Toutes les actions, toutes périodes confondues, selon les filtres diamètre, type d'arrêt et machine. Classées par délai. La saisie, la modification et la
-            clôture des actions sont réservées aux Admin.
+            Toutes les actions, toutes périodes confondues, selon les filtres diamètre, type d'arrêt et machine. Classées par délai. La saisie et la modification des
+            actions sont réservées aux Admin ; les Utilisateurs peuvent les
+            clôturer avec un commentaire.
           </p>
         </div>
         <div class="row">
@@ -1194,7 +1196,10 @@
       myId = null,
       role = "viewer";
     var days = {},
-      acts = {};
+      acts = {},
+      // clôtures : closures/{jour} = {items: {idArrêt: {idAction: {closed, closedAt, closedBy, closeComment}}}}
+      // collection séparée pour que les Utilisateurs puissent clôturer sans pouvoir modifier les actions
+      closes = {};
     var loaded = { days: false, acts: false };
     var stops = [];
     // Tables d'origine (Table_code_fer.xlsx, Table_code_macc.xlsx) ; config/codes dans la base les remplace
@@ -1402,7 +1407,7 @@
     // ---------- Model ----------
     // Actions d'un arrêt : items[id].list = {idAction: action}. Les anciennes
     // fiches à une seule action (champs à plat) apparaissent comme l'action "a0".
-    function actionsOf(x) {
+    function actionsOf(x, cl) {
       var list = [],
         l = (x && x.list) || {};
       Object.keys(l).forEach(function (aid) {
@@ -1413,6 +1418,10 @@
       });
       if (x && !l.a0 && (x.action || x.typeAction || x.pilote || x.delai))
         list.push({ id: "a0", typeAction: x.typeAction || "", action: x.action || "", pilote: x.pilote || "", delai: x.delai || "", by: x.by || null, at: x.at || null, created: 0 });
+      list.forEach(function (a) {
+        var c = cl && cl[a.id];
+        if (c) { a.closed = !!c.closed; a.closedAt = c.closedAt || null; a.closedBy = c.closedBy || null; a.closeComment = c.closeComment || ""; }
+      });
       list.sort(function (a, b) { return a.created - b.created || (a.id < b.id ? -1 : 1); });
       return list;
     }
@@ -1431,10 +1440,11 @@
       var out = [];
       Object.keys(days).forEach(function (day) {
         var m = (days[day] && days[day].stops) || {},
-          a = (acts[day] && acts[day].items) || {};
+          a = (acts[day] && acts[day].items) || {},
+          c = (closes[day] && closes[day].items) || {};
         Object.keys(m).forEach(function (id) {
           var s = m[id];
-          out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "", diam: s.diam || "", actions: actionsOf(a[id]), rex: rexOf(a[id]) });
+          out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "", diam: s.diam || "", actions: actionsOf(a[id], c[id]), rex: rexOf(a[id]) });
         });
       });
       out.sort(function (a, b) { return a.start - b.start; });
@@ -1446,7 +1456,7 @@
       try {
         localStorage.setItem(
           LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts }),
+          JSON.stringify({ days: days, acts: acts, closes: closes }),
         );
       } catch (e) {}
     }
@@ -1456,6 +1466,7 @@
         if (d) {
           days = d.days || {};
           acts = d.acts || {};
+          closes = d.closes || {};
         }
       } catch (e) {}
     }
@@ -1534,13 +1545,29 @@
       // la journée de stockage change : déplacer l'arrêt puis ses actions / REX
       await deleteStops(function (s) { return s.id === id; });
       await addStops([Object.assign({ id: id }, next)]);
+      var cItem = closes[old.day] && closes[old.day].items && closes[old.day].items[id];
+      if (cItem) {
+        await writeItem(newDay, id, JSON.parse(JSON.stringify(cItem)), "closures");
+        var cRest = Object.assign({}, closes[old.day].items);
+        delete cRest[id];
+        if (mode === "db") {
+          await chains["closures/" + newDay];
+          var cRef = db.collection("closures").doc(old.day);
+          if (Object.keys(cRest).length) await cRef.set({ items: cRest });
+          else await cRef.delete();
+        } else {
+          if (Object.keys(cRest).length) closes[old.day] = { items: cRest };
+          else delete closes[old.day];
+          saveLocal();
+        }
+      }
       var item = acts[old.day] && acts[old.day].items && acts[old.day].items[id];
       if (item) {
         await writeItem(newDay, id, JSON.parse(JSON.stringify(item)));
         var rest = Object.assign({}, acts[old.day].items);
         delete rest[id];
         if (mode === "db") {
-          await chains[newDay];
+          await chains["actions/" + newDay];
           var ref = db.collection("actions").doc(old.day);
           if (Object.keys(rest).length) await ref.set({ items: rest });
           else await ref.delete();
@@ -1562,19 +1589,22 @@
       return t;
     }
     // écrit une partie de items[stopId] (actions ou REX) ; update fusionne les objets imbriqués
-    function writeItem(day, stopId, part) {
+    function writeItem(day, stopId, part, coll) {
+      coll = coll || "actions";
+      var store = coll === "closures" ? closes : acts;
       if (mode === "local") {
-        acts[day] = acts[day] || { items: {} };
-        acts[day].items[stopId] = deepMerge(acts[day].items[stopId] || {}, part);
+        store[day] = store[day] || { items: {} };
+        store[day].items[stopId] = deepMerge(store[day].items[stopId] || {}, part);
         saveLocal();
         rebuild();
         return Promise.resolve();
       }
-      var ref = db.collection("actions").doc(day),
-        patch = {};
+      var ref = db.collection(coll).doc(day),
+        patch = {},
+        ck = coll + "/" + day;
       patch[stopId] = part;
       // une écriture à la fois par document
-      chains[day] = (chains[day] || Promise.resolve())
+      chains[ck] = (chains[ck] || Promise.resolve())
         .then(async function () {
           try {
             await ref.update({ items: patch });
@@ -1592,13 +1622,21 @@
         .catch(function (e) {
           toast(dbErrorMessage(e));
         });
-      return chains[day];
+      return chains[ck];
     }
     function writeAction(day, stopId, aid, fields) {
       var inner = {};
       inner[aid] = Object.assign({}, fields, { by: myId, at: Date.now() });
       return writeItem(day, stopId, { list: inner });
     }
+    function writeClosure(day, stopId, aid, fields) {
+      var inner = {};
+      inner[aid] = fields;
+      return writeItem(day, stopId, inner, "closures");
+    }
+    var canClose = function () {
+      return role === "admin" || role === "user";
+    };
     function writeRex(day, stopId, fields) {
       return writeItem(day, stopId, { rex: Object.assign({}, fields, { by: myId, at: Date.now() }) });
     }
@@ -2865,7 +2903,7 @@
     }
     var closing = null; // action en cours de clôture : "jour|arrêt|action"
     function renderActView() {
-      var today = startOfDay(Date.now()), soon = today + 7 * 864e5, rows = actViewRows(), all = [], admin = canWriteActions();
+      var today = startOfDay(Date.now()), soon = today + 7 * 864e5, rows = actViewRows(), all = [], admin = canClose();
       filtered().forEach(function (x) { realActions(x.s).forEach(function (a) { all.push(a); }); });
       var open = all.filter(function (a) { return !a.closed; });
       var late = open.filter(function (a) { return isLate(a, today); }).length;
@@ -3173,18 +3211,18 @@
     $("avStatus").addEventListener("change", renderActView);
     $("avTable").addEventListener("click", function (e) {
       var b = e.target.closest("button");
-      if (!b || !canWriteActions()) return;
+      if (!b || !canClose()) return;
       var tr = b.closest("tr[data-key]"), k = tr.dataset.key.split("|");
       if (b.hasAttribute("data-close")) { closing = tr.dataset.key; renderActView(); }
       else if (b.hasAttribute("data-close-no")) { closing = null; renderActView(); }
       else if (b.hasAttribute("data-close-yes")) {
         var comment = tr.querySelector("[data-close-comment]").value.trim();
         closing = null;
-        writeAction(k[0], k[1], k[2], { closed: true, closedAt: Date.now(), closedBy: myId, closeComment: comment });
+        writeClosure(k[0], k[1], k[2], { closed: true, closedAt: Date.now(), closedBy: myId, closeComment: comment });
         if (mode === "local") refresh(); else renderActView();
         toast("Action clôturée");
       } else if (b.hasAttribute("data-reopen")) {
-        writeAction(k[0], k[1], k[2], { closed: false, closedAt: null, closedBy: null, closeComment: "" });
+        writeClosure(k[0], k[1], k[2], { closed: false, closedAt: null, closedBy: null, closeComment: "" });
         if (mode === "local") refresh(); else renderActView();
         toast("Action rouverte");
       }
@@ -3391,6 +3429,16 @@
           });
           acts = d;
           loaded.acts = true;
+          refresh();
+        }, onErr);
+      db.collection("closures")
+        .limit(1000)
+        .onSnapshot(function (snap) {
+          var d = {};
+          snap.docs.forEach(function (doc) {
+            d[doc.id] = doc.data();
+          });
+          closes = d;
           refresh();
         }, onErr);
       db.doc("config/codes").onSnapshot(function (snap) {
