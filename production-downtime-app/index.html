@@ -689,6 +689,20 @@
     min-width: 220px;
     white-space: pre-wrap;
   }
+  .ed-table input {
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+  .ed-table td.ed-btns {
+    white-space: nowrap;
+    text-align: right;
+  }
+  .ed-table td.ed-btns .btn + .btn {
+    margin-left: 6px;
+  }
+  .ed-table tr.ed-row td {
+    background: var(--accent-soft);
+  }
   .av-table tr.is-closed td {
     color: var(--muted);
   }
@@ -917,6 +931,25 @@
         <span class="muted" id="parseInfo"></span>
       </div>
       <div class="scroll" id="preview"></div>
+    </div>
+
+    <div class="panel stack">
+      <div>
+        <h2>Modifier des arrêts</h2>
+        <p class="hint">
+          Retrouvez un arrêt par sa journée de production (8h à 8h) ou par une
+          recherche, puis modifiez ses dates, codes, détail ou diamètre. Les
+          actions et le REX de l'arrêt sont conservés.
+        </p>
+      </div>
+      <div class="row">
+        <label class="f">Jour de production<input type="date" id="edDay" /></label>
+        <button class="btn" id="edPrev" aria-label="Jour précédent">◀</button>
+        <button class="btn" id="edNext" aria-label="Jour suivant">▶</button>
+        <label class="f">Rechercher<input type="search" id="edQ" placeholder="détail, machine, code…" autocomplete="off" style="width: 240px" /></label>
+        <label class="chk"><input type="checkbox" id="edAll" /> Tous les jours</label>
+      </div>
+      <div class="scroll" id="edTable"></div>
     </div>
 
     <div class="panel">
@@ -1436,6 +1469,41 @@
         refresh();
       }
     }
+    async function updateStop(old, next) {
+      var newDay = dayKey(next.start), id = old.id;
+      if (newDay === old.day) {
+        if (mode === "db") {
+          var patch = {};
+          patch[id] = strip(next);
+          await db.collection("days").doc(newDay).update({ stops: patch });
+        } else {
+          days[newDay].stops[id] = strip(next);
+          saveLocal();
+          refresh();
+        }
+        return;
+      }
+      // la journée de stockage change : déplacer l'arrêt puis ses actions / REX
+      await deleteStops(function (s) { return s.id === id; });
+      await addStops([Object.assign({ id: id }, next)]);
+      var item = acts[old.day] && acts[old.day].items && acts[old.day].items[id];
+      if (item) {
+        await writeItem(newDay, id, JSON.parse(JSON.stringify(item)));
+        var rest = Object.assign({}, acts[old.day].items);
+        delete rest[id];
+        if (mode === "db") {
+          await chains[newDay];
+          var ref = db.collection("actions").doc(old.day);
+          if (Object.keys(rest).length) await ref.set({ items: rest });
+          else await ref.delete();
+        } else {
+          if (Object.keys(rest).length) acts[old.day] = { items: rest };
+          else delete acts[old.day];
+          saveLocal();
+          refresh();
+        }
+      }
+    }
     var chains = {};
     function deepMerge(t, s) {
       Object.keys(s).forEach(function (k) {
@@ -1875,6 +1943,100 @@
       busy = false;
       renderPreview();
     }
+    // ---------- Modifier des arrêts ----------
+    var ed = { day: null, id: null, del: null };
+    function edRows() {
+      var words = normText($("edQ").value).split(/\s+/).filter(Boolean), all = $("edAll").checked;
+      if (ed.day == null) ed.day = stops.length ? prodDay(Math.max.apply(null, stops.map(function (s) { return s.start; }))).getTime() : prodDay(Date.now()).getTime();
+      var from = ed.day, to = new Date(from); to.setDate(to.getDate() + 1); to = to.getTime();
+      return stops.filter(function (s) {
+        if (!all && !(s.start >= from && s.start < to)) return false;
+        if (!words.length) return true;
+        var t = normText([s.detail, s.fer, s.macc, machineOf(s), typeOf(s), s.diam, fmtDate(s.start)].join(" "));
+        return words.every(function (w) { return t.indexOf(w) >= 0; });
+      });
+    }
+    function renderEditor() {
+      var tbl = $("edTable");
+      var ae = document.activeElement;
+      if (ed.id && ae && ae.matches && ae.matches("#edTable .ed-row [data-ed]")) return; // ne pas effacer une saisie en cours
+      $("edDay").value = ed.day != null ? toLocalInput(ed.day).slice(0, 10) : "";
+      var all = $("edAll").checked;
+      $("edDay").disabled = $("edPrev").disabled = $("edNext").disabled = all;
+      var rows = edRows();
+      if (!rows.length) {
+        tbl.innerHTML = '<div class="empty">' + (stops.length ? "Aucun arrêt pour ce jour ou cette recherche." : "Aucun arrêt enregistré.") + "</div>";
+        return;
+      }
+      var shown = rows.slice(0, 300);
+      tbl.innerHTML = '<table class="ed-table"><thead><tr><th>Début</th><th>Fin</th><th class="num">Durée</th><th>Diamètre</th><th>FER</th><th>Macc</th><th>Détail</th><th></th></tr></thead><tbody>' +
+        shown.map(function (s) {
+          if (ed.id === s.id)
+            return '<tr data-id="' + esc(s.id) + '" class="ed-row">' +
+              '<td><input type="datetime-local" step="1" data-ed="start" value="' + toLocalInput(s.start) + '" /></td>' +
+              '<td><input type="datetime-local" step="1" data-ed="end" value="' + toLocalInput(s.end) + '" /></td>' +
+              '<td class="num muted">—</td>' +
+              '<td><input data-ed="diam" value="' + esc(s.diam) + '" style="width: 80px" /></td>' +
+              '<td><input data-ed="fer" value="' + esc(s.fer) + '" style="width: 70px" /></td>' +
+              '<td><input data-ed="macc" value="' + esc(s.macc) + '" style="width: 80px" /></td>' +
+              '<td><input data-ed="detail" value="' + esc(s.detail) + '" style="width: 100%; min-width: 200px" /></td>' +
+              '<td class="ed-btns"><button class="btn sm primary" data-ed-save>Enregistrer</button><button class="btn sm" data-ed-cancel>Annuler</button></td></tr>';
+          var btns = ed.del === s.id
+            ? '<span class="confirm">Supprimer cet arrêt ? <button class="btn sm danger" data-ed-del-yes>Oui</button><button class="btn sm" data-ed-del-no>Non</button></span>'
+            : '<button class="btn sm" data-ed-edit>Modifier</button><button class="btn sm danger" data-ed-del>Supprimer</button>';
+          return '<tr data-id="' + esc(s.id) + '"><td class="mono">' + fmtDate(s.start) + '</td><td class="mono">' + fmtDate(s.end) + '</td><td class="num">' + fmtDur(s.end - s.start) + "</td><td>" + esc(s.diam) + "</td><td>" + codeCell("fer", s.fer) + "</td><td>" + codeCell("macc", s.macc) + "</td><td>" + esc(s.detail) + '</td><td class="ed-btns">' + btns + "</td></tr>";
+        }).join("") + "</tbody></table>" + (rows.length > shown.length ? '<p class="hint">' + rows.length + " arrêts : affinez la recherche pour voir les autres.</p>" : "");
+      var first = ed.id && tbl.querySelector('.ed-row [data-ed="start"]');
+      if (first) first.focus();
+    }
+    async function saveEdit(tr) {
+      var s = stops.find(function (x) { return x.id === tr.dataset.id; });
+      if (!s) return;
+      var v = {};
+      tr.querySelectorAll("[data-ed]").forEach(function (el) { v[el.dataset.ed] = el.value.trim(); });
+      var start = fromLocalInput(v.start), end = fromLocalInput(v.end);
+      if (start == null || end == null) { toast("Indiquez une date de début et de fin complètes."); return; }
+      if (end < start) { toast("La fin doit être après le début."); return; }
+      var next = { start: start, end: end, fer: v.fer, macc: v.macc, detail: v.detail, diam: v.diam };
+      if (stops.some(function (x) { return x.id !== s.id && stopKey(x) === stopKey(next); })) { toast("Un arrêt identique existe déjà."); return; }
+      ed.id = null;
+      document.activeElement.blur();
+      try {
+        await updateStop(s, next);
+        ed.day = prodDay(start).getTime();
+        toast("Arrêt modifié");
+      } catch (e) { toast(dbErrorMessage(e)); }
+      renderEditor();
+    }
+    $("edDay").addEventListener("change", function () {
+      var m = this.value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) { ed.day = new Date(+m[1], +m[2] - 1, +m[3], DAY_START_HOUR).getTime(); ed.id = null; renderEditor(); }
+    });
+    $("edPrev").addEventListener("click", function () { var d = new Date(ed.day); d.setDate(d.getDate() - 1); ed.day = d.getTime(); ed.id = null; renderEditor(); });
+    $("edNext").addEventListener("click", function () { var d = new Date(ed.day); d.setDate(d.getDate() + 1); ed.day = d.getTime(); ed.id = null; renderEditor(); });
+    $("edQ").addEventListener("input", function () { ed.id = null; renderEditor(); });
+    $("edAll").addEventListener("change", function () { ed.id = null; renderEditor(); });
+    $("edTable").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b || !isAdmin()) return;
+      var tr = b.closest("tr[data-id]"), id = tr.dataset.id;
+      if (b.hasAttribute("data-ed-edit")) { ed.id = id; ed.del = null; renderEditor(); }
+      else if (b.hasAttribute("data-ed-cancel")) { ed.id = null; document.activeElement.blur(); renderEditor(); }
+      else if (b.hasAttribute("data-ed-save")) saveEdit(tr);
+      else if (b.hasAttribute("data-ed-del")) { ed.del = id; renderEditor(); }
+      else if (b.hasAttribute("data-ed-del-no")) { ed.del = null; renderEditor(); }
+      else if (b.hasAttribute("data-ed-del-yes")) {
+        ed.del = null;
+        deleteStops(function (s) { return s.id === id; }).then(function () { toast("Arrêt supprimé"); renderEditor(); }, function (err) { toast(dbErrorMessage(err)); });
+      }
+    });
+    $("edTable").addEventListener("keydown", function (e) {
+      var tr = e.target.closest(".ed-row");
+      if (!tr) return;
+      if (e.key === "Enter") { e.preventDefault(); saveEdit(tr); }
+      if (e.key === "Escape") { ed.id = null; document.activeElement.blur(); renderEditor(); }
+    });
+
     var pendingDelete = null;
     function renderBatches() {
       if (!stops.length) {
@@ -2770,6 +2932,7 @@
       renderHeader();
       renderChips();
       renderBatches();
+      if (tab === "saisie") renderEditor();
       renderCodesInfo();
       document.querySelectorAll("nav.tabs button").forEach(function (b) {
         b.setAttribute("aria-selected", b.dataset.tab === tab);
