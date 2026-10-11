@@ -689,6 +689,17 @@
     min-width: 220px;
     white-space: pre-wrap;
   }
+  form.login {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .login-msg {
+    color: var(--danger);
+    font-size: 13px;
+  }
   .ed-table input {
     font-size: 12px;
     padding: 4px 6px;
@@ -823,9 +834,19 @@
       <span class="sub" id="dataSummary">Chargement…</span>
       <span class="sync" id="syncState">Connexion…</span>
       <span class="role" id="roleBadge" hidden></span>
+      <button class="btn sm" id="btnLogin" hidden>Se connecter</button>
+      <button class="btn sm" id="btnLogout" hidden>Se déconnecter</button>
       <button class="btn sm" id="btnExportTop">Exporter la base JSON</button>
     </div>
   </header>
+  <form class="panel login" id="loginPanel" hidden autocomplete="off">
+    <label class="f"
+      >Mot de passe Utilisateur ou Admin<input type="password" id="loginPwd" autocomplete="current-password"
+    /></label>
+    <button class="btn primary" type="submit">Valider</button>
+    <button class="btn" type="button" id="loginCancel">Annuler</button>
+    <span class="login-msg" id="loginMsg"></span>
+  </form>
 
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="saisie" aria-selected="false">
@@ -1021,40 +1042,35 @@
       <div>
         <h2>Profils</h2>
         <p class="hint">
-          Le profil de chaque personne vient de son niveau d'accès à la page,
-          réglé par le propriétaire dans le menu Partager.
+          L'application s'ouvre en lecture seule. Le bouton « Se connecter » en
+          haut de page débloque un profil par mot de passe, pour la durée de
+          l'onglet. Les modifications exigent en plus le niveau Éditeur dans le
+          menu Partager.
         </p>
       </div>
       <div class="roles">
         <div>
-          <span class="role admin">Admin</span>
-          <p class="hint" style="margin-top: 8px">
-            Niveau <strong>Éditeur</strong> ou propriétaire.
-          </p>
+          <span class="role viewer">Lecture seule</span>
+          <p class="hint" style="margin-top: 8px">À l'ouverture, sans mot de passe.</p>
           <ul>
-            <li>Colle et supprime des arrêts</li>
-            <li>Importe et exporte la base JSON</li>
-            <li>Saisit et modifie les actions et les REX</li>
-            <li>Consulte les analyses, les actions et les REX</li>
+            <li>Consulte les analyses Pareto, les actions et les REX</li>
           </ul>
         </div>
         <div>
           <span class="role user">Utilisateur</span>
-          <p class="hint" style="margin-top: 8px">
-            Niveau <strong>Contributeur</strong>.
-          </p>
+          <p class="hint" style="margin-top: 8px">Mot de passe Utilisateur.</p>
           <ul>
             <li>Consulte les analyses Pareto, les actions et les REX</li>
-            <li>Exporte la base JSON</li>
+            <li>Exporte la base JSON et copie les tableaux pour Excel</li>
           </ul>
         </div>
         <div>
-          <span class="role viewer">Lecture seule</span>
-          <p class="hint" style="margin-top: 8px">
-            Niveau <strong>Lecteur</strong> ou <strong>Commentateur</strong>.
-          </p>
+          <span class="role admin">Admin</span>
+          <p class="hint" style="margin-top: 8px">Mot de passe Admin et niveau Éditeur.</p>
           <ul>
-            <li>Consulte les analyses, les actions et les REX</li>
+            <li>Colle, modifie et supprime des arrêts</li>
+            <li>Saisit, modifie et clôture les actions et les REX</li>
+            <li>Importe la base JSON et met à jour les tables de codes</li>
           </ul>
         </div>
       </div>
@@ -1321,6 +1337,38 @@
     }
     function stopKey(s) {
       return [s.start, s.end, s.fer, s.macc, s.diam].join("|");
+    }
+    // Profil affiché = le plus bas entre le profil débloqué par mot de passe et le
+    // niveau d'accès à la page (menu Partager), qui seul autorise les écritures.
+    var RANK = { viewer: 0, user: 1, admin: 2 };
+    var PWD_HASH = {
+      d2f11871612a28e18352ee3e72277c61e618405bed720c8387b0134a78412fe1: "user",
+      ced150a99d744423eec95f62df9c1670c03faa64df54189bfe23a7d0316d09aa: "admin",
+    };
+    var platformRole = "viewer", unlocked = "viewer";
+    try { unlocked = sessionStorage.getItem(LOCAL_KEY + "-unlock") || "viewer"; } catch (e) {}
+    if (!RANK.hasOwnProperty(unlocked)) unlocked = "viewer";
+    function applyRole() {
+      role = RANK[unlocked] <= RANK[platformRole] ? unlocked : platformRole;
+    }
+    var canExport = function () {
+      return role !== "viewer";
+    };
+    async function sha256hex(text) {
+      var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+    }
+    async function login(pwd) {
+      var got;
+      try { got = PWD_HASH[await sha256hex("arrets-production:" + pwd)]; }
+      catch (e) { return "Connexion impossible dans ce navigateur."; }
+      if (!got) return "Mot de passe incorrect.";
+      unlocked = got;
+      try { sessionStorage.setItem(LOCAL_KEY + "-unlock", got); } catch (e) {}
+      applyRole();
+      if (RANK[got] > RANK[platformRole])
+        return "ok:Mot de passe accepté, mais votre accès à la page (menu Partager) limite votre profil à « " + (platformRole === "user" ? "Utilisateur" : "Lecture seule") + " ». Demandez au propriétaire le niveau Éditeur.";
+      return "ok:Connecté en " + (got === "admin" ? "Admin" : "Utilisateur") + ".";
     }
     var isAdmin = function () {
       return role === "admin";
@@ -1782,6 +1830,10 @@
         !isAdmin();
       document.querySelector('nav.tabs [data-tab="actions"]').hidden =
         !isAdmin();
+      $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
+      $("btnLogin").textContent = unlocked === "user" ? "Passer en Admin" : "Se connecter";
+      $("btnLogout").hidden = mode === "pending" || unlocked === "viewer";
+      ["btnCopyAv", "btnCopyRex"].forEach(function (id) { $(id).hidden = !canExport(); });
     }
     function normText(s) {
       return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -2118,6 +2170,7 @@
       };
     }
     async function exportJSON() {
+      if (!canExport()) return;
       var text = JSON.stringify(buildExport(), null, 2),
         name = "arrets-production-" + dayKey(Date.now()) + ".json";
       var dl =
@@ -2941,7 +2994,7 @@
         p.hidden = p.dataset.panel !== tab;
       });
       $("filters").hidden = tab === "saisie";
-      $("btnExportTop").hidden = mode === "pending";
+      $("btnExportTop").hidden = mode === "pending" || !canExport();
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
       if (tab === "rex") renderRex();
@@ -2987,6 +3040,33 @@
       renderPreview();
     });
     $("btnImport").addEventListener("click", doImport);
+    $("btnLogin").addEventListener("click", function () {
+      $("loginPanel").hidden = false;
+      $("loginMsg").textContent = "";
+      $("loginPwd").value = "";
+      $("loginPwd").focus();
+    });
+    $("loginCancel").addEventListener("click", function () { $("loginPanel").hidden = true; });
+    $("loginPanel").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var msg = await login($("loginPwd").value);
+      $("loginPwd").value = "";
+      if (msg.indexOf("ok:") === 0) {
+        $("loginPanel").hidden = true;
+        toast(msg.slice(3));
+        renderAll();
+      } else {
+        $("loginMsg").textContent = msg;
+        $("loginPwd").focus();
+      }
+    });
+    $("btnLogout").addEventListener("click", function () {
+      unlocked = "viewer";
+      try { sessionStorage.removeItem(LOCAL_KEY + "-unlock"); } catch (e) {}
+      applyRole();
+      toast("Déconnecté : lecture seule");
+      renderAll();
+    });
     $("btnExport").addEventListener("click", exportJSON);
     $("btnExportTop").addEventListener("click", exportJSON);
     $("jsonFile").addEventListener("change", function () {
@@ -3253,7 +3333,8 @@
         var lc = JSON.parse(localStorage.getItem(LOCAL_KEY + "-codes") || "null");
         if (lc && (lc.fer || lc.macc)) { codes = { fer: lc.fer || DEFAULT_CODES.fer, macc: lc.macc || DEFAULT_CODES.macc }; codesCustom = true; }
       } catch (e) {}
-      role = "admin";
+      platformRole = "admin";
+      applyRole();
       loadLocal();
       refresh();
     }
@@ -3284,8 +3365,9 @@
         myId = await user.id();
         var edit = await user.canEdit(),
           write = await user.can("data.write");
-        role = edit ? "admin" : write === false ? "viewer" : "user";
-      } else role = "user";
+        platformRole = edit ? "admin" : write === false ? "viewer" : "user";
+      } else platformRole = "user";
+      applyRole();
       var onErr = function (e) {
         toast(dbErrorMessage(e));
       };
