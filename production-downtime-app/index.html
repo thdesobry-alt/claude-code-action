@@ -872,6 +872,7 @@
           <button data-gran="day" aria-pressed="true">Jour</button>
           <button data-gran="week" aria-pressed="false">Semaine</button>
           <button data-gran="month" aria-pressed="false">Mois</button>
+          <button data-gran="year" aria-pressed="false">Année</button>
           <button data-gran="all" aria-pressed="false">Tout</button>
         </div>
       </div>
@@ -1765,6 +1766,7 @@
     }
     // Journée de production : de 8h à 8h le lendemain. Semaine : du lundi 8h au
     // lundi suivant 8h. Mois : du 1er à 8h au 1er du mois suivant à 8h.
+    // Année : du 1er janvier à 8h au 1er janvier suivant à 8h.
     var DAY_START_HOUR = 8;
     var MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
     function prodDay(ms) {
@@ -1792,9 +1794,11 @@
       var a = prodDay(ui.ref), b;
       if (ui.gran === "week") a.setDate(a.getDate() - ((a.getDay() + 6) % 7));
       if (ui.gran === "month") a.setDate(1);
+      if (ui.gran === "year") a.setMonth(0, 1);
       b = new Date(a);
       if (ui.gran === "day") b.setDate(b.getDate() + 1);
       else if (ui.gran === "week") b.setDate(b.getDate() + 7);
+      else if (ui.gran === "year") b.setFullYear(b.getFullYear() + 1);
       else b.setMonth(b.getMonth() + 1);
       ui.from = a.getTime();
       ui.to = b.getTime();
@@ -1804,6 +1808,7 @@
       if (ui.gran === "day") d.setDate(d.getDate() + n);
       else if (ui.gran === "week") d.setDate(d.getDate() + 7 * n);
       else if (ui.gran === "month") { d.setDate(1); d.setMonth(d.getMonth() + n); }
+      else if (ui.gran === "year") { d.setMonth(0, 1); d.setFullYear(d.getFullYear() + n); }
       ui.ref = d.getTime();
       applyPeriod();
     }
@@ -1812,6 +1817,7 @@
       var f = fmtDate(ui.from).slice(0, 16), t = fmtDate(ui.to).slice(0, 16), a = new Date(ui.from), name;
       if (ui.gran === "day") name = "Journée du " + f.slice(0, 10);
       else if (ui.gran === "week") name = "Semaine " + isoWeek(a) + " " + a.getFullYear();
+      else if (ui.gran === "year") name = "Année " + a.getFullYear();
       else if (ui.gran === "month") name = MONTHS[a.getMonth()].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + a.getFullYear();
       else name = "Toute la période";
       return "<strong>" + name + "</strong> · du " + f + " au " + t;
@@ -1923,7 +1929,7 @@
           : '<span class="muted">—</span>';
       });
       $("fRef").value = ui.ref != null ? toLocalInput(prodDay(ui.ref).getTime()).slice(0, 10) : "";
-      $("refWrap").firstChild.textContent = ui.gran === "week" ? "Un jour de la semaine" : ui.gran === "month" ? "Un jour du mois" : "Jour de production";
+      $("refWrap").firstChild.textContent = ui.gran === "week" ? "Un jour de la semaine" : ui.gran === "month" ? "Un jour du mois" : ui.gran === "year" ? "Un jour de l'année" : "Jour de production";
       var np = noPeriod();
       $("refWrap").hidden = $("btnPrev").hidden = $("btnNext").hidden = np || ui.gran === "all";
       $("granSeg").parentNode.hidden = $("btnLatest").hidden = np;
