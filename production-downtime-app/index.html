@@ -900,7 +900,6 @@
   <header class="top">
     <h1>Arrêts de <span>production</span></h1>
     <div class="who">
-      <span class="sub" id="dataSummary">Chargement…</span>
       <span class="sync" id="syncState">Connexion…</span>
       <span class="role" id="roleBadge" hidden></span>
       <button class="btn sm" id="btnLogin" hidden>Se connecter</button>
@@ -2003,29 +2002,6 @@
 
     // ---------- Header & filters ----------
     function renderHeader() {
-      var n = stops.length;
-      if (mode === "pending") $("dataSummary").textContent = "Chargement…";
-      else if (!n) $("dataSummary").textContent = "Aucun arrêt enregistré";
-      else {
-        var min = Math.min.apply(
-            null,
-            stops.map(function (s) {
-              return s.start;
-            }),
-          ),
-          max = Math.max.apply(
-            null,
-            stops.map(function (s) {
-              return s.end;
-            }),
-          );
-        $("dataSummary").textContent =
-          n +
-          " arrêts · du " +
-          fmtDate(min).slice(0, 10) +
-          " au " +
-          fmtDate(max).slice(0, 10);
-      }
       var sync = $("syncState");
       sync.className =
         "sync " + (mode === "db" ? "on" : mode === "local" ? "off" : "");
