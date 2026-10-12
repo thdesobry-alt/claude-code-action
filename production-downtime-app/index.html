@@ -689,6 +689,17 @@
     min-width: 220px;
     white-space: pre-wrap;
   }
+  .filebar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 13px;
+  }
   form.login {
     display: flex;
     flex-wrap: wrap;
@@ -907,6 +918,7 @@
       <button class="btn sm" id="btnExportTop">Exporter la base JSON</button>
     </div>
   </header>
+  <div class="filebar" id="fileBar" hidden></div>
   <form class="panel login" id="loginPanel" hidden autocomplete="off">
     <label class="f"
       >Mot de passe Utilisateur ou Admin<input type="password" id="loginPwd" autocomplete="current-password"
@@ -1564,7 +1576,230 @@
           JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan }),
         );
       } catch (e) {}
+      if (fileHandle) scheduleFileSave();
     }
+
+    // ---------- Base commune : fichier JSON dans un dossier partagé ----------
+    // Chrome / Edge : la page lit et réécrit le fichier choisi. Avant chaque écriture,
+    // le fichier est relu et fusionné (fusion à 3 voies) pour ne pas écraser les
+    // modifications faites entre-temps par un autre poste. Relecture toutes les 10 s.
+    var fileHandle = null, fileWritable = false, fileBase = null, fileLastMod = 0,
+      fileSaving = false, filePending = false, fileTimer = null, fileSavedAt = null, fileStoredName = null, filePollTimer = null;
+    var fsSupported = typeof window.showOpenFilePicker === "function";
+    function isObj(v) { return v && typeof v === "object" && !Array.isArray(v); }
+    function clone(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
+    function eq(a, b) {
+      if (a === b) return true;
+      if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every(function (x, i) { return eq(x, b[i]); });
+      if (isObj(a) && isObj(b)) {
+        var ka = Object.keys(a), kb = Object.keys(b);
+        return ka.length === kb.length && ka.every(function (k) { return b.hasOwnProperty(k) && eq(a[k], b[k]); });
+      }
+      return false;
+    }
+    function merge3(b, o, t) {
+      if (eq(o, b)) return clone(t);
+      if (eq(t, b)) return clone(o);
+      if (isObj(o) && isObj(t)) {
+        var r = {}, keys = {};
+        Object.keys(o).concat(Object.keys(t)).forEach(function (k) { keys[k] = 1; });
+        Object.keys(keys).forEach(function (k) {
+          var m = merge3(isObj(b) ? b[k] : undefined, o[k], t[k]);
+          if (m !== undefined) r[k] = m;
+        });
+        return r;
+      }
+      return clone(o); // conflit sur une même valeur : la modification de ce poste l'emporte
+    }
+    function snapshot() {
+      return clone({ days: days, acts: acts, closes: closes, plan: plan, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
+    }
+    function applyState(s) {
+      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {};
+      if (s.codes && (s.codes.fer || s.codes.macc)) { codes = { fer: s.codes.fer || DEFAULT_CODES.fer, macc: s.codes.macc || DEFAULT_CODES.macc }; codesCustom = true; }
+      else { codes = DEFAULT_CODES; codesCustom = false; }
+    }
+    // fichier exporté (version 2, liste « arrets ») -> structure de la base
+    function fromExport(data) {
+      var st = { days: {}, acts: {}, closes: {}, plan: {}, codes: null }, groups = {}, order = [];
+      (data.arrets || []).forEach(function (r) {
+        var start = parseFrDate(r.dateDebut || ""), end = parseFrDate(r.dateFin || "");
+        if (start == null || end == null || end < start) return;
+        var id = String(r.id || "").replace(/[^A-Za-z0-9_\-.~:@+]/g, "") || "s" + start + "-" + String(r.codeMacc || "").replace(/[^A-Za-z0-9]/g, ""), day = dayKey(start);
+        (st.days[day] = st.days[day] || { stops: {} }).stops[id] = { start: start, end: end, fer: String(r.codeFER || "").trim(), macc: String(r.codeMacc || "").trim(), detail: String(r.detail || "").trim(), diam: String(r.diametre || "").trim() };
+        if (r.rex && (r.rex.constat || r.rex.cause || r.rex.enseignement))
+          (st.acts[day] = st.acts[day] || { items: {} }).items[id] = { rex: { constat: r.rex.constat || "", cause: r.rex.cause || "", enseignement: r.rex.enseignement || "" } };
+        (Array.isArray(r.actions) ? r.actions : []).forEach(function (a) {
+          if (!(a.action || a.typeAction || a.pilote || a.delai)) return;
+          // identifiants stables : relire le même fichier donne la même base (indispensable pour la fusion)
+          var key = a.numero ? "n:" + a.numero : "u:" + id + ":" + (a.action || "") + ":" + (a.typeAction || "");
+          if (!groups[key]) { groups[key] = { a: a, ids: [] }; order.push(key); }
+          if (groups[key].ids.indexOf(id) < 0) groups[key].ids.push(id);
+        });
+      });
+      var used = {}, maxN = 0;
+      order.forEach(function (k) { var m = String(groups[k].a.numero || "").match(/(\d+)/); if (m) { var n = +m[1]; if (!used[n]) { used[n] = k; if (n > maxN) maxN = n; } } });
+      order.forEach(function (k, i) {
+        var g = groups[k], a = g.a, m = String(a.numero || "").match(/(\d+)/), n = m && used[+m[1]] === k ? +m[1] : ++maxN, aid = "a" + n, doc = "b" + Math.floor(n / PLAN_PER_DOC);
+        ((st.plan[doc] = st.plan[doc] || { items: {} }).items)[aid] = { num: n, typeAction: a.typeAction || "", action: a.action || "", pilote: a.pilote || "", delai: /^\d{4}-\d{2}-\d{2}$/.test(a.delai || "") ? a.delai : "", created: n, stops: g.ids };
+        if (a.cloturee) ((st.closes["plan-" + doc] = st.closes["plan-" + doc] || { items: {} }).items)[aid] = { closed: true, closedAt: parseFrDate(a.dateCloture || "") || 0, closedBy: null, closeComment: a.commentaireCloture || "" };
+      });
+      return st;
+    }
+    async function readFileState() {
+      var f = await fileHandle.getFile(), text = await f.text();
+      fileLastMod = f.lastModified;
+      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, codes: null };
+      var d = JSON.parse(text);
+      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, codes: d.codes || null };
+      if (d && Array.isArray(d.arrets)) return fromExport(d);
+      throw new Error("format");
+    }
+    async function writeFileState(s) {
+      var w = await fileHandle.createWritable();
+      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, codes: s.codes }));
+      await w.close();
+      fileLastMod = (await fileHandle.getFile()).lastModified;
+    }
+    function scheduleFileSave() {
+      filePending = true;
+      clearTimeout(fileTimer);
+      fileTimer = setTimeout(flushFile, 400);
+    }
+    async function flushFile() {
+      if (!fileHandle) return;
+      if (fileSaving) { scheduleFileSave(); return; }
+      fileSaving = true;
+      var mine = snapshot();
+      try {
+        if (!fileWritable) throw { ro: true };
+        var theirs = await readFileState(), merged = merge3(fileBase, mine, theirs);
+        await writeFileState(merged);
+        fileBase = merged;
+        var now = snapshot();
+        // modifications faites pendant l'écriture : les garder et réenregistrer
+        if (!eq(now, mine)) { applyState(merge3(mine, now, merged)); scheduleFileSave(); }
+        else { applyState(clone(merged)); filePending = false; }
+        fileSavedAt = Date.now();
+        refresh();
+      } catch (e) {
+        filePending = false;
+        toast(e && e.ro ? "Le fichier de la base est en lecture seule : modification non enregistrée." : e && e.message === "format" ? "Le fichier choisi n'est pas une base d'arrêts." : "Enregistrement dans le fichier impossible. Vérifiez l'accès au dossier partagé.");
+        if (fileBase) { applyState(clone(fileBase)); refresh(); }
+      }
+      fileSaving = false;
+      renderFileBar();
+    }
+    async function pollFile() {
+      if (!fileHandle || fileSaving || filePending) return;
+      try {
+        var f = await fileHandle.getFile();
+        if (f.lastModified === fileLastMod) return;
+        var theirs = await readFileState();
+        applyState(merge3(fileBase, snapshot(), theirs));
+        fileBase = theirs;
+        refresh();
+      } catch (e) {}
+    }
+    // poignée du fichier mémorisée dans le navigateur (IndexedDB) pour la reconnexion
+    function idb(fn) {
+      return new Promise(function (res, rej) {
+        try {
+          var rq = indexedDB.open("arrets-production", 1);
+          rq.onupgradeneeded = function () { rq.result.createObjectStore("kv"); };
+          rq.onsuccess = function () {
+            try {
+              var tx = rq.result.transaction("kv", "readwrite"), r = fn(tx.objectStore("kv"));
+              tx.oncomplete = function () { res(r && r.result); };
+              tx.onerror = tx.onabort = function () { rej(tx.error); };
+            } catch (e) { rej(e); }
+          };
+          rq.onerror = function () { rej(rq.error); };
+        } catch (e) { rej(e); }
+      });
+    }
+    async function ensurePerm(hd, ask) {
+      for (var m of ["readwrite", "read"]) {
+        var q = await hd.queryPermission({ mode: m });
+        if (q === "granted") return m;
+        if (ask) { q = await hd.requestPermission({ mode: m }); if (q === "granted") return m; }
+      }
+      return null;
+    }
+    async function connectFile(hd, ask) {
+      var perm = await ensurePerm(hd, ask);
+      if (!perm) { toast("Accès au fichier refusé."); return false; }
+      var prev = fileHandle;
+      fileHandle = hd;
+      fileWritable = perm === "readwrite";
+      try {
+        var st = await readFileState();
+        fileBase = st;
+        applyState(clone(st));
+      } catch (e) {
+        fileHandle = prev;
+        toast(e && e.message === "format" ? "Ce fichier n'est pas une base d'arrêts (JSON exporté par l'application)." : "Lecture du fichier impossible.");
+        renderFileBar();
+        return false;
+      }
+      idb(function (s) { return s.put(hd, "fileHandle"); }).catch(function () {});
+      fileStoredName = hd.name;
+      ui.rangeSet = false;
+      clearInterval(filePollTimer);
+      filePollTimer = setInterval(pollFile, 10000);
+      refresh();
+      renderFileBar();
+      toast("Base commune ouverte : " + hd.name + (fileWritable ? "" : " (lecture seule)"));
+      return true;
+    }
+    async function pickFile() {
+      try {
+        var hs = await window.showOpenFilePicker({ multiple: false, types: [{ description: "Base des arrêts (JSON)", accept: { "application/json": [".json"] } }] });
+        if (hs && hs[0]) await connectFile(hs[0], true);
+      } catch (e) {}
+    }
+    async function createFile() {
+      try {
+        var hd = await window.showSaveFilePicker({ suggestedName: "arrets-production-base.json", types: [{ description: "Base des arrêts (JSON)", accept: { "application/json": [".json"] } }] });
+        var prev = fileHandle;
+        fileHandle = hd;
+        await writeFileState(snapshot());
+        fileHandle = prev;
+        await connectFile(hd, true);
+      } catch (e) {}
+    }
+    function renderFileBar() {
+      var bar = $("fileBar");
+      if (mode !== "local") { bar.hidden = true; return; }
+      bar.hidden = false;
+      if (!fsSupported) {
+        bar.innerHTML = '<span class="pill late">Base locale</span> Pour utiliser la base commune du dossier partagé, ouvrez cette page avec <strong>Chrome</strong> ou <strong>Edge</strong>. Les données ne sont enregistrées que dans ce navigateur.';
+        return;
+      }
+      if (fileHandle) {
+        bar.innerHTML = '<span class="pill ok">Base commune</span> <strong>' + esc(fileHandle.name) + "</strong>" +
+          (fileWritable ? "" : ' <span class="pill a">lecture seule</span>') +
+          '<span class="muted">' + (fileSaving || filePending ? "Enregistrement…" : fileSavedAt ? "Enregistré à " + fmtDate(fileSavedAt).slice(11, 16) : "Ouverte") + " · mise à jour automatique toutes les 10 s</span>" +
+          '<button class="btn sm" data-file-open>Changer de fichier</button>';
+        return;
+      }
+      bar.innerHTML = '<span class="pill late">Base non connectée</span> Ouvrez le fichier de la base commune (JSON) enregistré dans le dossier partagé.' +
+        (fileStoredName ? ' <button class="btn sm primary" data-file-reconnect>Reconnecter « ' + esc(fileStoredName) + " »</button>" : "") +
+        ' <button class="btn sm' + (fileStoredName ? "" : " primary") + '" data-file-open>Ouvrir la base commune…</button>' +
+        (isAdmin() ? ' <button class="btn sm" data-file-create>Créer une nouvelle base…</button>' : "");
+    }
+    async function initFileBase() {
+      renderFileBar();
+      if (!fsSupported) return;
+      var hd = null;
+      try { hd = await idb(function (s) { return s.get("fileHandle"); }); } catch (e) {}
+      if (!hd) return;
+      fileStoredName = hd.name;
+      storedHandle = hd;
+      if (await ensurePerm(hd, false)) await connectFile(hd, false);
+      else renderFileBar();
+    }
+    var storedHandle = null;
     function loadLocal() {
       try {
         var d = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null");
@@ -2009,8 +2244,9 @@
         mode === "db"
           ? "Base partagée"
           : mode === "local"
-            ? "Base locale (ce navigateur)"
+            ? fileHandle ? "Base commune : " + fileHandle.name : "Base locale (ce navigateur)"
             : "Connexion…";
+      if (mode === "local" && fileHandle) sync.className = "sync on";
       var rb = $("roleBadge");
       rb.hidden = mode === "pending";
       rb.className = "role " + role;
@@ -2027,6 +2263,7 @@
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent = unlocked === "user" ? "Passer en Admin" : "Se connecter";
       $("btnLogout").hidden = mode === "pending" || unlocked === "viewer";
+      if (mode === "local" && !fileHandle) renderFileBar();
       ["btnCopyAv", "btnCopyRex"].forEach(function (id) { $(id).hidden = !canExport(); });
     }
     function normText(s) {
@@ -3302,6 +3539,13 @@
       renderPreview();
     });
     $("btnImport").addEventListener("click", doImport);
+    $("fileBar").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      if (b.hasAttribute("data-file-open")) pickFile();
+      else if (b.hasAttribute("data-file-create")) createFile();
+      else if (b.hasAttribute("data-file-reconnect") && storedHandle) connectFile(storedHandle, true);
+    });
     $("btnLogin").addEventListener("click", function () {
       $("loginPanel").hidden = false;
       $("loginMsg").textContent = "";
@@ -3620,7 +3864,7 @@
       if (!isAdmin()) return;
       try {
         if (mode === "db") await db.doc("config/codes").set(next);
-        else { codes = { fer: next.fer || DEFAULT_CODES.fer, macc: next.macc || DEFAULT_CODES.macc }; codesCustom = !!(next.fer || next.macc); try { localStorage.setItem(LOCAL_KEY + "-codes", JSON.stringify(next)); } catch (e) {} refresh(); }
+        else { codes = { fer: next.fer || DEFAULT_CODES.fer, macc: next.macc || DEFAULT_CODES.macc }; codesCustom = !!(next.fer || next.macc); try { localStorage.setItem(LOCAL_KEY + "-codes", JSON.stringify(next)); } catch (e) {} saveLocal(); refresh(); }
         return true;
       } catch (e) { toast(dbErrorMessage(e)); return false; }
     }
@@ -3648,6 +3892,7 @@
       applyRole();
       loadLocal();
       refresh();
+      initFileBase();
     }
     async function init() {
       try {
