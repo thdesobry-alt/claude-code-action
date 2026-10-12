@@ -3111,6 +3111,14 @@
       return out;
     }
     var closing = null; // action en cours de clôture (clé de ligne)
+    // durée au format 00h00m
+    function fmtHM(ms) {
+      var m = Math.round(ms / 60000), hh = Math.floor(m / 60), mm = m % 60;
+      return (hh < 10 ? "0" : "") + hh + "h" + pad(mm) + "m";
+    }
+    function cumDur(r) {
+      return r.ss.reduce(function (t, s) { return t + (s.end - s.start); }, 0);
+    }
     function stopLineHTML(s) {
       return '<div class="av-stop"><span class="mono">' + fmtDate(s.start).slice(0, 16) + "</span> · " + fmtDur(s.end - s.start) +
         (s.diam ? " · Ø " + esc(s.diam) : "") + " · " + esc(typeOf(s)) + " · <strong>" + esc(machineOf(s)) + "</strong>" +
@@ -3131,7 +3139,7 @@
         $("avTable").innerHTML = '<div class="empty">' + (mode === "pending" ? "Chargement de la base…" : all.length ? "Aucune action ne correspond." : "Aucune action avec ces filtres.") + "</div>";
         return;
       }
-      $("avTable").innerHTML = '<table class="av-table"><thead><tr><th>N°</th><th>Délai</th><th>Statut</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Arrêt(s)</th>' + (admin ? "<th>Clôture</th>" : "") + "</tr></thead><tbody>" +
+      $("avTable").innerHTML = '<table class="av-table"><thead><tr><th>N°</th><th>Délai</th><th>Statut</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th class="num">Durée cumulée</th><th>Arrêt(s)</th>' + (admin ? "<th>Clôture</th>" : "") + "</tr></thead><tbody>" +
         rows.map(function (r) {
           var a = r.a, key = r.key;
           var st = a.closed ? '<span class="pill ok">Clôturée</span>' : isLate(a, today) ? '<span class="pill late">En retard</span>' : r.d != null && r.d <= soon ? '<span class="pill a">Sous 7 j</span>' : r.d == null ? '<span class="muted">Sans délai</span>' : '<span class="pill neutral">À venir</span>';
@@ -3148,10 +3156,10 @@
             else ctl = '<button class="btn sm" data-close>Clôturer</button>';
           }
           var shown = r.ss.slice(0, 4);
-          var stopsCell = (r.ss.length > 1 ? '<div class="shared">' + r.ss.length + " arrêts</div>" : "") + shown.map(stopLineHTML).join("") +
+          var stopsCell = shown.map(stopLineHTML).join("") +
             (r.ss.length > shown.length ? '<div class="muted">+ ' + (r.ss.length - shown.length) + " autre(s)</div>" : "");
           return '<tr data-key="' + esc(key) + '" class="' + (a.closed ? "is-closed" : "") + '"><td>' + (a.plan ? '<span class="num-badge">' + numLabel(a) + "</span>" : '<span class="muted">—</span>') + '</td><td class="mono">' + (a.delai ? a.delai.split("-").reverse().join("/") : "—") + "</td><td>" + st + "</td><td>" + esc(a.typeAction || "—") + '</td><td class="av-action">' + esc(a.action) + closeInfo + "</td><td>" + esc(a.pilote || "—") +
-            '</td><td class="av-stops">' + stopsCell + "</td>" + (admin ? '<td class="av-close">' + ctl + "</td>" : "") + "</tr>";
+            '</td><td class="num"><strong>' + fmtHM(cumDur(r)) + "</strong>" + (r.ss.length > 1 ? '<div class="shared">' + r.ss.length + " arrêts</div>" : "") + '</td><td class="av-stops">' + stopsCell + "</td>" + (admin ? '<td class="av-close">' + ctl + "</td>" : "") + "</tr>";
         }).join("") + "</tbody></table>";
       fillNames("#avTable");
       var t = closing && document.querySelector("#avTable [data-close-comment]");
@@ -3159,10 +3167,10 @@
     }
     function copyActView() {
       var rows = actViewRows();
-      var lines = [["N° action", "Délai", "Statut", "Type d'action", "Action", "Pilote", "Date de clôture", "Commentaire de clôture", "Nb arrêts", "Arrêts"].join("\t")];
+      var lines = [["N° action", "Délai", "Statut", "Type d'action", "Action", "Pilote", "Date de clôture", "Commentaire de clôture", "Nb arrêts", "Durée cumulée", "Arrêts"].join("\t")];
       rows.forEach(function (r) {
         var a = r.a;
-        lines.push([numLabel(a), a.delai ? a.delai.split("-").reverse().join("/") : "", a.closed ? "Clôturée" : isLate(a, startOfDay(Date.now())) ? "En retard" : "En cours", a.typeAction, a.action, a.pilote, a.closedAt ? fmtDate(a.closedAt).slice(0, 10) : "", a.closeComment, r.ss.length,
+        lines.push([numLabel(a), a.delai ? a.delai.split("-").reverse().join("/") : "", a.closed ? "Clôturée" : isLate(a, startOfDay(Date.now())) ? "En retard" : "En cours", a.typeAction, a.action, a.pilote, a.closedAt ? fmtDate(a.closedAt).slice(0, 10) : "", a.closeComment, r.ss.length, fmtHM(cumDur(r)),
           r.ss.map(function (s) { return fmtDate(s.start).slice(0, 16) + " " + machineOf(s) + (s.detail ? " (" + s.detail + ")" : ""); }).join(" ; ")]
           .map(function (v) { v = String(v == null ? "" : v); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join("\t"));
       });
