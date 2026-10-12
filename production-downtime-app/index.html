@@ -3013,9 +3013,14 @@
       var s = Math.round(ms / 1000), hh = Math.floor(s / 3600);
       return (hh < 10 ? "0" : "") + hh + ":" + pad(Math.floor((s % 3600) / 60)) + ":" + pad(s % 60);
     }
+    function chartLimit() {
+      return ui.gran === "month" || ui.gran === "year" || ui.gran === "all" ? 0.8 : 0.95;
+    }
     function chartSVG(data, metric, kind) {
-      // catégories tracées jusqu'à 95 % du cumul ; au-delà de 80 % les barres sont en teinte claire
-      var rows = data.rows.filter(function (r) { return r.in95; }),
+      // jour / semaine : catégories jusqu'à 95 % du cumul (au-delà de 80 % en teinte claire) ;
+      // mois / année / tout : jusqu'à 80 % seulement
+      var lim = chartLimit(),
+        rows = data.rows.filter(function (r) { return lim === 0.8 ? r.a : r.in95; }),
         n = rows.length;
       var maxLabel = Math.max.apply(
         null,
@@ -3244,7 +3249,7 @@
         fmtDate(ui.from) +
         " au " +
         fmtDate(ui.to) +
-        ". Le graphique montre les catégories jusqu'à 95 % du total (en foncé, celles qui font les 80 % prioritaires). Les arrêts à cheval sur les bornes sont comptés pour la partie comprise dans la période. Cliquez sur une barre pour voir le détail.</p></div>" +
+        ". " + (chartLimit() === 0.8 ? "Le graphique montre les catégories qui font 80 % du total." : "Le graphique montre les catégories jusqu'à 95 % du total (en foncé, celles qui font les 80 % prioritaires).") + " Les arrêts à cheval sur les bornes sont comptés pour la partie comprise dans la période. Cliquez sur une barre pour voir le détail.</p></div>" +
         '<div class="seg" role="group" aria-label="Critère"><button data-metric="' +
         kind +
         '" data-m="dur" aria-pressed="' +
