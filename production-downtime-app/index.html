@@ -981,6 +981,7 @@
     <button role="tab" data-tab="saisie" aria-selected="false">
       Saisie des arrêts
     </button>
+    <button role="tab" data-tab="prog" aria-selected="false">Programme de laminage</button>
     <button role="tab" data-tab="machine" aria-selected="true">
       Analyse Pareto Machine
     </button>
@@ -1061,14 +1062,7 @@
           espaces autour du détail sont supprimés.
         </p>
       </div>
-      <div class="row">
-        <label class="f"
-          >Diamètre de ces arrêts<input
-            id="diam"
-            placeholder="ex. 350"
-            style="width: 160px"
-        /></label>
-      </div>
+      <p class="hint">Le diamètre de chaque arrêt vient de l'onglet <strong>Programme de laminage</strong>, selon son heure de début.</p>
       <textarea
         class="paste"
         id="paste"
@@ -1103,8 +1097,11 @@
       <div class="scroll" id="edTable"></div>
     </div>
 
-    <div class="panel">
-      <h2>Arrêts enregistrés par diamètre</h2>
+    <div class="panel stack">
+      <div>
+        <h2>Derniers imports</h2>
+        <p class="hint">Chaque collage ou import de fichier est enregistré comme un import. En cas d'erreur de manipulation, supprimez l'import concerné : tous ses arrêts sont retirés.</p>
+      </div>
       <div class="scroll" id="batches"></div>
     </div>
 
@@ -1200,6 +1197,7 @@
           <p class="hint" style="margin-top: 8px">Mot de passe Admin et niveau Éditeur.</p>
           <ul>
             <li>Colle, modifie et supprime des arrêts</li>
+            <li>Tient le programme de laminage</li>
             <li>Saisit, modifie et clôture les actions et les REX</li>
             <li>Importe la base JSON et met à jour les tables de codes</li>
           </ul>
@@ -1246,6 +1244,34 @@
   </section>
 
   <!-- ACTIONS (consultation) -->
+  <section data-panel="prog" class="stack" hidden>
+    <div class="panel stack">
+      <div>
+        <h2>Programme de laminage</h2>
+        <p class="hint">
+          Les diamètres laminés, avec leur date et heure de démarrage et de fin.
+          Chaque arrêt prend le diamètre de la campagne en cours à son heure de
+          début. Les journées de production vont de 8h à 8h.
+        </p>
+      </div>
+      <div class="stack" id="pgFormWrap">
+        <div class="row">
+          <label class="f">Diamètre<input id="pgDiam" placeholder="ex. 16" style="width: 110px" /></label>
+          <label class="f">Démarrage<input type="datetime-local" step="1" id="pgStart" /></label>
+          <label class="f">Fin<input type="datetime-local" step="1" id="pgEnd" /></label>
+          <button class="btn primary" id="pgAdd">Ajouter au programme</button>
+        </div>
+        <details>
+          <summary class="muted">Coller plusieurs lignes depuis Excel (diamètre, démarrage, fin)</summary>
+          <textarea class="paste" id="pgPaste" style="min-height: 100px" placeholder="16&#9;10/01/2026 09:00:00&#9;10/07/2026 14:00:00"></textarea>
+          <div class="row"><button class="btn" id="pgPasteAdd" disabled>Ajouter ces lignes</button><span class="muted" id="pgPasteInfo"></span></div>
+        </details>
+      </div>
+      <div class="kpis" id="pgKpis"></div>
+      <div class="scroll" id="pgTable"></div>
+    </div>
+  </section>
+
   <section data-panel="actview" class="stack" hidden>
     <div class="panel stack">
       <div class="row" style="justify-content: space-between">
@@ -1478,7 +1504,7 @@
       return s.diam || "(sans diamètre)";
     }
     function stopKey(s) {
-      return [s.start, s.end, s.fer, s.macc, s.diam].join("|");
+      return [s.start, s.end, s.fer, s.macc].join("|");
     }
     // Profil affiché = le plus bas entre le profil débloqué par mot de passe et le
     // niveau d'accès à la page (menu Partager), qui seul autorise les écritures.
@@ -1579,7 +1605,19 @@
     function numLabel(a) {
       return a && a.plan ? "A-" + ("000" + a.num).slice(-4) : "";
     }
+    // programme de laminage : config/program = {items: {id: {diam, start, end}}}
+    var program = {}, programList = [];
+    function programDiam(ms) {
+      for (var i = 0; i < programList.length; i++) {
+        var p = programList[i];
+        if (ms >= p.start && ms < p.end) return p.diam;
+      }
+      return "";
+    }
     function rebuild() {
+      programList = Object.keys(program).map(function (id) { return Object.assign({ id: id }, program[id]); })
+        .filter(function (p) { return p && !p.deleted && p.diam && p.start < p.end; })
+        .sort(function (a, b) { return a.start - b.start; });
       var out = [];
       Object.keys(days).forEach(function (day) {
         var m = (days[day] && days[day].stops) || {},
@@ -1587,7 +1625,9 @@
           c = (closes[day] && closes[day].items) || {};
         Object.keys(m).forEach(function (id) {
           var s = m[id];
-          out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "", diam: s.diam || "", actions: actionsOf(a[id], c[id]), rex: rexOf(a[id]) });
+          out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "",
+            diam: programDiam(s.start) || s.diam || "", diamRaw: s.diam || "", imp: s.imp || null, impAt: s.impAt || null, impSrc: s.impSrc || "",
+            actions: actionsOf(a[id], c[id]), rex: rexOf(a[id]) });
         });
       });
       var byId = {}, pc = {};
@@ -1626,7 +1666,7 @@
       try {
         localStorage.setItem(
           LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan }),
+          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program }),
         );
       } catch (e) {}
       if (fileHandle) scheduleFileSave();
@@ -1665,16 +1705,20 @@
       return clone(o); // conflit sur une même valeur : la modification de ce poste l'emporte
     }
     function snapshot() {
-      return clone({ days: days, acts: acts, closes: closes, plan: plan, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
+      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
     }
     function applyState(s) {
-      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {};
+      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {};
       if (s.codes && (s.codes.fer || s.codes.macc)) { codes = { fer: s.codes.fer || DEFAULT_CODES.fer, macc: s.codes.macc || DEFAULT_CODES.macc }; codesCustom = true; }
       else { codes = DEFAULT_CODES; codesCustom = false; }
     }
     // fichier exporté (version 2, liste « arrets ») -> structure de la base
     function fromExport(data) {
-      var st = { days: {}, acts: {}, closes: {}, plan: {}, codes: null }, groups = {}, order = [];
+      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, codes: null }, groups = {}, order = [];
+      (data.programme || []).forEach(function (pg, i) {
+        var a = parseFrDate(pg.debut || ""), b = parseFrDate(pg.fin || "");
+        if (pg.diametre && a != null && b != null && b > a) st.program["p" + a + "-" + i] = { diam: String(pg.diametre).trim(), start: a, end: b };
+      });
       (data.arrets || []).forEach(function (r) {
         var start = parseFrDate(r.dateDebut || ""), end = parseFrDate(r.dateFin || "");
         if (start == null || end == null || end < start) return;
@@ -1702,15 +1746,15 @@
     async function readFileState() {
       var f = await fileHandle.getFile(), text = await f.text();
       fileLastMod = f.lastModified;
-      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, codes: null };
+      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, codes: null };
       var d = JSON.parse(text);
-      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, codes: d.codes || null };
+      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, codes: d.codes || null };
       if (d && Array.isArray(d.arrets)) return fromExport(d);
       throw new Error("format");
     }
     async function writeFileState(s) {
       var w = await fileHandle.createWritable();
-      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, codes: s.codes }));
+      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, codes: s.codes }));
       await w.close();
       fileLastMod = (await fileHandle.getFile()).lastModified;
     }
@@ -1861,18 +1905,42 @@
           acts = d.acts || {};
           closes = d.closes || {};
           plan = d.plan || {};
+          program = d.program || {};
         }
       } catch (e) {}
     }
     function strip(s) {
-      return {
+      var o = {
         start: s.start,
         end: s.end,
         fer: s.fer,
         macc: s.macc,
         detail: s.detail,
-        diam: s.diam,
+        diam: s.diamRaw !== undefined ? s.diamRaw : s.diam || "",
       };
+      if (s.imp) { o.imp = s.imp; o.impAt = s.impAt; o.impSrc = s.impSrc || ""; }
+      return o;
+    }
+    function writeProgram(id, fields) {
+      var body = Object.assign({}, fields, { by: myId, at: Date.now() });
+      if (mode === "local") {
+        program[id] = Object.assign({}, program[id] || {}, body);
+        saveLocal();
+        refresh();
+        return Promise.resolve();
+      }
+      var ref = db.doc("config/program"), patch = {}, ck = "config/program";
+      patch[id] = body;
+      chains[ck] = (chains[ck] || Promise.resolve())
+        .then(async function () {
+          try { await ref.update({ items: patch }); }
+          catch (e) {
+            if (e && e.code === "invalid_argument") { var sn = await ref.get(); if (!sn.exists) { await ref.set({ items: patch }); return; } }
+            throw e;
+          }
+        })
+        .catch(function (e) { toast(dbErrorMessage(e)); });
+      return chains[ck];
     }
 
     async function addStops(list) {
@@ -2394,7 +2462,8 @@
       if (parsed.errors.length)
         info += " · " + parsed.errors.length + " ligne(s) en erreur ignorée(s)";
       if (parsed.headers) info += " · en-tête ignoré";
-      if (!$("diam").value.trim()) info += " · indiquez le diamètre";
+      var noProg = parsed.ok.filter(function (r) { return !programDiam(r.start); }).length;
+      if (noProg) info += " · " + noProg + " arrêt(s) hors programme de laminage (sans diamètre)";
       $("parseInfo").textContent = info;
       $("btnImport").disabled = busy || !parsed.ok.length;
       var rows = parsed.ok.concat(parsed.errors).sort(function (a, b) {
@@ -2437,7 +2506,9 @@
     }
     async function doImport() {
       if (!parsed || !parsed.ok.length || busy || !isAdmin()) return;
-      var diam = $("diam").value.trim(),
+      var diam = "",
+        impId = "i" + uid(),
+        impAt = Date.now(),
         keys = {},
         toAdd = [],
         dup = 0;
@@ -2453,6 +2524,9 @@
           macc: r.macc,
           detail: r.detail,
           diam: diam,
+          imp: impId,
+          impAt: impAt,
+          impSrc: "Collage Excel",
         };
         if (keys[stopKey(s)]) {
           dup++;
@@ -2512,7 +2586,7 @@
               '<td><input type="datetime-local" step="1" data-ed="start" value="' + toLocalInput(s.start) + '" /></td>' +
               '<td><input type="datetime-local" step="1" data-ed="end" value="' + toLocalInput(s.end) + '" /></td>' +
               '<td class="num muted">—</td>' +
-              '<td><input data-ed="diam" value="' + esc(s.diam) + '" style="width: 80px" /></td>' +
+              '<td><input data-ed="diam" value="' + esc(s.diamRaw) + '" style="width: 80px" title="Utilisé seulement si l\'arrêt est hors programme de laminage" /></td>' +
               '<td><input data-ed="fer" value="' + esc(s.fer) + '" style="width: 70px" /></td>' +
               '<td><input data-ed="macc" value="' + esc(s.macc) + '" style="width: 80px" /></td>' +
               '<td><input data-ed="detail" value="' + esc(s.detail) + '" style="width: 100%; min-width: 200px" /></td>' +
@@ -2533,7 +2607,7 @@
       var start = fromLocalInput(v.start), end = fromLocalInput(v.end);
       if (start == null || end == null) { toast("Indiquez une date de début et de fin complètes."); return; }
       if (end < start) { toast("La fin doit être après le début."); return; }
-      var next = { start: start, end: end, fer: v.fer, macc: v.macc, detail: v.detail, diam: v.diam };
+      var next = { start: start, end: end, fer: v.fer, macc: v.macc, detail: v.detail, diam: v.diam, imp: s.imp, impAt: s.impAt, impSrc: s.impSrc };
       if (stops.some(function (x) { return x.id !== s.id && stopKey(x) === stopKey(next); })) { toast("Un arrêt identique existe déjà."); return; }
       ed.id = null;
       document.activeElement.blur();
@@ -2574,57 +2648,100 @@
     });
 
     var pendingDelete = null;
-    function renderBatches() {
-      if (!stops.length) {
-        $("batches").innerHTML =
-          '<div class="empty">Aucun arrêt pour l\'instant. Collez un tableau Excel ci-dessus pour commencer.</div>';
-        return;
-      }
+    function importGroups() {
       var g = {};
       stops.forEach(function (s) {
-        var k = diamOf(s);
-        g[k] = g[k] || { n: 0, dur: 0, min: Infinity, max: -Infinity };
-        g[k].n++;
-        g[k].dur += s.end - s.start;
-        g[k].min = Math.min(g[k].min, s.start);
-        g[k].max = Math.max(g[k].max, s.end);
+        var k = s.imp || "_old";
+        var e = (g[k] = g[k] || { id: k, at: s.impAt || 0, src: s.impSrc || "", n: 0, dur: 0, min: Infinity, max: -Infinity });
+        e.n++; e.dur += s.end - s.start; e.min = Math.min(e.min, s.start); e.max = Math.max(e.max, s.end);
       });
-      var keys = Object.keys(g).sort(function (a, b) {
-        return a.localeCompare(b, "fr", { numeric: true });
+      return Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.at - a.at; });
+    }
+    function renderBatches() {
+      if (!stops.length) {
+        $("batches").innerHTML = '<div class="empty">Aucun arrêt pour l\'instant. Collez un tableau Excel ci-dessus pour commencer.</div>';
+        return;
+      }
+      var all = importGroups(), recent = all.filter(function (x) { return x.id !== "_old"; }).slice(0, 10), old = all.find(function (x) { return x.id === "_old"; });
+      var rows = recent.map(function (x, i) {
+        var act = pendingDelete === x.id
+          ? '<span class="confirm">Supprimer les ' + x.n + ' arrêts de cet import (pour tous les utilisateurs) ? <button class="btn sm danger" data-del-yes="' + esc(x.id) + '">Supprimer</button><button class="btn sm" data-del-no>Annuler</button></span>'
+          : '<button class="btn sm danger" data-del="' + esc(x.id) + '">Supprimer cet import</button>';
+        return "<tr><td class=\"mono\">" + fmtDate(x.at).slice(0, 16) + (i === 0 ? ' <span class="pill a">Dernier import</span>' : "") + "</td><td>" + esc(x.src || "—") + '</td><td class="num">' + x.n + '</td><td class="num">' + fmtDur(x.dur) +
+          '</td><td class="mono">' + fmtDate(x.min).slice(0, 16) + " → " + fmtDate(x.max).slice(0, 16) + '</td><td style="text-align: right">' + act + "</td></tr>";
       });
-      $("batches").innerHTML =
-        '<table><thead><tr><th>Diamètre</th><th class="num">Arrêts</th><th class="num">Durée totale</th><th>Premier arrêt</th><th>Dernier arrêt</th><th></th></tr></thead><tbody>' +
-        keys
-          .map(function (k) {
-            var x = g[k];
-            var act =
-              pendingDelete === k
-                ? '<span class="confirm">Supprimer ' +
-                  x.n +
-                  ' arrêts pour tous les utilisateurs ? <button class="btn sm danger" data-del-yes="' +
-                  esc(k) +
-                  '">Supprimer</button><button class="btn sm" data-del-no>Annuler</button></span>'
-                : '<button class="btn sm danger" data-del="' +
-                  esc(k) +
-                  '">Supprimer</button>';
-            return (
-              "<tr><td><strong>" +
-              esc(k) +
-              '</strong></td><td class="num">' +
-              x.n +
-              '</td><td class="num">' +
-              fmtDur(x.dur) +
-              '</td><td class="mono">' +
-              fmtDate(x.min) +
-              '</td><td class="mono">' +
-              fmtDate(x.max) +
-              '</td><td style="text-align: right">' +
-              act +
-              "</td></tr>"
-            );
-          })
-          .join("") +
-        "</tbody></table>";
+      if (old) rows.push('<tr class="muted"><td>Imports antérieurs</td><td>sans historique</td><td class="num">' + old.n + '</td><td class="num">' + fmtDur(old.dur) + '</td><td class="mono">' + fmtDate(old.min).slice(0, 16) + " → " + fmtDate(old.max).slice(0, 16) + '</td><td style="text-align: right" class="muted">Supprimables arrêt par arrêt ci-dessus</td></tr>');
+      $("batches").innerHTML = '<table><thead><tr><th>Importé le</th><th>Origine</th><th class="num">Arrêts</th><th class="num">Durée</th><th>Période des arrêts</th><th></th></tr></thead><tbody>' + rows.join("") + "</tbody></table>";
+    }
+
+    // ---------- Programme de laminage ----------
+    var pgEdit = null, pgDel = null;
+    function pgOverlap(a, b, exceptId) {
+      return programList.find(function (p) { return p.id !== exceptId && a < p.end && b > p.start; }) || null;
+    }
+    function pgDefaults() {
+      var a = programList.length ? programList[programList.length - 1].end : prodDay(Date.now()).getTime();
+      var b = new Date(a); b.setDate(b.getDate() + 1);
+      if (!$("pgStart").value) $("pgStart").value = toLocalInput(a);
+      if (!$("pgEnd").value) $("pgEnd").value = toLocalInput(b.getTime());
+    }
+    function renderProgram() {
+      var adm = isAdmin(), ae = document.activeElement;
+      $("pgFormWrap").hidden = !adm;
+      if (adm) pgDefaults();
+      if (pgEdit && ae && ae.matches && ae.matches("#pgTable [data-pg]")) return; // saisie en cours
+      var counts = {};
+      stops.forEach(function (s) {
+        for (var i = 0; i < programList.length; i++) {
+          var p = programList[i];
+          if (s.start >= p.start && s.start < p.end) { var c = (counts[p.id] = counts[p.id] || { n: 0, dur: 0 }); c.n++; c.dur += s.end - s.start; break; }
+        }
+      });
+      var covered = Object.keys(counts).reduce(function (t, k) { return t + counts[k].n; }, 0);
+      $("pgKpis").innerHTML =
+        '<div class="kpi"><div class="l">Campagnes au programme</div><div class="v">' + programList.length + "</div></div>" +
+        '<div class="kpi"><div class="l">Arrêts associés à un diamètre</div><div class="v">' + covered + " / " + stops.length + "</div></div>" +
+        '<div class="kpi"><div class="l">Arrêts hors programme</div><div class="v" style="color: ' + (stops.length - covered ? "var(--danger)" : "inherit") + '">' + (stops.length - covered) + "</div></div>";
+      if (!programList.length) {
+        $("pgTable").innerHTML = '<div class="empty">Aucune campagne au programme. ' + (adm ? "Indiquez un diamètre avec son démarrage et sa fin ci-dessus." : "Un Admin doit renseigner le programme de laminage.") + "</div>";
+        return;
+      }
+      var list = programList.slice().reverse();
+      $("pgTable").innerHTML = '<table class="ed-table"><thead><tr><th>Diamètre</th><th>Démarrage</th><th>Fin</th><th class="num">Durée</th><th class="num">Arrêts</th><th class="num">Temps d\'arrêt</th>' + (adm ? "<th></th>" : "") + "</tr></thead><tbody>" +
+        list.map(function (p) {
+          var c = counts[p.id] || { n: 0, dur: 0 };
+          if (adm && pgEdit === p.id)
+            return '<tr data-pid="' + esc(p.id) + '" class="ed-row"><td><input data-pg="diam" value="' + esc(p.diam) + '" style="width: 80px" /></td>' +
+              '<td><input type="datetime-local" step="1" data-pg="start" value="' + toLocalInput(p.start) + '" /></td>' +
+              '<td><input type="datetime-local" step="1" data-pg="end" value="' + toLocalInput(p.end) + '" /></td><td></td><td></td><td></td>' +
+              '<td class="ed-btns"><button class="btn sm primary" data-pg-save>Enregistrer</button><button class="btn sm" data-pg-cancel>Annuler</button></td></tr>';
+          var btns = !adm ? "" : pgDel === p.id
+            ? '<td class="ed-btns"><span class="confirm">Retirer du programme ? <button class="btn sm danger" data-pg-del-yes>Oui</button><button class="btn sm" data-pg-del-no>Non</button></span></td>'
+            : '<td class="ed-btns"><button class="btn sm" data-pg-edit>Modifier</button><button class="btn sm danger" data-pg-del>Supprimer</button></td>';
+          return '<tr data-pid="' + esc(p.id) + '"><td><strong>Ø ' + esc(p.diam) + '</strong></td><td class="mono">' + fmtDate(p.start) + '</td><td class="mono">' + fmtDate(p.end) + '</td><td class="num">' + fmtHM(p.end - p.start) +
+            '</td><td class="num">' + c.n + '</td><td class="num">' + fmtDur(c.dur) + "</td>" + btns + "</tr>";
+        }).join("") + "</tbody></table>";
+    }
+    function pgCheck(diam, a, b, exceptId) {
+      if (!diam) return "Indiquez le diamètre.";
+      if (a == null || b == null) return "Indiquez une date et une heure de démarrage et de fin complètes.";
+      if (b <= a) return "La fin doit être après le démarrage.";
+      var o = pgOverlap(a, b, exceptId);
+      if (o) return "Cette période chevauche Ø " + o.diam + " (du " + fmtDate(o.start).slice(0, 16) + " au " + fmtDate(o.end).slice(0, 16) + ").";
+      return "";
+    }
+    var pgParsed = [];
+    function parsePgPaste() {
+      var rows = parseTSV($("pgPaste").value), ok = [], bad = 0;
+      rows.forEach(function (c, i) {
+        var d = String(c[0] || "").trim().replace(/^Ø\s*/i, ""), a = parseFrDate(c[1] || ""), b = parseFrDate(c[2] || "");
+        if (i === 0 && a == null && b == null) return; // en-tête
+        if (!d || a == null || b == null || b <= a) { bad++; return; }
+        ok.push({ diam: d, start: a, end: b });
+      });
+      pgParsed = ok;
+      $("pgPasteInfo").textContent = $("pgPaste").value.trim() ? ok.length + " ligne(s) valides" + (bad ? " · " + bad + " ligne(s) invalide(s) ignorée(s)" : "") : "";
+      $("pgPasteAdd").disabled = !ok.length;
     }
 
     // ---------- JSON database file ----------
@@ -2633,6 +2750,7 @@
         format: "arrets-production",
         version: 2,
         exportedAt: new Date().toISOString(),
+        programme: programList.map(function (p) { return { diametre: p.diam, debut: fmtDate(p.start), fin: fmtDate(p.end) }; }),
         arrets: stops.map(function (s) {
           return {
             id: s.id,
@@ -2709,6 +2827,13 @@
         byKey[stopKey(s)] = s;
         byId[s.id] = s;
       });
+      var impJ = "i" + uid(), impJAt = Date.now();
+      (data.programme || []).forEach(function (pg) {
+        var a = parseFrDate(pg.debut || ""), b = parseFrDate(pg.fin || "");
+        if (!pg.diametre || a == null || b == null || b <= a) return;
+        if (programList.some(function (p) { return a < p.end && b > p.start; })) return; // déjà couvert
+        writeProgram("p" + uid(), { diam: String(pg.diametre).trim(), start: a, end: b });
+      });
       var toAdd = [],
         rexWrites = [],
         actionWrites = [],
@@ -2729,6 +2854,9 @@
           macc: String(r.codeMacc || "").trim(),
           detail: String(r.detail || "").trim(),
           diam: String(r.diametre || "").trim(),
+          imp: impJ,
+          impAt: impJAt,
+          impSrc: "Fichier JSON",
         };
         var existing = byKey[stopKey(s)] || byId[s.id];
         if (existing) s = existing;
@@ -3567,11 +3695,12 @@
       document.querySelectorAll("[data-panel]").forEach(function (p) {
         p.hidden = p.dataset.panel !== tab;
       });
-      $("filters").hidden = tab === "saisie";
+      $("filters").hidden = tab === "saisie" || tab === "prog";
       $("btnExportTop").hidden = mode === "pending" || !canExport();
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
       if (tab === "rex") renderRex();
+      if (tab === "prog") renderProgram();
       if (tab === "actview") {
         var ae = document.activeElement;
         if (ae && ae.matches && ae.matches("#avTable [data-close-comment]")) deferAv = true;
@@ -3608,7 +3737,6 @@
       if (b) setTab(b.dataset.tab);
     });
     $("paste").addEventListener("input", renderPreview);
-    $("diam").addEventListener("input", renderPreview);
     $("btnClearPaste").addEventListener("click", function () {
       $("paste").value = "";
       renderPreview();
@@ -3648,6 +3776,50 @@
       toast("Déconnecté : lecture seule");
       renderAll();
     });
+    $("pgAdd").addEventListener("click", function () {
+      if (!isAdmin()) return;
+      var d = $("pgDiam").value.trim().replace(/^Ø\s*/i, ""), a = fromLocalInput($("pgStart").value), b = fromLocalInput($("pgEnd").value);
+      var err = pgCheck(d, a, b);
+      if (err) { toast(err); return; }
+      writeProgram("p" + uid(), { diam: d, start: a, end: b });
+      $("pgDiam").value = ""; $("pgStart").value = ""; $("pgEnd").value = "";
+      toast("Ø " + d + " ajouté au programme");
+      if (mode !== "local") renderProgram();
+    });
+    $("pgPaste").addEventListener("input", parsePgPaste);
+    $("pgPasteAdd").addEventListener("click", function () {
+      if (!isAdmin()) return;
+      var added = 0, skipped = 0, batch = [];
+      pgParsed.forEach(function (r) {
+        var clash = pgOverlap(r.start, r.end) || batch.find(function (x) { return r.start < x.end && r.end > x.start; });
+        if (clash) { skipped++; return; }
+        batch.push(r);
+      });
+      batch.forEach(function (r) { writeProgram("p" + uid(), r); added++; });
+      $("pgPaste").value = ""; parsePgPaste();
+      toast(added + " campagne(s) ajoutée(s)" + (skipped ? " · " + skipped + " ignorée(s) car elles chevauchent le programme" : ""));
+    });
+    $("pgTable").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b || !isAdmin()) return;
+      var tr = b.closest("tr[data-pid]"), id = tr.dataset.pid;
+      if (b.hasAttribute("data-pg-edit")) { pgEdit = id; pgDel = null; renderProgram(); }
+      else if (b.hasAttribute("data-pg-cancel")) { pgEdit = null; document.activeElement.blur(); renderProgram(); }
+      else if (b.hasAttribute("data-pg-del")) { pgDel = id; renderProgram(); }
+      else if (b.hasAttribute("data-pg-del-no")) { pgDel = null; renderProgram(); }
+      else if (b.hasAttribute("data-pg-del-yes")) { pgDel = null; writeProgram(id, { deleted: true }); toast("Campagne retirée du programme"); if (mode !== "local") renderProgram(); }
+      else if (b.hasAttribute("data-pg-save")) {
+        var v = {};
+        tr.querySelectorAll("[data-pg]").forEach(function (el) { v[el.dataset.pg] = el.value.trim(); });
+        var d = v.diam.replace(/^Ø\s*/i, ""), a = fromLocalInput(v.start), c = fromLocalInput(v.end), err = pgCheck(d, a, c, id);
+        if (err) { toast(err); return; }
+        pgEdit = null;
+        document.activeElement.blur();
+        writeProgram(id, { diam: d, start: a, end: c });
+        toast("Campagne modifiée");
+        if (mode !== "local") renderProgram();
+      }
+    });
     $("btnExport").addEventListener("click", exportJSON);
     $("btnExportTop").addEventListener("click", exportJSON);
     $("jsonFile").addEventListener("change", function () {
@@ -3669,10 +3841,10 @@
         pendingDelete = null;
         renderBatches();
         deleteStops(function (s) {
-          return diamOf(s) === k;
+          return s.imp === k;
         }).then(
           function () {
-            toast("Arrêts du diamètre " + k + " supprimés");
+            toast("Import supprimé");
           },
           function (err) {
             toast(dbErrorMessage(err));
@@ -4033,7 +4205,7 @@
       } catch (e) {}
       if (
         location.hash &&
-        /^#(saisie|machine|type|actions|actview|rex)$/.test(location.hash)
+        /^#(saisie|prog|machine|type|actions|actview|rex)$/.test(location.hash)
       )
         ui.tab = location.hash.slice(1);
       renderAll();
@@ -4102,6 +4274,11 @@
           closes = d;
           refresh();
         }, onErr);
+      db.doc("config/program").onSnapshot(function (snap) {
+        var d = snap.exists ? snap.data() : null;
+        program = (d && d.items) || {};
+        refresh();
+      }, onErr);
       db.doc("config/codes").onSnapshot(function (snap) {
         var d = snap.exists ? snap.data() : null;
         codesCustom = !!(d && (d.fer || d.macc));
