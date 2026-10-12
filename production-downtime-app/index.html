@@ -1119,6 +1119,14 @@
         </p>
       </div>
       <div id="codesInfo"></div>
+      <div id="codesUnknown"></div>
+      <div class="row">
+        <label class="f">Table<select id="cnKind"><option value="macc">Code Macc (machine)</option><option value="fer">Code FER (type d'arrêt)</option></select></label>
+        <label class="f">Code<input id="cnCode" style="width: 90px" /></label>
+        <label class="f">Nom<input id="cnName" style="width: 260px" /></label>
+        <button class="btn" id="cnSave">Nommer / renommer ce code</button>
+        <span class="muted" id="cnCurrent"></span>
+      </div>
       <div class="row">
         <label class="f"
           >Table à remplacer
@@ -4211,10 +4219,68 @@
         return "<li><strong>" + label + "</strong> : " + Object.keys(codes[kind] || {}).length + " codes" +
           (u.length ? ' · <span class="pill late">' + u.length + " code(s) des arrêts sans nom : " + esc(u.slice(0, 15).join(", ")) + (u.length > 15 ? "…" : "") + "</span>" : stops.length ? ' · <span class="pill ok">tous les codes des arrêts ont un nom</span>' : "") + "</li>";
       };
+      renderUnknownCodes();
       $("codesInfo").innerHTML = '<ul style="margin: 0; padding-left: 18px">' + line("fer", "Codes FER") + line("macc", "Codes Macc") + "</ul>" +
         '<p class="hint" style="margin-top: 6px">' + (codesCustom ? "Tables mises à jour par un Admin." : "Tables d'origine (Table_code_fer.xlsx et Table_code_macc.xlsx).") + "</p>";
       $("btnCodesReset").hidden = !codesCustom;
     }
+    // codes présents dans les arrêts mais absents des tables : à nommer directement
+    function renderUnknownCodes() {
+      var box = $("codesUnknown"), ae = document.activeElement;
+      if (ae && ae.matches && ae.matches("#codesUnknown input")) return; // saisie en cours
+      var u = {};
+      stops.forEach(function (s) {
+        [["fer", s.fer], ["macc", s.macc]].forEach(function (kc) {
+          var c = normCode(kc[1]);
+          if (!c || codeName(kc[0], c)) return;
+          var k = kc[0] + "|" + c, e = (u[k] = u[k] || { kind: kc[0], code: c, n: 0, dur: 0, ex: "" });
+          e.n++; e.dur += s.end - s.start;
+          if (!e.ex && s.detail) e.ex = s.detail;
+        });
+      });
+      var list = Object.keys(u).map(function (k) { return u[k]; }).sort(function (a, b) { return b.dur - a.dur; });
+      if (!list.length) { box.innerHTML = ""; return; }
+      box.innerHTML = '<h3 style="margin-top: 4px">Codes sans nom (' + list.length + ")</h3>" +
+        '<div class="scroll"><table class="ed-table"><thead><tr><th>Table</th><th>Code</th><th class="num">Arrêts</th><th class="num">Temps d\'arrêt</th><th>Exemple de détail</th><th>Nom à donner</th></tr></thead><tbody>' +
+        list.map(function (e) {
+          return "<tr><td>" + (e.kind === "fer" ? "FER (type d'arrêt)" : "Macc (machine)") + '</td><td class="mono"><strong>' + esc(e.code) + '</strong></td><td class="num">' + e.n + '</td><td class="num">' + fmtDur(e.dur) +
+            '</td><td class="muted">' + esc(e.ex.slice(0, 70)) + '</td><td><input data-uk-kind="' + e.kind + '" data-uk-code="' + esc(e.code) + '" placeholder="Nom" style="width: 220px" /></td></tr>';
+        }).join("") + '</tbody></table></div><div class="row" style="margin-top: 8px"><button class="btn primary" id="ukSave">Enregistrer les noms saisis</button></div>';
+    }
+    async function saveCodeNames(pairs) {
+      var next = { fer: Object.assign({}, codes.fer), macc: Object.assign({}, codes.macc) };
+      pairs.forEach(function (p) { next[p.kind][normCode(p.code)] = p.name; });
+      return saveCodes(next);
+    }
+    $("codesUnknown").addEventListener("click", async function (e) {
+      if (!e.target.closest("#ukSave") || !isAdmin()) return;
+      var pairs = [];
+      $("codesUnknown").querySelectorAll("input[data-uk-code]").forEach(function (el) {
+        var n = el.value.trim();
+        if (n) pairs.push({ kind: el.dataset.ukKind, code: el.dataset.ukCode, name: n });
+      });
+      if (!pairs.length) { toast("Saisissez au moins un nom."); return; }
+      document.activeElement.blur();
+      if (await saveCodeNames(pairs)) toast(pairs.length + " code(s) nommé(s)");
+    });
+    $("codesUnknown").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && e.target.matches("input[data-uk-code]")) { e.preventDefault(); $("ukSave").click(); }
+    });
+    function cnShowCurrent() {
+      var c = normCode($("cnCode").value), n = c ? codeName($("cnKind").value, c) : "";
+      $("cnCurrent").textContent = c ? (n ? "Nom actuel : " + n : "Ce code n'a pas encore de nom") : "";
+    }
+    $("cnCode").addEventListener("input", cnShowCurrent);
+    $("cnKind").addEventListener("change", cnShowCurrent);
+    $("cnSave").addEventListener("click", async function () {
+      if (!isAdmin()) return;
+      var c = normCode($("cnCode").value), n = $("cnName").value.trim();
+      if (!c || !n) { toast("Indiquez le code et le nom."); return; }
+      if (await saveCodeNames([{ kind: $("cnKind").value, code: c, name: n }])) {
+        toast("Code " + c + " : « " + n + " » enregistré");
+        $("cnCode").value = ""; $("cnName").value = ""; cnShowCurrent();
+      }
+    });
     function parseCodes() {
       var txt = $("codesPaste").value, map = {}, n = 0, bad = 0;
       parseTSV(txt).forEach(function (cells, i) {
