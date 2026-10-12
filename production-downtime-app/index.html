@@ -2819,6 +2819,7 @@
         d.share = total ? d.v / total : 0;
         d.cum = total ? cum / total : 0;
         d.a = prev / (total || 1) < 0.8;
+        d.in95 = prev / (total || 1) < 0.95;
       });
       return { rows: arr, total: total };
     }
@@ -2845,8 +2846,8 @@
       return (hh < 10 ? "0" : "") + hh + ":" + pad(Math.floor((s % 3600) / 60)) + ":" + pad(s % 60);
     }
     function chartSVG(data, metric, kind) {
-      // seules les catégories qui font les 80 % sont tracées : le reste n'est pas prioritaire
-      var rows = data.rows.filter(function (r) { return r.a; }),
+      // catégories tracées jusqu'à 95 % du cumul ; au-delà de 80 % les barres sont en teinte claire
+      var rows = data.rows.filter(function (r) { return r.in95; }),
         n = rows.length;
       var maxLabel = Math.max.apply(
         null,
@@ -3075,7 +3076,7 @@
         fmtDate(ui.from) +
         " au " +
         fmtDate(ui.to) +
-        ". Le graphique montre les catégories qui font 80 % du total. Les arrêts à cheval sur les bornes sont comptés pour la partie comprise dans la période. Cliquez sur une barre pour voir le détail.</p></div>" +
+        ". Le graphique montre les catégories jusqu'à 95 % du total (en foncé, celles qui font les 80 % prioritaires). Les arrêts à cheval sur les bornes sont comptés pour la partie comprise dans la période. Cliquez sur une barre pour voir le détail.</p></div>" +
         '<div class="seg" role="group" aria-label="Critère"><button data-metric="' +
         kind +
         '" data-m="dur" aria-pressed="' +
