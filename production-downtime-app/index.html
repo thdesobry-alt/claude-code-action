@@ -1099,6 +1099,7 @@
 
     <div class="panel stack">
       <div>
+        <div class="act-banner" id="exclBanner" hidden></div>
         <h2>Derniers imports</h2>
         <p class="hint">Chaque collage ou import de fichier est enregistré comme un import. En cas d'erreur de manipulation, supprimez l'import concerné : tous ses arrêts sont retirés.</p>
       </div>
@@ -1614,7 +1615,16 @@
       }
       return "";
     }
+    // arrêts exclus par défaut : code FER 51 (cycle) et arrêts sans machine (code Macc vide, 0 ou « N/A »)
+    function isExcluded(s) {
+      var m = String(s.macc || "").trim();
+      if (normCode(s.fer) === "51") return true;
+      if (!m || normCode(m) === "0" || /^n\/?a$/i.test(m)) return true;
+      return /^n\/?a$/i.test(codeName("macc", m));
+    }
+    var excludedCount = 0;
     function rebuild() {
+      excludedCount = 0;
       programList = Object.keys(program).map(function (id) { return Object.assign({ id: id }, program[id]); })
         .filter(function (p) { return p && !p.deleted && p.diam && p.start < p.end; })
         .sort(function (a, b) { return a.start - b.start; });
@@ -1625,6 +1635,7 @@
           c = (closes[day] && closes[day].items) || {};
         Object.keys(m).forEach(function (id) {
           var s = m[id];
+          if (isExcluded(s)) { excludedCount++; return; }
           out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "",
             diam: programDiam(s.start) || s.diam || "", diamRaw: s.diam || "", imp: s.imp || null, impAt: s.impAt || null, impSrc: s.impSrc || "",
             actions: actionsOf(a[id], c[id]), rex: rexOf(a[id]) });
@@ -2224,7 +2235,7 @@
       });
     }
     function parsePaste(text) {
-      var out = { ok: [], errors: [], headers: 0 };
+      var out = { ok: [], errors: [], excluded: [], headers: 0 };
       parseTSV(text).forEach(function (cells, idx) {
         var a = parseFrDate(cells[0] || ""),
           b = parseFrDate(cells[1] || "");
@@ -2248,6 +2259,9 @@
         if (err.length) {
           rec.error = err.join(", ");
           out.errors.push(rec);
+        } else if (isExcluded(rec)) {
+          rec.excluded = true;
+          out.excluded.push(rec);
         } else out.ok.push(rec);
       });
       return out;
@@ -2381,6 +2395,7 @@
         !isAdmin();
       document.querySelector('nav.tabs [data-tab="actions"]').hidden =
         !isAdmin();
+      document.querySelector('nav.tabs [data-tab="prog"]').hidden = !isAdmin();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent = unlocked === "user" ? "Passer en Admin" : "Se connecter";
       $("btnLogout").hidden = mode === "pending" || unlocked === "viewer";
@@ -2462,11 +2477,12 @@
       if (parsed.errors.length)
         info += " · " + parsed.errors.length + " ligne(s) en erreur ignorée(s)";
       if (parsed.headers) info += " · en-tête ignoré";
+      if (parsed.excluded.length) info += " · " + parsed.excluded.length + " arrêt(s) exclu(s) (code FER 51 cycle ou sans machine)";
       var noProg = parsed.ok.filter(function (r) { return !programDiam(r.start); }).length;
       if (noProg) info += " · " + noProg + " arrêt(s) hors programme de laminage (sans diamètre)";
       $("parseInfo").textContent = info;
       $("btnImport").disabled = busy || !parsed.ok.length;
-      var rows = parsed.ok.concat(parsed.errors).sort(function (a, b) {
+      var rows = parsed.ok.concat(parsed.errors, parsed.excluded.map(function (r) { return Object.assign({}, r, { error: "exclu : FER 51 ou sans machine" }); })).sort(function (a, b) {
         return a.line - b.line;
       });
       $("preview").innerHTML =
@@ -2657,7 +2673,18 @@
       });
       return Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.at - a.at; });
     }
+    var exclConfirm = false;
+    function renderExclBanner() {
+      var el = $("exclBanner");
+      el.hidden = !excludedCount || !isAdmin();
+      if (el.hidden) return;
+      el.innerHTML = excludedCount + " arrêt(s) enregistré(s) sont exclus des analyses (code FER 51 cycle, ou sans machine / N/A). " +
+        (exclConfirm
+          ? '<span class="confirm">Les supprimer définitivement ? <button class="btn sm danger" data-excl-yes>Supprimer</button><button class="btn sm" data-excl-no>Annuler</button></span>'
+          : '<button class="btn sm" data-excl>Les supprimer de la base</button>');
+    }
     function renderBatches() {
+      renderExclBanner();
       if (!stops.length) {
         $("batches").innerHTML = '<div class="empty">Aucun arrêt pour l\'instant. Collez un tableau Excel ci-dessus pour commencer.</div>';
         return;
@@ -2827,7 +2854,7 @@
         byKey[stopKey(s)] = s;
         byId[s.id] = s;
       });
-      var impJ = "i" + uid(), impJAt = Date.now();
+      var impJ = "i" + uid(), impJAt = Date.now(), skippedEx = 0;
       (data.programme || []).forEach(function (pg) {
         var a = parseFrDate(pg.debut || ""), b = parseFrDate(pg.fin || "");
         if (!pg.diametre || a == null || b == null || b <= a) return;
@@ -2845,6 +2872,7 @@
           bad++;
           return;
         }
+        if (isExcluded({ fer: r.codeFER, macc: r.codeMacc })) { skippedEx++; return; }
         var s = {
           id:
             String(r.id || uid()).replace(/[^A-Za-z0-9_\-.~:@+]/g, "") || uid(),
@@ -2911,6 +2939,7 @@
           " action(s) et " +
           rexWrites.length +
           " REX repris" +
+          (skippedEx ? ", " + skippedEx + " arrêt(s) exclu(s) (FER 51 ou sans machine)" : "") +
           (bad ? ", " + bad + " ligne(s) invalide(s) ignorée(s)" : "") +
           ".";
       } catch (e) {
@@ -3682,7 +3711,7 @@
       );
     }
     function renderAll() {
-      var tab = (ui.tab === "saisie" || ui.tab === "actions") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       curTab = tab;
       renderHeader();
       renderChips();
@@ -3826,6 +3855,16 @@
       var f = this.files && this.files[0];
       if (f) importJSON(f);
       this.value = "";
+    });
+    $("exclBanner").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b || !isAdmin()) return;
+      if (b.hasAttribute("data-excl")) { exclConfirm = true; renderExclBanner(); }
+      else if (b.hasAttribute("data-excl-no")) { exclConfirm = false; renderExclBanner(); }
+      else if (b.hasAttribute("data-excl-yes")) {
+        exclConfirm = false;
+        deleteStops(isExcluded).then(function () { toast("Arrêts exclus supprimés"); renderBatches(); }, function (err) { toast(dbErrorMessage(err)); });
+      }
     });
     $("batches").addEventListener("click", function (e) {
       var b = e.target.closest("button");
