@@ -711,6 +711,24 @@
     color: var(--danger);
     font-size: 13px;
   }
+  .pd-table input {
+    width: 90px;
+    text-align: right;
+    font-family: var(--font-data);
+  }
+  .pd-table tfoot th {
+    text-transform: none;
+    letter-spacing: 0;
+    background: var(--surface-2);
+    color: var(--fg);
+    font-size: 12px;
+  }
+  .pd-table input::placeholder {
+    color: var(--line);
+  }
+  .pd-low {
+    color: var(--danger);
+  }
   .ed-table input {
     font-size: 12px;
     padding: 4px 6px;
@@ -982,6 +1000,7 @@
       Saisie des arrêts
     </button>
     <button role="tab" data-tab="prog" aria-selected="false">Programme de laminage</button>
+    <button role="tab" data-tab="prod" aria-selected="false">Production</button>
     <button role="tab" data-tab="machine" aria-selected="true">
       Analyse Pareto Machine
     </button>
@@ -1207,7 +1226,7 @@
           <p class="hint" style="margin-top: 8px">Mot de passe Admin et niveau Éditeur.</p>
           <ul>
             <li>Colle, modifie et supprime des arrêts</li>
-            <li>Tient le programme de laminage</li>
+            <li>Tient le programme de laminage et la production journalière</li>
             <li>Saisit, modifie et clôture les actions et les REX</li>
             <li>Importe la base JSON et met à jour les tables de codes</li>
           </ul>
@@ -1279,6 +1298,35 @@
       </div>
       <div class="kpis" id="pgKpis"></div>
       <div class="scroll" id="pgTable"></div>
+    </div>
+  </section>
+
+  <section data-panel="prod" class="stack" hidden>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between">
+        <div>
+          <h2>Production</h2>
+          <p class="hint">
+            Saisissez pour chaque journée de production (8h à 8h le lendemain)
+            les tonnes produites et le temps d'ouverture. Le temps d'arrêt vient
+            des arrêts saisis. Taux de marche = (ouverture − arrêts) ÷ ouverture.
+            Productivité = tonnes ÷ temps de marche.
+          </p>
+        </div>
+        <div class="row">
+          <button class="btn" id="pdPrev" aria-label="Mois précédent">◀</button>
+          <strong id="pdMonth" style="min-width: 140px; text-align: center"></strong>
+          <button class="btn" id="pdNext" aria-label="Mois suivant">▶</button>
+          <button class="btn" id="pdCopy">Copier pour Excel</button>
+        </div>
+      </div>
+      <div class="kpis" id="pdKpis"></div>
+      <details>
+        <summary class="muted">Coller plusieurs jours depuis Excel (date, tonnes, temps d'ouverture)</summary>
+        <textarea class="paste" id="pdPaste" style="min-height: 100px" placeholder="09/10/2026&#9;1250&#9;24:00"></textarea>
+        <div class="row"><button class="btn" id="pdPasteAdd" disabled>Enregistrer ces jours</button><span class="muted" id="pdPasteInfo"></span></div>
+      </details>
+      <div class="scroll" id="pdTable"></div>
     </div>
   </section>
 
@@ -1686,7 +1734,7 @@
       try {
         localStorage.setItem(
           LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program }),
+          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production }),
         );
       } catch (e) {}
       if (fileHandle) scheduleFileSave();
@@ -1725,16 +1773,20 @@
       return clone(o); // conflit sur une même valeur : la modification de ce poste l'emporte
     }
     function snapshot() {
-      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
+      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
     }
     function applyState(s) {
-      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {};
+      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {};
       if (s.codes && (s.codes.fer || s.codes.macc)) { codes = { fer: s.codes.fer || DEFAULT_CODES.fer, macc: s.codes.macc || DEFAULT_CODES.macc }; codesCustom = true; }
       else { codes = DEFAULT_CODES; codesCustom = false; }
     }
     // fichier exporté (version 2, liste « arrets ») -> structure de la base
     function fromExport(data) {
-      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, codes: null }, groups = {}, order = [];
+      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, codes: null }, groups = {}, order = [];
+      (data.production || []).forEach(function (pr) {
+        var k = pdKeyFromFr(pr.jour);
+        if (k) st.production[k] = { tonnes: pr.tonnes === "" || pr.tonnes == null ? null : +pr.tonnes, ouverture: pr.ouvertureMin == null ? null : +pr.ouvertureMin };
+      });
       (data.programme || []).forEach(function (pg, i) {
         var a = parseFrDate(pg.debut || ""), b = parseFrDate(pg.fin || "");
         if (pg.diametre && a != null && b != null && b > a) st.program["p" + a + "-" + i] = { diam: String(pg.diametre).trim(), start: a, end: b };
@@ -1766,15 +1818,15 @@
     async function readFileState() {
       var f = await fileHandle.getFile(), text = await f.text();
       fileLastMod = f.lastModified;
-      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, codes: null };
+      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, codes: null };
       var d = JSON.parse(text);
-      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, codes: d.codes || null };
+      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, codes: d.codes || null };
       if (d && Array.isArray(d.arrets)) return fromExport(d);
       throw new Error("format");
     }
     async function writeFileState(s) {
       var w = await fileHandle.createWritable();
-      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, codes: s.codes }));
+      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, codes: s.codes }));
       await w.close();
       fileLastMod = (await fileHandle.getFile()).lastModified;
     }
@@ -1926,6 +1978,7 @@
           closes = d.closes || {};
           plan = d.plan || {};
           program = d.program || {};
+          production = d.production || {};
         }
       } catch (e) {}
     }
@@ -1940,6 +1993,29 @@
       };
       if (s.imp) { o.imp = s.imp; o.impAt = s.impAt; o.impSrc = s.impSrc || ""; }
       return o;
+    }
+    // production par journée : config/production = {items: {"AAAA-MM-JJ" (jour de démarrage 8h): {tonnes, ouverture (min)}}}
+    var production = {};
+    function writeProduction(day, fields) {
+      var body = Object.assign({}, fields, { by: myId, at: Date.now() });
+      if (mode === "local") {
+        production[day] = Object.assign({}, production[day] || {}, body);
+        saveLocal();
+        refresh();
+        return Promise.resolve();
+      }
+      var ref = db.doc("config/production"), patch = {}, ck = "config/production";
+      patch[day] = body;
+      chains[ck] = (chains[ck] || Promise.resolve())
+        .then(async function () {
+          try { await ref.update({ items: patch }); }
+          catch (e) {
+            if (e && e.code === "invalid_argument") { var sn = await ref.get(); if (!sn.exists) { await ref.set({ items: patch }); return; } }
+            throw e;
+          }
+        })
+        .catch(function (e) { toast(dbErrorMessage(e)); });
+      return chains[ck];
     }
     function writeProgram(id, fields) {
       var body = Object.assign({}, fields, { by: myId, at: Date.now() });
@@ -2413,6 +2489,7 @@
       document.querySelector('nav.tabs [data-tab="actions"]').hidden =
         !isAdmin();
       document.querySelector('nav.tabs [data-tab="prog"]').hidden = !isAdmin();
+      document.querySelector('nav.tabs [data-tab="prod"]').hidden = !isAdmin();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent = unlocked === "user" ? "Passer en Admin" : "Se connecter";
       $("btnLogout").hidden = mode === "pending" || unlocked === "viewer";
@@ -2720,6 +2797,140 @@
       $("batches").innerHTML = '<table><thead><tr><th>Importé le</th><th>Origine</th><th class="num">Arrêts</th><th class="num">Durée</th><th>Période des arrêts</th><th></th></tr></thead><tbody>' + rows.join("") + "</tbody></table>";
     }
 
+    // ---------- Production (tonnes, ouverture, taux de marche, productivité) ----------
+    function pdKeyFromFr(s) {
+      var m = String(s || "").trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      return m ? m[3] + "-" + pad(+m[2]) + "-" + pad(+m[1]) : null;
+    }
+    // temps d'ouverture : « 24 », « 24:00 », « 20,5 », « 20h30 » -> minutes
+    function parseOpening(v) {
+      v = String(v || "").trim().replace(/\s/g, "");
+      if (!v) return null;
+      var m = v.match(/^(\d{1,3})[:hH](\d{1,2})m?$/);
+      if (m) return +m[1] * 60 + +m[2];
+      var n = parseFloat(v.replace(",", "."));
+      return isNaN(n) ? NaN : Math.round(n * 60);
+    }
+    function parseTonnes(v) {
+      v = String(v || "").trim().replace(/\s/g, "").replace(",", ".");
+      if (!v) return null;
+      var n = parseFloat(v);
+      return isNaN(n) ? NaN : n;
+    }
+    function fmtOpening(min) { return min == null ? "" : pad(Math.floor(min / 60)) + ":" + pad(min % 60); }
+    function fmtNum(n, d) { return n == null || isNaN(n) ? "—" : n.toLocaleString("fr-FR", { maximumFractionDigits: d == null ? 1 : d }); }
+    function pdMonthStart() {
+      if (ui.pdMonth == null) { var t = prodDay(Date.now()); ui.pdMonth = new Date(t.getFullYear(), t.getMonth(), 1).getTime(); }
+      return new Date(ui.pdMonth);
+    }
+    // temps d'arrêt d'une journée de production : arrêts ramenés à la fenêtre 8h -> 8h
+    function stopTimeIn(a, b) {
+      var t = 0;
+      stops.forEach(function (s) { var o = Math.min(s.end, b) - Math.max(s.start, a); if (o > 0) t += o; });
+      return t;
+    }
+    function pdRows() {
+      var m0 = pdMonthStart(), y = m0.getFullYear(), mo = m0.getMonth(), n = new Date(y, mo + 1, 0).getDate(), rows = [];
+      for (var d = 1; d <= n; d++) {
+        var a = new Date(y, mo, d, DAY_START_HOUR).getTime(), b = new Date(y, mo, d + 1, DAY_START_HOUR).getTime();
+        var key = y + "-" + pad(mo + 1) + "-" + pad(d), v = production[key] || {};
+        var stopMs = stopTimeIn(a, b), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
+        var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
+        rows.push({ key: key, a: a, tons: tons, open: open, stopMs: stopMs, run: run,
+          taux: openMs ? run / openMs : null, prod: run && tons != null ? tons / (run / 3600000) : null });
+      }
+      return rows;
+    }
+    var pdEditing = false;
+    function renderProduction() {
+      if (pdEditing) return; // saisie en cours dans le tableau : redessiné à la sortie
+      var ae = document.activeElement;
+      if (ae && ae.matches && ae.matches("#pdTable input")) return;
+      var m0 = pdMonthStart();
+      $("pdMonth").textContent = MONTHS[m0.getMonth()].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + m0.getFullYear();
+      var rows = pdRows(), filled = rows.filter(function (r) { return r.open != null; });
+      var T = filled.reduce(function (t, r) { return t + (r.tons || 0); }, 0),
+        O = filled.reduce(function (t, r) { return t + r.open * 60000; }, 0),
+        S = filled.reduce(function (t, r) { return t + r.stopMs; }, 0),
+        R = Math.max(0, O - S);
+      $("pdKpis").innerHTML =
+        '<div class="kpi"><div class="l">Production du mois</div><div class="v">' + fmtNum(T, 0) + " t</div></div>" +
+        '<div class="kpi"><div class="l">Temps d\'ouverture</div><div class="v">' + fmtHM(O) + "</div></div>" +
+        '<div class="kpi"><div class="l">Taux de marche</div><div class="v">' + (O ? pct(R / O) : "—") + "</div></div>" +
+        '<div class="kpi"><div class="l">Productivité</div><div class="v">' + (R ? fmtNum(T / (R / 3600000), 1) + " t/h" : "—") + "</div></div>";
+      var wd = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
+      $("pdTable").innerHTML = '<table class="ed-table pd-table"><thead><tr><th>Journée (8h → 8h)</th><th class="num">Production (t)</th><th class="num">Temps d\'ouverture</th><th class="num">Temps d\'arrêt</th><th class="num">Temps de marche</th><th class="num">Taux de marche</th><th class="num">Productivité (t/h)</th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          var dt = new Date(r.a);
+          return '<tr data-day="' + r.key + '"><td class="mono">' + wd[dt.getDay()] + " " + fmtDate(r.a).slice(0, 10) + "</td>" +
+            '<td class="num"><input data-pd="tonnes" inputmode="decimal" value="' + (r.tons == null ? "" : String(r.tons).replace(".", ",")) + '" placeholder="t" /></td>' +
+            '<td class="num"><input data-pd="ouverture" value="' + fmtOpening(r.open) + '" placeholder="hh:mm" /></td>' +
+            '<td class="num">' + fmtHM(r.stopMs) + '</td><td class="num">' + (r.run == null ? "—" : fmtHM(r.run)) + "</td>" +
+            '<td class="num">' + (r.taux == null ? "—" : '<strong class="' + (r.taux < 0.8 ? "pd-low" : "") + '">' + pct(r.taux) + "</strong>") + "</td>" +
+            '<td class="num">' + fmtNum(r.prod, 1) + "</td></tr>";
+        }).join("") +
+        '</tbody><tfoot><tr><th>Total du mois</th><th class="num">' + fmtNum(T, 0) + '</th><th class="num">' + fmtHM(O) + '</th><th class="num">' + fmtHM(S) + '</th><th class="num">' + fmtHM(R) + '</th><th class="num">' + (O ? pct(R / O) : "—") + '</th><th class="num">' + (R ? fmtNum(T / (R / 3600000), 1) : "—") + "</th></tr></tfoot></table>" +
+        '<p class="hint">Les totaux portent sur les journées dont le temps d\'ouverture est saisi.</p>';
+    }
+    function savePdRow(tr) {
+      var t = parseTonnes(tr.querySelector('[data-pd="tonnes"]').value), o = parseOpening(tr.querySelector('[data-pd="ouverture"]').value);
+      if (isNaN(t)) { toast("Production : saisissez un nombre de tonnes."); return; }
+      if (isNaN(o) || (o != null && (o < 0 || o > 24 * 60))) { toast("Temps d'ouverture : saisissez une durée entre 00:00 et 24:00 (ex. 24:00 ou 20,5)."); return; }
+      var cur = production[tr.dataset.day] || {};
+      if ((cur.tonnes == null ? null : cur.tonnes) === t && (cur.ouverture == null ? null : cur.ouverture) === o) return;
+      writeProduction(tr.dataset.day, { tonnes: t, ouverture: o });
+    }
+    $("pdTable").addEventListener("change", function (e) {
+      var tr = e.target.closest("tr[data-day]");
+      if (tr && isAdmin()) savePdRow(tr);
+    });
+    $("pdTable").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && e.target.matches("[data-pd]")) {
+        e.preventDefault();
+        var inputs = Array.prototype.slice.call(document.querySelectorAll("#pdTable [data-pd]")), i = inputs.indexOf(e.target);
+        var next = inputs[i + 2] || inputs[i + 1];
+        if (next) next.focus(); else e.target.blur();
+      }
+    });
+    $("pdTable").addEventListener("focusin", function () { pdEditing = true; });
+    $("pdTable").addEventListener("focusout", function () {
+      setTimeout(function () {
+        var ae = document.activeElement;
+        if (!(ae && ae.matches && ae.matches("#pdTable input"))) { pdEditing = false; renderProduction(); }
+      }, 0);
+    });
+    $("pdPrev").addEventListener("click", function () { var d = pdMonthStart(); d.setMonth(d.getMonth() - 1); ui.pdMonth = d.getTime(); renderProduction(); });
+    $("pdNext").addEventListener("click", function () { var d = pdMonthStart(); d.setMonth(d.getMonth() + 1); ui.pdMonth = d.getTime(); renderProduction(); });
+    var pdParsed = [];
+    $("pdPaste").addEventListener("input", function () {
+      var ok = [], bad = 0;
+      parseTSV(this.value).forEach(function (c, i) {
+        var k = pdKeyFromFr(c[0]), t = parseTonnes(c[1]), o = parseOpening(c[2]);
+        if (!k) { if (i) bad++; return; }
+        if (isNaN(t) || isNaN(o) || (o != null && o > 24 * 60)) { bad++; return; }
+        ok.push({ k: k, t: t, o: o });
+      });
+      pdParsed = ok;
+      $("pdPasteInfo").textContent = this.value.trim() ? ok.length + " jour(s) valides" + (bad ? " · " + bad + " ligne(s) invalide(s) ignorée(s)" : "") : "";
+      $("pdPasteAdd").disabled = !ok.length;
+    });
+    $("pdPasteAdd").addEventListener("click", function () {
+      if (!isAdmin()) return;
+      pdParsed.forEach(function (r) { writeProduction(r.k, { tonnes: r.t, ouverture: r.o }); });
+      toast(pdParsed.length + " jour(s) enregistré(s)");
+      $("pdPaste").value = ""; $("pdPaste").dispatchEvent(new Event("input"));
+      if (mode !== "local") renderProduction();
+    });
+    $("pdCopy").addEventListener("click", function () {
+      var lines = [["Journée", "Production (t)", "Temps d'ouverture", "Temps d'arrêt", "Temps de marche", "Taux de marche", "Productivité (t/h)"].join("\t")];
+      pdRows().forEach(function (r) {
+        lines.push([fmtDate(r.a).slice(0, 10), r.tons == null ? "" : String(r.tons).replace(".", ","), fmtOpening(r.open), fmtHM(r.stopMs), r.run == null ? "" : fmtHM(r.run),
+          r.taux == null ? "" : (r.taux * 100).toFixed(1).replace(".", ",") + " %", r.prod == null ? "" : r.prod.toFixed(1).replace(".", ",")].join("\t"));
+      });
+      try { navigator.clipboard.writeText(lines.join("\n")).then(function () { toast("Mois copié : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); }); }
+      catch (e) { toast("Copie refusée par le navigateur"); }
+    });
+
     // ---------- Programme de laminage ----------
     var pgEdit = null, pgDel = null;
     function pgOverlap(a, b, exceptId) {
@@ -2797,6 +3008,7 @@
         version: 2,
         exportedAt: new Date().toISOString(),
         programme: programList.map(function (p) { return { diametre: p.diam, debut: fmtDate(p.start), fin: fmtDate(p.end) }; }),
+        production: Object.keys(production).sort().map(function (k) { var v = production[k] || {}; return { jour: k.split("-").reverse().join("/"), tonnes: v.tonnes == null ? "" : v.tonnes, ouvertureMin: v.ouverture == null ? null : v.ouverture }; }),
         arrets: stops.map(function (s) {
           return {
             id: s.id,
@@ -2874,6 +3086,10 @@
         byId[s.id] = s;
       });
       var impJ = "i" + uid(), impJAt = Date.now(), skippedEx = 0;
+      (data.production || []).forEach(function (pr) {
+        var k = pdKeyFromFr(pr.jour);
+        if (k && !production[k]) writeProduction(k, { tonnes: pr.tonnes === "" || pr.tonnes == null ? null : +pr.tonnes, ouverture: pr.ouvertureMin == null ? null : +pr.ouvertureMin });
+      });
       (data.programme || []).forEach(function (pg) {
         var a = parseFrDate(pg.debut || ""), b = parseFrDate(pg.fin || "");
         if (!pg.diametre || a == null || b == null || b <= a) return;
@@ -3735,7 +3951,7 @@
       );
     }
     function renderAll() {
-      var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       curTab = tab;
       renderHeader();
       renderChips();
@@ -3748,12 +3964,13 @@
       document.querySelectorAll("[data-panel]").forEach(function (p) {
         p.hidden = p.dataset.panel !== tab;
       });
-      $("filters").hidden = tab === "saisie" || tab === "prog";
+      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod";
       $("btnExportTop").hidden = mode === "pending" || !canExport();
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
       if (tab === "rex") renderRex();
       if (tab === "prog") renderProgram();
+      if (tab === "prod") renderProduction();
       if (tab === "actview") {
         var ae = document.activeElement;
         if (ae && ae.matches && ae.matches("#avTable [data-close-comment]")) deferAv = true;
@@ -4333,7 +4550,7 @@
       } catch (e) {}
       if (
         location.hash &&
-        /^#(saisie|prog|machine|type|actions|actview|rex)$/.test(location.hash)
+        /^#(saisie|prog|prod|machine|type|actions|actview|rex)$/.test(location.hash)
       )
         ui.tab = location.hash.slice(1);
       renderAll();
@@ -4402,6 +4619,11 @@
           closes = d;
           refresh();
         }, onErr);
+      db.doc("config/production").onSnapshot(function (snap) {
+        var d = snap.exists ? snap.data() : null;
+        production = (d && d.items) || {};
+        refresh();
+      }, onErr);
       db.doc("config/program").onSnapshot(function (snap) {
         var d = snap.exists ? snap.data() : null;
         program = (d && d.items) || {};
