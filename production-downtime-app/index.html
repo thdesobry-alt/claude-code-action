@@ -880,6 +880,55 @@
     border-bottom: 0;
     padding-bottom: 2px;
   }
+  .det-table td.pf-btns {
+    white-space: nowrap;
+    text-align: right;
+  }
+  .det-table td.pf-btns .btn + .btn {
+    margin-left: 6px;
+  }
+  .det-rex {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .det-rex strong {
+    color: var(--bar);
+  }
+  .pf-form {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--bar);
+    background: var(--surface-2);
+    display: grid;
+    gap: 8px;
+  }
+  .pf-grid {
+    display: grid;
+    grid-template-columns: 160px minmax(220px, 1fr) 180px 160px;
+    gap: 10px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .pf-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .pf-form textarea {
+    width: 100%;
+    min-height: 56px;
+    font: 13px/1.4 var(--font-body);
+    resize: vertical;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .pf-form input,
+  .pf-form select {
+    width: 100%;
+  }
+  .pf-form .sel-attach input {
+    width: 150px;
+  }
   .det-acts {
     margin: 4px 0 0;
     padding-left: 16px;
@@ -2790,8 +2839,14 @@
         f = v / p;
       return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
     }
+    // durée au format hh:mm:ss
+    function fmtHMS(ms) {
+      var s = Math.round(ms / 1000), hh = Math.floor(s / 3600);
+      return (hh < 10 ? "0" : "") + hh + ":" + pad(Math.floor((s % 3600) / 60)) + ":" + pad(s % 60);
+    }
     function chartSVG(data, metric, kind) {
-      var rows = data.rows,
+      // seules les catégories qui font les 80 % sont tracées : le reste n'est pas prioritaire
+      var rows = data.rows.filter(function (r) { return r.a; }),
         n = rows.length;
       var maxLabel = Math.max.apply(
         null,
@@ -2804,7 +2859,7 @@
       var rotate = n > 8 || maxLabel > 12;
       var W = Math.max(1100, n * 56 + 120),
         H = 400,
-        ml = 64,
+        ml = 78,
         mr = 52,
         mt = 20,
         mb = rotate ? Math.min(130, 24 + Math.min(maxLabel, 22) * 6.2) : 40;
@@ -2845,7 +2900,7 @@
           '" y="' +
           (gy + 4) +
           '" text-anchor="end">' +
-          gv.toLocaleString("fr-FR", { maximumFractionDigits: 1 }) +
+          (unitMin ? fmtHMS(gv * 60000) : gv.toLocaleString("fr-FR", { maximumFractionDigits: 1 })) +
           "</text>";
         s +=
           '<text x="' +
@@ -2862,7 +2917,7 @@
         '" transform="rotate(-90 14 ' +
         (mt + ph / 2) +
         ')" text-anchor="middle">' +
-        (unitMin ? "Durée (min)" : "Nombre d'arrêts") +
+        (unitMin ? "Durée (hh:mm:ss)" : "Nombre d'arrêts") +
         "</text>";
       s +=
         '<line class="p80" x1="' +
@@ -2903,7 +2958,7 @@
           '" style="cursor: pointer"><title>' +
           esc(r.k) +
           " : " +
-          (unitMin ? fmtDur(r.v) : r.v + " arrêt(s)") +
+          (unitMin ? fmtHMS(r.v) : r.v + " arrêt(s)") +
           " · " +
           pct(r.share) +
           "</title></rect>";
@@ -2914,7 +2969,7 @@
             '" y="' +
             (by - 4) +
             '" text-anchor="middle">' +
-            (unitMin ? fmtMin(r.v) : r.v) +
+            (unitMin ? fmtHMS(r.v) : r.v) +
             "</text>";
         var cx = x + bw / 2,
           lab = esc(r.k.length > 22 ? r.k.slice(0, 21) + "…" : r.k);
@@ -2969,8 +3024,28 @@
         '"></line>';
       return s + "</svg>";
     }
+    // formulaires Admin dans le détail des Pareto : nouvelle action, rattachement par numéro, REX
+    function parFormHTML(s, type) {
+      if (type === "rex") {
+        var r = s.rex || {};
+        return '<div class="pf-form"><div class="rex-title">' + (s.rex ? "Modifier le REX" : "Saisir un REX") + '</div><div class="rex-grid">' +
+          REX_FIELDS.map(function (f) { return '<label class="f">' + f[1] + '<textarea data-pf="' + f[0] + '" placeholder="' + esc(f[2]) + '">' + esc(r[f[0]] || "") + "</textarea></label>"; }).join("") +
+          '</div><div class="confirm"><button class="btn sm primary" data-pf-rex-save>Enregistrer le REX</button><button class="btn sm" data-pf-cancel>Annuler</button></div></div>';
+      }
+      return '<div class="pf-form"><div class="rex-title">Nouvelle action pour cet arrêt</div><div class="pf-grid">' +
+        '<label class="f">Type d\'action<select data-pf="typeAction">' + TYPE_ACTIONS.map(function (o) { return '<option value="' + esc(o) + '">' + (o ? esc(o) : "—") + "</option>"; }).join("") + "</select></label>" +
+        '<label class="f pf-wide">Action<textarea data-pf="action" placeholder="Action à mener"></textarea></label>' +
+        '<label class="f">Pilote<input data-pf="pilote" /></label>' +
+        '<label class="f">Délai<input type="date" data-pf="delai" /></label></div>' +
+        '<div class="confirm"><button class="btn sm primary" data-pf-create>Créer l\'action</button><button class="btn sm" data-pf-cancel>Annuler</button>' +
+        '<span class="sel-attach">ou rattacher une action existante <input list="planList" data-pf="attach" placeholder="N°, ex. A-0012" autocomplete="off" /><button class="btn sm" data-pf-attach>Rattacher</button></span></div></div>';
+    }
     function renderPareto(kind) {
       var el = document.querySelector('[data-panel="' + kind + '"]');
+      var ae0 = document.activeElement;
+      if (ui.parForm && ae0 && ae0.matches && ae0.matches('[data-panel="' + kind + '"] [data-pf]')) return; // saisie en cours
+      var adm = canWriteActions();
+      if (adm) planDatalist();
       var keyFn = kind === "machine" ? machineOf : typeOf,
         otherFn = kind === "machine" ? typeOf : machineOf;
       var title =
@@ -3000,7 +3075,7 @@
         fmtDate(ui.from) +
         " au " +
         fmtDate(ui.to) +
-        ". Les arrêts à cheval sur les bornes sont comptés pour la partie comprise dans la période. Cliquez sur une barre pour voir le détail.</p></div>" +
+        ". Le graphique montre les catégories qui font 80 % du total. Les arrêts à cheval sur les bornes sont comptés pour la partie comprise dans la période. Cliquez sur une barre pour voir le détail.</p></div>" +
         '<div class="seg" role="group" aria-label="Critère"><button data-metric="' +
         kind +
         '" data-m="dur" aria-pressed="' +
@@ -3041,40 +3116,6 @@
           "</div></div>";
         return;
       }
-      var table =
-        '<table><thead><tr><th class="num">Rang</th><th>' +
-        colName +
-        '</th><th class="num">Arrêts</th><th class="num">Durée</th><th class="num">Min</th><th class="num">%</th><th class="num">% cumulé</th><th></th></tr></thead><tbody>' +
-        data.rows
-          .map(function (r, i) {
-            return (
-              '<tr class="' +
-              (r.a ? "classA" : "") +
-              '" data-focus="' +
-              kind +
-              '" data-k="' +
-              esc(r.k) +
-              '" style="cursor: pointer"><td class="num">' +
-              (i + 1) +
-              "</td><td><strong>" +
-              esc(r.k) +
-              '</strong></td><td class="num">' +
-              r.n +
-              '</td><td class="num">' +
-              fmtDur(r.dur) +
-              '</td><td class="num">' +
-              fmtMin(r.dur) +
-              '</td><td class="num">' +
-              pct(r.share) +
-              '</td><td class="num">' +
-              pct(r.cum) +
-              "</td><td>" +
-              (r.a ? '<span class="pill a">Priorité</span>' : "") +
-              "</td></tr>"
-            );
-          })
-          .join("") +
-        "</tbody></table>";
       var focus = ui.focus[kind];
       if (
         !focus ||
@@ -3109,9 +3150,9 @@
             return "<strong>" + esc(k) + "</strong> " + fmtDur(sub[k]);
           })
           .join(" · ") +
-        '</p><div class="scroll" style="max-height: 420px; overflow-y: auto"><table><thead><tr><th>Début</th><th class="num">Durée</th><th>' +
+        '</p><div class="scroll"><table class="det-table"><thead><tr><th>Début</th><th class="num">Durée</th><th>' +
         otherName +
-        "</th></tr></thead><tbody>" +
+        "</th>" + (adm ? "<th></th>" : "") + "</tr></thead><tbody>" +
         det
           .map(function (x) {
             return (
@@ -3121,9 +3162,13 @@
               fmtDur(x.dur) +
               "</td><td>" +
               esc(otherFn(x.s)) +
-              '</td></tr><tr class="det-line"><td colspan="3">' +
+              "</td>" +
+              (adm ? '<td class="pf-btns" data-sid="' + esc(x.s.id) + '"><button class="btn sm" data-pf-open="action">+ Action</button><button class="btn sm" data-pf-open="rex">' + (x.s.rex ? "Modifier le REX" : "+ REX") + "</button></td>" : "") +
+              '</tr><tr class="det-line"><td colspan="' + (adm ? 4 : 3) + '">' +
               (x.s.detail ? esc(x.s.detail) : '<span class="muted">Pas de détail</span>') +
               detActionsHTML(x.s) +
+              (x.s.rex ? '<div class="det-rex"><strong>REX</strong> · ' + esc([x.s.rex.constat, x.s.rex.cause, x.s.rex.enseignement].filter(Boolean).join(" · ")) + "</div>" : "") +
+              (adm && ui.parForm && ui.parForm.sid === x.s.id ? parFormHTML(x.s, ui.parForm.type) : "") +
               "</td></tr>"
             );
           })
@@ -3136,11 +3181,11 @@
         '<div class="chart scroll">' +
         chartSVG(data, metric, kind) +
         "</div></div>" +
-        '<div class="grid2"><div class="panel scroll">' +
-        table +
-        '</div><div class="panel">' +
+        '<div class="panel">' +
         detail +
-        "</div></div>";
+        "</div>";
+      var pf = el.querySelector("[data-pf]");
+      if (pf && ui.parFocus) { pf.focus(); ui.parFocus = false; }
     }
 
     // ---------- Actions ----------
@@ -3705,6 +3750,41 @@
     $("actFilter").addEventListener("change", renderActions);
     $("btnCopy").addEventListener("click", copyActions);
     $("rexQ").addEventListener("input", renderRex);
+    ["machine", "type"].forEach(function (kind) {
+      var panel = document.querySelector('[data-panel="' + kind + '"]');
+      panel.addEventListener("click", function (e) {
+        var b = e.target.closest("button");
+        if (!b || !canWriteActions()) return;
+        if (b.dataset.pfOpen) {
+          ui.parForm = { sid: b.closest("[data-sid]").dataset.sid, type: b.dataset.pfOpen };
+          ui.parFocus = true;
+          renderPareto(kind);
+          return;
+        }
+        if (!ui.parForm) return;
+        var form = b.closest(".pf-form");
+        if (b.hasAttribute("data-pf-cancel")) { ui.parForm = null; renderPareto(kind); return; }
+        var s = stops.find(function (x) { return x.id === ui.parForm.sid; });
+        if (!s || !form) return;
+        var v = {};
+        form.querySelectorAll("[data-pf]").forEach(function (el) { v[el.dataset.pf] = el.value.trim(); });
+        if (b.hasAttribute("data-pf-create")) {
+          if (!v.action) { toast("Écrivez l'action à mener."); return; }
+          writePlan(uid(), { num: nextNum(), typeAction: v.typeAction, action: v.action, pilote: v.pilote, delai: v.delai, created: Date.now(), stops: [s.id] });
+          toast("Action créée");
+        } else if (b.hasAttribute("data-pf-attach")) {
+          var pa = findPlanByNum(v.attach);
+          if (!pa) { toast("Numéro d'action introuvable."); return; }
+          if (!linkStops(pa, [s.id])) { toast(numLabel(pa) + " est déjà rattachée à cet arrêt."); return; }
+          toast(numLabel(pa) + " rattachée à cet arrêt");
+        } else if (b.hasAttribute("data-pf-rex-save")) {
+          writeRex(s.day, s.id, { constat: v.constat, cause: v.cause, enseignement: v.enseignement });
+          toast("REX enregistré");
+        } else return;
+        ui.parForm = null;
+        if (mode === "local") refresh(); else renderPareto(kind);
+      });
+    });
     $("rexList").addEventListener("click", function (e) {
       var b = e.target.closest("button");
       if (!b || !canWriteActions()) return;
