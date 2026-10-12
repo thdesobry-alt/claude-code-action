@@ -1221,6 +1221,10 @@
             </select>
           </label>
           <label class="f"
+            >Pilote
+            <select id="avPilote"><option value="">Tous les pilotes</option></select>
+          </label>
+          <label class="f"
             >Rechercher<input type="search" id="avQ" placeholder="action, pilote, machine…" autocomplete="off" style="width: 220px"
           /></label>
           <button class="btn" id="btnCopyAv">Copier pour Excel</button>
@@ -3326,11 +3330,27 @@
       });
       return order.map(function (k) { return map[k]; });
     }
+    function pilKey(s) {
+      return normText(String(s || "").trim());
+    }
+    // liste des pilotes des actions affichables (filtres diamètre / type / machine)
+    function renderPiloteOptions() {
+      var sel = $("avPilote"), cur = sel.value, names = {};
+      actViewItems().forEach(function (r) {
+        var p = String(r.a.pilote || "").trim();
+        if (p && !names[pilKey(p)]) names[pilKey(p)] = p;
+      });
+      var keys = Object.keys(names).sort(function (a, b) { return names[a].localeCompare(names[b], "fr"); });
+      sel.innerHTML = '<option value="">Tous les pilotes</option>' + keys.map(function (k) { return '<option value="' + esc(k) + '"' + (k === cur ? " selected" : "") + ">" + esc(names[k]) + "</option>"; }).join("") +
+        (cur && !names[cur] ? '<option value="' + esc(cur) + '" selected>(aucune action)</option>' : "");
+    }
     function actViewRows() {
       var today = startOfDay(Date.now()), soon = today + 7 * 864e5, st = $("avStatus").value;
       var words = normText($("avQ").value).split(/\s+/).filter(Boolean);
+      var pil = $("avPilote").value;
       var out = actViewItems().filter(function (r) {
         var a = r.a, d = r.d;
+        if (pil && pilKey(a.pilote) !== pil) return false;
         if (st === "closed" ? !a.closed : st !== "all" && a.closed) return false;
         if (st === "late" && !isLate(a, today)) return false;
         if (st === "soon" && !(d != null && d >= today && d <= soon)) return false;
@@ -3361,6 +3381,7 @@
         (s.detail ? '<div class="av-detail">' + esc(s.detail) + "</div>" : "") + "</div>";
     }
     function renderActView() {
+      renderPiloteOptions();
       var today = startOfDay(Date.now()), soon = today + 7 * 864e5, rows = actViewRows(), admin = canClose();
       var all = actViewItems().map(function (r) { return r.a; });
       var open = all.filter(function (a) { return !a.closed; });
@@ -3707,6 +3728,7 @@
       }
     });
     $("avStatus").addEventListener("change", renderActView);
+    $("avPilote").addEventListener("change", renderActView);
     $("avTable").addEventListener("click", function (e) {
       var b = e.target.closest("button");
       if (!b || !canClose()) return;
