@@ -1238,7 +1238,7 @@
         <div>
           <h2>REX</h2>
           <p class="hint">
-            Tous les REX, toutes périodes confondues, selon les filtres diamètre, type d'arrêt et machine, avec leurs actions. La saisie et la modification des REX sont réservées aux Admin (onglet Saisie des actions / REX).
+            Tous les REX, toutes périodes confondues, selon les filtres diamètre, type d'arrêt et machine, avec leurs actions. Les Admin peuvent modifier un REX directement ici ou depuis l'onglet Saisie des actions / REX.
           </p>
         </div>
         <div class="row">
@@ -3425,7 +3425,10 @@
         return words.every(function (w) { return t.indexOf(w) >= 0; });
       });
     }
+    var rexEditing = null; // arrêt dont le REX est en cours de modification (Admin)
     function renderRex() {
+      var ae = document.activeElement;
+      if (rexEditing && ae && ae.matches && ae.matches("#rexList [data-rex-edit]")) return; // ne pas effacer une saisie en cours
       var all = filtered(), withRex = all.filter(function (x) { return x.s.rex; }), rows = rexRows();
       var durRex = withRex.reduce(function (t, x) { return t + x.dur; }, 0), durAll = all.reduce(function (t, x) { return t + x.dur; }, 0);
       $("rexKpis").innerHTML =
@@ -3447,7 +3450,12 @@
                 (a.closed ? ' <span class="pill ok">Clôturée</span>' : isLate(a, today) ? ' <span class="pill late">En retard</span>' : "") + "</li>";
             }).join("") + "</ul></div>"
           : "";
-        return '<article class="act-stop">' + stopHeadHTML(s) + rexViewHTML(s.rex) + list + "</article>";
+        var body = rexEditing === s.id
+          ? '<div class="rex-box"><div class="rex-title">Modifier le REX</div><div class="rex-grid">' + REX_FIELDS.map(function (f) {
+              return '<label class="f">' + f[1] + '<textarea data-rex-edit="' + f[0] + '" placeholder="' + esc(f[2]) + '">' + esc(s.rex[f[0]] || "") + "</textarea></label>";
+            }).join("") + '</div><div class="confirm"><button class="btn sm primary" data-rex-save>Enregistrer</button><button class="btn sm" data-rex-cancel>Annuler</button></div></div>'
+          : rexViewHTML(s.rex) + (canWriteActions() ? '<div><button class="btn sm" data-rex-edit-open>Modifier le REX</button></div>' : "");
+        return '<article class="act-stop" data-id="' + esc(s.id) + '" data-day="' + esc(s.day) + '">' + stopHeadHTML(s) + body + list + "</article>";
       }).join("") + "</div>";
       fillNames("#rexList");
     }
@@ -3676,6 +3684,28 @@
     $("actFilter").addEventListener("change", renderActions);
     $("btnCopy").addEventListener("click", copyActions);
     $("rexQ").addEventListener("input", renderRex);
+    $("rexList").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b || !canWriteActions()) return;
+      var art = b.closest("article[data-id]");
+      if (!art) return;
+      if (b.hasAttribute("data-rex-edit-open")) {
+        rexEditing = art.dataset.id;
+        renderRex();
+        var t = document.querySelector('#rexList article[data-id="' + rexEditing + '"] [data-rex-edit]');
+        if (t) t.focus();
+      } else if (b.hasAttribute("data-rex-cancel")) {
+        rexEditing = null;
+        renderRex();
+      } else if (b.hasAttribute("data-rex-save")) {
+        var f = {};
+        art.querySelectorAll("[data-rex-edit]").forEach(function (el) { f[el.dataset.rexEdit] = el.value.trim(); });
+        rexEditing = null;
+        writeRex(art.dataset.day, art.dataset.id, f);
+        if (mode === "local") refresh(); else renderRex();
+        toast(f.constat || f.cause || f.enseignement ? "REX enregistré" : "REX vidé : il n'apparaît plus dans cet onglet");
+      }
+    });
     $("avStatus").addEventListener("change", renderActView);
     $("avTable").addEventListener("click", function (e) {
       var b = e.target.closest("button");
