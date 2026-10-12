@@ -1498,7 +1498,9 @@
       if (!r || !(r.constat || r.cause || r.enseignement)) return null;
       return { constat: r.constat || "", cause: r.cause || "", enseignement: r.enseignement || "", by: r.by || null, at: r.at || null };
     }
-    var planList = [];
+    var planList = [],
+      planMerged = {};
+    var PLAN_PER_DOC = 100; // 100 actions par document : 1 000 documents = 100 000 actions
     function numLabel(a) {
       return a && a.plan ? "A-" + ("000" + a.num).slice(-4) : "";
     }
@@ -1513,11 +1515,23 @@
           out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "", diam: s.diam || "", actions: actionsOf(a[id], c[id]), rex: rexOf(a[id]) });
         });
       });
-      var byId = {}, pc = (closes.plan && closes.plan.items) || {};
+      var byId = {}, pc = {};
+      // clôtures des actions numérotées : closures/plan (ancien) et closures/plan-b{n}
+      Object.keys(closes).forEach(function (k) {
+        if (k === "plan" || k.indexOf("plan-") === 0) Object.assign(pc, (closes[k] && closes[k].items) || {});
+      });
       out.forEach(function (s) { byId[s.id] = s; });
       planList = [];
-      Object.keys(plan).forEach(function (aid) {
-        var p = plan[aid];
+      planMerged = {};
+      // plan/b{n} regroupe 100 actions (items) ; les premiers documents plan/{idAction} contiennent une seule action
+      Object.keys(plan).forEach(function (docId) {
+        var d = plan[docId];
+        if (!d) return;
+        if (d.items) Object.keys(d.items).forEach(function (aid) { planMerged[aid] = Object.assign({}, d.items[aid], { _doc: docId }); });
+        else planMerged[docId] = Object.assign({}, d, { _doc: docId, _single: true });
+      });
+      Object.keys(planMerged).forEach(function (aid) {
+        var p = planMerged[aid];
         if (!p || p.deleted) return;
         var c = pc[aid], ids = (p.stops || []).filter(function (id) { return byId[id]; });
         var a = { id: aid, plan: true, num: p.num || 0, typeAction: p.typeAction || "", action: p.action || "", pilote: p.pilote || "", delai: p.delai || "",
@@ -1673,7 +1687,7 @@
     // écrit une partie de items[stopId] (actions ou REX) ; update fusionne les objets imbriqués
     function writeItem(day, stopId, part, coll) {
       coll = coll || "actions";
-      var store = coll === "closures" ? closes : acts;
+      var store = coll === "closures" ? closes : coll === "plan" ? plan : acts;
       if (mode === "local") {
         store[day] = store[day] || { items: {} };
         store[day].items[stopId] = deepMerge(store[day].items[stopId] || {}, part);
@@ -1714,27 +1728,39 @@
     var issuedNum = 0;
     function nextNum() {
       var m = issuedNum;
-      Object.keys(plan).forEach(function (k) { var n = plan[k] && plan[k].num; if (n > m) m = n; });
+      Object.keys(planMerged).forEach(function (k) { var n = planMerged[k].num; if (n > m) m = n; });
       issuedNum = m + 1;
       return m + 1;
     }
-    function writePlan(aid, fields, isNew) {
+    function planDocOf(aid, num) {
+      var m = planMerged[aid];
+      if (m) return m._doc;
+      return "b" + Math.floor((num || 0) / PLAN_PER_DOC);
+    }
+    function writePlan(aid, fields) {
       var body = Object.assign({}, fields, { by: myId, at: Date.now() });
-      if (mode === "local") {
-        plan[aid] = Object.assign({}, plan[aid] || {}, body);
-        saveLocal();
-        rebuild();
-        return Promise.resolve();
+      var m = planMerged[aid];
+      if (m && m._single) {
+        // ancienne action enregistrée seule dans son document
+        if (mode === "local") {
+          plan[aid] = Object.assign({}, plan[aid] || {}, body);
+          saveLocal();
+          rebuild();
+          return Promise.resolve();
+        }
+        var ref = db.collection("plan").doc(aid), ck = "plan/" + aid;
+        chains[ck] = (chains[ck] || Promise.resolve())
+          .then(function () { return ref.update(body); })
+          .catch(function (e) { toast(dbErrorMessage(e)); });
+        return chains[ck];
       }
-      var ref = db.collection("plan").doc(aid), ck = "plan/" + aid;
-      chains[ck] = (chains[ck] || Promise.resolve())
-        .then(function () { return isNew ? ref.set(body) : ref.update(body); })
-        .catch(function (e) { toast(dbErrorMessage(e)); });
-      return chains[ck];
+      var docId = planDocOf(aid, fields.num);
+      if (!m) planMerged[aid] = Object.assign({}, body, { _doc: docId }); // numéro et document réservés tout de suite
+      return writeItem(docId, aid, body, "plan");
     }
     function createPlanAction(stopIds) {
       var aid = uid();
-      writePlan(aid, { num: nextNum(), typeAction: "", action: "", pilote: "", delai: "", created: Date.now(), stops: stopIds.slice() }, true);
+      writePlan(aid, { num: nextNum(), typeAction: "", action: "", pilote: "", delai: "", created: Date.now(), stops: stopIds.slice() });
       return aid;
     }
     function findPlanByNum(v) {
@@ -1744,20 +1770,21 @@
       return planList.find(function (a) { return a.num === n; }) || null;
     }
     function linkStops(a, ids) {
-      var cur = (plan[a.id] && plan[a.id].stops) || [], added = 0;
+      var cur = (planMerged[a.id] && planMerged[a.id].stops) || [], added = 0;
       ids.forEach(function (id) { if (cur.indexOf(id) < 0) { cur = cur.concat([id]); added++; } });
       if (added) writePlan(a.id, { stops: cur });
       return added;
     }
     function closePlan(aid, fields) {
-      return writeItem("plan", aid, fields, "closures");
+      var m = planMerged[aid];
+      return writeItem(m && !m._single ? "plan-" + m._doc : "plan", aid, fields, "closures");
     }
     async function migrateLegacy() {
       var n = 0, list = stops.slice();
       for (var s of list) {
         for (var a of s.actions.filter(function (y) { return !y.plan; })) {
           var aid = uid();
-          await writePlan(aid, { num: nextNum(), typeAction: a.typeAction, action: a.action, pilote: a.pilote, delai: a.delai, created: a.created || Date.now(), stops: [s.id] }, true);
+          await writePlan(aid, { num: nextNum(), typeAction: a.typeAction, action: a.action, pilote: a.pilote, delai: a.delai, created: a.created || Date.now(), stops: [s.id] });
           if (a.closed) await closePlan(aid, { closed: true, closedAt: a.closedAt, closedBy: a.closedBy, closeComment: a.closeComment });
           await writeAction(s.day, s.id, a.id, { deleted: true });
           n++;
@@ -2466,7 +2493,7 @@
         });
         for (var key of Object.keys(g)) {
           var fI = g[key].f, aidI = uid();
-          await writePlan(aidI, { num: nextNum(), typeAction: fI.typeAction, action: fI.action, pilote: fI.pilote, delai: fI.delai, created: fI.created, stops: g[key].sids }, true);
+          await writePlan(aidI, { num: nextNum(), typeAction: fI.typeAction, action: fI.action, pilote: fI.pilote, delai: fI.delai, created: fI.created, stops: g[key].sids });
           if (fI.closed) await closePlan(aidI, { closed: true, closedAt: fI.closedAt, closedBy: null, closeComment: fI.closeComment });
         }
         for (var rw of rexWrites) await writeRex(rw[0], rw[1], rw[2]);
