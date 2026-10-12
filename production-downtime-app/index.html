@@ -711,6 +711,32 @@
     color: var(--danger);
     font-size: 13px;
   }
+  .cr-h {
+    color: var(--bar);
+  }
+  .cr-ok {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .inc-card .inc-btns {
+    margin-left: auto;
+    display: inline-flex;
+    gap: 6px;
+  }
+  .inc-grid {
+    grid-template-columns: 200px 120px minmax(160px, 1fr);
+  }
+  .inc-grid .pf-wide {
+    grid-column: 1 / -1;
+  }
+  .sa-add input {
+    width: auto;
+  }
+  .cr-pareto-wrap {
+    display: grid;
+    gap: 0;
+  }
   .pd-table input {
     width: 90px;
     text-align: right;
@@ -1001,6 +1027,7 @@
     </button>
     <button role="tab" data-tab="prog" aria-selected="false">Programme de laminage</button>
     <button role="tab" data-tab="prod" aria-selected="false">Production</button>
+    <button role="tab" data-tab="cr" aria-selected="false">CR journalier</button>
     <button role="tab" data-tab="machine" aria-selected="true">
       Analyse Pareto Machine
     </button>
@@ -1298,6 +1325,35 @@
     </div>
   </section>
 
+  <section data-panel="cr" class="stack" hidden>
+    <div class="panel">
+      <div class="row" style="justify-content: space-between; align-items: center">
+        <div>
+          <h2 id="crTitle">Compte rendu journalier</h2>
+          <p class="hint" id="crSub"></p>
+        </div>
+        <div class="row">
+          <button class="btn" id="crPrev" aria-label="Journée précédente">◀</button>
+          <label class="f">Journée de production<input type="date" id="crDay" /></label>
+          <button class="btn" id="crNext" aria-label="Journée suivante">▶</button>
+          <button class="btn" id="crYesterday">Veille</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel stack">
+      <h2 class="cr-h">1. Point sécurité</h2>
+      <div id="crSafety"></div>
+    </div>
+    <div class="panel stack">
+      <h2 class="cr-h">2. Taux de marche et productivité</h2>
+      <div id="crPerf"></div>
+    </div>
+    <div class="cr-pareto-wrap">
+      <div class="panel" style="margin-bottom: 0"><h2 class="cr-h">3. Pareto du jour</h2></div>
+      <div id="crPareto" class="stack"></div>
+    </div>
+  </section>
+
   <section data-panel="prod" class="stack" hidden>
     <div class="panel stack">
       <div class="row" style="justify-content: space-between">
@@ -1432,7 +1488,7 @@
       gran: "day",
       ref: null,
       sel: { machine: null, type: null, diam: null },
-      metric: { machine: "dur", type: "dur" },
+      metric: { machine: "dur", type: "dur", cr: "dur" },
       focus: { machine: null, type: null },
     };
 
@@ -1731,7 +1787,7 @@
       try {
         localStorage.setItem(
           LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production }),
+          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety }),
         );
       } catch (e) {}
       if (fileHandle) scheduleFileSave();
@@ -1770,16 +1826,23 @@
       return clone(o); // conflit sur une même valeur : la modification de ce poste l'emporte
     }
     function snapshot() {
-      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
+      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
     }
     function applyState(s) {
-      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {};
+      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {};
       if (s.codes && (s.codes.fer || s.codes.macc)) { codes = { fer: s.codes.fer || DEFAULT_CODES.fer, macc: s.codes.macc || DEFAULT_CODES.macc }; codesCustom = true; }
       else { codes = DEFAULT_CODES; codesCustom = false; }
     }
     // fichier exporté (version 2, liste « arrets ») -> structure de la base
     function fromExport(data) {
-      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, codes: null }, groups = {}, order = [];
+      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, codes: null }, groups = {}, order = [];
+      (data.securite || []).forEach(function (x, i) {
+        var k = pdKeyFromFr(x.jour);
+        if (!k) return;
+        var acts0 = {};
+        (x.actions || []).forEach(function (a, j) { acts0["s" + j] = { action: a.action || "", pilote: a.pilote || "", delai: a.delai || "", done: !!a.fait, created: j }; });
+        ((st.safety[k.slice(0, 7)] = st.safety[k.slice(0, 7)] || { items: {} }).items)["x" + k + "-" + i] = { day: k, heure: x.heure || "", type: x.type || "", lieu: x.lieu || "", description: x.description || "", actions: acts0, created: i };
+      });
       (data.production || []).forEach(function (pr) {
         var k = pdKeyFromFr(pr.jour);
         if (k) st.production[k] = { tonnes: pr.tonnes === "" || pr.tonnes == null ? null : +pr.tonnes, ouverture: pr.ouvertureMin == null ? null : +pr.ouvertureMin };
@@ -1815,15 +1878,15 @@
     async function readFileState() {
       var f = await fileHandle.getFile(), text = await f.text();
       fileLastMod = f.lastModified;
-      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, codes: null };
+      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, codes: null };
       var d = JSON.parse(text);
-      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, codes: d.codes || null };
+      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, codes: d.codes || null };
       if (d && Array.isArray(d.arrets)) return fromExport(d);
       throw new Error("format");
     }
     async function writeFileState(s) {
       var w = await fileHandle.createWritable();
-      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, codes: s.codes }));
+      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, codes: s.codes }));
       await w.close();
       fileLastMod = (await fileHandle.getFile()).lastModified;
     }
@@ -1976,6 +2039,7 @@
           plan = d.plan || {};
           program = d.program || {};
           production = d.production || {};
+          safety = d.safety || {};
         }
       } catch (e) {}
     }
@@ -2146,7 +2210,7 @@
     // écrit une partie de items[stopId] (actions ou REX) ; update fusionne les objets imbriqués
     function writeItem(day, stopId, part, coll) {
       coll = coll || "actions";
-      var store = coll === "closures" ? closes : coll === "plan" ? plan : acts;
+      var store = coll === "closures" ? closes : coll === "plan" ? plan : coll === "safety" ? safety : acts;
       if (mode === "local") {
         store[day] = store[day] || { items: {} };
         store[day].items[stopId] = deepMerge(store[day].items[stopId] || {}, part);
@@ -2378,14 +2442,16 @@
     function noPeriod() {
       return curTab === "actview" || curTab === "rex";
     }
+    var skipChips = false; // Pareto du CR : journée complète, sans les filtres machine / type / diamètre
     function filtered() {
-      var all = noPeriod();
+      var all = noPeriod() && !skipChips;
       if (!all && (ui.from == null || ui.to == null)) return [];
       return stops
         .filter(function (s) {
           var o = all ? 1 : overlap(s);
           if (o < 0 || (o === 0 && !(s.start >= ui.from && s.start <= ui.to)))
             return false;
+          if (skipChips) return true;
           return (
             isSel("machine", machineOf(s)) &&
             isSel("type", typeOf(s)) &&
@@ -2821,9 +2887,15 @@
       return new Date(ui.pdMonth);
     }
     // temps d'arrêt d'une journée de production : arrêts ramenés à la fenêtre 8h -> 8h
-    function stopTimeIn(a, b) {
+    // arrêts pris en compte dans le taux de marche : hors 51 cycle (déjà exclus) et hors 26 manque billettes
+    function isMissingBillet(s) { return normCode(s.fer) === "26"; }
+    function stopTimeIn(a, b, onlyMissing) {
       var t = 0;
-      stops.forEach(function (s) { var o = Math.min(s.end, b) - Math.max(s.start, a); if (o > 0) t += o; });
+      stops.forEach(function (s) {
+        if (!!onlyMissing !== isMissingBillet(s)) return;
+        var o = Math.min(s.end, b) - Math.max(s.start, a);
+        if (o > 0) t += o;
+      });
       return t;
     }
     function pdRows() {
@@ -2928,6 +3000,180 @@
       catch (e) { toast("Copie refusée par le navigateur"); }
     });
 
+    // ---------- CR journalier ----------
+    var safety = {};
+    var INC_TYPES = ["Accident avec arrêt", "Accident sans arrêt", "Presqu'accident", "Situation dangereuse", "Incident matériel"];
+    function incidents() {
+      var out = [];
+      Object.keys(safety).forEach(function (mk) {
+        var it = (safety[mk] && safety[mk].items) || {};
+        Object.keys(it).forEach(function (id) { var x = it[id]; if (x && !x.deleted) out.push(Object.assign({ id: id, month: mk }, x)); });
+      });
+      return out.sort(function (a, b) { return (a.day + (a.heure || "")).localeCompare(b.day + (b.heure || "")) || (a.created || 0) - (b.created || 0); });
+    }
+    function incActions(x) {
+      var l = x.actions || {};
+      return Object.keys(l).map(function (k) { return Object.assign({ id: k }, l[k]); }).filter(function (a) { return a && !a.deleted; })
+        .sort(function (a, b) { return (a.created || 0) - (b.created || 0); });
+    }
+    function writeSafety(month, incId, part) {
+      return writeItem(month, incId, Object.assign({}, part, { by: myId, at: Date.now() }), "safety");
+    }
+    function crRange() {
+      if (ui.crDay == null) { var d = prodDay(Date.now()); d.setDate(d.getDate() - 1); ui.crDay = d.getTime(); }
+      var b = new Date(ui.crDay); b.setDate(b.getDate() + 1);
+      return { a: ui.crDay, b: b.getTime(), key: dayKey(ui.crDay) };
+    }
+    var crIncEdit = null; // incident en cours de modification ("new" pour une déclaration)
+    function safetyLate(a) {
+      if (a.done || !a.delai) return false;
+      var p = a.delai.split("-");
+      return new Date(+p[0], +p[1] - 1, +p[2]).getTime() < startOfDay(Date.now());
+    }
+    function incFormHTML(x) {
+      x = x || {};
+      return '<div class="pf-form" data-inc-form="' + esc(x.id || "new") + '"><div class="rex-title">' + (x.id ? "Modifier l'incident" : "Déclarer un incident") + '</div><div class="pf-grid inc-grid">' +
+        '<label class="f">Type<select data-inc="type">' + INC_TYPES.map(function (t) { return "<option" + (t === x.type ? " selected" : "") + ">" + esc(t) + "</option>"; }).join("") + "</select></label>" +
+        '<label class="f">Heure<input type="time" data-inc="heure" value="' + esc(x.heure || "") + '" /></label>' +
+        '<label class="f">Lieu / équipement<input data-inc="lieu" value="' + esc(x.lieu || "") + '" /></label>' +
+        '<label class="f pf-wide">Description<textarea data-inc="description" placeholder="Ce qui s\'est passé">' + esc(x.description || "") + "</textarea></label></div>" +
+        '<div class="confirm"><button class="btn sm primary" data-inc-save>Enregistrer</button><button class="btn sm" data-inc-cancel>Annuler</button></div></div>';
+    }
+    function renderCRSafety() {
+      var box = $("crSafety"), ae = document.activeElement;
+      if (ae && ae.matches && ae.matches("#crSafety input, #crSafety textarea, #crSafety select")) return; // saisie en cours
+      var r = crRange(), adm = isAdmin(), incs = incidents().filter(function (x) { return x.day === r.key; });
+      var html = "";
+      if (!incs.length) html += '<div class="cr-ok"><span class="pill ok">Aucun incident</span> Aucun incident sécurité déclaré pour cette journée.</div>';
+      html += incs.map(function (x) {
+        if (crIncEdit === x.id) return incFormHTML(x);
+        var acts = incActions(x);
+        return '<article class="act-stop inc-card" data-inc-id="' + esc(x.id) + '" data-inc-month="' + esc(x.month) + '"><div class="act-head"><span class="pill late">' + esc(x.type || "Incident") + "</span>" +
+          (x.heure ? '<span class="mono">' + esc(x.heure) + "</span>" : "") + (x.lieu ? "<strong>" + esc(x.lieu) + "</strong>" : "") +
+          (adm ? '<span class="inc-btns"><button class="btn sm" data-inc-edit>Modifier</button><button class="btn sm danger" data-inc-del>Supprimer</button></span>' : "") + "</div>" +
+          '<div class="act-detail">' + (x.description ? esc(x.description) : '<span class="muted">Pas de description</span>') + "</div>" +
+          '<div class="rex-title">Actions sécurité</div>' +
+          (acts.length ? '<table class="ed-table"><thead><tr><th>Action</th><th>Pilote</th><th>Délai</th><th>Statut</th>' + (adm ? "<th></th>" : "") + "</tr></thead><tbody>" +
+            acts.map(function (a) {
+              return '<tr data-sa="' + esc(a.id) + '"><td>' + esc(a.action) + "</td><td>" + esc(a.pilote || "—") + '</td><td class="mono">' + (a.delai ? a.delai.split("-").reverse().join("/") : "—") + "</td><td>" +
+                (a.done ? '<span class="pill ok">Fait</span>' : safetyLate(a) ? '<span class="pill late">En retard</span>' : '<span class="pill neutral">À faire</span>') + "</td>" +
+                (adm ? '<td class="ed-btns"><button class="btn sm" data-sa-toggle>' + (a.done ? "Rouvrir" : "Fait") + '</button><button class="btn sm danger" data-sa-del>Retirer</button></td>' : "") + "</tr>";
+            }).join("") + "</tbody></table>" : '<p class="muted" style="margin: 0">Aucune action sécurité.</p>') +
+          (adm ? '<div class="act-add sa-add"><input data-sa-new="action" placeholder="Action corrective" style="width: 320px" /><input data-sa-new="pilote" placeholder="Pilote" style="width: 140px" /><input type="date" data-sa-new="delai" /><button class="btn sm" data-sa-add>+ Ajouter l\'action</button></div>' : "") +
+          "</article>";
+      }).join("");
+      if (adm) html += crIncEdit === "new" ? incFormHTML(null) : '<div><button class="btn sm primary" data-inc-new>+ Déclarer un incident</button></div>';
+      // actions sécurité encore ouvertes, tous jours confondus
+      var open = [];
+      incidents().forEach(function (x) { incActions(x).forEach(function (a) { if (!a.done) open.push({ x: x, a: a }); }); });
+      open.sort(function (p, q) { return (p.a.delai || "9999").localeCompare(q.a.delai || "9999"); });
+      html += '<div class="rex-title" style="margin-top: 6px">Actions sécurité en cours (toutes journées) : ' + open.length + "</div>" +
+        (open.length ? '<table class="ed-table"><thead><tr><th>Incident du</th><th>Type</th><th>Action</th><th>Pilote</th><th>Délai</th><th>Statut</th></tr></thead><tbody>' +
+          open.map(function (o) {
+            return '<tr><td class="mono">' + o.x.day.split("-").reverse().join("/") + "</td><td>" + esc(o.x.type || "") + "</td><td>" + esc(o.a.action) + "</td><td>" + esc(o.a.pilote || "—") + '</td><td class="mono">' +
+              (o.a.delai ? o.a.delai.split("-").reverse().join("/") : "—") + "</td><td>" + (safetyLate(o.a) ? '<span class="pill late">En retard</span>' : '<span class="pill neutral">À faire</span>') + "</td></tr>";
+          }).join("") + "</tbody></table>" : '<p class="muted" style="margin: 0">Aucune action sécurité ouverte.</p>');
+      box.innerHTML = html;
+      var f = box.querySelector("[data-inc-form] textarea");
+      if (f && crIncFocus) { box.querySelector("[data-inc-form] select").focus(); crIncFocus = false; }
+    }
+    var crIncFocus = false;
+    function renderCRPerf() {
+      var box = $("crPerf"), ae = document.activeElement;
+      if (ae && ae.matches && ae.matches("#crPerf input")) return;
+      var r = crRange(), v = production[r.key] || {}, adm = isAdmin();
+      var stopMs = stopTimeIn(r.a, r.b), mb = stopTimeIn(r.a, r.b, true), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
+      var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
+      var taux = openMs ? run / openMs : null, prod = run && tons != null ? tons / (run / 3600000) : null;
+      box.innerHTML = '<div class="kpis">' +
+        '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>" +
+        '<div class="kpi"><div class="l">Productivité</div><div class="v">' + (prod == null ? "—" : fmtNum(prod, 1) + " t/h") + "</div></div>" +
+        '<div class="kpi"><div class="l">Production</div><div class="v">' + (tons == null ? "—" : fmtNum(tons, 1) + " t") + "</div></div>" +
+        '<div class="kpi"><div class="l">Temps d\'arrêt pris en compte</div><div class="v">' + fmtHM(stopMs) + "</div></div></div>" +
+        '<p class="hint" style="margin-top: 8px">Ouverture ' + (open == null ? "non saisie" : fmtOpening(open)) + " · marche " + (run == null ? "—" : fmtHM(run)) +
+        " · manque billettes (26) non pris en compte : " + fmtHM(mb) + " · les arrêts 51 cycle sont exclus.</p>" +
+        (adm ? '<div class="row" style="margin-top: 8px"><label class="f">Production (t)<input data-crpd="tonnes" inputmode="decimal" value="' + (tons == null ? "" : String(tons).replace(".", ",")) + '" style="width: 120px" /></label>' +
+          '<label class="f">Temps d\'ouverture<input data-crpd="ouverture" value="' + fmtOpening(open) + '" placeholder="hh:mm" style="width: 100px" /></label>' +
+          '<button class="btn" data-crpd-save>Enregistrer</button></div>' : (open == null ? '<p class="muted">La production de cette journée n\'est pas encore saisie.</p>' : ""));
+    }
+    function renderCR() {
+      var r = crRange();
+      $("crDay").value = r.key;
+      $("crSub").textContent = "Journée du " + fmtDate(r.a).slice(0, 16) + " au " + fmtDate(r.b).slice(0, 16);
+      renderCRSafety();
+      renderCRPerf();
+      renderCRPareto();
+    }
+    function crShift(n) { var d = new Date(crRange().a); d.setDate(d.getDate() + n); ui.crDay = d.getTime(); crIncEdit = null; renderCR(); }
+    $("crPrev").addEventListener("click", function () { crShift(-1); });
+    $("crNext").addEventListener("click", function () { crShift(1); });
+    $("crYesterday").addEventListener("click", function () { ui.crDay = null; crIncEdit = null; renderCR(); });
+    $("crDay").addEventListener("change", function () {
+      var m = this.value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) { ui.crDay = new Date(+m[1], +m[2] - 1, +m[3], DAY_START_HOUR).getTime(); crIncEdit = null; renderCR(); }
+    });
+    $("crSafety").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b || !isAdmin()) return;
+      var r = crRange();
+      if (b.hasAttribute("data-inc-new")) { crIncEdit = "new"; crIncFocus = true; renderCRSafety(); return; }
+      if (b.hasAttribute("data-inc-cancel")) { crIncEdit = null; document.activeElement.blur(); renderCRSafety(); return; }
+      if (b.hasAttribute("data-inc-save")) {
+        var form = b.closest("[data-inc-form]"), v = {};
+        form.querySelectorAll("[data-inc]").forEach(function (el) { v[el.dataset.inc] = el.value.trim(); });
+        if (!v.description) { toast("Décrivez l'incident."); return; }
+        var id = form.dataset.incForm, existing = id !== "new" && incidents().find(function (x) { return x.id === id; });
+        if (existing) writeSafety(existing.month, id, v);
+        else writeSafety(r.key.slice(0, 7), "x" + uid(), Object.assign(v, { day: r.key, created: Date.now(), actions: {} }));
+        crIncEdit = null; document.activeElement.blur();
+        toast(existing ? "Incident modifié" : "Incident déclaré");
+        if (mode === "local") refresh(); else renderCRSafety();
+        return;
+      }
+      var card = b.closest("[data-inc-id]");
+      if (!card) return;
+      var incId = card.dataset.incId, month = card.dataset.incMonth;
+      if (b.hasAttribute("data-inc-edit")) { crIncEdit = incId; renderCRSafety(); return; }
+      if (b.hasAttribute("data-inc-del")) {
+        if (b.dataset.confirm) { writeSafety(month, incId, { deleted: true }); toast("Incident supprimé"); if (mode === "local") refresh(); else renderCRSafety(); }
+        else { b.dataset.confirm = "1"; b.textContent = "Confirmer la suppression"; }
+        return;
+      }
+      if (b.hasAttribute("data-sa-add")) {
+        var nv = {};
+        card.querySelectorAll("[data-sa-new]").forEach(function (el) { nv[el.dataset.saNew] = el.value.trim(); });
+        if (!nv.action) { toast("Écrivez l'action corrective."); return; }
+        var patch = {};
+        patch["s" + uid()] = { action: nv.action, pilote: nv.pilote, delai: nv.delai, done: false, created: Date.now() };
+        writeSafety(month, incId, { actions: patch });
+        document.activeElement.blur();
+        toast("Action sécurité ajoutée");
+        if (mode === "local") refresh(); else renderCRSafety();
+        return;
+      }
+      var tr = b.closest("tr[data-sa]");
+      if (!tr) return;
+      var p2 = {}, sid = tr.dataset.sa, inc = incidents().find(function (x) { return x.id === incId; }), a = inc && incActions(inc).find(function (y) { return y.id === sid; });
+      if (b.hasAttribute("data-sa-toggle")) p2[sid] = { done: !(a && a.done) };
+      else if (b.hasAttribute("data-sa-del")) p2[sid] = { deleted: true };
+      else return;
+      writeSafety(month, incId, { actions: p2 });
+      if (mode === "local") refresh(); else renderCRSafety();
+    });
+    $("crSafety").addEventListener("focusout", function () {
+      setTimeout(function () { var ae = document.activeElement; if (!(ae && ae.closest && ae.closest("#crSafety")) && !crIncEdit) renderCRSafety(); }, 0);
+    });
+    $("crPerf").addEventListener("click", function (e) {
+      if (!e.target.closest("[data-crpd-save]") || !isAdmin()) return;
+      var t = parseTonnes($("crPerf").querySelector('[data-crpd="tonnes"]').value), o = parseOpening($("crPerf").querySelector('[data-crpd="ouverture"]').value);
+      if (isNaN(t)) { toast("Production : saisissez un nombre de tonnes."); return; }
+      if (isNaN(o) || (o != null && (o < 0 || o > 24 * 60))) { toast("Temps d'ouverture : saisissez une durée entre 00:00 et 24:00."); return; }
+      document.activeElement.blur();
+      writeProduction(crRange().key, { tonnes: t, ouverture: o });
+      toast("Production enregistrée");
+      if (mode !== "local") renderCRPerf();
+    });
+
     // ---------- Programme de laminage ----------
     var pgEdit = null, pgDel = null;
     function pgOverlap(a, b, exceptId) {
@@ -3005,6 +3251,10 @@
         version: 2,
         exportedAt: new Date().toISOString(),
         programme: programList.map(function (p) { return { diametre: p.diam, debut: fmtDate(p.start), fin: fmtDate(p.end) }; }),
+        securite: incidents().map(function (x) {
+          return { jour: x.day.split("-").reverse().join("/"), heure: x.heure, type: x.type, lieu: x.lieu, description: x.description,
+            actions: incActions(x).map(function (a) { return { action: a.action, pilote: a.pilote, delai: a.delai, fait: !!a.done }; }) };
+        }),
         production: Object.keys(production).sort().map(function (k) { var v = production[k] || {}; return { jour: k.split("-").reverse().join("/"), tonnes: v.tonnes == null ? "" : v.tonnes, ouvertureMin: v.ouverture == null ? null : v.ouverture }; }),
         arrets: stops.map(function (s) {
           return {
@@ -3083,6 +3333,13 @@
         byId[s.id] = s;
       });
       var impJ = "i" + uid(), impJAt = Date.now(), skippedEx = 0;
+      (data.securite || []).forEach(function (x) {
+        var k = pdKeyFromFr(x.jour);
+        if (!k || incidents().some(function (y) { return y.day === k && y.description === (x.description || ""); })) return;
+        var acts0 = {};
+        (x.actions || []).forEach(function (a, j) { acts0["s" + uid() + j] = { action: a.action || "", pilote: a.pilote || "", delai: a.delai || "", done: !!a.fait, created: Date.now() + j }; });
+        writeSafety(k.slice(0, 7), "x" + uid(), { day: k, heure: x.heure || "", type: x.type || "", lieu: x.lieu || "", description: x.description || "", actions: acts0, created: Date.now() });
+      });
       (data.production || []).forEach(function (pr) {
         var k = pdKeyFromFr(pr.jour);
         if (k && !production[k]) writeProduction(k, { tonnes: pr.tonnes === "" || pr.tonnes == null ? null : +pr.tonnes, ouverture: pr.ouvertureMin == null ? null : +pr.ouvertureMin });
@@ -3435,20 +3692,30 @@
         '<div class="confirm"><button class="btn sm primary" data-pf-create>Créer l\'action</button><button class="btn sm" data-pf-cancel>Annuler</button>' +
         '<span class="sel-attach">ou rattacher une action existante <input list="planList" data-pf="attach" placeholder="N°, ex. A-0012" autocomplete="off" /><button class="btn sm" data-pf-attach>Rattacher</button></span></div></div>';
     }
+    var crRendering = false;
+    function renderCRPareto() {
+      var r = crRange(), sv = { from: ui.from, to: ui.to, gran: ui.gran };
+      ui.from = r.a; ui.to = r.b; ui.gran = "day"; skipChips = true; crRendering = true;
+      try { renderPareto("cr"); }
+      finally { ui.from = sv.from; ui.to = sv.to; ui.gran = sv.gran; skipChips = false; crRendering = false; }
+    }
     function renderPareto(kind) {
-      var el = document.querySelector('[data-panel="' + kind + '"]');
+      if (kind === "cr" && !crRendering) { renderCRPareto(); return; }
+      var el = kind === "cr" ? $("crPareto") : document.querySelector('[data-panel="' + kind + '"]');
       var ae0 = document.activeElement;
       if (ui.parForm && ae0 && ae0.matches && ae0.matches('[data-panel="' + kind + '"] [data-pf]')) return; // saisie en cours
       var adm = canWriteActions();
       if (adm) planDatalist();
-      var keyFn = kind === "machine" ? machineOf : typeOf,
-        otherFn = kind === "machine" ? typeOf : machineOf;
+      var keyFn = kind === "type" ? typeOf : machineOf,
+        otherFn = kind === "type" ? machineOf : typeOf;
       var title =
-        kind === "machine"
-          ? "Analyse Pareto Machine"
-          : "Analyse Pareto Type d'arrêts";
-      var colName = kind === "machine" ? "Machine" : "Type d'arrêt",
-        otherName = kind === "machine" ? "Type d'arrêt" : "Machine";
+        kind === "cr"
+          ? "Pareto machine de la journée"
+          : kind === "machine"
+            ? "Analyse Pareto Machine"
+            : "Analyse Pareto Type d'arrêts";
+      var colName = kind === "type" ? "Type d'arrêt" : "Machine",
+        otherName = kind === "type" ? "Machine" : "Type d'arrêt";
       if (mode === "pending") {
         el.innerHTML =
           '<div class="panel"><h2>' +
@@ -3962,13 +4229,14 @@
       document.querySelectorAll("[data-panel]").forEach(function (p) {
         p.hidden = p.dataset.panel !== tab;
       });
-      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod";
+      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "cr";
       $("btnExportTop").hidden = mode === "pending" || !canExport();
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
       if (tab === "rex") renderRex();
       if (tab === "prog") renderProgram();
       if (tab === "prod") renderProduction();
+      if (tab === "cr") renderCR();
       if (tab === "actview") {
         var ae = document.activeElement;
         if (ae && ae.matches && ae.matches("#avTable [data-close-comment]")) deferAv = true;
@@ -4208,7 +4476,7 @@
     $("actFilter").addEventListener("change", renderActions);
     $("btnCopy").addEventListener("click", copyActions);
     $("rexQ").addEventListener("input", renderRex);
-    ["machine", "type"].forEach(function (kind) {
+    ["machine", "type", "cr"].forEach(function (kind) {
       var panel = document.querySelector('[data-panel="' + kind + '"]');
       panel.addEventListener("click", function (e) {
         var b = e.target.closest("button");
@@ -4548,7 +4816,7 @@
       } catch (e) {}
       if (
         location.hash &&
-        /^#(saisie|prog|prod|machine|type|actions|actview|rex)$/.test(location.hash)
+        /^#(saisie|prog|prod|cr|machine|type|actions|actview|rex)$/.test(location.hash)
       )
         ui.tab = location.hash.slice(1);
       renderAll();
@@ -4615,6 +4883,14 @@
             d[doc.id] = doc.data();
           });
           closes = d;
+          refresh();
+        }, onErr);
+      db.collection("safety")
+        .limit(1000)
+        .onSnapshot(function (snap) {
+          var d = {};
+          snap.docs.forEach(function (doc) { d[doc.id] = doc.data(); });
+          safety = d;
           refresh();
         }, onErr);
       db.doc("config/production").onSnapshot(function (snap) {
