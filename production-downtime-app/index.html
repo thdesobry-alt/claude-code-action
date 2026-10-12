@@ -3089,7 +3089,7 @@
         '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>" +
         '<div class="kpi"><div class="l">Productivité</div><div class="v">' + (prod == null ? "—" : fmtNum(prod, 1) + " t/h") + "</div></div>" +
         '<div class="kpi"><div class="l">Production</div><div class="v">' + (tons == null ? "—" : fmtNum(tons, 1) + " t") + "</div></div>" +
-        '<div class="kpi"><div class="l">Temps d\'arrêt pris en compte</div><div class="v">' + fmtHM(stopMs) + "</div></div></div>" +
+        '<div class="kpi"><div class="l">Temps d\'arrêt</div><div class="v">' + fmtHM(stopMs) + "</div></div></div>" +
         '<p class="hint" style="margin-top: 8px">Ouverture ' + (open == null ? "non saisie" : fmtOpening(open)) + " · marche " + (run == null ? "—" : fmtHM(run)) +
         " · manque billettes (26) non pris en compte : " + fmtHM(mb) + " · les arrêts 51 cycle sont exclus.</p>" +
         (adm ? '<div class="row" style="margin-top: 8px"><label class="f">Production (t)<input data-crpd="tonnes" inputmode="decimal" value="' + (tons == null ? "" : String(tons).replace(".", ",")) + '" style="width: 120px" /></label>' +
@@ -3737,7 +3737,7 @@
         fmtDate(ui.from) +
         " au " +
         fmtDate(ui.to) +
-        ". " + (chartLimit() === 0.8 ? "Le graphique montre les catégories qui font 80 % du total." : "Le graphique montre les catégories jusqu'à 95 % du total (en foncé, celles qui font les 80 % prioritaires).") + " Les arrêts à cheval sur les bornes sont comptés pour la partie comprise dans la période. Cliquez sur une barre pour voir le détail.</p></div>" +
+        ".</p></div>" +
         '<div class="seg" role="group" aria-label="Critère"><button data-metric="' +
         kind +
         '" data-m="dur" aria-pressed="' +
