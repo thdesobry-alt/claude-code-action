@@ -745,9 +745,67 @@
     color: var(--muted);
     border: 1px solid var(--line);
   }
+  .av-table td.av-stops {
+    min-width: 260px;
+  }
+  .av-stop + .av-stop {
+    margin-top: 6px;
+  }
+  .av-stop .av-detail {
+    color: var(--muted);
+  }
   .av-table td.av-detail {
     min-width: 180px;
     color: var(--muted);
+  }
+  .num-badge {
+    font-family: var(--font-data);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--bar);
+    white-space: nowrap;
+  }
+  .shared {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .act-add,
+  .sel-attach {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .act-add input,
+  .sel-attach input {
+    font-size: 12px;
+    padding: 4px 6px;
+    width: 230px;
+  }
+  .sel-stop {
+    margin-left: auto;
+    padding-bottom: 0;
+    font-size: 12px;
+  }
+  .sel-bar,
+  .act-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--bar);
+    background: var(--surface-2);
+    position: sticky;
+    top: 48px;
+    z-index: 3;
+  }
+  .act-banner {
+    position: static;
+    border-color: var(--accent);
+    background: var(--accent-soft);
   }
   .rex-box {
     border-top: 1px dashed var(--line);
@@ -1200,7 +1258,10 @@
       acts = {},
       // clôtures : closures/{jour} = {items: {idArrêt: {idAction: {closed, closedAt, closedBy, closeComment}}}}
       // collection séparée pour que les Utilisateurs puissent clôturer sans pouvoir modifier les actions
-      closes = {};
+      closes = {},
+      // actions numérotées : plan/{idAction} = {num, typeAction, action, pilote, delai, created, stops: [idArrêt…]}
+      // une même action peut être rattachée à plusieurs arrêts
+      plan = {};
     var loaded = { days: false, acts: false };
     var stops = [];
     // Tables d'origine (Table_code_fer.xlsx, Table_code_macc.xlsx) ; config/codes dans la base les remplace
@@ -1437,6 +1498,10 @@
       if (!r || !(r.constat || r.cause || r.enseignement)) return null;
       return { constat: r.constat || "", cause: r.cause || "", enseignement: r.enseignement || "", by: r.by || null, at: r.at || null };
     }
+    var planList = [];
+    function numLabel(a) {
+      return a && a.plan ? "A-" + ("000" + a.num).slice(-4) : "";
+    }
     function rebuild() {
       var out = [];
       Object.keys(days).forEach(function (day) {
@@ -1448,6 +1513,21 @@
           out.push({ id: id, day: day, start: s.start, end: s.end, fer: s.fer || "", macc: s.macc || "", detail: s.detail || "", diam: s.diam || "", actions: actionsOf(a[id], c[id]), rex: rexOf(a[id]) });
         });
       });
+      var byId = {}, pc = (closes.plan && closes.plan.items) || {};
+      out.forEach(function (s) { byId[s.id] = s; });
+      planList = [];
+      Object.keys(plan).forEach(function (aid) {
+        var p = plan[aid];
+        if (!p || p.deleted) return;
+        var c = pc[aid], ids = (p.stops || []).filter(function (id) { return byId[id]; });
+        var a = { id: aid, plan: true, num: p.num || 0, typeAction: p.typeAction || "", action: p.action || "", pilote: p.pilote || "", delai: p.delai || "",
+          by: p.by || null, at: p.at || null, created: p.created || 0, stops: ids, rawStops: p.stops || [],
+          closed: c ? !!c.closed : false, closedAt: c ? c.closedAt || null : null, closedBy: c ? c.closedBy || null : null, closeComment: c ? c.closeComment || "" : "" };
+        planList.push(a);
+        ids.forEach(function (id) { byId[id].actions.push(a); });
+      });
+      planList.sort(function (a, b) { return a.num - b.num; });
+      out.forEach(function (s) { s.actions.sort(function (a, b) { return a.created - b.created || (a.id < b.id ? -1 : 1); }); });
       out.sort(function (a, b) { return a.start - b.start; });
       stops = out;
     }
@@ -1457,7 +1537,7 @@
       try {
         localStorage.setItem(
           LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts, closes: closes }),
+          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan }),
         );
       } catch (e) {}
     }
@@ -1468,6 +1548,7 @@
           days = d.days || {};
           acts = d.acts || {};
           closes = d.closes || {};
+          plan = d.plan || {};
         }
       } catch (e) {}
     }
@@ -1629,6 +1710,61 @@
       var inner = {};
       inner[aid] = Object.assign({}, fields, { by: myId, at: Date.now() });
       return writeItem(day, stopId, { list: inner });
+    }
+    var issuedNum = 0;
+    function nextNum() {
+      var m = issuedNum;
+      Object.keys(plan).forEach(function (k) { var n = plan[k] && plan[k].num; if (n > m) m = n; });
+      issuedNum = m + 1;
+      return m + 1;
+    }
+    function writePlan(aid, fields, isNew) {
+      var body = Object.assign({}, fields, { by: myId, at: Date.now() });
+      if (mode === "local") {
+        plan[aid] = Object.assign({}, plan[aid] || {}, body);
+        saveLocal();
+        rebuild();
+        return Promise.resolve();
+      }
+      var ref = db.collection("plan").doc(aid), ck = "plan/" + aid;
+      chains[ck] = (chains[ck] || Promise.resolve())
+        .then(function () { return isNew ? ref.set(body) : ref.update(body); })
+        .catch(function (e) { toast(dbErrorMessage(e)); });
+      return chains[ck];
+    }
+    function createPlanAction(stopIds) {
+      var aid = uid();
+      writePlan(aid, { num: nextNum(), typeAction: "", action: "", pilote: "", delai: "", created: Date.now(), stops: stopIds.slice() }, true);
+      return aid;
+    }
+    function findPlanByNum(v) {
+      var m = String(v || "").match(/(\d+)/);
+      if (!m) return null;
+      var n = +m[1];
+      return planList.find(function (a) { return a.num === n; }) || null;
+    }
+    function linkStops(a, ids) {
+      var cur = (plan[a.id] && plan[a.id].stops) || [], added = 0;
+      ids.forEach(function (id) { if (cur.indexOf(id) < 0) { cur = cur.concat([id]); added++; } });
+      if (added) writePlan(a.id, { stops: cur });
+      return added;
+    }
+    function closePlan(aid, fields) {
+      return writeItem("plan", aid, fields, "closures");
+    }
+    async function migrateLegacy() {
+      var n = 0, list = stops.slice();
+      for (var s of list) {
+        for (var a of s.actions.filter(function (y) { return !y.plan; })) {
+          var aid = uid();
+          await writePlan(aid, { num: nextNum(), typeAction: a.typeAction, action: a.action, pilote: a.pilote, delai: a.delai, created: a.created || Date.now(), stops: [s.id] }, true);
+          if (a.closed) await closePlan(aid, { closed: true, closedAt: a.closedAt, closedBy: a.closedBy, closeComment: a.closeComment });
+          await writeAction(s.day, s.id, a.id, { deleted: true });
+          n++;
+        }
+      }
+      if (mode === "local") refresh();
+      toast(n + " action(s) numérotée(s)");
     }
     function writeClosure(day, stopId, aid, fields) {
       var inner = {};
@@ -2206,7 +2342,7 @@
             diametre: s.diam,
             actions: s.actions.map(function (a) {
               return { typeAction: a.typeAction, action: a.action, pilote: a.pilote, delai: a.delai,
-                cloturee: a.closed, dateCloture: a.closedAt ? fmtDate(a.closedAt) : "", commentaireCloture: a.closeComment };
+                cloturee: a.closed, dateCloture: a.closedAt ? fmtDate(a.closedAt) : "", commentaireCloture: a.closeComment, numero: numLabel(a) };
             }),
             rex: s.rex ? { constat: s.rex.constat, cause: s.rex.cause, enseignement: s.rex.enseignement } : null,
           };
@@ -2316,19 +2452,22 @@
             f.closeComment = String(a.commentaireCloture || "");
           }
           if (f.typeAction || f.action || f.pilote || f.delai)
-            actionWrites.push([dayKey(s.start), s.id, uid(), f]);
+            actionWrites.push({ key: a.numero ? "n:" + a.numero : "u:" + uid(), sid: s.id, f: f });
         });
       });
       info.textContent = "Import en cours…";
       try {
         await addStops(toAdd);
-        // regroupe les actions par jour : une écriture par document
+        // une action numérotée par numéro du fichier, rattachée à tous ses arrêts
         var g = {};
         actionWrites.forEach(function (w) {
-          (g[w[0]] = g[w[0]] || []).push(w);
+          var e = (g[w.key] = g[w.key] || { f: w.f, sids: [] });
+          if (e.sids.indexOf(w.sid) < 0) e.sids.push(w.sid);
         });
-        for (var day of Object.keys(g)) {
-          for (var w of g[day]) await writeAction(w[0], w[1], w[2], w[3]);
+        for (var key of Object.keys(g)) {
+          var fI = g[key].f, aidI = uid();
+          await writePlan(aidI, { num: nextNum(), typeAction: fI.typeAction, action: fI.action, pilote: fI.pilote, delai: fI.delai, created: fI.created, stops: g[key].sids }, true);
+          if (fI.closed) await closePlan(aidI, { closed: true, closedAt: fI.closedAt, closedBy: null, closeComment: fI.closeComment });
         }
         for (var rw of rexWrites) await writeRex(rw[0], rw[1], rw[2]);
         if (mode === "local") refresh();
@@ -2336,7 +2475,7 @@
         info.textContent =
           toAdd.length +
           " arrêt(s) ajouté(s), " +
-          actionWrites.length +
+          Object.keys(g).length +
           " action(s) et " +
           rexWrites.length +
           " REX repris" +
@@ -2786,15 +2925,20 @@
         }).join("") + "</dl></div>";
     }
     var pendingDelAct = null;
-    function actionRowHTML(a, today, dis) {
+    function actionRowHTML(a, today, dis, stopId) {
       var opts = TYPE_ACTIONS.slice();
       if (a.typeAction && opts.indexOf(a.typeAction) < 0) opts.push(a.typeAction);
       var st = a.closed ? ' <span class="pill ok">Clôturée</span>' : isLate(a, today) ? ' <span class="pill late">En retard</span>' : "";
       var upd = a.at ? '<span data-uid="' + esc(a.by || "") + '">' + (a.by ? "…" : "") + "</span><br>" + fmtDate(a.at).slice(0, 16) : "";
-      var del = dis ? "" : pendingDelAct === a.id
-        ? '<span class="confirm">Supprimer ? <button class="btn sm danger" data-act-del-yes>Oui</button><button class="btn sm" data-act-del-no>Non</button></span>'
-        : '<button class="btn sm danger" data-act-del aria-label="Supprimer cette action">Supprimer</button>';
-      return '<tr data-aid="' + esc(a.id) + '">' +
+      var shared = a.plan && a.stops.length > 1, delKey = stopId + "/" + a.id;
+      var del = dis ? "" : pendingDelAct === delKey
+        ? '<span class="confirm">' + (shared ? "Détacher de cet arrêt ?" : "Supprimer ?") + ' <button class="btn sm danger" data-act-del-yes>Oui</button><button class="btn sm" data-act-del-no>Non</button></span>'
+        : '<button class="btn sm danger" data-act-del>' + (shared ? "Détacher" : "Supprimer") + "</button>";
+      var num = a.plan
+        ? '<span class="num-badge">' + numLabel(a) + "</span>" + (shared ? '<div class="shared">Commune à ' + a.stops.length + " arrêts</div>" : "")
+        : '<span class="muted">—</span>';
+      return '<tr data-aid="' + esc(a.id) + '"' + (a.plan ? ' data-plan="1"' : "") + ">" +
+        '<td class="numc">' + num + "</td>" +
         '<td class="typ"><select data-field="typeAction" aria-label="Type d\'action"' + dis + ">" +
         opts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === a.typeAction ? " selected" : "") + ">" + (o ? esc(o) : "—") + "</option>"; }).join("") +
         "</select></td>" +
@@ -2804,13 +2948,20 @@
         '<td class="upd">' + upd + "</td>" +
         '<td class="rm">' + del + "</td></tr>";
     }
+    function planDatalist() {
+      var dl = $("planList");
+      if (!dl) { dl = document.createElement("datalist"); dl.id = "planList"; document.body.appendChild(dl); }
+      dl.innerHTML = planList.map(function (a) {
+        return '<option value="' + numLabel(a) + '">' + esc((a.action || "(sans texte)").slice(0, 80)) + (a.closed ? " — clôturée" : "") + "</option>";
+      }).join("");
+    }
     function renderActions() {
       var all = filtered(), rows = actionRows(), today = startOfDay(Date.now()), ro = !canWriteActions();
       $("actHint").textContent = ro
         ? "Arrêts de la période et des filtres sélectionnés, avec leurs actions. La saisie est réservée aux Admin."
         : "Arrêts de la période et des filtres sélectionnés. Ajoutez une ou plusieurs actions par arrêt : elles sont enregistrées automatiquement et visibles par tous.";
       var withA = all.filter(function (x) { return realActions(x.s).length; }).length,
-        nAct = all.reduce(function (t, x) { return t + realActions(x.s).length; }, 0),
+        nAct = (function () { var k = {}; all.forEach(function (x) { realActions(x.s).forEach(function (a) { k[a.plan ? a.id : x.s.id + a.id] = 1; }); }); return Object.keys(k).length; })(),
         late = all.reduce(function (t, x) { return t + x.s.actions.filter(function (a) { return isLate(a, today); }).length; }, 0);
       $("actKpis").innerHTML =
         '<div class="kpi"><div class="l">Arrêts sur la période</div><div class="v">' + all.length + "</div></div>" +
@@ -2822,15 +2973,30 @@
         return;
       }
       var dis = ro ? " disabled" : "";
-      $("actTable").innerHTML = '<div class="act-list">' + rows.map(function (x) {
+      planDatalist();
+      var legacy = 0;
+      stops.forEach(function (s) { legacy += s.actions.filter(function (a) { return !a.plan; }).length; });
+      var sel = ui.selStops || (ui.selStops = {}), nSel = Object.keys(sel).length;
+      var top = "";
+      if (!ro && legacy)
+        top += '<div class="act-banner">' + legacy + " action(s) saisie(s) avant la numérotation n'ont pas de numéro. " +
+          '<button class="btn sm" data-migrate>Numéroter les actions existantes</button></div>';
+      if (!ro && nSel)
+        top += '<div class="sel-bar"><strong>' + nSel + " arrêt" + (nSel > 1 ? "s" : "") + " sélectionné" + (nSel > 1 ? "s" : "") + "</strong>" +
+          '<button class="btn sm primary" data-sel-create>Créer une action commune</button>' +
+          '<span class="sel-attach"><input list="planList" id="selAttachNum" placeholder="N° d&#39;action, ex. A-0012" autocomplete="off" /><button class="btn sm" data-sel-attach>Rattacher à la sélection</button></span>' +
+          '<button class="btn sm" data-sel-clear>Désélectionner</button></div>';
+      $("actTable").innerHTML = top + '<div class="act-list">' + rows.map(function (x) {
         var s = x.s, n = realActions(s).length;
         var head = stopHeadHTML(s, '<span class="pill ' + (n ? "ok" : "a") + '">' + (n ? n + " action" + (n > 1 ? "s" : "") : "Sans action") + "</span>" +
-          (s.rex ? '<span class="pill rex">REX</span>' : "")), detail = "";
+          (s.rex ? '<span class="pill rex">REX</span>' : "") +
+          (ro ? "" : '<label class="chk sel-stop"><input type="checkbox" data-sel' + (sel[s.id] ? " checked" : "") + " /> Sélectionner</label>")), detail = "";
         var table = s.actions.length
-          ? '<div class="scroll"><table class="actions-table"><thead><tr><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Délai</th><th>Mis à jour</th><th></th></tr></thead><tbody>' +
-            s.actions.map(function (a) { return actionRowHTML(a, today, dis); }).join("") + "</tbody></table></div>"
+          ? '<div class="scroll"><table class="actions-table"><thead><tr><th>N°</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Délai</th><th>Mis à jour</th><th></th></tr></thead><tbody>' +
+            s.actions.map(function (a) { return actionRowHTML(a, today, dis, s.id); }).join("") + "</tbody></table></div>"
           : "";
-        var add = ro ? "" : '<div><button class="btn sm" data-act-add>+ Ajouter une action</button></div>';
+        var add = ro ? "" : '<div class="act-add"><button class="btn sm" data-act-add>+ Nouvelle action</button>' +
+          '<span class="sel-attach"><input list="planList" data-attach placeholder="N° d\'action existante, ex. A-0012" autocomplete="off" /><button class="btn sm" data-act-attach>Rattacher</button></span></div>';
         return '<article class="act-stop" data-id="' + esc(s.id) + '" data-day="' + esc(s.day) + '">' + head + detail + table + add + rexEditHTML(s, ro) + "</article>";
       }).join("") + "</div>";
       fillNames("#actTable");
@@ -2856,14 +3022,14 @@
     }
     function copyActions() {
       var rows = actionRows();
-      var lines = [["Date début", "Date fin", "Durée", "Diamètre", "Code FER", "Nom FER", "Code Macc", "Nom Macc", "Détail", "Type d'action", "Action", "Pilote", "Délai", "REX constat", "REX cause(s)", "REX enseignement"].join("\t")];
+      var lines = [["Date début", "Date fin", "Durée", "Diamètre", "Code FER", "Nom FER", "Code Macc", "Nom Macc", "Détail", "N° action", "Type d'action", "Action", "Pilote", "Délai", "REX constat", "REX cause(s)", "REX enseignement"].join("\t")];
       var n = 0;
       rows.forEach(function (x) {
         var s = x.s, list = realActions(s).length ? s.actions : [{}];
         list.forEach(function (a) {
           var d = a.delai ? a.delai.split("-").reverse().join("/") : "";
           n++;
-          lines.push([fmtDate(s.start), fmtDate(s.end), fmtDur(s.end - s.start), s.diam, s.fer, codeName("fer", s.fer), s.macc, codeName("macc", s.macc), s.detail, a.typeAction, a.action, a.pilote, d, s.rex ? s.rex.constat : "", s.rex ? s.rex.cause : "", s.rex ? s.rex.enseignement : ""]
+          lines.push([fmtDate(s.start), fmtDate(s.end), fmtDur(s.end - s.start), s.diam, s.fer, codeName("fer", s.fer), s.macc, codeName("macc", s.macc), s.detail, numLabel(a), a.typeAction, a.action, a.pilote, d, s.rex ? s.rex.constat : "", s.rex ? s.rex.cause : "", s.rex ? s.rex.enseignement : ""]
             .map(function (v) { v = String(v || ""); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join("\t"));
         });
       });
@@ -2885,32 +3051,47 @@
       var p = a.delai.split("-");
       return new Date(+p[0], +p[1] - 1, +p[2]).getTime();
     }
-    function actViewRows() {
-      var today = startOfDay(Date.now()), soon = today + 7 * 864e5, st = $("avStatus").value;
-      var words = normText($("avQ").value).split(/\s+/).filter(Boolean), out = [];
+    // une ligne par action ; une action numérotée regroupe tous ses arrêts filtrés
+    function actViewItems() {
+      var map = {}, order = [];
       filtered().forEach(function (x) {
         realActions(x.s).forEach(function (a) {
-          var d = dueOf(a);
-          if (st === "closed" ? !a.closed : st !== "all" && a.closed) return;
-          if (st === "late" && !isLate(a, today)) return;
-          if (st === "soon" && !(d != null && d >= today && d <= soon)) return;
-          if (st === "nodate" && d != null) return;
-          if (words.length) {
-            var t = normText([a.typeAction, a.action, a.pilote, a.closeComment, x.s.detail, machineOf(x.s), typeOf(x.s), x.s.diam].join(" "));
-            if (!words.every(function (w) { return t.indexOf(w) >= 0; })) return;
-          }
-          out.push({ s: x.s, a: a, d: d });
+          var key = a.plan ? "plan|" + a.id : x.s.day + "|" + x.s.id + "|" + a.id;
+          if (!map[key]) { map[key] = { key: key, a: a, ss: [], d: dueOf(a) }; order.push(key); }
+          map[key].ss.push(x.s);
         });
       });
+      return order.map(function (k) { return map[k]; });
+    }
+    function actViewRows() {
+      var today = startOfDay(Date.now()), soon = today + 7 * 864e5, st = $("avStatus").value;
+      var words = normText($("avQ").value).split(/\s+/).filter(Boolean);
+      var out = actViewItems().filter(function (r) {
+        var a = r.a, d = r.d;
+        if (st === "closed" ? !a.closed : st !== "all" && a.closed) return false;
+        if (st === "late" && !isLate(a, today)) return false;
+        if (st === "soon" && !(d != null && d >= today && d <= soon)) return false;
+        if (st === "nodate" && d != null) return false;
+        if (words.length) {
+          var t = normText([numLabel(a), a.typeAction, a.action, a.pilote, a.closeComment].concat(r.ss.map(function (s) { return [s.detail, machineOf(s), typeOf(s), s.diam].join(" "); })).join(" "));
+          if (!words.every(function (w) { return t.indexOf(w) >= 0; })) return false;
+        }
+        return true;
+      });
       out.sort(function (p, q) {
-        return (p.a.closed - q.a.closed) || (p.a.closed ? (q.a.closedAt || 0) - (p.a.closedAt || 0) : (p.d == null) - (q.d == null) || (p.d || 0) - (q.d || 0)) || p.s.start - q.s.start;
+        return (p.a.closed - q.a.closed) || (p.a.closed ? (q.a.closedAt || 0) - (p.a.closedAt || 0) : (p.d == null) - (q.d == null) || (p.d || 0) - (q.d || 0)) || p.ss[0].start - q.ss[0].start;
       });
       return out;
     }
-    var closing = null; // action en cours de clôture : "jour|arrêt|action"
+    var closing = null; // action en cours de clôture (clé de ligne)
+    function stopLineHTML(s) {
+      return '<div class="av-stop"><span class="mono">' + fmtDate(s.start).slice(0, 16) + "</span> · " + fmtDur(s.end - s.start) +
+        (s.diam ? " · Ø " + esc(s.diam) : "") + " · " + esc(typeOf(s)) + " · <strong>" + esc(machineOf(s)) + "</strong>" +
+        (s.detail ? '<div class="av-detail">' + esc(s.detail) + "</div>" : "") + "</div>";
+    }
     function renderActView() {
-      var today = startOfDay(Date.now()), soon = today + 7 * 864e5, rows = actViewRows(), all = [], admin = canClose();
-      filtered().forEach(function (x) { realActions(x.s).forEach(function (a) { all.push(a); }); });
+      var today = startOfDay(Date.now()), soon = today + 7 * 864e5, rows = actViewRows(), admin = canClose();
+      var all = actViewItems().map(function (r) { return r.a; });
       var open = all.filter(function (a) { return !a.closed; });
       var late = open.filter(function (a) { return isLate(a, today); }).length;
       var nSoon = open.filter(function (a) { var d = dueOf(a); return d != null && d >= today && d <= soon; }).length;
@@ -2923,9 +3104,9 @@
         $("avTable").innerHTML = '<div class="empty">' + (mode === "pending" ? "Chargement de la base…" : all.length ? "Aucune action ne correspond." : "Aucune action avec ces filtres.") + "</div>";
         return;
       }
-      $("avTable").innerHTML = '<table class="av-table"><thead><tr><th>Délai</th><th>Statut</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Arrêt</th><th>Diamètre</th><th>Type d\'arrêt</th><th>Machine</th><th>Détail</th>' + (admin ? "<th>Clôture</th>" : "") + "</tr></thead><tbody>" +
+      $("avTable").innerHTML = '<table class="av-table"><thead><tr><th>N°</th><th>Délai</th><th>Statut</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Arrêt(s)</th>' + (admin ? "<th>Clôture</th>" : "") + "</tr></thead><tbody>" +
         rows.map(function (r) {
-          var a = r.a, key = r.s.day + "|" + r.s.id + "|" + a.id;
+          var a = r.a, key = r.key;
           var st = a.closed ? '<span class="pill ok">Clôturée</span>' : isLate(a, today) ? '<span class="pill late">En retard</span>' : r.d != null && r.d <= soon ? '<span class="pill a">Sous 7 j</span>' : r.d == null ? '<span class="muted">Sans délai</span>' : '<span class="pill neutral">À venir</span>';
           var closeInfo = a.closed
             ? '<div class="close-info">Clôturée le ' + (a.closedAt ? fmtDate(a.closedAt).slice(0, 10) : "—") + (a.closedBy ? ' par <span data-uid="' + esc(a.closedBy) + '">…</span>' : "") +
@@ -2939,9 +3120,11 @@
             else if (a.closed) ctl = '<button class="btn sm" data-reopen>Rouvrir</button>';
             else ctl = '<button class="btn sm" data-close>Clôturer</button>';
           }
-          return '<tr data-key="' + esc(key) + '" class="' + (a.closed ? "is-closed" : "") + '"><td class="mono">' + (a.delai ? a.delai.split("-").reverse().join("/") : "—") + "</td><td>" + st + "</td><td>" + esc(a.typeAction || "—") + '</td><td class="av-action">' + esc(a.action) + closeInfo + "</td><td>" + esc(a.pilote || "—") +
-            '</td><td class="mono">' + fmtDate(r.s.start).slice(0, 16) + "<br>" + fmtDur(r.s.end - r.s.start) + "</td><td>" + esc(r.s.diam) + "</td><td>" + esc(typeOf(r.s)) + "</td><td>" + esc(machineOf(r.s)) + '</td><td class="av-detail">' + esc(r.s.detail) + "</td>" +
-            (admin ? '<td class="av-close">' + ctl + "</td>" : "") + "</tr>";
+          var shown = r.ss.slice(0, 4);
+          var stopsCell = (r.ss.length > 1 ? '<div class="shared">' + r.ss.length + " arrêts</div>" : "") + shown.map(stopLineHTML).join("") +
+            (r.ss.length > shown.length ? '<div class="muted">+ ' + (r.ss.length - shown.length) + " autre(s)</div>" : "");
+          return '<tr data-key="' + esc(key) + '" class="' + (a.closed ? "is-closed" : "") + '"><td>' + (a.plan ? '<span class="num-badge">' + numLabel(a) + "</span>" : '<span class="muted">—</span>') + '</td><td class="mono">' + (a.delai ? a.delai.split("-").reverse().join("/") : "—") + "</td><td>" + st + "</td><td>" + esc(a.typeAction || "—") + '</td><td class="av-action">' + esc(a.action) + closeInfo + "</td><td>" + esc(a.pilote || "—") +
+            '</td><td class="av-stops">' + stopsCell + "</td>" + (admin ? '<td class="av-close">' + ctl + "</td>" : "") + "</tr>";
         }).join("") + "</tbody></table>";
       fillNames("#avTable");
       var t = closing && document.querySelector("#avTable [data-close-comment]");
@@ -2949,11 +3132,12 @@
     }
     function copyActView() {
       var rows = actViewRows();
-      var lines = [["Délai", "Statut", "Type d'action", "Action", "Pilote", "Date de clôture", "Commentaire de clôture", "Date arrêt", "Durée", "Diamètre", "Type d'arrêt", "Machine", "Détail"].join("\t")];
+      var lines = [["N° action", "Délai", "Statut", "Type d'action", "Action", "Pilote", "Date de clôture", "Commentaire de clôture", "Nb arrêts", "Arrêts"].join("\t")];
       rows.forEach(function (r) {
         var a = r.a;
-        lines.push([a.delai ? a.delai.split("-").reverse().join("/") : "", a.closed ? "Clôturée" : isLate(a, startOfDay(Date.now())) ? "En retard" : "En cours", a.typeAction, a.action, a.pilote, a.closedAt ? fmtDate(a.closedAt).slice(0, 10) : "", a.closeComment, fmtDate(r.s.start), fmtDur(r.s.end - r.s.start), r.s.diam, typeOf(r.s), machineOf(r.s), r.s.detail]
-          .map(function (v) { v = String(v || ""); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join("\t"));
+        lines.push([numLabel(a), a.delai ? a.delai.split("-").reverse().join("/") : "", a.closed ? "Clôturée" : isLate(a, startOfDay(Date.now())) ? "En retard" : "En cours", a.typeAction, a.action, a.pilote, a.closedAt ? fmtDate(a.closedAt).slice(0, 10) : "", a.closeComment, r.ss.length,
+          r.ss.map(function (s) { return fmtDate(s.start).slice(0, 16) + " " + machineOf(s) + (s.detail ? " (" + s.detail + ")" : ""); }).join(" ; ")]
+          .map(function (v) { v = String(v == null ? "" : v); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join("\t"));
       });
       try {
         navigator.clipboard.writeText(lines.join("\n")).then(function () { toast(rows.length + " action(s) copiée(s) : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); });
@@ -2986,7 +3170,7 @@
         var s = x.s, acts = realActions(s);
         var list = acts.length
           ? '<div class="rex-acts"><div class="rex-title">Actions</div><ul>' + acts.map(function (a) {
-              return "<li>" + (a.typeAction ? "<strong>" + esc(a.typeAction) + "</strong> · " : "") + esc(a.action || "—") +
+              return "<li>" + (a.plan ? '<span class="num-badge">' + numLabel(a) + "</span> " : "") + (a.typeAction ? "<strong>" + esc(a.typeAction) + "</strong> · " : "") + esc(a.action || "—") +
                 (a.pilote ? ' <span class="muted">· ' + esc(a.pilote) + "</span>" : "") +
                 (a.delai ? ' <span class="muted">· ' + a.delai.split("-").reverse().join("/") + "</span>" : "") +
                 (a.closed ? ' <span class="pill ok">Clôturée</span>' : isLate(a, today) ? ' <span class="pill late">En retard</span>' : "") + "</li>";
@@ -3020,7 +3204,7 @@
         !$("actTable").closest("[data-panel]").hidden &&
         a &&
         $("actTable").contains(a) &&
-        (a.dataset.field || a.dataset.rex)
+        (a.dataset.field || a.dataset.rex || a.hasAttribute("data-attach") || a.id === "selAttachNum")
       );
     }
     function renderAll() {
@@ -3224,11 +3408,13 @@
       else if (b.hasAttribute("data-close-yes")) {
         var comment = tr.querySelector("[data-close-comment]").value.trim();
         closing = null;
-        writeClosure(k[0], k[1], k[2], { closed: true, closedAt: Date.now(), closedBy: myId, closeComment: comment });
+        var cf = { closed: true, closedAt: Date.now(), closedBy: myId, closeComment: comment };
+        if (k[0] === "plan") closePlan(k[1], cf); else writeClosure(k[0], k[1], k[2], cf);
         if (mode === "local") refresh(); else renderActView();
         toast("Action clôturée");
       } else if (b.hasAttribute("data-reopen")) {
-        writeClosure(k[0], k[1], k[2], { closed: false, closedAt: null, closedBy: null, closeComment: "" });
+        var rf = { closed: false, closedAt: null, closedBy: null, closeComment: "" };
+        if (k[0] === "plan") closePlan(k[1], rf); else writeClosure(k[0], k[1], k[2], rf);
         if (mode === "local") refresh(); else renderActView();
         toast("Action rouverte");
       }
@@ -3247,7 +3433,7 @@
     var timers = {};
     function ctx(el) {
       var art = el.closest("article[data-id]"), tr = el.closest("tr[data-aid]");
-      return art ? { art: art, tr: tr, stopId: art.dataset.id, day: art.dataset.day, aid: tr && tr.dataset.aid } : null;
+      return art ? { art: art, tr: tr, stopId: art.dataset.id, day: art.dataset.day, aid: tr && tr.dataset.aid, plan: !!(tr && tr.dataset.plan) } : null;
     }
     function flush(c) {
       var key = c.stopId + "/" + c.aid;
@@ -3259,7 +3445,11 @@
         a = s && s.actions.find(function (y) { return y.id === c.aid; });
       if (a && a.typeAction === f.typeAction && a.action === f.action && a.pilote === f.pilote && a.delai === f.delai) return;
       if (a) Object.assign(a, f);
-      writeAction(c.day, c.stopId, c.aid, f);
+      if (c.plan) {
+        writePlan(c.aid, f);
+        // une action commune apparaît sur plusieurs fiches : les remettre à jour
+        if (mode === "local") setTimeout(function () { if (!editingActions()) renderActions(); }, 0);
+      } else writeAction(c.day, c.stopId, c.aid, f);
     }
     function flushRex(art) {
       var stopId = art.dataset.id, day = art.dataset.day, key = "rex/" + stopId;
@@ -3285,6 +3475,13 @@
       timers[key] = setTimeout(function () { flush(c); }, 800);
     });
     $("actTable").addEventListener("change", function (e) {
+      if (e.target.hasAttribute("data-sel")) {
+        var art0 = e.target.closest("article[data-id]");
+        if (e.target.checked) ui.selStops[art0.dataset.id] = 1; else delete ui.selStops[art0.dataset.id];
+        renderActions();
+        return;
+      }
+      if (e.target.hasAttribute("data-attach") || e.target.id === "selAttachNum") return;
       if (e.target.dataset.rex) { if (canWriteActions()) flushRex(e.target.closest("article[data-id]")); return; }
       var c = ctx(e.target);
       if (c && c.tr && canWriteActions()) flush(c);
@@ -3292,26 +3489,62 @@
     $("actTable").addEventListener("click", function (e) {
       var b = e.target.closest("button");
       if (!b || !canWriteActions()) return;
+      if (b.hasAttribute("data-migrate")) { b.disabled = true; migrateLegacy(); return; }
+      if (b.hasAttribute("data-sel-clear")) { ui.selStops = {}; renderActions(); return; }
+      if (b.hasAttribute("data-sel-create")) {
+        var ids0 = Object.keys(ui.selStops);
+        ui.focusAction = createPlanAction(ids0);
+        ui.selStops = {};
+        toast("Action commune créée pour " + ids0.length + " arrêt(s)");
+        if (mode === "local") refresh(); else renderActions();
+        return;
+      }
+      if (b.hasAttribute("data-sel-attach")) {
+        var pa = findPlanByNum($("selAttachNum").value);
+        if (!pa) { toast("Numéro d'action introuvable."); return; }
+        var n0 = linkStops(pa, Object.keys(ui.selStops));
+        ui.selStops = {};
+        toast(numLabel(pa) + " rattachée à " + n0 + " arrêt(s) de plus");
+        if (mode === "local") refresh(); else renderActions();
+        return;
+      }
       var c = ctx(b);
       if (!c) return;
+      if (b.hasAttribute("data-act-attach")) {
+        var pa1 = findPlanByNum(c.art.querySelector("[data-attach]").value);
+        if (!pa1) { toast("Numéro d'action introuvable."); return; }
+        if (!linkStops(pa1, [c.stopId])) { toast(numLabel(pa1) + " est déjà rattachée à cet arrêt."); return; }
+        toast(numLabel(pa1) + " rattachée à cet arrêt");
+        if (mode === "local") refresh(); else renderActions();
+        return;
+      }
       if (b.hasAttribute("data-rex-open")) {
         rexOpen[c.stopId] = true;
         ui.focusRex = c.stopId;
         renderActions();
       } else if (b.hasAttribute("data-act-add")) {
-        var aid = uid();
-        ui.focusAction = aid;
-        writeAction(c.day, c.stopId, aid, { typeAction: "", action: "", pilote: "", delai: "", created: Date.now() });
-        if (mode === "local") refresh();
+        ui.focusAction = createPlanAction([c.stopId]);
+        if (mode === "local") refresh(); else renderActions();
       } else if (b.hasAttribute("data-act-del")) {
-        pendingDelAct = c.aid; renderActions();
+        pendingDelAct = c.stopId + "/" + c.aid; renderActions();
       } else if (b.hasAttribute("data-act-del-no")) {
         pendingDelAct = null; renderActions();
       } else if (b.hasAttribute("data-act-del-yes")) {
         pendingDelAct = null;
-        writeAction(c.day, c.stopId, c.aid, { deleted: true });
+        if (c.plan) {
+          var pd = planList.find(function (y) { return y.id === c.aid; });
+          if (pd && pd.stops.length > 1) {
+            writePlan(c.aid, { stops: pd.rawStops.filter(function (id) { return id !== c.stopId; }) });
+            toast(numLabel(pd) + " détachée de cet arrêt");
+          } else {
+            writePlan(c.aid, { deleted: true });
+            toast("Action supprimée");
+          }
+        } else {
+          writeAction(c.day, c.stopId, c.aid, { deleted: true });
+          toast("Action supprimée");
+        }
         if (mode === "local") refresh(); else renderActions();
-        toast("Action supprimée");
       }
     });
     $("actTable").addEventListener("focusout", function () {
@@ -3435,6 +3668,16 @@
           });
           acts = d;
           loaded.acts = true;
+          refresh();
+        }, onErr);
+      db.collection("plan")
+        .limit(1000)
+        .onSnapshot(function (snap) {
+          var d = {};
+          snap.docs.forEach(function (doc) {
+            d[doc.id] = doc.data();
+          });
+          plan = d;
           refresh();
         }, onErr);
       db.collection("closures")
