@@ -1004,9 +1004,6 @@
     <button role="tab" data-tab="machine" aria-selected="true">
       Analyse Pareto Machine
     </button>
-    <button role="tab" data-tab="type" aria-selected="false">
-      Analyse Pareto Type d'arrêts
-    </button>
     <button role="tab" data-tab="actions" aria-selected="false">Saisie des actions / REX</button>
     <button role="tab" data-tab="actview" aria-selected="false">Actions</button>
     <button role="tab" data-tab="rex" aria-selected="false">REX</button>
@@ -3952,6 +3949,7 @@
     }
     function renderAll() {
       var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
       curTab = tab;
       renderHeader();
       renderChips();
