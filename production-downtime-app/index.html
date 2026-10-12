@@ -869,6 +869,17 @@
     border-bottom: 0;
     padding-bottom: 2px;
   }
+  .det-acts {
+    margin: 4px 0 0;
+    padding-left: 16px;
+    font-size: 12px;
+  }
+  div.det-acts {
+    padding-left: 0;
+  }
+  .det-acts li + li {
+    margin-top: 2px;
+  }
   tr.det-line td {
     padding-top: 0;
     padding-bottom: 10px;
@@ -2545,6 +2556,17 @@
       });
       return { rows: arr, total: total };
     }
+    // actions mises en place sur un arrêt, affichées sous son détail dans les Pareto
+    function detActionsHTML(s) {
+      var acts = realActions(s), today = startOfDay(Date.now());
+      if (!acts.length) return '<div class="det-acts muted">Aucune action</div>';
+      return '<ul class="det-acts">' + acts.map(function (a) {
+        var st = a.closed ? '<span class="pill ok">Clôturée</span>' : isLate(a, today) ? '<span class="pill late">En retard</span>' : '<span class="pill neutral">En cours</span>';
+        return "<li>" + (a.plan ? '<span class="num-badge">' + numLabel(a) + "</span> " : "") + esc(a.action || "—") +
+          (a.pilote || a.delai ? ' <span class="muted">· ' + esc([a.pilote, a.delai ? a.delai.split("-").reverse().join("/") : ""].filter(Boolean).join(" · ")) + "</span>" : "") +
+          " " + st + "</li>";
+      }).join("") + "</ul>";
+    }
     function niceMax(v) {
       if (v <= 0) return 1;
       var p = Math.pow(10, Math.floor(Math.log10(v))),
@@ -2884,6 +2906,7 @@
               esc(otherFn(x.s)) +
               '</td></tr><tr class="det-line"><td colspan="3">' +
               (x.s.detail ? esc(x.s.detail) : '<span class="muted">Pas de détail</span>') +
+              detActionsHTML(x.s) +
               "</td></tr>"
             );
           })
