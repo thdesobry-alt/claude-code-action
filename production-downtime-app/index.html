@@ -1010,6 +1010,7 @@
       <button class="btn" id="btnPrev" aria-label="Période précédente">◀</button>
       <button class="btn" id="btnNext" aria-label="Période suivante">▶</button>
       <button class="btn" id="btnLatest">Dernières données</button>
+      <label class="chk" id="noFourWrap"><input type="checkbox" id="noFour" /> Exclure le four du Pareto</label>
     </div>
     <div class="period" id="periodLabel"></div>
     <div class="chips-row">
@@ -2286,6 +2287,13 @@
     }
     // onglets Actions et REX : pas de filtre de période, toutes dates confondues
     var curTab = "machine";
+    // arrêts du four : type d'arrêt (code FER) nommé « Four » dans la table (codes 7 et 27)
+    function isFour(s) {
+      return /^four$/i.test(codeName("fer", s.fer).trim());
+    }
+    function isPareto() {
+      return curTab === "machine" || curTab === "type";
+    }
     function noPeriod() {
       return curTab === "actview" || curTab === "rex";
     }
@@ -2300,7 +2308,8 @@
           return (
             isSel("machine", machineOf(s)) &&
             isSel("type", typeOf(s)) &&
-            isSel("diam", diamOf(s))
+            isSel("diam", diamOf(s)) &&
+            !(ui.noFour && isPareto() && isFour(s))
           );
         })
         .map(function (s) {
@@ -2454,6 +2463,8 @@
       $("fRef").value = ui.ref != null ? toLocalInput(prodDay(ui.ref).getTime()).slice(0, 10) : "";
       $("refWrap").firstChild.textContent = ui.gran === "week" ? "Un jour de la semaine" : ui.gran === "month" ? "Un jour du mois" : ui.gran === "year" ? "Un jour de l'année" : "Jour de production";
       var np = noPeriod();
+      $("noFourWrap").hidden = !isPareto();
+      $("noFour").checked = !!ui.noFour;
       $("refWrap").hidden = $("btnPrev").hidden = $("btnNext").hidden = np || ui.gran === "all";
       $("granSeg").parentNode.hidden = $("btnLatest").hidden = np;
       document.querySelectorAll("#granSeg button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.gran === ui.gran); });
@@ -3891,6 +3902,13 @@
         );
       }
     });
+    $("noFour").addEventListener("change", function () {
+      ui.noFour = this.checked;
+      try { localStorage.setItem(LOCAL_KEY + "-nofour", ui.noFour ? "1" : ""); } catch (e) {}
+      ui.focus = { machine: null, type: null };
+      renderAll();
+    });
+    try { ui.noFour = localStorage.getItem(LOCAL_KEY + "-nofour") === "1"; } catch (e) {}
     $("granSeg").addEventListener("click", function (e) {
       var b = e.target.closest("button[data-gran]");
       if (!b) return;
