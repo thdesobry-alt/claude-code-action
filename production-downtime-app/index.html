@@ -4724,11 +4724,11 @@
       var list = Object.keys(u).map(function (k) { return u[k]; }).sort(function (a, b) { return b.dur - a.dur; });
       if (!list.length) { box.innerHTML = ""; return; }
       box.innerHTML = '<h3 style="margin-top: 4px">Codes sans nom (' + list.length + ")</h3>" +
-        '<div class="scroll"><table class="ed-table"><thead><tr><th>Table</th><th>Code</th><th class="num">Arrêts</th><th class="num">Temps d\'arrêt</th><th>Exemple de détail</th><th>Nom à donner</th></tr></thead><tbody>' +
+        '<div class="scroll"><table class="ed-table"><thead><tr><th>Table</th><th>Code</th><th class="num">Arrêts</th><th class="num">Temps d\'arrêt</th><th>Exemple de détail</th><th>Corriger le code (erreur de saisie)</th><th>ou nom à donner</th></tr></thead><tbody>' +
         list.map(function (e) {
           return "<tr><td>" + (e.kind === "fer" ? "FER (type d'arrêt)" : "Macc (machine)") + '</td><td class="mono"><strong>' + esc(e.code) + '</strong></td><td class="num">' + e.n + '</td><td class="num">' + fmtDur(e.dur) +
-            '</td><td class="muted">' + esc(e.ex.slice(0, 70)) + '</td><td><input data-uk-kind="' + e.kind + '" data-uk-code="' + esc(e.code) + '" placeholder="Nom" style="width: 220px" /></td></tr>';
-        }).join("") + '</tbody></table></div><div class="row" style="margin-top: 8px"><button class="btn primary" id="ukSave">Enregistrer les noms saisis</button></div>';
+            '</td><td class="muted">' + esc(e.ex.slice(0, 70)) + '</td><td><input data-uk-fix="' + e.kind + '" data-uk-from="' + esc(e.code) + '" placeholder="Bon code" inputmode="numeric" style="width: 110px" /> <span class="muted" data-uk-fixname></span></td><td><input data-uk-kind="' + e.kind + '" data-uk-code="' + esc(e.code) + '" placeholder="Nom" style="width: 220px" /></td></tr>';
+        }).join("") + '</tbody></table></div><p class="hint" style="margin-top: 6px">Un code corrigé est remplacé dans tous les arrêts concernés.</p><div class="row" style="margin-top: 8px"><button class="btn primary" id="ukSave">Enregistrer</button></div>';
     }
     async function saveCodeNames(pairs) {
       var next = { fer: Object.assign({}, codes.fer), macc: Object.assign({}, codes.macc) };
@@ -4737,17 +4737,45 @@
     }
     $("codesUnknown").addEventListener("click", async function (e) {
       if (!e.target.closest("#ukSave") || !isAdmin()) return;
-      var pairs = [];
+      var pairs = [], fixes = [];
+      $("codesUnknown").querySelectorAll("input[data-uk-fix]").forEach(function (el) {
+        var to = normCode(el.value);
+        if (to && to !== el.dataset.ukFrom) fixes.push({ kind: el.dataset.ukFix, from: el.dataset.ukFrom, to: to });
+      });
       $("codesUnknown").querySelectorAll("input[data-uk-code]").forEach(function (el) {
         var n = el.value.trim();
-        if (n) pairs.push({ kind: el.dataset.ukKind, code: el.dataset.ukCode, name: n });
+        if (!n) return;
+        if (fixes.some(function (f) { return f.kind === el.dataset.ukKind && f.from === el.dataset.ukCode; })) return; // le code est corrigé : pas de nom
+        pairs.push({ kind: el.dataset.ukKind, code: el.dataset.ukCode, name: n });
       });
-      if (!pairs.length) { toast("Saisissez au moins un nom."); return; }
+      if (!pairs.length && !fixes.length) { toast("Saisissez un bon code ou un nom."); return; }
       document.activeElement.blur();
-      if (await saveCodeNames(pairs)) toast(pairs.length + " code(s) nommé(s)");
+      var msg = [];
+      if (fixes.length) {
+        var list = [];
+        stops.forEach(function (st) {
+          fixes.forEach(function (f) {
+            if (normCode(st[f.kind]) !== f.from) return;
+            var n = Object.assign({}, st);
+            n[f.kind] = f.to;
+            list.push(n);
+          });
+        });
+        try { await addStops(list); msg.push(list.length + " arrêt(s) recodé(s)"); }
+        catch (err) { toast(dbErrorMessage(err)); return; }
+      }
+      if (pairs.length && (await saveCodeNames(pairs))) msg.push(pairs.length + " code(s) nommé(s)");
+      if (msg.length) toast(msg.join(" · "));
+      renderUnknownCodes();
+    });
+    $("codesUnknown").addEventListener("input", function (e) {
+      var el = e.target;
+      if (!el.matches("input[data-uk-fix]")) return;
+      var c = normCode(el.value), n = c ? codeName(el.dataset.ukFix, c) : "";
+      el.parentNode.querySelector("[data-uk-fixname]").textContent = c ? (n ? "→ " + n : "→ code sans nom") : "";
     });
     $("codesUnknown").addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && e.target.matches("input[data-uk-code]")) { e.preventDefault(); $("ukSave").click(); }
+      if (e.key === "Enter" && e.target.matches("input[data-uk-code], input[data-uk-fix]")) { e.preventDefault(); $("ukSave").click(); }
     });
     function cnShowCurrent() {
       var c = normCode($("cnCode").value), n = c ? codeName($("cnKind").value, c) : "";
