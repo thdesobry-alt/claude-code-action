@@ -44,6 +44,11 @@
         --bad: #c2321f;
         --warn: #a66300;
         --good: #1c7a3c;
+        --mf-j-bg: #ffc7a8;
+        --mf-j-fg: #8a2a00;
+        --mf-n-bg: #7a2a12;
+        --mf-n-fg: #ffe1d2;
+        --mf-row: #fbe6dc;
         --pv-m: #1e8a43;
         --pv-f: #f29a1f;
         --pv-n: #d23a26;
@@ -82,6 +87,11 @@
           --bad: #ff7a66;
           --warn: #f0b04a;
           --good: #6fd391;
+          --mf-j-bg: #5a2a14;
+          --mf-j-fg: #ffc9a8;
+          --mf-n-bg: #8a3416;
+          --mf-n-fg: #ffe1d2;
+          --mf-row: #2a1d18;
           --pv-m: #23944a;
           --pv-f: #f0a43a;
           --pv-n: #d9452f;
@@ -117,6 +127,11 @@
         --bad: #ff7a66;
         --warn: #f0b04a;
         --good: #6fd391;
+        --mf-j-bg: #5a2a14;
+        --mf-j-fg: #ffc9a8;
+        --mf-n-bg: #8a3416;
+        --mf-n-fg: #ffe1d2;
+        --mf-row: #2a1d18;
         --pv-m: #23944a;
         --pv-f: #f0a43a;
         --pv-n: #d9452f;
@@ -322,6 +337,18 @@
       .c-FOR {
         background: var(--abs-bg);
         color: var(--abs-fg);
+      }
+      .c-MJ {
+        background: var(--mf-j-bg);
+        color: var(--mf-j-fg);
+      }
+      .c-MN {
+        background: var(--mf-n-bg);
+        color: var(--mf-n-fg);
+      }
+      .plan tr.mfrow th,
+      .plan tr.mfrow td {
+        background: var(--mf-row);
       }
       .c-ANA {
         background: var(--bad);
@@ -1311,7 +1338,15 @@
             }
           return d;
         }
-        const LABEL = { ...SHIFT, ...ABS };
+        // Maintien four : poste hors production (jour ou nuit), compté en heures travaillées.
+        const MF = {
+          MJ: "Maintien four jour 8h–20h",
+          MN: "Maintien four nuit 20h–8h",
+        };
+        const isMF = (c) => !!MF[c];
+        const LABEL = { ...SHIFT, ...ABS, ...MF };
+        // Codes affichés dans les cases (MJ et MN s'affichent « MF »).
+        const disp = (c) => (isMF(c) ? "MF" : c);
         const DEFAULT_CYCLE = {
           pattern: "RJJJRRRRRRRNNNRRRRJJJRNNNRRR".split(""),
           ref: "2026-01-05",
@@ -2133,7 +2168,11 @@
           memo.set(k, v);
           return v;
         }
-        const isWork = (c) => c === "J" || c === "N";
+        // Nature du poste : J (8h–20h) ou N (20h–8h), production ou maintien four.
+        const KIND = { J: "J", N: "N", MJ: "J", MN: "N" };
+        const isWork = (c) => !!KIND[c];
+        // Absent de la production ce jour-là (absence ou maintien four) : poste à remplacer.
+        const isAway = (c) => !!ABS[c] || isMF(c);
         // "08:30" -> 8.5 ; sur un poste de nuit, les heures après minuit sont ramenées à 24 h et plus.
         const toH = (hm) => {
           const [h, m] = String(hm || "")
@@ -2146,7 +2185,7 @@
           let a = toH(pa.from),
             b = toH(pa.to);
           if (Number.isNaN(a) || Number.isNaN(b)) return null;
-          if (c === "N") {
+          if (KIND[c] === "N") {
             if (a < 20) a += 24;
             if (b <= 20) b += 24;
           }
@@ -2158,7 +2197,7 @@
           const sp = partialSpan(c, pa);
           const ov = (x, y) =>
             sp ? Math.max(0, Math.min(sp[1], y) - Math.max(sp[0], x)) : 0;
-          return c === "J"
+          return KIND[c] === "J"
             ? [12 - ov(8, 20), 0]
             : [4 - ov(20, 24), 8 - ov(24, 32)];
         }
@@ -2200,7 +2239,7 @@
         };
         function needsCover(a, ds) {
           const e = entryOf(a.id, ds);
-          return !!(e && ABS[e.c] && isWork(teamCode(a.eq, ds)) && !e.r);
+          return !!(e && isAway(e.c) && isWork(teamCode(a.eq, ds)) && !e.r);
         }
         // Ordre choisi par l'utilisateur dans chaque équipe (champ ord) ; le tri par nom ne sert
         // qu'aux fiches antérieures à ce champ, le temps de leur attribuer un rang.
@@ -2374,7 +2413,7 @@
           const t = tx();
           for (const ds of days) {
             const e = t.entry(absentId, ds);
-            if (!e || !ABS[e.c]) continue;
+            if (!e || !isAway(e.c)) continue;
             if (e.r) {
               const o = t.entry(e.r, ds);
               if (o && o.rp === absentId) t.put(e.r, ds, null);
@@ -2422,7 +2461,7 @@
         function absenceBlock(a, ds) {
           // Jours travaillés consécutifs (selon le cycle) couverts par la même absence non remplacée.
           const e = entryOf(a.id, ds);
-          if (!e || !ABS[e.c]) return [ds];
+          if (!e || !isAway(e.c)) return [ds];
           const same = (d) => {
             const x = entryOf(a.id, d);
             return x && x.c === e.c && !x.r;
@@ -2468,8 +2507,8 @@
               // Repos obligatoire de 11 h entre deux postes : pas de jour (8h) en sortant de nuit,
               // pas de nuit (jusqu'à 8h) la veille d'un poste de jour.
               if (
-                (shift === "J" && before === "N") ||
-                (shift === "N" && after === "J")
+                (shift === "J" && KIND[before] === "N") ||
+                (shift === "N" && KIND[after] === "J")
               ) {
                 ok = false;
                 break;
@@ -2798,7 +2837,7 @@
                     } else if (
                       e &&
                       e.c &&
-                      !ABS[e.c] &&
+                      !isAway(e.c) &&
                       e.c !== teamCode(a.eq, ds)
                     )
                       k.push("ovr");
@@ -2824,7 +2863,7 @@
                       k.push("cmt");
                       tip += `\n💬 ${nt}`;
                     }
-                    return `<td class="${cls(ds)}"><button class="${k.join(" ")}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(tip)}">${c === "R" ? (nd ? "ND" : "") : c}</button></td>`;
+                    return `<td class="${cls(ds)}"><button class="${k.join(" ")}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(tip)}">${c === "R" ? (nd ? "ND" : "") : disp(c)}</button></td>`;
                   })
                   .join("") +
                 `<td class="tot" title="Prévu sur le mois : ${fmtH(hoursBetween(a, days[0], days[days.length - 1]))} h">${fmtH(doneHours(a, days[0], days[days.length - 1]))} h</td></tr>`;
@@ -2872,14 +2911,39 @@
             );
           };
 
+          // Total des heures de maintien four (jour + nuit), réalisées jusqu'à la veille.
+          const mfHours = (ds) =>
+            agents.reduce((h, a) => {
+              const c = codeOf(a, ds);
+              if (!isMF(c)) return h;
+              const p = shiftParts(c, entryOf(a.id, ds)?.pa);
+              return h + p[0] + p[1];
+            }, 0);
+          const mfRow = () => {
+            const vals = days.map((ds) => (isDone(ds) ? mfHours(ds) : null));
+            return (
+              `<tr class="staff hrs mfrow"><th class="name">Maintien four <small class="muted">jour + nuit</small></th>` +
+              vals
+                .map((h, i) => {
+                  if (h === null) {
+                    const pv = mfHours(days[i]);
+                    return `<td class="${cls(days[i])}"><span class="staffn muted" title="Pas encore réalisé${pv ? ` (prévu : ${fmtH(pv)} h)` : ""}">${pv ? "–" : ""}</span></td>`;
+                  }
+                  return `<td class="${cls(days[i])}"><span class="staffn" title="${fmtH(h)} h de maintien four le ${fmtShort(days[i])}">${h ? fmtH(h) : ""}</span></td>`;
+                })
+                .join("") +
+              `<td class="tot"><b>${fmtH(vals.reduce((x, y) => x + (y || 0), 0))} h</b></td></tr>`
+            );
+          };
+
           return `<div style="display:flex;flex-direction:column;gap:12px">
     <div class="gridwrap"><table class="plan">
       <thead><tr><th class="name" rowspan="2">Agent</th>${wkrow}<th class="tot" rowspan="2">H mois</th></tr><tr>${head}</tr></thead>
-      <tbody>${body}${staff("J")}${staff("N")}${hoursRow("J")}${hoursRow("N")}</tbody>
+      <tbody>${body}${staff("J")}${staff("N")}${hoursRow("J")}${hoursRow("N")}${mfRow()}</tbody>
     </table></div>
     <div class="legend">
       <span><i class="c c-J">J</i>Jour 8h–20h</span><span><i class="c c-N">N</i>Nuit 20h–8h</span><span><i class="c c-R" style="width:30px">·</i>Repos</span>
-      <span><i class="c c-CP">CP</i>Congé</span><span><i class="c c-RCR">RCR</i>RCR/RCE</span><span><i class="c c-MAL">MAL</i>Maladie</span><span><i class="c c-FOR">FOR</i>Formation</span><span><i class="c c-ANA">ANA</i>Abs. non autorisée</span><span><i class="nd-mark">ND</i>contacté, non disponible</span><span><i class="cmt-mark"></i>commentaire</span>
+      <span><i class="c c-CP">CP</i>Congé</span><span><i class="c c-RCR">RCR</i>RCR/RCE</span><span><i class="c c-MAL">MAL</i>Maladie</span><span><i class="c c-FOR">FOR</i>Formation</span><span><i class="c c-ANA">ANA</i>Abs. non autorisée</span><span><i class="c c-MJ">MF</i>Maintien four jour</span><span><i class="c c-MN">MF</i>Maintien four nuit</span><span><i class="nd-mark">ND</i>contacté, non disponible</span><span><i class="cmt-mark"></i>commentaire</span>
       <span><i class="c cell need" style="width:14px;height:14px"></i>à remplacer</span><span><i class="c cell cov" style="width:14px;height:14px"></i>remplacé</span>
       <span><i class="c c-J cell rp">J</i>en remplacement</span><span><i class="c c-J cell ovr">J</i>modifié hors cycle</span><span><i class="c c-J cell part">J</i>absence partielle</span>
     </div>
@@ -3124,7 +3188,7 @@
             mon = mondayOf(ds);
           const can = S.canWrite;
           let repl = "";
-          if (e && ABS[e.c] && isWork(base)) {
+          if (e && isAway(e.c) && isWork(base)) {
             if (e.r) {
               repl = `<div class="sec"><div class="label">Remplacement</div><div class="cand"><span class="c c-${base}" style="width:30px;height:22px">${base}</span><div><div class="who">${esc(fullName(agentById(e.r)))}</div><div class="meta">${esc(groupShort(agentById(e.r)?.eq || "?"))} · remplace sur ce poste</div></div>${can ? `<button class="btn sm" data-act="unrepl">Retirer</button>` : ""}</div></div>`;
             } else if (can) {
@@ -3180,7 +3244,7 @@
       <button class="btn iconbtn ghost" data-act="close" aria-label="Fermer">✕</button></header>
     <div class="body">
       <dl class="kv">${a.eq === POOL ? `<dt>Prévu</dt><dd>Remplaçant : pas de cycle, disponible pour renforcer les équipes</dd>` : `<dt>Prévu pour l'équipe</dt><dd><span class="c c-${base}" style="width:30px;height:20px">${base === "R" ? "·" : base}</span> ${LABEL[base]}</dd>`}
-        <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : code}</span> ${a.eq === POOL && code === "R" ? "Disponible (sans poste)" : LABEL[code]}</dd>
+        <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : disp(code)}</span> ${a.eq === POOL && code === "R" ? "Disponible (sans poste)" : LABEL[code]}</dd>
         <dt>Semaine S${isoWeek(ds)}</dt><dd class="mono">${fmtH(wk)} h réalisées · ${fmtH(hoursBetween(a, mon, addDays(mon, 6)))} h prévues <span class="muted">(${fmtShort(mon)} → ${fmtShort(addDays(mon, 6))})</span></dd></dl>
       ${rp}
       ${
@@ -3204,11 +3268,17 @@
         can
           ? `<div class="sec"><div class="label">Poste de la journée</div><div class="choices">
         ${["J", "N", "R"].map((c) => `<button class="choice" data-act="shift" data-v="${c}" aria-pressed="${code === c}"><span class="c c-${c}">${c === "R" ? "·" : c}</span>${c === "J" ? "Jour" : c === "N" ? "Nuit" : "Repos"}</button>`).join("")}
+        ${Object.keys(MF)
+          .map(
+            (c) =>
+              `<button class="choice" data-act="shift" data-v="${c}" aria-pressed="${code === c}"><span class="c c-${c}">MF</span>Maintien four ${c === "MJ" ? "jour" : "nuit"}</button>`,
+          )
+          .join("")}
         ${e ? `<button class="choice" data-act="shift" data-v="">Revenir au cycle</button>` : ""}</div></div>
       ${
         isWork(code)
           ? `<div class="sec"><div class="label">Absence partielle sur le poste${e?.pa ? ` · ${fmtH(12 - partialHours(code, e.pa))} h travaillées` : ""}</div>
-        <div class="range"><label>De<input type="time" id="pa-from" step="900" value="${esc(e?.pa?.from || (code === "J" ? "08:00" : "20:00"))}"></label><label>À<input type="time" id="pa-to" step="900" value="${esc(e?.pa?.to || "")}"></label>
+        <div class="range"><label>De<input type="time" id="pa-from" step="900" value="${esc(e?.pa?.from || (KIND[code] === "J" ? "08:00" : "20:00"))}"></label><label>À<input type="time" id="pa-to" step="900" value="${esc(e?.pa?.to || "")}"></label>
           <label>Motif<select id="pa-m">${Object.keys(ABS)
             .map(
               (m) =>
@@ -3216,7 +3286,7 @@
             )
             .join("")}</select></label></div>
         <div class="choices"><button class="btn sm primary" data-act="partial">${e?.pa ? "Modifier" : "Enregistrer"}</button>${e?.pa ? `<button class="btn sm" data-act="unpartial">Retirer l'absence partielle</button>` : ""}</div>
-        <p class="note">Horaires compris dans le poste (${code === "J" ? "8h–20h" : "20h–8h"}). Les heures d'absence sont retirées des heures travaillées.</p>
+        <p class="note">Horaires compris dans le poste (${KIND[code] === "J" ? "8h–20h" : "20h–8h"}). Les heures d'absence sont retirées des heures travaillées.</p>
       </div>`
           : ""
       }
@@ -3312,14 +3382,14 @@
               m: $("#pa-m").value,
             };
             const sp = partialSpan(c, pa);
-            const lo = c === "J" ? 8 : 20;
+            const lo = KIND[c] === "J" ? 8 : 20;
             if (!pa.from || !pa.to || !sp) {
               toast("Indiquez l'heure de début et l'heure de fin.");
               return;
             }
             if (sp[0] < lo || sp[1] > lo + 12 || sp[1] <= sp[0]) {
               toast(
-                `Les horaires doivent être compris dans le poste (${c === "J" ? "8h–20h" : "20h–8h"}).`,
+                `Les horaires doivent être compris dans le poste (${KIND[c] === "J" ? "8h–20h" : "20h–8h"}).`,
               );
               return;
             }
