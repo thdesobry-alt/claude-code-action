@@ -998,12 +998,26 @@
     height: auto;
     display: block;
   }
+  .zone-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .zone-grad {
+    width: 160px;
+    height: 10px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, hsl(120, 62%, 36%), hsl(60, 62%, 40%), hsl(0, 62%, 36%));
+  }
   .zone-svg g[data-zone] {
     cursor: pointer;
   }
   .zone-svg rect {
     fill: var(--bar);
-    stroke: var(--bar);
+    stroke: rgba(0, 0, 0, 0.18);
     stroke-width: 1.5;
   }
   .zone-svg g[data-zone]:hover rect,
@@ -1018,7 +1032,7 @@
     outline: none;
   }
   .zone-svg text {
-    fill: var(--on-bar);
+    fill: #ffffff;
     font-size: 15px;
     text-anchor: middle;
     pointer-events: none;
@@ -3914,6 +3928,13 @@
         all += x.dur;
       });
       $("zoneSub").textContent = mode === "pending" ? "Chargement de la base…" : "Du " + fmtDate(ui.from) + " au " + fmtDate(ui.to) + ". Cliquez sur une zone pour afficher son Pareto.";
+      // couleur : vert (moins d'arrêts) → rouge (plus d'arrêts), selon le critère Durée / Nombre
+      var byN = ui.metric.schema === "n", vals = ZONES.map(function (z) { return (byN ? cnt : tot)[z.id] || 0; });
+      var vmin = Math.min.apply(null, vals), vmax = Math.max.apply(null, vals);
+      function zoneColor(v) {
+        var t = vmax > vmin ? (v - vmin) / (vmax - vmin) : 0;
+        return "hsl(" + Math.round(120 * (1 - t)) + ", 62%, " + Math.round(36 + 4 * Math.sin(Math.PI * t)) + "%)";
+      }
       $("zoneMap").innerHTML = '<svg class="zone-svg" viewBox="0 0 1070 360" role="group" aria-label="Schéma du laminoir">' + ZONES.map(function (z) {
         var cx = z.x + z.w / 2, d = tot[z.id] || 0, n = cnt[z.id] || 0;
         var info = fmtHM(d) + (all ? " · " + pct(d / all) : "");
@@ -3926,8 +3947,9 @@
             '<text class="zd" x="' + cx + '" y="' + (top + z.lines.length * lh + 4) + '">' + info + "</text>" +
             (showN ? '<text class="zp" x="' + cx + '" y="' + (top + z.lines.length * lh + 21) + '">' + n + " arrêt" + (n > 1 ? "s" : "") + "</text>" : "");
         }
-        return '<g data-zone="' + z.id + '" tabindex="0" role="button" aria-pressed="' + (ui.zone === z.id) + '" aria-label="' + esc(z.name) + " : " + info + '"' + (ui.zone === z.id ? ' class="on"' : "") + '><rect x="' + z.x + '" y="' + z.y + '" width="' + z.w + '" height="' + z.h + '" rx="2" />' + txt + "</g>";
-      }).join("") + "</svg>";
+        return '<g data-zone="' + z.id + '" tabindex="0" role="button" aria-pressed="' + (ui.zone === z.id) + '" aria-label="' + esc(z.name) + " : " + info + '"' + (ui.zone === z.id ? ' class="on"' : "") + '><rect x="' + z.x + '" y="' + z.y + '" width="' + z.w + '" height="' + z.h + '" rx="2" style="fill: ' + zoneColor(byN ? n : d) + '" />' + txt + "</g>";
+      }).join("") + "</svg>" +
+        '<div class="zone-legend"><span>Moins d\'arrêts</span><span class="zone-grad"></span><span>Plus d\'arrêts</span><span class="muted">(' + (byN ? "en nombre" : "en durée") + ")</span></div>";
       var dn = tot.none || 0;
       $("zoneOut").innerHTML = dn
         ? '<p class="hint">Hors schéma (machines sans zone) : ' + fmtHM(dn) + " · " + (cnt.none || 0) + " arrêt(s) · " + '<button class="btn sm" data-zone-btn="none"' + (ui.zone === "none" ? ' aria-pressed="true"' : "") + ">Voir le Pareto</button></p>"
