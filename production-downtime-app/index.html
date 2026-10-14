@@ -1363,7 +1363,7 @@
             Saisissez pour chaque journée de production (8h à 8h le lendemain)
             les tonnes produites et le temps d'ouverture. Le temps d'arrêt vient
             des arrêts saisis. Taux de marche = (ouverture − arrêts) ÷ ouverture.
-            Productivité = tonnes ÷ temps de marche.
+            Productivité = tonnes ÷ temps d'ouverture.
           </p>
         </div>
         <div class="row">
@@ -2906,7 +2906,7 @@
         var stopMs = stopTimeIn(a, b), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
         var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
         rows.push({ key: key, a: a, tons: tons, open: open, stopMs: stopMs, run: run,
-          taux: openMs ? run / openMs : null, prod: run && tons != null ? tons / (run / 3600000) : null });
+          taux: openMs ? run / openMs : null, prod: openMs && tons != null ? tons / (openMs / 3600000) : null });
       }
       return rows;
     }
@@ -2926,7 +2926,7 @@
         '<div class="kpi"><div class="l">Production du mois</div><div class="v">' + fmtNum(T, 0) + " t</div></div>" +
         '<div class="kpi"><div class="l">Temps d\'ouverture</div><div class="v">' + fmtHM(O) + "</div></div>" +
         '<div class="kpi"><div class="l">Taux de marche</div><div class="v">' + (O ? pct(R / O) : "—") + "</div></div>" +
-        '<div class="kpi"><div class="l">Productivité</div><div class="v">' + (R ? fmtNum(T / (R / 3600000), 1) + " t/h" : "—") + "</div></div>";
+        '<div class="kpi"><div class="l">Productivité</div><div class="v">' + (O ? fmtNum(T / (O / 3600000), 1) + " t/h" : "—") + "</div></div>";
       var wd = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
       $("pdTable").innerHTML = '<table class="ed-table pd-table"><thead><tr><th>Journée (8h → 8h)</th><th class="num">Production (t)</th><th class="num">Temps d\'ouverture</th><th class="num">Temps d\'arrêt</th><th class="num">Temps de marche</th><th class="num">Taux de marche</th><th class="num">Productivité (t/h)</th></tr></thead><tbody>' +
         rows.map(function (r) {
@@ -2938,7 +2938,7 @@
             '<td class="num">' + (r.taux == null ? "—" : '<strong class="' + (r.taux < 0.8 ? "pd-low" : "") + '">' + pct(r.taux) + "</strong>") + "</td>" +
             '<td class="num">' + fmtNum(r.prod, 1) + "</td></tr>";
         }).join("") +
-        '</tbody><tfoot><tr><th>Total du mois</th><th class="num">' + fmtNum(T, 0) + '</th><th class="num">' + fmtHM(O) + '</th><th class="num">' + fmtHM(S) + '</th><th class="num">' + fmtHM(R) + '</th><th class="num">' + (O ? pct(R / O) : "—") + '</th><th class="num">' + (R ? fmtNum(T / (R / 3600000), 1) : "—") + "</th></tr></tfoot></table>" +
+        '</tbody><tfoot><tr><th>Total du mois</th><th class="num">' + fmtNum(T, 0) + '</th><th class="num">' + fmtHM(O) + '</th><th class="num">' + fmtHM(S) + '</th><th class="num">' + fmtHM(R) + '</th><th class="num">' + (O ? pct(R / O) : "—") + '</th><th class="num">' + (O ? fmtNum(T / (O / 3600000), 1) : "—") + "</th></tr></tfoot></table>" +
         '<p class="hint">Les totaux portent sur les journées dont le temps d\'ouverture est saisi.</p>';
     }
     function savePdRow(tr) {
@@ -3084,7 +3084,7 @@
       var r = crRange(), v = production[r.key] || {}, adm = isAdmin();
       var stopMs = stopTimeIn(r.a, r.b), mb = stopTimeIn(r.a, r.b, true), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
       var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
-      var taux = openMs ? run / openMs : null, prod = run && tons != null ? tons / (run / 3600000) : null;
+      var taux = openMs ? run / openMs : null, prod = openMs && tons != null ? tons / (openMs / 3600000) : null;
       box.innerHTML = '<div class="kpis">' +
         '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>" +
         '<div class="kpi"><div class="l">Productivité</div><div class="v">' + (prod == null ? "—" : fmtNum(prod, 1) + " t/h") + "</div></div>" +
