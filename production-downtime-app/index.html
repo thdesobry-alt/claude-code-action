@@ -1350,6 +1350,10 @@
           <label class="f">Afficher<select id="zoneShow"><option value="all">Toutes les machines</option><option value="none">Hors schéma seulement</option></select></label>
         </div>
         <div id="zoneTable"></div>
+        <h3 style="margin-top: 14px">Coller une table depuis Excel</h3>
+        <p class="hint">Colonnes : Code machine, Nom machine, Zone (le nom doit être celui d'une zone du schéma, ou « Hors schéma »).</p>
+        <textarea id="zonePaste" rows="5" style="width: 100%" placeholder="Collez ici les lignes copiées depuis Excel"></textarea>
+        <div class="row" style="margin-top: 8px"><button class="btn primary" id="zonePasteBtn">Appliquer la table</button><span class="hint" id="zonePasteInfo"></span></div>
       </details>
     </div>
   </section>
@@ -2152,14 +2156,18 @@
     // zones du schéma : config/zones = {items: {codeMacc: idZone ("" = hors schéma)}} ; sinon affectation par défaut
     var zones = {};
     function writeZone(code, zone) {
+      var patch = {};
+      patch[code] = zone;
+      return writeZones(patch);
+    }
+    function writeZones(patch) {
       if (mode === "local") {
-        zones[code] = zone;
+        Object.assign(zones, patch);
         saveLocal();
         refresh();
         return Promise.resolve();
       }
-      var ref = db.doc("config/zones"), patch = {}, ck = "config/zones";
-      patch[code] = zone;
+      var ref = db.doc("config/zones"), ck = "config/zones";
       chains[ck] = (chains[ck] || Promise.resolve())
         .then(async function () {
           try { await ref.update({ items: patch }); }
@@ -3975,6 +3983,29 @@
     $("zoneOut").addEventListener("click", function (e) {
       var b = e.target.closest("[data-zone-btn]");
       if (b) pickZone(b.dataset.zoneBtn);
+    });
+    function zoneIdFromName(n) {
+      var k = String(n || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+      if (!k) return null;
+      if (k === "hors schema" || k === "aucune" || k === "-") return "";
+      var z = ZONES.find(function (x) { return x.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() === k || x.id === k; });
+      return z ? z.id : null;
+    }
+    $("zonePasteBtn").addEventListener("click", function () {
+      if (!isAdmin()) return;
+      var patch = {}, n = 0, bad = [], same = 0;
+      parseTSV($("zonePaste").value).forEach(function (cells, i) {
+        var c = normCode(cells[0]);
+        if (!c || !/\d/.test(c)) return; // en-tête ou ligne vide
+        var z = zoneIdFromName(cells.length > 2 ? cells[2] : cells[1]);
+        if (z === null) { bad.push(c); return; }
+        if (zoneOfCode(c) === z) { same++; return; }
+        patch[c] = z; n++;
+      });
+      var info = n + " machine(s) changée(s) de zone" + (same ? " · " + same + " déjà correcte(s)" : "") + (bad.length ? " · zone non reconnue pour : " + bad.slice(0, 10).join(", ") + (bad.length > 10 ? "…" : "") : "");
+      $("zonePasteInfo").textContent = info;
+      if (!n) return;
+      writeZones(patch).then(function () { $("zonePaste").value = ""; toast(n + " machine(s) réaffectée(s)"); renderSchema(); });
     });
     $("zoneDetails").addEventListener("toggle", function () { if (this.open) renderZoneTable(); });
     $("zoneQ").addEventListener("input", renderZoneTable);
