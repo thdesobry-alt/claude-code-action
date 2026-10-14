@@ -3878,20 +3878,12 @@
       { id: "refr", name: "Refroidissoir jusque VR9", lines: ["Refroidissoir", "Jusque VR9"], x: 884, y: 148, w: 168, h: 204 },
       { id: "knca", name: "KNCA", lines: ["KNCA"], x: 884, y: 84, w: 168, h: 56 },
       { id: "evac", name: "Évacuation TR12 12bis", lines: ["Évacuation", "TR12 12bis"], x: 884, y: 4, w: 168, h: 72 },
+      { id: "eau", name: "Station eau", lines: ["Station eau"], x: 346, y: 26, w: 256, h: 84 },
     ];
-    // affectation par défaut selon le code machine (modifiable par l'Admin)
+    // affectation par défaut (Table_zones_laminoir.xlsx revue) ; modifiable par l'Admin
+    var DEFAULT_ZONES = {"300":"eau","301":"eau","302":"eau","303":"eau","320":"eau","321":"eau","322":"eau","323":"eau","324":"eau","330":"eau","331":"eau","332":"eau","333":"eau","334":"eau","335":"eau","336":"eau","337":"eau","338":"eau","340":"eau","341":"eau","342":"eau","343":"eau","344":"eau","345":"eau","346":"eau","347":"eau","348":"eau","349":"eau","350":"eau","351":"eau","353":"eau","354":"eau","355":"eau","357":"eau","358":"eau","359":"eau","360":"eau","370":"eau","400":"enf","401":"enf","405":"enf","406":"enf","407":"enf","408":"enf","409":"enf","410":"enf","411":"enf","412":"enf","415":"enf","420":"enf","421":"enf","422":"enf","423":"enf","425":"enf","426":"enf","427":"enf","428":"enf","429":"enf","430":"enf","431":"enf","435":"enf","440":"soud","441":"soud","445":"soud","446":"soud","449":"soud","450":"soud","451":"soud","452":"soud","455":"soud","458":"soud","460":"soud","465":"soud","466":"train","467":"train","469":"train","470":"train","471":"train","472":"train","473":"train","475":"train","476":"train","477":"train","478":"train","479":"train","480":"train","481":"train","482":"train","483":"train","484":"train","485":"train","486":"train","487":"train","490":"train","495":"train","496":"train","497":"train","500":"train","501":"train","502":"train","505":"train","506":"train","510":"train","511":"train","515":"train","516":"train","517":"train","520":"train","521":"train","523":"train","524":"train","525":"train","526":"train","527":"train","528":"train","529":"train","530":"train","531":"train","532":"train","533":"train","535":"train","536":"train","540":"train","541":"train","542":"train","545":"petit","546":"petit","550":"petit","551":"petit","552":"petit","553":"petit","554":"petit","555":"petit","556":"petit","557":"petit","558":"petit","559":"petit","560":"petit","561":"petit","562":"petit","565":"petit","566":"petit","567":"petit","568":"petit","570":"petit","572":"petit","574":"gros","575":"gros","576":"gros","577":"gros","580":"gros","585":"gros","586":"gros","587":"gros","590":"gros","591":"gros","592":"gros","595":"gros","596":"gros","597":"gros","598":"gros","600":"refr","601":"refr","602":"refr","605":"refr","606":"refr","610":"refr","611":"refr","614":"refr","615":"refr","616":"refr","617":"refr","618":"refr","620":"refr","625":"refr","626":"refr","627":"refr","630":"refr","631":"refr","635":"refr","636":"refr","637":"refr","638":"knca","639":"knca","640":"knca","641":"knca","642":"knca","643":"knca","644":"knca","645":"knca","646":"knca","647":"knca","648":"evac","650":"evac","651":"evac","655":"evac","656":"evac","657":"evac","660":"evac","661":"evac","662":"evac","663":"evac"};
     function defaultZone(code) {
-      var n = parseInt(code, 10);
-      if (isNaN(n)) return "";
-      if (n >= 400 && n <= 435) return "enf";
-      if (n >= 440 && n <= 465) return "soud";
-      if (n >= 466 && n <= 546) return "train";
-      if (n >= 550 && n <= 572) return "petit";
-      if (n >= 574 && n <= 587) return "gros";
-      if (n >= 590 && n <= 637) return "refr";
-      if (n >= 638 && n <= 647) return "knca";
-      if (n >= 648 && n <= 663) return "evac";
-      return "";
+      return DEFAULT_ZONES[code] || "";
     }
     function zoneOfCode(code) {
       var c = normCode(code);
