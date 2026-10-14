@@ -12,6 +12,9 @@
 <style>
   /* Layout: atelier control panel — header band with profile, sticky tab rail, filter strip shared by analysis tabs */
   :root {
+    --zone: #17607f;
+    --zone-hover: #1f7398;
+    --zone-line: #0f4a63;
     --bg: #f4f5f5;
     --surface: #ffffff;
     --surface-2: #f7f8f7;
@@ -993,6 +996,45 @@
   .muted {
     color: var(--muted);
   }
+  .zone-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .zone-svg g[data-zone] {
+    cursor: pointer;
+  }
+  .zone-svg rect {
+    fill: var(--zone);
+    stroke: var(--zone-line);
+    stroke-width: 1.5;
+  }
+  .zone-svg g[data-zone]:hover rect,
+  .zone-svg g[data-zone]:focus-visible rect {
+    fill: var(--zone-hover);
+  }
+  .zone-svg g[data-zone].on rect {
+    stroke: var(--accent);
+    stroke-width: 5;
+  }
+  .zone-svg g:focus {
+    outline: none;
+  }
+  .zone-svg text {
+    fill: #ffffff;
+    font-size: 15px;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+  .zone-svg text.zd {
+    font-size: 13px;
+    font-weight: 700;
+    fill: #ffffff;
+  }
+  .zone-svg text.zp {
+    font-size: 12px;
+    fill: #d6e6ee;
+  }
   .gclose {
     margin-left: 6px;
     padding: 1px 8px;
@@ -1060,6 +1102,7 @@
     <button role="tab" data-tab="machine" aria-selected="true">
       Analyse Pareto Machine
     </button>
+    <button role="tab" data-tab="schema" aria-selected="false">Schéma laminoir</button>
     <button role="tab" data-tab="actions" aria-selected="false">Saisie des actions / REX</button>
     <button role="tab" data-tab="actview" aria-selected="false">Actions</button>
     <button role="tab" data-tab="rex" aria-selected="false">REX</button>
@@ -1290,6 +1333,30 @@
 
   <!-- PARETO MACHINE -->
   <section data-panel="machine" class="stack"></section>
+  <!-- SCHÉMA DU LAMINOIR -->
+  <section data-panel="schema" class="stack" hidden>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between; align-items: center">
+        <div>
+          <h2>Schéma du laminoir</h2>
+          <p class="hint" id="zoneSub"></p>
+        </div>
+      </div>
+      <div id="zoneMap"></div>
+      <div id="zoneOut"></div>
+    </div>
+    <div id="zonePareto" class="stack"></div>
+    <div class="panel stack" id="zoneAdmin" hidden>
+      <details id="zoneDetails">
+        <summary><strong>Affectation des machines aux zones</strong></summary>
+        <div class="row" style="margin: 10px 0">
+          <input id="zoneQ" placeholder="Rechercher un code ou une machine" style="width: 280px" />
+          <label class="f">Afficher<select id="zoneShow"><option value="all">Toutes les machines</option><option value="none">Hors schéma seulement</option></select></label>
+        </div>
+        <div id="zoneTable"></div>
+      </details>
+    </div>
+  </section>
   <!-- PARETO TYPE -->
   <section data-panel="type" class="stack" hidden></section>
 
@@ -1517,7 +1584,7 @@
       gran: "day",
       ref: null,
       sel: { machine: null, type: null, diam: null },
-      metric: { machine: "dur", type: "dur", cr: "dur" },
+      metric: { machine: "dur", type: "dur", cr: "dur", schema: "dur" },
       focus: { machine: null, type: null },
     };
 
@@ -1816,7 +1883,7 @@
       try {
         localStorage.setItem(
           LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety }),
+          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones }),
         );
       } catch (e) {}
       if (fileHandle) scheduleFileSave();
@@ -1855,16 +1922,17 @@
       return clone(o); // conflit sur une même valeur : la modification de ce poste l'emporte
     }
     function snapshot() {
-      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
+      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
     }
     function applyState(s) {
-      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {};
+      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {}; zones = s.zones || {};
       if (s.codes && (s.codes.fer || s.codes.macc)) { codes = { fer: s.codes.fer || DEFAULT_CODES.fer, macc: s.codes.macc || DEFAULT_CODES.macc }; codesCustom = true; }
       else { codes = DEFAULT_CODES; codesCustom = false; }
     }
     // fichier exporté (version 2, liste « arrets ») -> structure de la base
     function fromExport(data) {
-      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, codes: null }, groups = {}, order = [];
+      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, codes: null }, groups = {}, order = [];
+      if (data.zones && typeof data.zones === "object") Object.keys(data.zones).forEach(function (c) { st.zones[c] = String(data.zones[c] || ""); });
       (data.securite || []).forEach(function (x, i) {
         var k = pdKeyFromFr(x.jour);
         if (!k) return;
@@ -1907,15 +1975,15 @@
     async function readFileState() {
       var f = await fileHandle.getFile(), text = await f.text();
       fileLastMod = f.lastModified;
-      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, codes: null };
+      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, codes: null };
       var d = JSON.parse(text);
-      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, codes: d.codes || null };
+      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, zones: d.zones || {}, codes: d.codes || null };
       if (d && Array.isArray(d.arrets)) return fromExport(d);
       throw new Error("format");
     }
     async function writeFileState(s) {
       var w = await fileHandle.createWritable();
-      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, codes: s.codes }));
+      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, zones: s.zones || {}, codes: s.codes }));
       await w.close();
       fileLastMod = (await fileHandle.getFile()).lastModified;
     }
@@ -2069,6 +2137,7 @@
           program = d.program || {};
           production = d.production || {};
           safety = d.safety || {};
+          zones = d.zones || {};
         }
       } catch (e) {}
     }
@@ -2083,6 +2152,28 @@
       };
       if (s.imp) { o.imp = s.imp; o.impAt = s.impAt; o.impSrc = s.impSrc || ""; }
       return o;
+    }
+    // zones du schéma : config/zones = {items: {codeMacc: idZone ("" = hors schéma)}} ; sinon affectation par défaut
+    var zones = {};
+    function writeZone(code, zone) {
+      if (mode === "local") {
+        zones[code] = zone;
+        saveLocal();
+        refresh();
+        return Promise.resolve();
+      }
+      var ref = db.doc("config/zones"), patch = {}, ck = "config/zones";
+      patch[code] = zone;
+      chains[ck] = (chains[ck] || Promise.resolve())
+        .then(async function () {
+          try { await ref.update({ items: patch }); }
+          catch (e) {
+            if (e && e.code === "invalid_argument") { var sn = await ref.get(); if (!sn.exists) { await ref.set({ items: patch }); return; } }
+            throw e;
+          }
+        })
+        .catch(function (e) { toast(dbErrorMessage(e)); });
+      return chains[ck];
     }
     // production par journée : config/production = {items: {"AAAA-MM-JJ" (jour de démarrage 8h): {tonnes, ouverture (min)}}}
     var production = {};
@@ -2466,7 +2557,7 @@
       return /^four$/i.test(codeName("fer", s.fer).trim());
     }
     function isPareto() {
-      return curTab === "machine" || curTab === "type";
+      return curTab === "machine" || curTab === "type" || curTab === "schema";
     }
     function noPeriod() {
       return curTab === "actview" || curTab === "rex";
@@ -2485,7 +2576,8 @@
             isSel("machine", machineOf(s)) &&
             isSel("type", typeOf(s)) &&
             isSel("diam", diamOf(s)) &&
-            !(ui.noFour && isPareto() && isFour(s))
+            !(ui.noFour && isPareto() && isFour(s)) &&
+            (curTab !== "schema" || !ui.zone || zoneMatch(s, ui.zone))
           );
         })
         .map(function (s) {
@@ -3285,6 +3377,7 @@
           return { jour: x.day.split("-").reverse().join("/"), heure: x.heure, type: x.type, lieu: x.lieu, description: x.description,
             actions: incActions(x).map(function (a) { return { action: a.action, pilote: a.pilote, delai: a.delai, fait: !!a.done }; }) };
         }),
+        zones: Object.assign({}, zones),
         production: Object.keys(production).sort().map(function (k) { var v = production[k] || {}; return { jour: k.split("-").reverse().join("/"), tonnes: v.tonnes == null ? "" : v.tonnes, ouvertureMin: v.ouverture == null ? null : v.ouverture }; }),
         arrets: stops.map(function (s) {
           return {
@@ -3370,6 +3463,7 @@
         (x.actions || []).forEach(function (a, j) { acts0["s" + uid() + j] = { action: a.action || "", pilote: a.pilote || "", delai: a.delai || "", done: !!a.fait, created: Date.now() + j }; });
         writeSafety(k.slice(0, 7), "x" + uid(), { day: k, heure: x.heure || "", type: x.type || "", lieu: x.lieu || "", description: x.description || "", actions: acts0, created: Date.now() });
       });
+      if (data.zones && typeof data.zones === "object") Object.keys(data.zones).forEach(function (c) { if (zones[c] === undefined) writeZone(c, String(data.zones[c] || "")); });
       (data.production || []).forEach(function (pr) {
         var k = pdKeyFromFr(pr.jour);
         if (k && !production[k]) writeProduction(k, { tonnes: pr.tonnes === "" || pr.tonnes == null ? null : +pr.tonnes, ouverture: pr.ouvertureMin == null ? null : +pr.ouvertureMin });
@@ -3770,6 +3864,132 @@
         '<div class="confirm"><button class="btn sm primary" data-pf-create>Créer l\'action</button><button class="btn sm" data-pf-cancel>Annuler</button>' +
         '<span class="sel-attach">ou rattacher une action existante <input list="planList" data-pf="attach" placeholder="N°, ex. A-0012" autocomplete="off" /><button class="btn sm" data-pf-attach>Rattacher</button></span></div></div>';
     }
+    // ---------- Schéma du laminoir ----------
+    var ZONES = [
+      { id: "enf", name: "Enfournement / Défournement", lines: ["Enfournement /", "Défournement"], x: 18, y: 26, w: 134, h: 326 },
+      { id: "soud", name: "Soudeuse", lines: ["Soudeuse"], x: 168, y: 268, w: 168, h: 84 },
+      { id: "train", name: "Train", lines: ["Train"], x: 346, y: 268, w: 256, h: 84 },
+      { id: "petit", name: "Ligne petit diamètre", lines: ["Ligne petit diamètre"], x: 628, y: 268, w: 240, h: 40, inline: true },
+      { id: "gros", name: "Ligne gros diamètre", lines: ["Ligne gros diamètre"], x: 628, y: 312, w: 240, h: 40, inline: true },
+      { id: "refr", name: "Refroidissoir jusque VR9", lines: ["Refroidissoir", "Jusque VR9"], x: 884, y: 148, w: 168, h: 204 },
+      { id: "knca", name: "KNCA", lines: ["KNCA"], x: 884, y: 84, w: 168, h: 56 },
+      { id: "evac", name: "Évacuation TR12 12bis", lines: ["Évacuation", "TR12 12bis"], x: 884, y: 4, w: 168, h: 72 },
+    ];
+    // affectation par défaut selon le code machine (modifiable par l'Admin)
+    function defaultZone(code) {
+      var n = parseInt(code, 10);
+      if (isNaN(n)) return "";
+      if (n >= 400 && n <= 435) return "enf";
+      if (n >= 440 && n <= 465) return "soud";
+      if (n >= 466 && n <= 546) return "train";
+      if (n >= 550 && n <= 572) return "petit";
+      if (n >= 574 && n <= 587) return "gros";
+      if (n >= 590 && n <= 637) return "refr";
+      if (n >= 638 && n <= 647) return "knca";
+      if (n >= 648 && n <= 663) return "evac";
+      return "";
+    }
+    function zoneOfCode(code) {
+      var c = normCode(code);
+      return zones[c] !== undefined ? zones[c] : defaultZone(c);
+    }
+    function zoneOf(s) {
+      return zoneOfCode(s.macc);
+    }
+    function zoneName(id) {
+      if (id === "none") return "Hors schéma";
+      var z = ZONES.find(function (x) { return x.id === id; });
+      return z ? z.name : "";
+    }
+    function zoneMatch(s, id) {
+      var z = zoneOf(s);
+      return id === "none" ? !z : z === id;
+    }
+    function renderSchema() {
+      var sv = ui.zone;
+      ui.zone = null;
+      var f = filtered();
+      ui.zone = sv;
+      var tot = {}, cnt = {}, all = 0;
+      f.forEach(function (x) {
+        var z = zoneOf(x.s) || "none";
+        tot[z] = (tot[z] || 0) + x.dur;
+        cnt[z] = (cnt[z] || 0) + 1;
+        all += x.dur;
+      });
+      $("zoneSub").textContent = mode === "pending" ? "Chargement de la base…" : "Du " + fmtDate(ui.from) + " au " + fmtDate(ui.to) + ". Cliquez sur une zone pour afficher son Pareto.";
+      $("zoneMap").innerHTML = '<svg class="zone-svg" viewBox="0 0 1070 360" role="group" aria-label="Schéma du laminoir">' + ZONES.map(function (z) {
+        var cx = z.x + z.w / 2, d = tot[z.id] || 0, n = cnt[z.id] || 0;
+        var info = fmtHM(d) + (all ? " · " + pct(d / all) : "");
+        var txt;
+        if (z.inline) {
+          txt = '<text x="' + cx + '" y="' + (z.y + 17) + '">' + esc(z.lines[0]) + '</text><text class="zd" x="' + cx + '" y="' + (z.y + 33) + '">' + info + "</text>";
+        } else {
+          var lh = 19, showN = z.h >= 80, top = z.y + z.h / 2 - ((z.lines.length + (showN ? 1.6 : 0.8)) * lh) / 2 + 14;
+          txt = z.lines.map(function (l, i) { return '<text x="' + cx + '" y="' + (top + i * lh) + '">' + esc(l) + "</text>"; }).join("") +
+            '<text class="zd" x="' + cx + '" y="' + (top + z.lines.length * lh + 4) + '">' + info + "</text>" +
+            (showN ? '<text class="zp" x="' + cx + '" y="' + (top + z.lines.length * lh + 21) + '">' + n + " arrêt" + (n > 1 ? "s" : "") + "</text>" : "");
+        }
+        return '<g data-zone="' + z.id + '" tabindex="0" role="button" aria-pressed="' + (ui.zone === z.id) + '" aria-label="' + esc(z.name) + " : " + info + '"' + (ui.zone === z.id ? ' class="on"' : "") + '><rect x="' + z.x + '" y="' + z.y + '" width="' + z.w + '" height="' + z.h + '" rx="2" />' + txt + "</g>";
+      }).join("") + "</svg>";
+      var dn = tot.none || 0;
+      $("zoneOut").innerHTML = dn
+        ? '<p class="hint">Hors schéma (machines sans zone) : ' + fmtHM(dn) + " · " + (cnt.none || 0) + " arrêt(s) · " + '<button class="btn sm" data-zone-btn="none"' + (ui.zone === "none" ? ' aria-pressed="true"' : "") + ">Voir le Pareto</button></p>"
+        : "";
+      if (ui.zone) renderPareto("schema");
+      else $("zonePareto").innerHTML = '<div class="panel"><div class="empty">Sélectionnez une zone du schéma pour afficher son Pareto.</div></div>';
+      $("zoneAdmin").hidden = !isAdmin();
+      if (isAdmin() && $("zoneDetails").open) renderZoneTable();
+    }
+    function renderZoneTable() {
+      var ae = document.activeElement;
+      if (ae && ae.matches && ae.matches("#zoneTable select")) return;
+      var seen = {}, rows = [];
+      Object.keys(codes.macc || {}).forEach(function (c) { seen[c] = 1; });
+      stops.forEach(function (s) { var c = normCode(s.macc); if (c) seen[c] = 1; });
+      var q = $("zoneQ").value.trim().toLowerCase(), only = $("zoneShow").value === "none";
+      Object.keys(seen).sort(function (a, b) { return (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0) || a.localeCompare(b); }).forEach(function (c) {
+        if (c === "0") return;
+        var nm = codeName("macc", c), z = zoneOfCode(c);
+        if (only && z) return;
+        if (q && (c + " " + nm).toLowerCase().indexOf(q) < 0) return;
+        rows.push({ c: c, nm: nm, z: z, custom: zones[c] !== undefined });
+      });
+      $("zoneTable").innerHTML = rows.length
+        ? '<div class="scroll"><table class="ed-table"><thead><tr><th>Code</th><th>Machine</th><th>Zone</th></tr></thead><tbody>' + rows.map(function (r) {
+            return '<tr><td class="mono">' + esc(r.c) + "</td><td>" + esc(r.nm || "—") + '</td><td><select data-zone-code="' + esc(r.c) + '"><option value="">Hors schéma</option>' +
+              ZONES.map(function (z) { return '<option value="' + z.id + '"' + (r.z === z.id ? " selected" : "") + ">" + esc(z.name) + "</option>"; }).join("") + "</select></td></tr>";
+          }).join("") + "</tbody></table></div>"
+        : '<div class="empty">Aucune machine ne correspond.</div>';
+    }
+    function pickZone(id) {
+      ui.zone = ui.zone === id ? null : id;
+      ui.focus.schema = null;
+      renderSchema();
+      if (ui.zone) { var el = $("zonePareto"); if (el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    }
+    $("zoneMap").addEventListener("click", function (e) {
+      var g = e.target.closest("[data-zone]");
+      if (g) pickZone(g.dataset.zone);
+    });
+    $("zoneMap").addEventListener("keydown", function (e) {
+      var g = e.target.closest("[data-zone]");
+      if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); pickZone(g.dataset.zone); }
+    });
+    $("zoneOut").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-zone-btn]");
+      if (b) pickZone(b.dataset.zoneBtn);
+    });
+    $("zoneDetails").addEventListener("toggle", function () { if (this.open) renderZoneTable(); });
+    $("zoneQ").addEventListener("input", renderZoneTable);
+    $("zoneShow").addEventListener("change", renderZoneTable);
+    $("zoneTable").addEventListener("change", function (e) {
+      var sel = e.target.closest("select[data-zone-code]");
+      if (!sel || !isAdmin()) return;
+      var c = sel.dataset.zoneCode;
+      sel.blur();
+      writeZone(c, sel.value).then(function () { toast("Machine " + c + " → " + (zoneName(sel.value) || "Hors schéma")); renderSchema(); });
+    });
     var crRendering = false;
     function renderCRPareto() {
       var r = crRange(), sv = { from: ui.from, to: ui.to, gran: ui.gran };
@@ -3779,7 +3999,7 @@
     }
     function renderPareto(kind) {
       if (kind === "cr" && !crRendering) { renderCRPareto(); return; }
-      var el = kind === "cr" ? $("crPareto") : document.querySelector('[data-panel="' + kind + '"]');
+      var el = kind === "cr" ? $("crPareto") : kind === "schema" ? $("zonePareto") : document.querySelector('[data-panel="' + kind + '"]');
       var ae0 = document.activeElement;
       if (ui.parForm && ae0 && ae0.matches && ae0.matches('[data-panel="' + kind + '"] [data-pf]')) return; // saisie en cours
       var adm = canWriteActions();
@@ -3789,6 +4009,8 @@
       var title =
         kind === "cr"
           ? "Pareto machine de la journée"
+          : kind === "schema"
+          ? "Pareto de la zone " + zoneName(ui.zone)
           : kind === "machine"
             ? "Analyse Pareto Machine"
             : "Analyse Pareto Type d'arrêts";
@@ -4315,6 +4537,7 @@
       if (tab === "prog") renderProgram();
       if (tab === "prod") renderProduction();
       if (tab === "cr") renderCR();
+      if (tab === "schema") renderSchema();
       if (tab === "actview") {
         var ae = document.activeElement;
         if (ae && ae.matches && ae.matches("#avTable [data-close-comment]")) deferAv = true;
@@ -4560,7 +4783,7 @@
     $("actFilter").addEventListener("change", renderActions);
     $("btnCopy").addEventListener("click", copyActions);
     $("rexQ").addEventListener("input", renderRex);
-    ["machine", "type", "cr"].forEach(function (kind) {
+    ["machine", "type", "cr", "schema"].forEach(function (kind) {
       var panel = document.querySelector('[data-panel="' + kind + '"]');
       panel.addEventListener("click", function (e) {
         var b = e.target.closest("button");
@@ -4928,7 +5151,7 @@
       } catch (e) {}
       if (
         location.hash &&
-        /^#(saisie|prog|prod|cr|machine|type|actions|actview|rex)$/.test(location.hash)
+        /^#(saisie|prog|prod|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
       )
         ui.tab = location.hash.slice(1);
       renderAll();
@@ -5005,6 +5228,11 @@
           safety = d;
           refresh();
         }, onErr);
+      db.doc("config/zones").onSnapshot(function (snap) {
+        var d = snap.exists ? snap.data() : null;
+        zones = (d && d.items) || {};
+        refresh();
+      }, onErr);
       db.doc("config/production").onSnapshot(function (snap) {
         var d = snap.exists ? snap.data() : null;
         production = (d && d.items) || {};
