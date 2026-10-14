@@ -12,9 +12,6 @@
 <style>
   /* Layout: atelier control panel — header band with profile, sticky tab rail, filter strip shared by analysis tabs */
   :root {
-    --zone: #17607f;
-    --zone-hover: #1f7398;
-    --zone-line: #0f4a63;
     --bg: #f4f5f5;
     --surface: #ffffff;
     --surface-2: #f7f8f7;
@@ -1005,13 +1002,13 @@
     cursor: pointer;
   }
   .zone-svg rect {
-    fill: var(--zone);
-    stroke: var(--zone-line);
+    fill: var(--bar);
+    stroke: var(--bar);
     stroke-width: 1.5;
   }
   .zone-svg g[data-zone]:hover rect,
   .zone-svg g[data-zone]:focus-visible rect {
-    fill: var(--zone-hover);
+    filter: brightness(0.88);
   }
   .zone-svg g[data-zone].on rect {
     stroke: var(--accent);
@@ -1021,7 +1018,7 @@
     outline: none;
   }
   .zone-svg text {
-    fill: #ffffff;
+    fill: var(--on-bar);
     font-size: 15px;
     text-anchor: middle;
     pointer-events: none;
@@ -1029,11 +1026,10 @@
   .zone-svg text.zd {
     font-size: 13px;
     font-weight: 700;
-    fill: #ffffff;
   }
   .zone-svg text.zp {
     font-size: 12px;
-    fill: #d6e6ee;
+    opacity: 0.85;
   }
   .gclose {
     margin-left: 6px;
