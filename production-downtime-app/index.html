@@ -998,6 +998,43 @@
     height: auto;
     display: block;
   }
+  .tl-chart {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .tl-chart .grid {
+    stroke: var(--line);
+  }
+  .tl-chart .axis {
+    font-size: 11px;
+    fill: var(--muted);
+  }
+  .tl-bar {
+    fill: var(--bar);
+  }
+  .tl-bar.worst {
+    fill: var(--danger);
+  }
+  .tl-val {
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--fg);
+  }
+  .tl-val.worst {
+    fill: var(--danger);
+  }
+  .tl-band {
+    fill: var(--surface-2);
+    stroke: var(--line);
+  }
+  .tl-stop {
+    fill: var(--danger);
+    opacity: 0.85;
+  }
+  .tl-tick {
+    stroke: var(--muted);
+  }
   .zone-legend {
     display: flex;
     align-items: center;
@@ -1458,8 +1495,12 @@
       <h2 class="cr-h">2. Taux de marche et productivité</h2>
       <div id="crPerf"></div>
     </div>
+    <div class="panel stack">
+      <h2 class="cr-h">3. Frise chronologique (8h → 8h)</h2>
+      <div id="crTimeline"></div>
+    </div>
     <div class="cr-pareto-wrap">
-      <div class="panel row" style="margin-bottom: 0; justify-content: space-between; align-items: center"><h2 class="cr-h">3. Pareto du jour</h2><label class="chk"><input type="checkbox" id="crNoFour" /> Exclure le four du Pareto</label></div>
+      <div class="panel row" style="margin-bottom: 0; justify-content: space-between; align-items: center"><h2 class="cr-h">4. Pareto du jour</h2><label class="chk"><input type="checkbox" id="crNoFour" /> Exclure le four du Pareto</label></div>
       <div id="crPareto" class="stack"></div>
     </div>
   </section>
@@ -3241,6 +3282,7 @@
       $("crSub").textContent = "Journée du " + fmtDate(r.a).slice(0, 16) + " au " + fmtDate(r.b).slice(0, 16);
       renderCRSafety();
       renderCRPerf();
+      renderCRTimeline();
       $("crNoFour").checked = !!ui.noFourCR;
       renderCRPareto();
     }
@@ -4031,6 +4073,61 @@
       sel.blur();
       writeZone(c, sel.value).then(function () { toast("Machine " + c + " → " + (zoneName(sel.value) || "Hors schéma")); renderSchema(); });
     });
+    // arrêts de la journée du CR (mêmes règles que le Pareto du jour)
+    function crStops() {
+      var r = crRange(), sv = { from: ui.from, to: ui.to, gran: ui.gran }, out;
+      ui.from = r.a; ui.to = r.b; ui.gran = "day"; skipChips = true; crRendering = true;
+      try { out = filtered(); }
+      finally { ui.from = sv.from; ui.to = sv.to; ui.gran = sv.gran; skipChips = false; crRendering = false; }
+      return out;
+    }
+    // frise : temps d'arrêt par créneau d'une heure + bande chronologique des arrêts
+    function renderCRTimeline() {
+      var box = $("crTimeline"), r = crRange(), H = 3600000;
+      if (mode === "pending") { box.innerHTML = '<div class="empty">Chargement de la base…</div>'; return; }
+      var f = crStops(), slots = [], i;
+      for (i = 0; i < 24; i++) slots.push({ a: r.a + i * H, b: r.a + (i + 1) * H, ms: 0, n: 0 });
+      f.forEach(function (x) {
+        var s0 = Math.max(x.s.start, r.a), s1 = Math.min(x.s.end, r.b);
+        slots.forEach(function (sl) {
+          var o = Math.min(s1, sl.b) - Math.max(s0, sl.a);
+          if (o > 0) { sl.ms += o; sl.n++; }
+        });
+      });
+      var maxMs = Math.max.apply(null, slots.map(function (sl) { return sl.ms; }));
+      if (!f.length) { box.innerHTML = '<div class="empty">Aucun arrêt sur cette journée.</div>'; return; }
+      var W = 1000, L = 44, R = 8, top = 22, ch = 170, bw = (W - L - R) / 24;
+      var yMax = Math.max(60, Math.ceil(maxMs / 60000 / 15) * 15), yScale = ch / yMax;
+      var svg = '<svg class="chart tl-chart" viewBox="0 0 ' + W + " " + (top + ch + 96) + '" role="img" aria-label="Temps d\'arrêt par heure">';
+      [0, yMax / 2, yMax].forEach(function (v) {
+        var y = top + ch - v * yScale;
+        svg += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" /><text class="axis" x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + v + " min</text>";
+      });
+      slots.forEach(function (sl, k) {
+        var m = sl.ms / 60000, h = m * yScale, x = L + k * bw, hr = new Date(sl.a).getHours();
+        var worst = sl.ms > 0 && sl.ms === maxMs;
+        svg += '<g><title>' + pad(hr) + "h – " + pad((hr + 1) % 24) + "h : " + fmtHM(sl.ms) + " d'arrêt (" + sl.n + " arrêt" + (sl.n > 1 ? "s" : "") + ")</title>" +
+          '<rect class="tl-bar' + (worst ? " worst" : "") + '" x="' + (x + 3) + '" y="' + (top + ch - h) + '" width="' + (bw - 6) + '" height="' + Math.max(h, 0) + '" rx="2" /></g>';
+        if (m >= 0.5) svg += '<text class="tl-val' + (worst ? " worst" : "") + '" x="' + (x + bw / 2) + '" y="' + (top + ch - h - 5) + '" text-anchor="middle">' + Math.round(m) + "</text>";
+        svg += '<text class="axis" x="' + (x + bw / 2) + '" y="' + (top + ch + 15) + '" text-anchor="middle">' + hr + "h</text>";
+      });
+      // bande chronologique : chaque arrêt à sa place entre 8h et 8h
+      var by = top + ch + 32, bh = 26, span = r.b - r.a;
+      svg += '<rect class="tl-band" x="' + L + '" y="' + by + '" width="' + (W - L - R) + '" height="' + bh + '" rx="2" />';
+      f.slice().sort(function (p, q) { return p.s.start - q.s.start; }).forEach(function (x) {
+        var s0 = Math.max(x.s.start, r.a), s1 = Math.min(x.s.end, r.b);
+        var x0 = L + ((s0 - r.a) / span) * (W - L - R), w = Math.max(2, ((s1 - s0) / span) * (W - L - R));
+        svg += '<g><title>' + fmtDate(x.s.start).slice(11, 16) + " → " + fmtDate(x.s.end).slice(11, 16) + " · " + fmtHM(x.s.end - x.s.start) + " · " + esc(machineOf(x.s)) + " · " + esc(typeOf(x.s)) + (x.s.detail ? " · " + esc(x.s.detail) : "") + '</title><rect class="tl-stop" x="' + x0 + '" y="' + by + '" width="' + w + '" height="' + bh + '" /></g>';
+      });
+      for (i = 0; i <= 24; i += 2) {
+        var tx = L + (i / 24) * (W - L - R);
+        svg += '<line class="tl-tick" x1="' + tx + '" x2="' + tx + '" y1="' + (by + bh) + '" y2="' + (by + bh + 5) + '" /><text class="axis" x="' + tx + '" y="' + (by + bh + 18) + '" text-anchor="middle">' + ((8 + i) % 24) + "h</text>";
+      }
+      svg += "</svg>";
+      var worstTxt = slots.filter(function (sl) { return sl.ms === maxMs; }).map(function (sl) { var h0 = new Date(sl.a).getHours(); return h0 + "h – " + ((h0 + 1) % 24) + "h"; }).join(", ");
+      var tot = f.reduce(function (t, x) { return t + x.dur; }, 0);
+      box.innerHTML = '<p class="hint">Créneau le plus pénalisant : <strong>' + worstTxt + "</strong> avec " + fmtHM(maxMs) + " d'arrêt · total de la journée " + fmtHM(tot) + " (" + f.length + " arrêt" + (f.length > 1 ? "s" : "") + "). Valeurs en minutes par heure ; survolez une barre ou un arrêt pour le détail.</p>" + svg;
+    }
     var crRendering = false;
     function renderCRPareto() {
       var r = crRange(), sv = { from: ui.from, to: ui.to, gran: ui.gran };
