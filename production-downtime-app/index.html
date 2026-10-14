@@ -993,6 +993,35 @@
   .muted {
     color: var(--muted);
   }
+  .gclose {
+    margin-left: 6px;
+    padding: 1px 8px;
+    font-size: 11px;
+  }
+  .gclose-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+  }
+  .gclose-modal .box {
+    background: var(--surface);
+    color: var(--fg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px;
+    width: min(460px, 100%);
+  }
+  .gclose-modal textarea {
+    width: 100%;
+    min-height: 80px;
+    margin: 8px 0;
+    box-sizing: border-box;
+  }
   @media (prefers-reduced-motion: no-preference) {
     .chart .bar {
       transition: fill 0.12s;
@@ -1349,7 +1378,7 @@
       <div id="crPerf"></div>
     </div>
     <div class="cr-pareto-wrap">
-      <div class="panel" style="margin-bottom: 0"><h2 class="cr-h">3. Pareto du jour</h2></div>
+      <div class="panel row" style="margin-bottom: 0; justify-content: space-between; align-items: center"><h2 class="cr-h">3. Pareto du jour</h2><label class="chk"><input type="checkbox" id="crNoFour" /> Exclure le four du Pareto</label></div>
       <div id="crPareto" class="stack"></div>
     </div>
   </section>
@@ -2451,7 +2480,7 @@
           var o = all ? 1 : overlap(s);
           if (o < 0 || (o === 0 && !(s.start >= ui.from && s.start <= ui.to)))
             return false;
-          if (skipChips) return true;
+          if (skipChips) return !(ui.noFourCR && crRendering && isFour(s));
           return (
             isSel("machine", machineOf(s)) &&
             isSel("type", typeOf(s)) &&
@@ -3102,6 +3131,7 @@
       $("crSub").textContent = "Journée du " + fmtDate(r.a).slice(0, 16) + " au " + fmtDate(r.b).slice(0, 16);
       renderCRSafety();
       renderCRPerf();
+      $("crNoFour").checked = !!ui.noFourCR;
       renderCRPareto();
     }
     function crShift(n) { var d = new Date(crRange().a); d.setDate(d.getDate() + n); ui.crDay = d.getTime(); crIncEdit = null; renderCR(); }
@@ -3469,6 +3499,54 @@
       });
       return { rows: arr, total: total };
     }
+    // bouton Clôturer / Rouvrir utilisable depuis tous les onglets
+    function closeKey(a, s) {
+      return a.plan ? "plan|" + a.id : s.day + "|" + s.id + "|" + a.id;
+    }
+    function closeBtnHTML(a, s) {
+      if (!canClose() || !a.action) return "";
+      return a.closed
+        ? '<button class="btn sm gclose" data-greopen="' + esc(closeKey(a, s)) + '">Rouvrir</button>'
+        : '<button class="btn sm gclose" data-gclose="' + esc(closeKey(a, s)) + '">Clôturer</button>';
+    }
+    function applyClose(key, fields) {
+      var k = key.split("|");
+      var p = k[0] === "plan" ? closePlan(k[1], fields) : writeClosure(k[0], k[1], k[2], fields);
+      Promise.resolve(p).then(function () { if (mode === "local") refresh(); else renderAll(); }, function (err) { toast(dbErrorMessage(err)); });
+    }
+    function openCloseDialog(key) {
+      var m = document.createElement("div");
+      m.className = "gclose-modal";
+      m.innerHTML = '<div class="box" role="dialog" aria-modal="true" aria-label="Clôturer l\'action"><h3 style="margin: 0">Clôturer l\'action</h3>' +
+        '<textarea placeholder="Commentaire de clôture (réalisé, résultat…)" aria-label="Commentaire de clôture"></textarea>' +
+        '<div class="confirm"><button class="btn sm primary" data-ok>Clôturer</button><button class="btn sm" data-no>Annuler</button></div></div>';
+      document.body.appendChild(m);
+      var ta = m.querySelector("textarea");
+      ta.focus();
+      function done(ok) {
+        if (ok) {
+          applyClose(key, { closed: true, closedAt: Date.now(), closedBy: myId, closeComment: ta.value.trim() });
+          toast("Action clôturée");
+        }
+        m.remove();
+      }
+      m.addEventListener("click", function (e) {
+        if (e.target === m || e.target.closest("[data-no]")) done(false);
+        else if (e.target.closest("[data-ok]")) done(true);
+      });
+      m.addEventListener("keydown", function (e) { if (e.key === "Escape") done(false); });
+    }
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-gclose], [data-greopen]");
+      if (!b || !canClose()) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (b.dataset.gclose) openCloseDialog(b.dataset.gclose);
+      else {
+        applyClose(b.dataset.greopen, { closed: false, closedAt: null, closedBy: null, closeComment: "" });
+        toast("Action rouverte");
+      }
+    }, true);
     // actions mises en place sur un arrêt, affichées sous son détail dans les Pareto
     function detActionsHTML(s) {
       var acts = realActions(s), today = startOfDay(Date.now());
@@ -3477,7 +3555,7 @@
         var st = a.closed ? '<span class="pill ok">Clôturée</span>' : isLate(a, today) ? '<span class="pill late">En retard</span>' : '<span class="pill neutral">En cours</span>';
         return "<li>" + (a.plan ? '<span class="num-badge">' + numLabel(a) + "</span> " : "") + esc(a.action || "—") +
           (a.pilote || a.delai ? ' <span class="muted">· ' + esc([a.pilote, a.delai ? a.delai.split("-").reverse().join("/") : ""].filter(Boolean).join(" · ")) + "</span>" : "") +
-          " " + st + "</li>";
+          " " + st + closeBtnHTML(a, s) + "</li>";
       }).join("") + "</ul>";
     }
     function niceMax(v) {
@@ -3899,7 +3977,7 @@
         }).join("") + "</dl></div>";
     }
     var pendingDelAct = null;
-    function actionRowHTML(a, today, dis, stopId) {
+    function actionRowHTML(a, today, dis, stopId, stop) {
       var opts = TYPE_ACTIONS.slice();
       if (a.typeAction && opts.indexOf(a.typeAction) < 0) opts.push(a.typeAction);
       var st = a.closed ? ' <span class="pill ok">Clôturée</span>' : isLate(a, today) ? ' <span class="pill late">En retard</span>' : "";
@@ -3920,7 +3998,7 @@
         '<td class="pil"><input data-field="pilote" aria-label="Pilote" value="' + esc(a.pilote) + '"' + dis + " /></td>" +
         '<td class="del"><input type="date" data-field="delai" aria-label="Délai" value="' + esc(a.delai) + '"' + dis + " />" + st + "</td>" +
         '<td class="upd">' + upd + "</td>" +
-        '<td class="rm">' + del + "</td></tr>";
+        '<td class="rm">' + (stop ? closeBtnHTML(a, stop) : "") + del + "</td></tr>";
     }
     function planDatalist() {
       var dl = $("planList");
@@ -3967,7 +4045,7 @@
           (ro ? "" : '<label class="chk sel-stop"><input type="checkbox" data-sel' + (sel[s.id] ? " checked" : "") + " /> Sélectionner</label>")), detail = "";
         var table = s.actions.length
           ? '<div class="scroll"><table class="actions-table"><thead><tr><th>N°</th><th>Type d\'action</th><th>Action</th><th>Pilote</th><th>Délai</th><th>Mis à jour</th><th></th></tr></thead><tbody>' +
-            s.actions.map(function (a) { return actionRowHTML(a, today, dis, s.id); }).join("") + "</tbody></table></div>"
+            s.actions.map(function (a) { return actionRowHTML(a, today, dis, s.id, s); }).join("") + "</tbody></table></div>"
           : "";
         var add = ro ? "" : '<div class="act-add"><button class="btn sm" data-act-add>+ Nouvelle action</button>' +
           '<span class="sel-attach"><input list="planList" data-attach placeholder="N° d\'action existante, ex. A-0012" autocomplete="off" /><button class="btn sm" data-act-attach>Rattacher</button></span></div>';
@@ -4175,7 +4253,7 @@
               return "<li>" + (a.plan ? '<span class="num-badge">' + numLabel(a) + "</span> " : "") + (a.typeAction ? "<strong>" + esc(a.typeAction) + "</strong> · " : "") + esc(a.action || "—") +
                 (a.pilote ? ' <span class="muted">· ' + esc(a.pilote) + "</span>" : "") +
                 (a.delai ? ' <span class="muted">· ' + a.delai.split("-").reverse().join("/") + "</span>" : "") +
-                (a.closed ? ' <span class="pill ok">Clôturée</span>' : isLate(a, today) ? ' <span class="pill late">En retard</span>' : "") + "</li>";
+                (a.closed ? ' <span class="pill ok">Clôturée</span>' : isLate(a, today) ? ' <span class="pill late">En retard</span>' : "") + closeBtnHTML(a, s) + "</li>";
             }).join("") + "</ul></div>"
           : "";
         var body = rexEditing === s.id
@@ -4405,6 +4483,12 @@
       renderAll();
     });
     try { ui.noFour = localStorage.getItem(LOCAL_KEY + "-nofour") === "1"; } catch (e) {}
+    try { ui.noFourCR = localStorage.getItem(LOCAL_KEY + "-nofour-cr") === "1"; } catch (e) {}
+    $("crNoFour").addEventListener("change", function () {
+      ui.noFourCR = this.checked;
+      try { localStorage.setItem(LOCAL_KEY + "-nofour-cr", ui.noFourCR ? "1" : ""); } catch (e) {}
+      renderCRPareto();
+    });
     $("granSeg").addEventListener("click", function (e) {
       var b = e.target.closest("button[data-gran]");
       if (!b) return;
