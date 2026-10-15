@@ -131,6 +131,9 @@
   * {
     box-sizing: border-box;
   }
+  [hidden] {
+    display: none !important;
+  }
   body {
     background: var(--bg);
     color: var(--fg);
@@ -588,6 +591,23 @@
     border: 0;
     padding: 0;
     position: relative;
+  }
+  .plan td.out {
+    background: repeating-linear-gradient(
+      135deg,
+      var(--surface-2) 0 4px,
+      var(--surface) 4px 8px
+    );
+  }
+  .plan .name small.hist {
+    display: block;
+    font-size: 10.5px;
+    color: var(--warn);
+    line-height: 1.1;
+  }
+  .list tr.moverow td {
+    background: var(--accent-soft);
+    white-space: normal;
   }
   .plan tr.team.pool th,
   .plan tr.team.pool td {
@@ -1329,7 +1349,7 @@
       MN: "Maintien four nuit 20h–8h",
     };
     const isMF = (c) => !!MF[c];
-    const LABEL = { ...SHIFT, ...ABS, ...MF };
+    const LABEL = { ...SHIFT, ...ABS, ...MF, OUT: "Hors effectif" };
     // Codes affichés dans les cases (MJ et MN s'affichent « MF »).
     const disp = (c) => (isMF(c) ? "MF" : c);
     const DEFAULT_CYCLE = {
@@ -2108,6 +2128,22 @@
     const teamCode = (team, ds) =>
       teamOverride(team, ds) || cycleCode(team, ds);
     const entryOf = (id, ds) => S.months[ymOf(ds)]?.j?.[id]?.[ds] || null;
+    // Historique : équipe à une date donnée (changements d'équipe datés) et fin de contrat.
+    const movesOf = (a) =>
+      (Array.isArray(a.moves) ? a.moves : [])
+        .filter((m) => m && m.date)
+        .sort((x, y) => x.date.localeCompare(y.date));
+    function eqOn(a, ds) {
+      const mv = movesOf(a);
+      let t = mv.length ? mv[0].from : a.eq;
+      for (const m of mv) if (ds >= m.date) t = m.to;
+      return t;
+    }
+    const activeOn = (a, ds) => !a.fin || ds <= a.fin;
+    const ended = (a) => !!a.fin && a.fin < todayStr();
+    // L'agent figure dans le groupe g pendant au moins un jour de la liste.
+    const inGroup = (a, g, days) =>
+      days.some((ds) => activeOn(a, ds) && eqOn(a, ds) === g);
     const noteOf = (id, ds) => S.months[ymOf(ds)]?.n?.[id]?.[ds] || "";
     // « Non disponible » : l'agent a été contacté pour ce jour et a refusé.
     const ndOf = (id, ds) => !!S.months[ymOf(ds)]?.nd?.[id]?.[ds];
@@ -2115,7 +2151,9 @@
       const k = a.id + ds;
       if (memo.has(k)) return memo.get(k);
       const e = entryOf(a.id, ds);
-      const v = (e && e.c) || teamCode(a.eq, ds);
+      const v = !activeOn(a, ds)
+        ? "OUT"
+        : (e && e.c) || teamCode(eqOn(a, ds), ds);
       memo.set(k, v);
       return v;
     }
@@ -2190,7 +2228,13 @@
     };
     function needsCover(a, ds) {
       const e = entryOf(a.id, ds);
-      return !!(e && isAway(e.c) && isWork(teamCode(a.eq, ds)) && !e.r);
+      return !!(
+        e &&
+        activeOn(a, ds) &&
+        isAway(e.c) &&
+        isWork(teamCode(eqOn(a, ds), ds)) &&
+        !e.r
+      );
     }
     // Ordre choisi par l'utilisateur dans chaque équipe (champ ord) ; le tri par nom ne sert
     // qu'aux fiches antérieures à ce champ, le temps de leur attribuer un rang.
@@ -2343,7 +2387,8 @@
       const t = tx();
       let k = 0;
       for (const ds of days) {
-        if (onlyWork && !isWork(teamCode(a.eq, ds))) continue;
+        if (!activeOn(a, ds)) continue;
+        if (onlyWork && !isWork(teamCode(eqOn(a, ds), ds))) continue;
         unlink(t, id, ds);
         t.put(id, ds, { c: code });
         k++;
@@ -2365,7 +2410,7 @@
           const o = t.entry(e.r, ds);
           if (o && o.rp === absentId) t.put(e.r, ds, null);
         }
-        const shift = teamCode(absent.eq, ds);
+        const shift = teamCode(eqOn(absent, ds), ds);
         unlink(t, replId, ds);
         t.put(absentId, ds, { ...e, r: replId });
         t.put(replId, ds, { c: shift, rp: absentId });
@@ -2416,7 +2461,7 @@
       const days = [];
       for (let k = -40; k <= 40; k++) {
         const d = addDays(ds, k);
-        if (isWork(teamCode(a.eq, d)) && same(d)) days.push(d);
+        if (isWork(teamCode(eqOn(a, d), d)) && same(d)) days.push(d);
       }
       // garder le bloc contigu (en ignorant les jours de repos) qui contient ds
       let i = days.indexOf(ds);
@@ -2426,7 +2471,7 @@
       const contiguous = (d1, d2) => {
         for (let n = dnum(d1) + 1; n < dnum(d2); n++) {
           const d = dstr(n);
-          if (isWork(teamCode(a.eq, d)) && !same(d)) return false;
+          if (isWork(teamCode(eqOn(a, d), d)) && !same(d)) return false;
         }
         return true;
       };
@@ -2447,7 +2492,7 @@
             ok = false;
             break;
           }
-          const shift = teamCode(absent.eq, ds);
+          const shift = teamCode(eqOn(absent, ds), ds);
           const before = codeOf(c, addDays(ds, -1)),
             after = codeOf(c, addDays(ds, 1));
           // Repos obligatoire de 11 h entre deux postes : pas de jour (8h) en sortant de nuit,
@@ -2561,7 +2606,7 @@
       savePoly(p);
     }
     function viewPoly() {
-      const agents = sortedAgents();
+      const agents = sortedAgents().filter((a) => !ended(a));
       const fns = polyFns();
       const can = S.canWrite;
       const fromAgents = [
@@ -2670,7 +2715,7 @@
           b.setAttribute("aria-selected", String(b.dataset.tab === S.tab)),
         );
       $("#rot").textContent =
-        `4 équipes · ${S.agents.filter((a) => a.eq !== POOL).length} agents · ${S.agents.filter((a) => a.eq === POOL).length} remplaçants · cycle ${S.cycle.pattern.length} j`;
+        `4 équipes · ${S.agents.filter((a) => a.eq !== POOL && !ended(a)).length} agents · ${S.agents.filter((a) => a.eq === POOL && !ended(a)).length} remplaçants · cycle ${S.cycle.pattern.length} j`;
       const v = $("#view");
       const fid = document.activeElement && document.activeElement.id;
       const scroll = $(".gridwrap")
@@ -2739,7 +2784,7 @@
       let body = "";
       const todo = [];
       for (const t of GROUPS) {
-        const list = agents.filter((a) => a.eq === t);
+        const list = agents.filter((a) => inGroup(a, t, days));
         if (t === POOL) {
           body += `<tr class="team pool"><th class="name">Remplaçants<small>${list.length ? `renfort production · ${list.length}` : "aucun : ajoutez-les dans l'onglet Agents"}</small></th>${days.map((ds) => `<td class="${cls(ds)}"></td>`).join("")}<td class="tot"></td></tr>`;
         } else
@@ -2755,16 +2800,18 @@
             `<td class="tot"></td></tr>`;
         for (const a of list) {
           body +=
-            `<tr><th class="name" title="${a.fn ? esc(a.fn) + " · " : ""}${esc(a.mat)} ${esc(fullName(a))}">${a.fn ? `<span class="fn">${esc(a.fn)}</span>` : ""}<span class="mat">${esc(a.mat || "—")}</span>${esc(fullName(a))}</th>` +
+            `<tr><th class="name" title="${a.fn ? esc(a.fn) + " · " : ""}${esc(a.mat)} ${esc(fullName(a))}${histNote(a, days) ? " · " + esc(histNote(a, days)) : ""}">${a.fn ? `<span class="fn">${esc(a.fn)}</span>` : ""}<span class="mat">${esc(a.mat || "—")}</span>${esc(fullName(a))}${histNote(a, days) ? `<small class="hist">${esc(histNote(a, days))}</small>` : ""}</th>` +
             days
               .map((ds) => {
+                if (!activeOn(a, ds) || eqOn(a, ds) !== t)
+                  return `<td class="${cls(ds)} out" title="${esc(fullName(a))} · ${fmtShort(ds)} · ${activeOn(a, ds) ? groupShort(eqOn(a, ds)) : "contrat terminé"}"></td>`;
                 const e = entryOf(a.id, ds),
                   c = codeOf(a, ds);
                 const need = needsCover(a, ds);
                 if (need) todo.push({ a, ds });
                 const k = ["cell", "c", "c-" + c];
-                if (a.eq === POOL) k.push("pool");
-                let tip = `${fullName(a)} · ${fmtShort(ds)} · ${a.eq === POOL && c === "R" ? "Disponible (sans poste)" : LABEL[c] || c}`;
+                if (t === POOL) k.push("pool");
+                let tip = `${fullName(a)} · ${fmtShort(ds)} · ${t === POOL && c === "R" ? "Disponible (sans poste)" : LABEL[c] || c}`;
                 if (e?.rp) {
                   k.push("rp");
                   tip += ` · remplace ${fullName(agentById(e.rp))}`;
@@ -2772,7 +2819,7 @@
                   e &&
                   e.c &&
                   !isAway(e.c) &&
-                  e.c !== teamCode(a.eq, ds)
+                  e.c !== teamCode(eqOn(a, ds), ds)
                 )
                   k.push("ovr");
                 if (need) {
@@ -2800,7 +2847,7 @@
                 return `<td class="${cls(ds)}"><button class="${k.join(" ")}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(tip)}">${c === "R" ? (nd ? "ND" : "") : disp(c)}</button></td>`;
               })
               .join("") +
-            `<td class="tot" title="Prévu sur le mois : ${fmtH(hoursBetween(a, days[0], days[days.length - 1]))} h">${fmtH(doneHours(a, days[0], days[days.length - 1]))} h</td></tr>`;
+            `<td class="tot" title="Prévu sur le mois${list.length && segDays(a, t, days).length < days.length ? " (jours dans ce groupe)" : ""} : ${fmtH(segHours(a, t, days, false))} h">${fmtH(segHours(a, t, days, true))} h</td></tr>`;
         }
       }
       const staff = (code) =>
@@ -2881,6 +2928,26 @@
   </div>`;
     }
 
+    // Jours du mois où l'agent est actif dans le groupe t, et heures correspondantes.
+    const segDays = (a, t, days) =>
+      days.filter((ds) => activeOn(a, ds) && eqOn(a, ds) === t);
+    const segHours = (a, t, days, done) =>
+      segDays(a, t, days)
+        .filter((ds) => !done || isDone(ds))
+        .reduce((h, ds) => h + hoursBetween(a, ds, ds), 0);
+    // Mention d'historique du mois : changement d'équipe et fin de contrat.
+    function histNote(a, days) {
+      const out = [];
+      for (const m of movesOf(a))
+        if (m.date > days[0] && m.date <= days[days.length - 1])
+          out.push(
+            `${groupShort(m.from)} → ${groupShort(m.to)} le ${fmtShort(m.date)}`,
+          );
+      if (a.fin && a.fin >= days[0] && a.fin <= days[days.length - 1])
+        out.push(`fin de contrat le ${fmtShort(a.fin)}`);
+      return out.join(" · ");
+    }
+
     function emptyAgents() {
       return `<div class="panel empty">
     <h2>Aucun agent enregistré</h2>
@@ -2901,8 +2968,12 @@
             weeks.map((w) => `S${isoWeek(w)}`).join("\t") +
             "\tMois\tJours d'absence\tHeures d'absence partielle",
         ];
+      const lastTeam = (a) => {
+        const act = days.filter((ds) => activeOn(a, ds));
+        return act.length ? eqOn(a, act[act.length - 1]) : null;
+      };
       for (const t of GROUPS) {
-        const list = agents.filter((a) => a.eq === t);
+        const list = agents.filter((a) => lastTeam(a) === t);
         if (!list.length) continue;
         rows += `<tr class="grp"><td colspan="${weeks.length + 6}">${groupName(t)}</td></tr>`;
         for (const a of list) {
@@ -2916,7 +2987,7 @@
             (s, d) => s + partialHours(codeOf(a, d), entryOf(a.id, d)?.pa),
             0,
           );
-          rows += `<tr><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}</td>${wh.map((h, i) => (h === null ? `<td class="num muted" title="Semaine à venir (prévu : ${fmtH(wp[i])} h)">–</td>` : `<td class="num${h > max ? " over" : ""}" title="Prévu sur la semaine : ${fmtH(wp[i])} h">${fmtH(h)}</td>`)).join("")}<td class="num"><b>${fmtH(mh)}</b></td><td class="num">${absd || ""}</td><td class="num">${parth ? fmtH(parth) : ""}</td></tr>`;
+          rows += `<tr><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}${histNote(a, days) ? `<div class="note">${esc(histNote(a, days))}</div>` : ""}</td>${wh.map((h, i) => (h === null ? `<td class="num muted" title="Semaine à venir (prévu : ${fmtH(wp[i])} h)">–</td>` : `<td class="num${h > max ? " over" : ""}" title="Prévu sur la semaine : ${fmtH(wp[i])} h">${fmtH(h)}</td>`)).join("")}<td class="num"><b>${fmtH(mh)}</b></td><td class="num">${absd || ""}</td><td class="num">${parth ? fmtH(parth) : ""}</td></tr>`;
           tsv.push(
             [
               a.fn || "",
@@ -2946,16 +3017,40 @@
   </div>`;
     }
 
+    // Ligne de confirmation d'un changement d'équipe (date d'effet).
+    function moveRow(a) {
+      const m = S.moveAsk;
+      return `<tr class="moverow"><td colspan="8"><div class="addrow">
+        <span><b>${esc(fullName(a))}</b> : ${esc(groupShort(a.eq))} → <b>${esc(groupShort(m.to))}</b></span>
+        <label>À partir du<input type="date" id="mv-date" value="${esc(m.date)}"></label>
+        <label class="check"><input type="checkbox" id="mv-fix" ${m.fix ? "checked" : ""}> Correction d'erreur (cette équipe depuis toujours)</label>
+        <button class="btn sm primary" data-act="mvok">Valider le changement</button><button class="btn sm" data-act="mvno">Annuler</button>
+      </div><p class="note">Les jours avant cette date restent comptés dans ${esc(groupShort(a.eq))} ; le mois du changement, l'agent apparaît dans les deux groupes.</p></td></tr>`;
+    }
     function viewAgents() {
       const agents = sortedAgents();
       const ro = S.canWrite ? "" : "disabled";
-      const rows = GROUPS.map((t) => {
-        const list = agents.filter((a) => a.eq === t);
-        return (
-          `<tr class="grp"><td colspan="7">${groupName(t)} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${t === POOL ? `${list.length} · renfort de production, sans cycle : ils remplacent les absents des équipes` : `${list.length} / 11`}</span></td></tr>` +
-          list
-            .map(
-              (a, i) => `<tr data-row="${a.id}" data-team="${t}">
+      const rows = [...GROUPS, "FIN"]
+        .map((t) => {
+          const list =
+            t === "FIN"
+              ? agents.filter(ended)
+              : agents.filter((a) => a.eq === t && !ended(a));
+          if (t === "FIN")
+            return list.length
+              ? `<tr class="grp"><td colspan="8">Contrats terminés <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${list.length} · n'apparaissent plus dans le planning après leur mois de fin ; leurs heures restent enregistrées</span></td></tr>` +
+                  list
+                    .map(
+                      (a) =>
+                        `<tr><td></td><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(a.nom || "")}</td><td>${esc(a.prenom || "")}</td><td>${esc(groupShort(a.eq))}</td><td><input type="date" id="fin-${a.id}" data-f="fin" data-id="${a.id}" value="${esc(a.fin || "")}" ${ro} title="Effacez la date pour annuler la fin de contrat"></td><td></td></tr>`,
+                    )
+                    .join("")
+              : "";
+          return (
+            `<tr class="grp"><td colspan="8">${groupName(t)} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${t === POOL ? `${list.length} · renfort de production, sans cycle : ils remplacent les absents des équipes` : `${list.length} / 11`}</span></td></tr>` +
+            list
+              .map(
+                (a, i) => `<tr data-row="${a.id}" data-team="${t}">
         <td><div class="ordcell">${
           S.canWrite
             ? `<span class="grip" data-grip="${a.id}" title="Glisser pour déplacer" aria-hidden="true">⠿</span><button class="btn sm ghost mv" data-act="up" data-id="${a.id}" aria-label="Monter ${esc(fullName(a))}" ${i === 0 ? "disabled" : ""}>↑</button><button class="btn sm ghost mv" data-act="down" data-id="${a.id}" aria-label="Descendre ${esc(fullName(a))}" ${i === list.length - 1 ? "disabled" : ""}>↓</button>`
@@ -2965,18 +3060,30 @@
         <td><input type="text" id="mat-${a.id}" data-f="mat" data-id="${a.id}" value="${esc(a.mat)}" placeholder="Matricule" ${ro}></td>
         <td><input type="text" id="nom-${a.id}" data-f="nom" data-id="${a.id}" value="${esc(a.nom)}" placeholder="Nom" ${ro}></td>
         <td><input type="text" id="pre-${a.id}" data-f="prenom" data-id="${a.id}" value="${esc(a.prenom)}" placeholder="Prénom" ${ro}></td>
-        <td><select id="eq-${a.id}" data-f="eq" data-id="${a.id}" ${ro}>${GROUPS.map((x) => `<option value="${x}" ${x === a.eq ? "selected" : ""}>${x === POOL ? "Remplaçant" : x}</option>`).join("")}</select></td>
-        <td>${S.canWrite ? (S.delAsk === a.id ? `<span class="confirm">Supprimer ?<button class="btn sm danger" data-act="delyes" data-id="${a.id}">Oui</button><button class="btn sm" data-act="delno">Non</button></span>` : `<button class="btn sm ghost danger" data-act="del" data-id="${a.id}">Supprimer</button>`) : ""}</td>
-      </tr>`,
-            )
-            .join("")
-        );
-      }).join("");
+        <td><select id="eq-${a.id}" data-f="eq" data-id="${a.id}" ${ro}>${GROUPS.map((x) => `<option value="${x}" ${x === a.eq ? "selected" : ""}>${x === POOL ? "Remplaçant" : x}</option>`).join("")}</select>${
+          movesOf(a).length
+            ? `<div class="note">${movesOf(a)
+                .slice(-2)
+                .map(
+                  (m) =>
+                    `${m.to === POOL ? "Rempl." : m.to} depuis le ${fmtShort(m.date)}/${m.date.slice(2, 4)}`,
+                )
+                .join("<br>")}</div>`
+            : ""
+        }</td>
+        <td><input type="date" id="fin-${a.id}" data-f="fin" data-id="${a.id}" value="${esc(a.fin || "")}" ${ro} aria-label="Fin de contrat de ${esc(fullName(a))}"></td>
+        <td>${S.canWrite ? (S.delAsk === a.id ? `<span class="confirm">Supprimer définitivement (heures comprises) ?<button class="btn sm danger" data-act="delyes" data-id="${a.id}">Oui</button><button class="btn sm" data-act="delno">Non</button></span>` : `<button class="btn sm ghost danger" data-act="del" data-id="${a.id}">Supprimer</button>`) : ""}</td>
+      </tr>${S.moveAsk && S.moveAsk.id === a.id ? moveRow(a) : ""}`,
+              )
+              .join("")
+          );
+        })
+        .join("");
       return `<div class="cols">
     <div class="panel">
       <h2>Agents</h2>
-      <p class="note">Les modifications sont enregistrées dès que vous quittez le champ. Changer l'équipe d'un agent l'aligne sur le cycle de sa nouvelle équipe. L'ordre des agents (flèches ou poignée ⠿ à faire glisser) est celui du planning et du tableau des heures.</p>
-      <div class="tablewrap"><table class="list"><thead><tr><th>Ordre</th><th>Fonction</th><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="note">Les modifications sont enregistrées dès que vous quittez le champ. Changer l'équipe d'un agent demande une date d'effet : son historique et ses heures restent dans l'ancienne équipe avant cette date. Une date de fin de contrat le retire du planning à partir du mois suivant, sans effacer ses mois de présence. L'ordre des agents (flèches ou poignée ⠿ à faire glisser) est celui du planning et du tableau des heures.</p>
+      <div class="tablewrap"><table class="list"><thead><tr><th>Ordre</th><th>Fonction</th><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th>Fin de contrat</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
       <datalist id="fn-list">${[
         ...new Set(S.agents.map((a) => (a.fn || "").trim()).filter(Boolean)),
       ]
@@ -3113,7 +3220,7 @@
       }
       const e = entryOf(id, ds),
         code = codeOf(a, ds),
-        base = teamCode(a.eq, ds);
+        base = teamCode(eqOn(a, ds), ds);
       const wk = weekHours(a, ds),
         mon = mondayOf(ds);
       const can = S.canWrite;
@@ -3165,14 +3272,14 @@
       const dr = S.drawer;
       dr.from ||= ds;
       dr.to ||= ds;
-      if (dr.onlyWork === undefined) dr.onlyWork = a.eq !== POOL;
+      if (dr.onlyWork === undefined) dr.onlyWork = eqOn(a, ds) !== POOL;
       o.innerHTML = `<div class="scrim" data-act="close"></div>
   <aside class="drawer" role="dialog" aria-label="Journée de ${esc(fullName(a))}">
-    <header><div><div class="label">${esc(groupShort(a.eq))}${a.fn ? ` · ${esc(a.fn)}` : ""} · ${esc(a.mat || "sans matricule")}</div><h2>${esc(fullName(a))}</h2><div class="muted" style="text-transform:capitalize">${fmtLong(ds)}</div></div>
+    <header><div><div class="label">${esc(groupShort(eqOn(a, ds)))}${a.fn ? ` · ${esc(a.fn)}` : ""} · ${esc(a.mat || "sans matricule")}</div><h2>${esc(fullName(a))}</h2><div class="muted" style="text-transform:capitalize">${fmtLong(ds)}</div></div>
       <button class="btn iconbtn ghost" data-act="close" aria-label="Fermer">✕</button></header>
     <div class="body">
-      <dl class="kv">${a.eq === POOL ? `<dt>Prévu</dt><dd>Remplaçant : pas de cycle, disponible pour renforcer les équipes</dd>` : `<dt>Prévu pour l'équipe</dt><dd><span class="c c-${base}" style="width:30px;height:20px">${base === "R" ? "·" : base}</span> ${LABEL[base]}</dd>`}
-        <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : disp(code)}</span> ${a.eq === POOL && code === "R" ? "Disponible (sans poste)" : LABEL[code]}</dd>
+      <dl class="kv">${eqOn(a, ds) === POOL ? `<dt>Prévu</dt><dd>Remplaçant : pas de cycle, disponible pour renforcer les équipes</dd>` : `<dt>Prévu pour l'équipe</dt><dd><span class="c c-${base}" style="width:30px;height:20px">${base === "R" ? "·" : base}</span> ${LABEL[base]}</dd>`}
+        <dt>Affectation</dt><dd><span class="c c-${code}" style="min-width:30px;height:20px;padding:0 4px">${code === "R" ? "·" : disp(code)}</span> ${eqOn(a, ds) === POOL && code === "R" ? "Disponible (sans poste)" : LABEL[code]}</dd>
         <dt>Semaine S${isoWeek(ds)}</dt><dd class="mono">${fmtH(wk)} h réalisées · ${fmtH(hoursBetween(a, mon, addDays(mon, 6)))} h prévues <span class="muted">(${fmtShort(mon)} → ${fmtShort(addDays(mon, 6))})</span></dd></dl>
       ${rp}
       ${
@@ -3422,6 +3529,43 @@
         toast("Agent supprimé");
         return;
       }
+      if (act === "mvno") {
+        S.moveAsk = null;
+        render();
+        return;
+      }
+      if (act === "mvok") {
+        const m = S.moveAsk,
+          a = agentById(m?.id);
+        if (!a) return;
+        const date = $("#mv-date").value,
+          fix = $("#mv-fix").checked;
+        if (!fix && !date) {
+          toast("Indiquez la date du changement d'équipe.");
+          return;
+        }
+        const { id, ...rest } = a;
+        let moves = movesOf(a);
+        if (fix) moves = [];
+        else {
+          const from = eqOn(a, addDays(date, -1));
+          moves = moves.filter((x) => x.date < date);
+          if (from !== m.to) moves.push({ date, from, to: m.to });
+        }
+        S.moveAsk = null;
+        await S.store.set("agents/" + id, {
+          ...rest,
+          eq: m.to,
+          moves,
+          ord: nextOrd(m.to),
+        });
+        toast(
+          fix
+            ? `${fullName(a)} : ${groupShort(m.to)} (correction)`
+            : `${fullName(a)} passe en ${groupShort(m.to)} le ${fmtShort(date)}`,
+        );
+        return;
+      }
       if (act === "pv") {
         setPolyLevel(
           b.dataset.id,
@@ -3528,8 +3672,19 @@
         if (!a) return;
         const v = el.value.trim();
         if ((a[el.dataset.f] || "") === v) return;
+        if (el.dataset.f === "eq") {
+          S.moveAsk = { id: a.id, to: v, date: todayStr(), fix: false };
+          render();
+          return;
+        }
         const { id, ...rest } = a;
-        const extra = el.dataset.f === "eq" ? { ord: nextOrd(v) } : {};
+        const extra = {};
+        if (el.dataset.f === "fin")
+          toast(
+            v
+              ? `Fin de contrat le ${fmtShort(v)} : ${fullName(a)} disparaît du planning à partir de ${MONTHS[Number(ymAdd(ymOf(v), 1).slice(5)) - 1]}`
+              : `Fin de contrat annulée pour ${fullName(a)}`,
+          );
         await S.store.set("agents/" + id, {
           ...rest,
           [el.dataset.f]: v,
@@ -3735,6 +3890,13 @@
         if (ex) {
           const { id, ...rest } = ex;
           const ord = eq === ex.eq && Number.isFinite(ex.ord) ? ex.ord : nx(eq);
+          const moves = movesOf(ex);
+          if (eq !== ex.eq) {
+            const d0 = todayStr();
+            const kept = moves.filter((x) => x.date < d0);
+            kept.push({ date: d0, from: eqOn(ex, addDays(d0, -1)), to: eq });
+            fnv.moves = kept;
+          }
           await S.store.set("agents/" + id, {
             ...rest,
             ...fnv,
