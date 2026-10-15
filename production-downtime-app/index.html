@@ -1074,6 +1074,10 @@
     font-size: 12px;
     opacity: 0.85;
   }
+  .fer-sel {
+    max-width: 220px;
+    font-size: 12px;
+  }
   .gclose {
     margin-left: 6px;
     padding: 1px 8px;
@@ -3645,6 +3649,28 @@
       });
       return { rows: arr, total: total };
     }
+    // type d'arrêt modifiable depuis le détail du Pareto (Admin)
+    function ferSelectHTML(s) {
+      var cur = normCode(s.fer), tbl = codes.fer || {}, list = Object.keys(tbl);
+      if (cur && list.indexOf(cur) < 0) list.push(cur);
+      list.sort(function (a, b) { return (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0) || a.localeCompare(b); });
+      return '<select class="fer-sel" data-fer-sid="' + esc(s.id) + '" aria-label="Type d\'arrêt">' + list.map(function (c) {
+        return '<option value="' + esc(c) + '"' + (c === cur ? " selected" : "") + ">" + esc(c + " – " + (tbl[c] || "sans nom")) + "</option>";
+      }).join("") + "</select>";
+    }
+    document.addEventListener("change", async function (e) {
+      var sel = e.target.closest && e.target.closest("select[data-fer-sid]");
+      if (!sel || !isAdmin()) return;
+      var s = stops.find(function (x) { return x.id === sel.dataset.ferSid; });
+      if (!s || normCode(s.fer) === sel.value) return;
+      var next = { start: s.start, end: s.end, fer: sel.value, macc: s.macc, detail: s.detail, diam: s.diamRaw !== undefined ? s.diamRaw : s.diam, imp: s.imp, impAt: s.impAt, impSrc: s.impSrc };
+      sel.blur();
+      try {
+        await updateStop(s, next);
+        toast("Type d'arrêt modifié : " + sel.value + " – " + (codeName("fer", sel.value) || "sans nom"));
+        if (mode !== "local") renderAll();
+      } catch (err) { toast(dbErrorMessage(err)); }
+    });
     // bouton Clôturer / Rouvrir utilisable depuis tous les onglets
     function closeKey(a, s) {
       return a.plan ? "plan|" + a.id : s.day + "|" + s.id + "|" + a.id;
@@ -4234,7 +4260,7 @@
               '</td><td class="num">' +
               fmtDur(x.dur) +
               "</td><td>" +
-              esc(otherFn(x.s)) +
+              (adm && kind !== "type" ? ferSelectHTML(x.s) : esc(otherFn(x.s))) +
               "</td>" +
               (adm ? '<td class="pf-btns" data-sid="' + esc(x.s.id) + '"><button class="btn sm" data-pf-open="action">+ Action</button><button class="btn sm" data-pf-open="rex">' + (x.s.rex ? "Modifier le REX" : "+ REX") + "</button></td>" : "") +
               '</tr><tr class="det-line"><td colspan="' + (adm ? 4 : 3) + '">' +
