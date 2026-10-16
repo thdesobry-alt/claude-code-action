@@ -1215,10 +1215,12 @@
       <div>
         <h2>Coller des arrêts depuis Excel</h2>
         <p class="hint">
-          Sélectionnez les 5 colonnes dans Excel (date début, date fin, code
-          FER, code Macc, détail), copiez, puis collez ci-dessous. Format des
-          dates : jj/mm/aaaa hh:mm:ss. Les lignes d'en-tête sont ignorées et les
-          espaces autour du détail sont supprimés.
+          Collez directement l'extraction complète des arrêts (11 colonnes :
+          seules la date début, la date fin, le code FER, le code Macc et la
+          description sont reprises), ou bien les 5 colonnes date début, date
+          fin, code FER, code Macc, détail. Format des dates : jj/mm/aaaa
+          hh:mm:ss. Les lignes d'en-tête sont ignorées et les espaces superflus
+          du détail sont supprimés.
         </p>
       </div>
       <p class="hint">Le diamètre de chaque arrêt vient de l'onglet <strong>Programme de laminage</strong>, selon son heure de début.</p>
@@ -2558,8 +2560,11 @@
     function parsePaste(text) {
       var out = { ok: [], errors: [], excluded: [], headers: 0 };
       parseTSV(text).forEach(function (cells, idx) {
-        var a = parseFrDate(cells[0] || ""),
-          b = parseFrDate(cells[1] || "");
+        // extraction complète : col. 1 début, 3 fin, 6 code FER, 7 code Macc, 11 description
+        if (cells.length >= 7 && parseFrDate((cells[1] || "").trim()) == null && parseFrDate((cells[2] || "").trim()) != null)
+          cells = [cells[0], cells[2], cells[5], cells[6], String(cells[10] || "").replace(/\s+/g, " ")];
+        var a = parseFrDate((cells[0] || "").trim()),
+          b = parseFrDate((cells[1] || "").trim());
         if (a == null && b == null && idx === 0) {
           out.headers++;
           return;
