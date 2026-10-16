@@ -917,6 +917,27 @@
     border-radius: 50%;
     background: #fff;
   }
+  .vcell {
+    position: relative;
+    display: flex;
+  }
+  .vc {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    translate: -50% 0;
+    width: max-content;
+    max-width: 120px;
+    font-size: 10.5px;
+    line-height: 1.25;
+    text-align: center;
+    color: var(--fg);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+  .vroll.has-notes {
+    margin-bottom: 44px;
+  }
   .vnotes {
     display: grid;
     gap: 2px;
@@ -1347,7 +1368,7 @@
       }
       const sel = [0, 1, 2].map((i) => pathFor(i)[n]);
       let fr = "",
-        notes = "";
+        notes = false;
       for (let f = 0; f < c.frettes; f++) {
         let gs = "";
         for (let g = 0; g < c.gpf; g++) {
@@ -1364,15 +1385,13 @@
             `Cage ${n} · Frette ${f + 1} · Cannelure ${g + 1} · ${STATES[st.s]}` +
             rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
             (st.c ? `\n${st.c}` : "");
-          gs += `<button class="vg s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${g + 1}</button>`;
-          if (st.c)
-            notes += `<span class="s-${st.s}"><b>F${f + 1}·C${g + 1}</b> ${esc(st.c)}</span>`;
+          gs += `<span class="vcell"><button class="vg s-${st.s}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${g + 1}</button>${st.c ? `<span class="vc">${esc(st.c)}</span>` : ""}</span>`;
+          if (st.c) notes = true;
         }
         fr += `<div class="vfrette">${gs}</div>`;
       }
       return sides(
-        `<div class="vroll"><span class="journal"></span><div class="barrel">${fr}</div><span class="journal"></span></div>` +
-          (notes ? `<div class="vnotes">${notes}</div>` : ""),
+        `<div class="vroll${notes ? " has-notes" : ""}"><span class="journal"></span><div class="barrel">${fr}</div><span class="journal"></span></div>`,
       );
     }
 
