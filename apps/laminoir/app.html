@@ -789,6 +789,13 @@
     color: var(--muted);
     text-align: center;
   }
+  .pick-q {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 8px 10px;
+    width: 100%;
+  }
   .picklist {
     display: grid;
     gap: 6px;
@@ -1856,16 +1863,26 @@
       <div class="modal-head"><h2>Cage ${n} · Insérer un cylindre</h2><button class="x" data-close aria-label="Fermer">×</button></div>
       <div class="modal-body">
         <div class="field"><span class="label">Choisir un cylindre en stock</span>
+          <input type="search" id="pick-q" class="pick-q" placeholder="Rechercher (nom ou diamètre)" aria-label="Rechercher un cylindre en stock">
           <div class="picklist">${list
             .map(
               (c) =>
-                `<button type="button" class="pick" data-pick="${esc(c.id)}"><b>${esc(c.name)}</b><span>Ø ${esc(c.diameter)} mm · ${countsOf(c).join(" + ")} cannelures</span>${stateSummary(c)}</button>`,
+                `<button type="button" class="pick" data-pick="${esc(c.id)}" data-search="${esc((c.name + " " + c.diameter).toLowerCase())}"><b>${esc(c.name)}</b><span>Ø ${esc(c.diameter)} mm · ${countsOf(c).join(" + ")} cannelures</span>${stateSummary(c)}</button>`,
             )
-            .join("")}</div>
+            .join("")}<p class="note" id="pick-none" hidden>Aucun cylindre en stock ne correspond.</p></div>
         </div>
       </div>
       <div class="modal-foot"><button type="button" class="btn" data-close>Annuler</button><span class="spacer"></span><button type="button" class="btn primary" id="mount-new">Nouveau cylindre</button></div>`,
         (m) => {
+          m.querySelector("#pick-q").addEventListener("input", (e) => {
+            const q = e.target.value.trim().toLowerCase();
+            let shown = 0;
+            m.querySelectorAll("[data-search]").forEach((b) => {
+              b.hidden = !!q && !b.dataset.search.includes(q);
+              if (!b.hidden) shown++;
+            });
+            m.querySelector("#pick-none").hidden = shown > 0;
+          });
           m.querySelector("#mount-new").addEventListener("click", () =>
             openCyl(null, n),
           );
