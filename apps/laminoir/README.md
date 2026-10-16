@@ -5,6 +5,8 @@ Application web (un seul fichier HTML) pour gérer les cylindres des cages de la
 - `index.html` : version autonome, à ouvrir directement dans un navigateur (données enregistrées dans le navigateur).
 - `app.html` : même application, publiée en Artifact claude.ai (données partagées entre les utilisateurs).
 
+Les cages 1 à 6 ont toujours 1 frette et 1 cannelure.
+
 Cages affichées selon le diamètre laminé :
 
 | Ø laminé | Cages |

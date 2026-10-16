@@ -1199,6 +1199,8 @@
     function openConfig(n) {
       const c = S.cages[n];
       const locked = !!c;
+      // Les cages 1 à 6 ont toujours 1 frette et 1 cannelure.
+      const fixed = n <= 6;
       openModal(
         `
       <div class="modal-head"><h2>Cage ${n} · ${locked ? "Cylindre" : "Insérer un cylindre"}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
@@ -1207,10 +1209,10 @@
           <label class="field"><span class="label">Nom du cylindre</span><input id="cfg-name" required maxlength="40" value="${esc(c ? c.name : "")}" placeholder="ex. CYL-0412"></label>
           <label class="field"><span class="label">Diamètre du cylindre (mm)</span><input id="cfg-diam" type="number" inputmode="decimal" step="0.1" min="1" required value="${esc(c ? c.diameter : "")}" placeholder="ex. 420"></label>
           <div class="row2">
-            <label class="field"><span class="label">Nombre de frettes</span><input id="cfg-fr" type="number" min="1" max="12" required value="${c ? c.frettes : 1}" ${locked ? "disabled" : ""}></label>
-            <label class="field"><span class="label">Cannelures par frette</span><input id="cfg-gpf" type="number" min="1" max="30" required value="${c ? c.gpf : 6}" ${locked ? "disabled" : ""}></label>
+            <label class="field"><span class="label">Nombre de frettes</span><input id="cfg-fr" type="number" min="1" max="12" required value="${fixed ? 1 : c ? c.frettes : 1}" ${locked || fixed ? "disabled" : ""}></label>
+            <label class="field"><span class="label">Cannelures par frette</span><input id="cfg-gpf" type="number" min="1" max="30" required value="${fixed ? 1 : c ? c.gpf : 6}" ${locked || fixed ? "disabled" : ""}></label>
           </div>
-          <p class="note">${locked ? "Le nombre de frettes et de cannelures est fixé à la création du cylindre." : "Attention : le nombre de frettes et de cannelures ne pourra plus être modifié après l'enregistrement."}</p>
+          <p class="note">${fixed ? "Les cages 1 à 6 ont toujours 1 frette et 1 cannelure." : locked ? "Le nombre de frettes et de cannelures est fixé à la création du cylindre." : "Attention : le nombre de frettes et de cannelures ne pourra plus être modifié après l'enregistrement."}</p>
         </div>
         <div class="modal-foot">
           ${locked ? `<button type="button" class="btn danger" id="cfg-reset">Tout remettre à neuf</button><button type="button" class="btn danger" id="cfg-remove">Retirer le cylindre</button><span class="spacer"></span>` : ""}
@@ -1236,7 +1238,9 @@
                 1,
                 Math.min(30, parseInt($("cfg-gpf").value, 10) || 1),
               );
-              S.cages[n] = { name, diameter, frettes, gpf, grooves: {} };
+              S.cages[n] = fixed
+                ? { name, diameter, frettes: 1, gpf: 1, grooves: {} }
+                : { name, diameter, frettes, gpf, grooves: {} };
             }
             saveCage(n);
             closeModal();
