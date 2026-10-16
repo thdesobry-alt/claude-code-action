@@ -761,7 +761,194 @@
     box-shadow: var(--shadow);
     max-width: calc(100% - 32px);
   }
+  .tabs {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tab {
+    border: 0;
+    background: var(--surface);
+    padding: 6px 14px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .tab + .tab {
+    border-left: 1px solid var(--line);
+  }
+  .tab[aria-pressed="true"] {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .view-tab #tools .mode,
+  .view-tab #hint {
+    display: none;
+  }
+  .view-tab .opt input[type="text"] {
+    padding-left: 10px;
+  }
+
+  /* Visualisation: one row per cage, top to bottom; rolls centred on a common axis. */
+  .vline {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    width: max-content;
+    min-width: 100%;
+  }
+  .vrow {
+    display: grid;
+    grid-template-columns: 112px 74px minmax(0, 1fr) 74px;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow);
+  }
+  .vrow.vhead {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding-block: 0;
+  }
+  .vside {
+    white-space: nowrap;
+    font-family: var(--f-display);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .vside.l {
+    text-align: left;
+  }
+  .vside.r {
+    text-align: right;
+  }
+  .vhead .vside {
+    font-size: 16px;
+    color: var(--fg);
+  }
+  .vcage {
+    display: grid;
+    gap: 2px;
+  }
+  .vcage-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .vcage .cage-num b {
+    font-size: 22px;
+  }
+  .vcage small {
+    font-size: 11px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .vcenter {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+  }
+  .vroll {
+    display: flex;
+    align-items: center;
+  }
+  .journal {
+    width: 16px;
+    height: 20px;
+    background: var(--line);
+    border-radius: 3px;
+  }
+  .barrel {
+    display: flex;
+    gap: 0;
+    padding: 8px 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+  .barrel.empty-roll {
+    padding: 12px 24px;
+    border-style: dashed;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .vfrette {
+    display: flex;
+    gap: 4px;
+    padding: 0 6px;
+  }
+  .vfrette + .vfrette {
+    border-left: 2px solid var(--line);
+  }
+  .vg {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 6px;
+    color: #fff;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 500;
+    display: grid;
+    place-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .vg.s-new {
+    background: var(--new);
+  }
+  .vg.s-worn {
+    background: var(--worn);
+  }
+  .vg.s-hs {
+    background: var(--hs);
+    background-image: repeating-linear-gradient(
+      135deg,
+      transparent 0 5px,
+      rgba(0, 0, 0, 0.18) 5px 8px
+    );
+  }
+  .vg.has-c::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  .vnotes {
+    display: grid;
+    gap: 2px;
+    font-size: 11px;
+    line-height: 1.3;
+    max-width: 60ch;
+  }
+  .vnotes span b {
+    font-family: var(--f-mono);
+    font-weight: 500;
+  }
+  .vnotes .s-new b {
+    color: var(--new);
+  }
+  .vnotes .s-worn b {
+    color: var(--worn);
+  }
+  .vnotes .s-hs b {
+    color: var(--hs);
+  }
   @media (max-width: 560px) {
+    .bar {
+      position: static;
+    }
     .row2 {
       grid-template-columns: 1fr;
     }
@@ -785,6 +972,14 @@
         aria-label="Diamètre laminé"
       ></div>
     </div>
+    <nav class="tabs" id="tabs" aria-label="Affichage">
+      <button class="tab" data-tab="edit" aria-pressed="true">
+        Renseignement
+      </button>
+      <button class="tab" data-tab="view" aria-pressed="false">
+        Visualisation
+      </button>
+    </nav>
     <span class="sync" id="sync">Connexion…</span>
   </div>
   <div class="tools" id="tools">
@@ -818,6 +1013,9 @@
     <div class="line" id="line">
       <p class="loading">Chargement des cylindres…</p>
     </div>
+  </div>
+  <div class="scroller" id="vscroller" hidden>
+    <div class="vline" id="vline"></div>
   </div>
 </main>
 
@@ -863,12 +1061,14 @@
       },
       diam: 16,
       mode: "state",
+      tab: "edit",
       show: [true, true, true],
       ready: false,
     };
     try {
       const d = Number(localStorage.getItem("laminoir-diam"));
       if (DIAMS[d]) S.diam = d;
+      if (localStorage.getItem("laminoir-tab") === "view") S.tab = "view";
     } catch (e) {}
 
     const $ = (id) => document.getElementById(id);
@@ -1135,17 +1335,80 @@
       );
     }
 
+    // ---------- Visualisation (cages top to bottom) ----------
+    function vrowHTML(n) {
+      const c = S.cages[n];
+      const label =
+        `<div class="vcage"><div class="vcage-top"><span class="cage-num">Cage<b>${n}</b></span>` +
+        `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Procédure en cas de cage HS">HS</button></div>` +
+        (c
+          ? `<small>${esc(c.name) || "Sans nom"} · Ø ${esc(c.diameter)} mm</small>`
+          : "") +
+        `</div>`;
+      const sides = (mid) =>
+        `<section class="vrow" data-cage="${n}">${label}<span class="vside l">Côté piste</span>` +
+        `<div class="vcenter">${mid}</div><span class="vside r">Côté moteur</span></section>`;
+      if (!c) {
+        return sides(
+          `<div class="vroll"><span class="journal"></span><div class="barrel empty-roll">Aucun cylindre</div><span class="journal"></span></div>`,
+        );
+      }
+      const sel = [0, 1, 2].map((i) => pathFor(i)[n]);
+      let fr = "",
+        notes = "";
+      for (let f = 0; f < c.frettes; f++) {
+        let gs = "";
+        for (let g = 0; g < c.gpf; g++) {
+          const key = `${f}-${g}`;
+          const st = grooveOf(n, key);
+          const rings = [];
+          sel.forEach((k, i) => {
+            if (k === key) rings.push(i);
+          });
+          const shadow = rings.length
+            ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 3}px var(--surface-2), 0 0 0 ${4 + j * 3}px var(${OPT_VARS[i]})`).join(",")}"`
+            : "";
+          const tip =
+            `Cage ${n} · Frette ${f + 1} · Cannelure ${g + 1} · ${STATES[st.s]}` +
+            rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
+            (st.c ? `\n${st.c}` : "");
+          gs += `<button class="vg s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${g + 1}</button>`;
+          if (st.c)
+            notes += `<span class="s-${st.s}"><b>F${f + 1}·C${g + 1}</b> ${esc(st.c)}</span>`;
+        }
+        fr += `<div class="vfrette">${gs}</div>`;
+      }
+      return sides(
+        `<div class="vroll"><span class="journal"></span><div class="barrel">${fr}</div><span class="journal"></span></div>` +
+          (notes ? `<div class="vnotes">${notes}</div>` : ""),
+      );
+    }
+
     function renderAll() {
       syncToolbar();
+      document.body.classList.toggle("view-tab", S.tab === "view");
+      document
+        .querySelectorAll("[data-tab]")
+        .forEach((b) =>
+          b.setAttribute("aria-pressed", String(b.dataset.tab === S.tab)),
+        );
+      $("scroller").hidden = S.tab === "view";
+      $("vscroller").hidden = S.tab !== "view";
       if (!S.ready) return;
-      const line = $("line");
-      line.innerHTML =
-        visible().map(cageHTML).join("") +
-        `<svg class="paths" id="paths" aria-hidden="true"></svg>`;
+      if (S.tab === "view") {
+        $("vline").innerHTML =
+          visible().map(vrowHTML).join("") +
+          `<svg class="paths" id="vpaths" aria-hidden="true"></svg>`;
+      } else {
+        $("line").innerHTML =
+          visible().map(cageHTML).join("") +
+          `<svg class="paths" id="paths" aria-hidden="true"></svg>`;
+      }
       requestAnimationFrame(drawPaths);
     }
 
     function drawPaths() {
+      if (S.tab === "view") return drawVPaths();
       const line = $("line"),
         svg = $("paths");
       if (!svg) return;
@@ -1187,10 +1450,54 @@
       });
       svg.innerHTML = out;
     }
-    if ("ResizeObserver" in window)
-      new ResizeObserver(() => requestAnimationFrame(drawPaths)).observe(
-        $("line"),
-      );
+
+    function drawVPaths() {
+      const line = $("vline"),
+        svg = $("vpaths");
+      if (!svg) return;
+      const base = line.getBoundingClientRect();
+      svg.setAttribute("width", line.scrollWidth);
+      svg.setAttribute("height", line.scrollHeight);
+      let out = "";
+      [0, 1, 2].forEach((i) => {
+        if (!S.show[i]) return;
+        const p = pathFor(i),
+          off = (i - 1) * 4;
+        const pts = [];
+        visible().forEach((n) => {
+          if (!validKey(n, p[n])) return;
+          const el = line.querySelector(
+            `.vg[data-cage="${n}"][data-g="${p[n]}"]`,
+          );
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          pts.push({
+            x: r.left - base.left + r.width / 2 + off,
+            t: r.top - base.top - 6,
+            b: r.bottom - base.top + 6,
+          });
+        });
+        if (pts.length < 2) return;
+        let d = "";
+        for (let k = 1; k < pts.length; k++) {
+          const a = pts[k - 1],
+            b = pts[k],
+            dy = (b.t - a.b) / 2;
+          d += `M${a.x},${a.b} C${a.x},${a.b + dy} ${b.x},${b.t - dy} ${b.x},${b.t} `;
+        }
+        const col = `var(${OPT_VARS[i]})`;
+        const dur = Math.max(3, pts.length * 0.8).toFixed(1);
+        out +=
+          `<path class="halo" d="${d}" stroke="${col}"></path><path d="${d}" stroke="${col}"></path>` +
+          `<circle class="runner" r="5.5" fill="${col}"><animateMotion dur="${dur}s" repeatCount="indefinite" path="${d}"></animateMotion></circle>`;
+      });
+      svg.innerHTML = out;
+    }
+    if ("ResizeObserver" in window) {
+      const ro = new ResizeObserver(() => requestAnimationFrame(drawPaths));
+      ro.observe($("line"));
+      ro.observe($("vline"));
+    }
     window.addEventListener("resize", () => requestAnimationFrame(drawPaths));
 
     // ---------- Modals ----------
@@ -1408,6 +1715,15 @@
 
     // ---------- Events ----------
     $("bar").addEventListener("click", (e) => {
+      const t = e.target.closest("[data-tab]");
+      if (t) {
+        S.tab = t.dataset.tab;
+        try {
+          localStorage.setItem("laminoir-tab", S.tab);
+        } catch (err) {}
+        renderAll();
+        return;
+      }
       const d = e.target.closest("[data-diam]");
       if (d) {
         S.diam = Number(d.dataset.diam);
@@ -1442,6 +1758,15 @@
     });
     $("tools").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && e.target.matches("input")) e.target.blur();
+    });
+
+    // Visualisation: HS opens the procedure, a groove opens its state and comment.
+    $("vline").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-act]");
+      if (!b) return;
+      const n = Number(b.dataset.cage);
+      if (b.dataset.act === "hs") return openHS(n);
+      if (b.dataset.act === "g") return openGroove(n, b.dataset.g);
     });
 
     $("line").addEventListener("click", (e) => {

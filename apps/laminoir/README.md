@@ -9,11 +9,11 @@ Les cages 1 à 6 ont toujours 1 frette et 1 cannelure.
 
 Cages affichées selon le diamètre laminé :
 
-| Ø laminé | Cages |
-| --- | --- |
-| 16 | 1 à 16, sauf 7 et 8 |
-| 18, 20 | 1 à 14 |
-| 25 | 1 à 12 |
-| 28 | 1 à 12, sauf 7 et 8 |
-| 32 | 1 à 10 |
-| 40 | 1 à 9, sauf 7 |
+| Ø laminé | Cages               |
+| -------- | ------------------- |
+| 16       | 1 à 16, sauf 7 et 8 |
+| 18, 20   | 1 à 14              |
+| 25       | 1 à 12              |
+| 28       | 1 à 12, sauf 7 et 8 |
+| 32       | 1 à 10              |
+| 40       | 1 à 9, sauf 7       |
