@@ -1111,7 +1111,7 @@
   }
   .vc {
     position: absolute;
-    top: calc(100% + 12px);
+    top: calc(100% + 26px);
     left: 50%;
     translate: -50% 0;
     width: max-content;
@@ -1123,8 +1123,15 @@
     white-space: pre-line;
     overflow-wrap: anywhere;
   }
-  .vroll.has-notes {
-    margin-bottom: 44px;
+  .paths line.lead {
+    stroke: var(--fg);
+    stroke-width: 1;
+    opacity: 0.55;
+  }
+  .paths circle.lead-dot {
+    fill: var(--fg);
+    stroke: none;
+    opacity: 0.55;
   }
   .vnotes {
     display: grid;
@@ -1700,11 +1707,53 @@
       svg.innerHTML = out;
     }
 
+    // Commentaires : sur une ligne sous le cylindre, sans chevauchement,
+    // chacun relié à sa cannelure par un trait fin.
+    const NOTE_GAP = 26;
+    function layoutNotes(base) {
+      const rolls = [...document.querySelectorAll("#vline .vroll")];
+      rolls.forEach((roll) => {
+        const hs = [...roll.querySelectorAll(".vc")].map((el) => el.offsetHeight);
+        roll.style.marginBottom = hs.length
+          ? `${NOTE_GAP + Math.max(...hs) - 6}px`
+          : "";
+      });
+      const leads = [];
+      rolls.forEach((roll) => {
+        const items = [...roll.querySelectorAll(".vc")]
+          .map((el) => {
+            const cell = el.parentElement.getBoundingClientRect();
+            return { el, cell, cx: cell.left + cell.width / 2, w: el.offsetWidth };
+          })
+          .sort((a, b) => a.cx - b.cx);
+        if (!items.length) return;
+        let prev = -Infinity;
+        items.forEach((it) => {
+          it.x = Math.max(it.cx - it.w / 2, prev + 10);
+          prev = it.x + it.w;
+        });
+        const shift =
+          items.reduce((s, it) => s + (it.x - (it.cx - it.w / 2)), 0) /
+          items.length;
+        items.forEach((it) => {
+          const center = it.x - shift + it.w / 2;
+          it.el.style.left = `${center - it.cell.left}px`;
+          leads.push({
+            x1: it.cx - base.left,
+            y1: it.cell.bottom - base.top + 2,
+            x2: center - base.left,
+            y2: it.cell.bottom - base.top + NOTE_GAP - 2,
+          });
+        });
+      });
+      return leads;
+    }
     function drawVPaths() {
       const line = $("vline"),
         svg = $("vpaths");
       if (!svg) return;
       const base = line.getBoundingClientRect();
+      const leads = layoutNotes(base);
       svg.setAttribute("width", line.scrollWidth);
       svg.setAttribute("height", line.scrollHeight);
       let out = "";
@@ -1740,6 +1789,12 @@
           `<path class="halo" d="${d}" stroke="${col}"></path><path d="${d}" stroke="${col}"></path>` +
           `<circle class="runner" r="5.5" fill="${col}"><animateMotion dur="${dur}s" repeatCount="indefinite" path="${d}"></animateMotion></circle>`;
       });
+      out += leads
+        .map(
+          (l) =>
+            `<line class="lead" x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}"></line><circle class="lead-dot" cx="${l.x1}" cy="${l.y1}" r="2"></circle>`,
+        )
+        .join("");
       svg.innerHTML = out;
     }
     if ("ResizeObserver" in window) {
