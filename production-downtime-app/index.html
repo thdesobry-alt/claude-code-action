@@ -998,185 +998,6 @@
     height: auto;
     display: block;
   }
-  .visu {
-    position: fixed;
-    inset: 0;
-    z-index: 300;
-    background: var(--bg);
-    color: var(--fg);
-    display: flex;
-    flex-direction: column;
-  }
-  .visu[hidden] {
-    display: none;
-  }
-  .visu-top {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 12px 24px;
-    background: var(--surface);
-    border-bottom: 4px solid var(--bar);
-  }
-  .visu-brand {
-    font-weight: 700;
-    font-size: 18px;
-    white-space: nowrap;
-  }
-  .visu-brand span {
-    color: var(--bar);
-  }
-  .visu-title {
-    flex: 1;
-    font-size: clamp(18px, 2.2vw, 30px);
-    font-weight: 700;
-  }
-  .visu-meta {
-    display: flex;
-    gap: 16px;
-    color: var(--muted);
-    font-size: 16px;
-    white-space: nowrap;
-  }
-  .visu-body {
-    flex: 1;
-    overflow: hidden;
-    padding: 24px 32px;
-    font-size: clamp(14px, 1.35vw, 22px);
-  }
-  .visu-bar {
-    height: 6px;
-    background: var(--line);
-  }
-  .visu-bar div {
-    height: 100%;
-    width: 0;
-    background: var(--accent);
-  }
-  .visu-ctl {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-    background: var(--surface);
-    opacity: 0.35;
-    transition: opacity 0.2s;
-  }
-  .visu-ctl:hover,
-  .visu-ctl:focus-within {
-    opacity: 1;
-  }
-  .visu-sec {
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-  }
-  .vk {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-  }
-  .vk > div {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-top: 5px solid var(--bar);
-    border-radius: 4px;
-    padding: 18px 20px;
-  }
-  .vk .l {
-    color: var(--muted);
-    font-size: 0.9em;
-  }
-  .vk .v {
-    font-size: 2.6em;
-    font-weight: 700;
-    margin-top: 6px;
-  }
-  .vk .v.bad {
-    color: var(--danger);
-  }
-  .vk .s {
-    color: var(--muted);
-    font-size: 0.8em;
-    margin-top: 4px;
-  }
-  .vt {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--surface);
-  }
-  .vt th,
-  .vt td {
-    font-size: 1em;
-    text-align: left;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--line);
-    vertical-align: top;
-  }
-  .vt th {
-    color: var(--muted);
-    font-size: 0.85em;
-    font-weight: 600;
-  }
-  .vt td.n {
-    text-align: right;
-    white-space: nowrap;
-    font-weight: 700;
-  }
-  .vt .acts {
-    font-size: 0.85em;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-  .vbars {
-    display: grid;
-    grid-template-columns: minmax(160px, 28%) 1fr auto;
-    gap: 10px 14px;
-    align-items: center;
-  }
-  .vbars .bar {
-    height: 1.4em;
-    background: var(--bar);
-    border-radius: 2px;
-  }
-  .vbars .bar.top {
-    background: var(--danger);
-  }
-  .vbars .val {
-    font-weight: 700;
-    white-space: nowrap;
-  }
-  .vinc {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-left: 6px solid var(--danger);
-    border-radius: 4px;
-    padding: 14px 18px;
-    margin-bottom: 14px;
-  }
-  .vok {
-    font-size: 1.8em;
-    color: var(--ok);
-    font-weight: 700;
-    padding: 30px 0;
-  }
-  .visu-body .pill {
-    font-size: 0.75em;
-  }
-  .visu-body .zone-legend {
-    font-size: 0.8em;
-  }
-  .visu-body .zone-grad {
-    width: 240px;
-  }
-  .visu-body h3 {
-    margin: 0 0 12px;
-    font-size: 1.1em;
-  }
-  .visu-body .tl-chart .axis {
-    font-size: 13px;
-  }
   .tl-chart {
     width: 100%;
     height: auto;
@@ -1301,27 +1122,10 @@
       <span class="role" id="roleBadge" hidden></span>
       <button class="btn sm" id="btnLogin" hidden>Se connecter</button>
       <button class="btn sm" id="btnLogout" hidden>Se déconnecter</button>
-      <button class="btn sm" id="btnVisu" title="Diaporama des résultats de la veille (écran d'atelier)">Mode visualisation</button>
       <button class="btn sm" id="btnExportTop">Exporter la base JSON</button>
     </div>
   </header>
   <div class="filebar" id="fileBar" hidden></div>
-  <div class="visu" id="visu" hidden role="dialog" aria-modal="true" aria-label="Mode visualisation">
-    <div class="visu-top">
-      <div class="visu-brand">Arrêts de <span>production</span></div>
-      <div class="visu-title" id="visuTitle"></div>
-      <div class="visu-meta"><span id="visuPage"></span><span id="visuClock"></span></div>
-    </div>
-    <div class="visu-body" id="visuBody"></div>
-    <div class="visu-bar"><div id="visuProg"></div></div>
-    <div class="visu-ctl">
-      <button class="btn sm" id="visuPrev" aria-label="Page précédente">◀</button>
-      <button class="btn sm" id="visuPause">Pause</button>
-      <button class="btn sm" id="visuNext" aria-label="Page suivante">▶</button>
-      <label class="f visu-sec" id="visuSecWrap" hidden>Secondes par page<input id="visuSec" type="number" min="3" max="300" step="1" style="width: 70px" /></label>
-      <button class="btn sm" id="visuQuit">Quitter</button>
-    </div>
-  </div>
   <form class="panel login" id="loginPanel" hidden autocomplete="off">
     <label class="f"
       >Mot de passe Utilisateur ou Admin<input type="password" id="loginPwd" autocomplete="current-password"
@@ -2130,7 +1934,7 @@
       try {
         localStorage.setItem(
           LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, settings: settings }),
+          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones }),
         );
       } catch (e) {}
       if (fileHandle) scheduleFileSave();
@@ -2169,17 +1973,16 @@
       return clone(o); // conflit sur une même valeur : la modification de ce poste l'emporte
     }
     function snapshot() {
-      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, settings: settings, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
+      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
     }
     function applyState(s) {
-      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {}; zones = s.zones || {}; settings = s.settings || {};
+      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {}; zones = s.zones || {};
       if (s.codes && (s.codes.fer || s.codes.macc)) { codes = { fer: s.codes.fer || DEFAULT_CODES.fer, macc: s.codes.macc || DEFAULT_CODES.macc }; codesCustom = true; }
       else { codes = DEFAULT_CODES; codesCustom = false; }
     }
     // fichier exporté (version 2, liste « arrets ») -> structure de la base
     function fromExport(data) {
-      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, settings: {}, codes: null }, groups = {}, order = [];
-      if (data.reglages && typeof data.reglages === "object") st.settings = Object.assign({}, data.reglages);
+      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, codes: null }, groups = {}, order = [];
       if (data.zones && typeof data.zones === "object") Object.keys(data.zones).forEach(function (c) { st.zones[c] = String(data.zones[c] || ""); });
       (data.securite || []).forEach(function (x, i) {
         var k = pdKeyFromFr(x.jour);
@@ -2223,15 +2026,15 @@
     async function readFileState() {
       var f = await fileHandle.getFile(), text = await f.text();
       fileLastMod = f.lastModified;
-      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, settings: {}, codes: null };
+      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, codes: null };
       var d = JSON.parse(text);
-      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, zones: d.zones || {}, settings: d.settings || {}, codes: d.codes || null };
+      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, zones: d.zones || {}, codes: d.codes || null };
       if (d && Array.isArray(d.arrets)) return fromExport(d);
       throw new Error("format");
     }
     async function writeFileState(s) {
       var w = await fileHandle.createWritable();
-      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, zones: s.zones || {}, settings: s.settings || {}, codes: s.codes }));
+      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, zones: s.zones || {}, codes: s.codes }));
       await w.close();
       fileLastMod = (await fileHandle.getFile()).lastModified;
     }
@@ -2386,7 +2189,6 @@
           production = d.production || {};
           safety = d.safety || {};
           zones = d.zones || {};
-          settings = d.settings || {};
         }
       } catch (e) {}
     }
@@ -2417,27 +2219,6 @@
         return Promise.resolve();
       }
       var ref = db.doc("config/zones"), ck = "config/zones";
-      chains[ck] = (chains[ck] || Promise.resolve())
-        .then(async function () {
-          try { await ref.update({ items: patch }); }
-          catch (e) {
-            if (e && e.code === "invalid_argument") { var sn = await ref.get(); if (!sn.exists) { await ref.set({ items: patch }); return; } }
-            throw e;
-          }
-        })
-        .catch(function (e) { toast(dbErrorMessage(e)); });
-      return chains[ck];
-    }
-    // réglages partagés : config/settings = {items: {slideSec}}
-    var settings = {};
-    function writeSettings(patch) {
-      if (mode === "local") {
-        Object.assign(settings, patch);
-        saveLocal();
-        refresh();
-        return Promise.resolve();
-      }
-      var ref = db.doc("config/settings"), ck = "config/settings";
       chains[ck] = (chains[ck] || Promise.resolve())
         .then(async function () {
           try { await ref.update({ items: patch }); }
@@ -3473,18 +3254,13 @@
       if (f && crIncFocus) { box.querySelector("[data-inc-form] select").focus(); crIncFocus = false; }
     }
     var crIncFocus = false;
-    function dayPerf(r) {
-      var v = production[r.key] || {};
-      var stopMs = stopTimeIn(r.a, r.b), mb = stopTimeIn(r.a, r.b, true), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
-      var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
-      return { stopMs: stopMs, mb: mb, open: open, tons: tons, openMs: openMs, run: run,
-        taux: openMs ? run / openMs : null, prod: openMs && tons != null ? tons / (openMs / 3600000) : null };
-    }
     function renderCRPerf() {
       var box = $("crPerf"), ae = document.activeElement;
       if (ae && ae.matches && ae.matches("#crPerf input")) return;
-      var r = crRange(), adm = isAdmin(), P = dayPerf(r);
-      var stopMs = P.stopMs, mb = P.mb, open = P.open, tons = P.tons, run = P.run, taux = P.taux, prod = P.prod;
+      var r = crRange(), v = production[r.key] || {}, adm = isAdmin();
+      var stopMs = stopTimeIn(r.a, r.b), mb = stopTimeIn(r.a, r.b, true), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
+      var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
+      var taux = openMs ? run / openMs : null, prod = openMs && tons != null ? tons / (openMs / 3600000) : null;
       box.innerHTML = '<div class="kpis">' +
         '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>" +
         '<div class="kpi"><div class="l">Productivité</div><div class="v">' + (prod == null ? "—" : fmtNum(prod, 1) + " t/h") + "</div></div>" +
@@ -3658,7 +3434,6 @@
             actions: incActions(x).map(function (a) { return { action: a.action, pilote: a.pilote, delai: a.delai, fait: !!a.done }; }) };
         }),
         zones: Object.assign({}, zones),
-        reglages: Object.assign({}, settings),
         production: Object.keys(production).sort().map(function (k) { var v = production[k] || {}; return { jour: k.split("-").reverse().join("/"), tonnes: v.tonnes == null ? "" : v.tonnes, ouvertureMin: v.ouverture == null ? null : v.ouverture }; }),
         arrets: stops.map(function (s) {
           return {
@@ -4213,25 +3988,14 @@
         all += x.dur;
       });
       $("zoneSub").textContent = mode === "pending" ? "Chargement de la base…" : "Du " + fmtDate(ui.from) + " au " + fmtDate(ui.to) + ". Cliquez sur une zone pour afficher son Pareto.";
-      $("zoneMap").innerHTML = zoneSvgHTML(tot, cnt, ui.metric.schema === "n", ui.zone, all);
-      var dn = tot.none || 0;
-      $("zoneOut").innerHTML = dn
-        ? '<p class="hint">Hors schéma (machines sans zone) : ' + fmtHM(dn) + " · " + (cnt.none || 0) + " arrêt(s) · " + '<button class="btn sm" data-zone-btn="none"' + (ui.zone === "none" ? ' aria-pressed="true"' : "") + ">Voir le Pareto</button></p>"
-        : "";
-      if (ui.zone) renderPareto("schema");
-      else $("zonePareto").innerHTML = '<div class="panel"><div class="empty">Sélectionnez une zone du schéma pour afficher son Pareto.</div></div>';
-      $("zoneAdmin").hidden = !isAdmin();
-      if (isAdmin() && $("zoneDetails").open) renderZoneTable();
-    }
-    function zoneSvgHTML(tot, cnt, byN, sel, all) {
       // couleur : vert (moins d'arrêts) → rouge (plus d'arrêts), selon le critère Durée / Nombre
-      var vals = ZONES.map(function (z) { return (byN ? cnt : tot)[z.id] || 0; });
+      var byN = ui.metric.schema === "n", vals = ZONES.map(function (z) { return (byN ? cnt : tot)[z.id] || 0; });
       var vmin = Math.min.apply(null, vals), vmax = Math.max.apply(null, vals);
       function zoneColor(v) {
         var t = vmax > vmin ? (v - vmin) / (vmax - vmin) : 0;
         return "hsl(" + Math.round(120 * (1 - t)) + ", 62%, " + Math.round(36 + 4 * Math.sin(Math.PI * t)) + "%)";
       }
-      return '<svg class="zone-svg" viewBox="0 0 1070 360" role="group" aria-label="Schéma du laminoir">' + ZONES.map(function (z) {
+      $("zoneMap").innerHTML = '<svg class="zone-svg" viewBox="0 0 1070 360" role="group" aria-label="Schéma du laminoir">' + ZONES.map(function (z) {
         var cx = z.x + z.w / 2, d = tot[z.id] || 0, n = cnt[z.id] || 0;
         var info = fmtHM(d) + (all ? " · " + pct(d / all) : "");
         var txt;
@@ -4243,9 +4007,17 @@
             '<text class="zd" x="' + cx + '" y="' + (top + z.lines.length * lh + 4) + '">' + info + "</text>" +
             (showN ? '<text class="zp" x="' + cx + '" y="' + (top + z.lines.length * lh + 21) + '">' + n + " arrêt" + (n > 1 ? "s" : "") + "</text>" : "");
         }
-        return '<g data-zone="' + z.id + '" tabindex="0" role="button" aria-pressed="' + (sel === z.id) + '" aria-label="' + esc(z.name) + " : " + info + '"' + (sel === z.id ? ' class="on"' : "") + '><rect x="' + z.x + '" y="' + z.y + '" width="' + z.w + '" height="' + z.h + '" rx="2" style="fill: ' + zoneColor(byN ? n : d) + '" />' + txt + "</g>";
+        return '<g data-zone="' + z.id + '" tabindex="0" role="button" aria-pressed="' + (ui.zone === z.id) + '" aria-label="' + esc(z.name) + " : " + info + '"' + (ui.zone === z.id ? ' class="on"' : "") + '><rect x="' + z.x + '" y="' + z.y + '" width="' + z.w + '" height="' + z.h + '" rx="2" style="fill: ' + zoneColor(byN ? n : d) + '" />' + txt + "</g>";
       }).join("") + "</svg>" +
         '<div class="zone-legend"><span>Moins d\'arrêts</span><span class="zone-grad"></span><span>Plus d\'arrêts</span><span class="muted">(' + (byN ? "en nombre" : "en durée") + ")</span></div>";
+      var dn = tot.none || 0;
+      $("zoneOut").innerHTML = dn
+        ? '<p class="hint">Hors schéma (machines sans zone) : ' + fmtHM(dn) + " · " + (cnt.none || 0) + " arrêt(s) · " + '<button class="btn sm" data-zone-btn="none"' + (ui.zone === "none" ? ' aria-pressed="true"' : "") + ">Voir le Pareto</button></p>"
+        : "";
+      if (ui.zone) renderPareto("schema");
+      else $("zonePareto").innerHTML = '<div class="panel"><div class="empty">Sélectionnez une zone du schéma pour afficher son Pareto.</div></div>';
+      $("zoneAdmin").hidden = !isAdmin();
+      if (isAdmin() && $("zoneDetails").open) renderZoneTable();
     }
     function renderZoneTable() {
       var ae = document.activeElement;
@@ -4333,11 +4105,6 @@
       if (mode === "pending") { box.innerHTML = '<div class="empty">Chargement de la base…</div>'; return; }
       var f = crStops().slice().sort(function (p, q) { return p.s.start - q.s.start; });
       if (!f.length) { box.innerHTML = '<div class="empty">Aucun arrêt sur cette journée.</div>'; return; }
-      var svg = timelineSVG(f, r);
-      var tot = f.reduce(function (t, x) { return t + x.dur; }, 0);
-      box.innerHTML = '<p class="hint">' + f.length + " arrêt" + (f.length > 1 ? "s" : "") + " · " + fmtHM(tot) + " d'arrêt sur la journée. Survolez un arrêt pour le détail.</p>" + svg;
-    }
-    function timelineSVG(f, r) {
       var W = 1000, L = 10, R = 10, by = 8, bh = 64, span = r.b - r.a, cw = W - L - R, i;
       var svg = '<svg class="tl-chart" viewBox="0 0 ' + W + " " + (by + bh + 30) + '" role="img" aria-label="Frise chronologique des arrêts">';
       svg += '<rect class="tl-band" x="' + L + '" y="' + by + '" width="' + cw + '" height="' + bh + '" rx="2" />';
@@ -4357,179 +4124,9 @@
         svg += '<line class="tl-tick" x1="' + tx + '" x2="' + tx + '" y1="' + (by + bh) + '" y2="' + (by + bh + 5) + '" /><text class="axis" x="' + tx + '" y="' + (by + bh + 19) + '" text-anchor="' + (i === 0 ? "start" : i === 24 ? "end" : "middle") + '">' + ((8 + i) % 24) + "h</text>";
       }
       svg += "</svg>";
-      return svg;
+      var tot = f.reduce(function (t, x) { return t + x.dur; }, 0);
+      box.innerHTML = '<p class="hint">' + f.length + " arrêt" + (f.length > 1 ? "s" : "") + " · " + fmtHM(tot) + " d'arrêt sur la journée. Survolez un arrêt pour le détail.</p>" + svg;
     }
-    // ---------- Mode visualisation (diaporama de la veille) ----------
-    var visu = { on: false, i: 0, slides: [], paused: false, t: null, t0: 0, clock: null };
-    function visuSec() {
-      var n = parseInt(settings.slideSec, 10);
-      return n >= 3 && n <= 300 ? n : 10;
-    }
-    function stopsIn(a, b) {
-      var sv = { from: ui.from, to: ui.to, gran: ui.gran }, out;
-      ui.from = a; ui.to = b; ui.gran = "day"; skipChips = true;
-      try { out = filtered(); }
-      finally { ui.from = sv.from; ui.to = sv.to; ui.gran = sv.gran; skipChips = false; }
-      return out;
-    }
-    function visuRange() {
-      var d = prodDay(Date.now()); d.setDate(d.getDate() - 1);
-      var a = d.getTime(), b = new Date(a); b.setDate(b.getDate() + 1);
-      return { a: a, b: b.getTime(), key: dayKey(a) };
-    }
-    function actStatusHTML(a) {
-      var today = startOfDay(Date.now());
-      return a.closed ? '<span class="pill ok">Clôturée</span>' : isLate(a, today) ? '<span class="pill late">En retard</span>' : '<span class="pill neutral">En cours</span>';
-    }
-    function chunk(list, n) {
-      var out = [];
-      for (var i = 0; i < list.length; i += n) out.push(list.slice(i, i + n));
-      return out.length ? out : [[]];
-    }
-    function buildSlides() {
-      var r = visuRange(), P = dayPerf(r), f = stopsIn(r.a, r.b).sort(function (p, q) { return q.dur - p.dur; });
-      var tot = f.reduce(function (t, x) { return t + x.dur; }, 0), slides = [];
-      var dayLbl = new Date(r.a).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-      // 1. résultats
-      slides.push({ title: "Résultats de la veille · " + dayLbl, html:
-        '<div class="vk">' +
-        '<div><div class="l">Taux de marche</div><div class="v' + (P.taux != null && P.taux < 0.8 ? " bad" : "") + '">' + (P.taux == null ? "—" : pct(P.taux)) + "</div>" + (P.open == null ? '<div class="s">Production non saisie</div>' : "") + "</div>" +
-        '<div><div class="l">Productivité</div><div class="v">' + (P.prod == null ? "—" : fmtNum(P.prod, 1) + " t/h") + "</div></div>" +
-        '<div><div class="l">Production</div><div class="v">' + (P.tons == null ? "—" : fmtNum(P.tons, 0) + " t") + "</div></div>" +
-        '<div><div class="l">Temps d\'arrêt</div><div class="v">' + fmtHM(P.stopMs) + '</div><div class="s">hors 51 cycle et 26 manque billettes</div></div>' +
-        '<div><div class="l">Nombre d\'arrêts</div><div class="v">' + f.length + "</div></div>" +
-        '<div><div class="l">Manque billettes (26)</div><div class="v">' + fmtHM(P.mb) + "</div></div>" +
-        "</div>" +
-        '<p class="hint" style="margin-top: 18px">Journée du ' + fmtDate(r.a).slice(0, 16) + " au " + fmtDate(r.b).slice(0, 16) + (P.open != null ? " · ouverture " + fmtOpening(P.open) : "") + "</p>" });
-      // 2. sécurité
-      var inc = incidents().filter(function (x) { return x.day === r.key; });
-      var openSafe = [];
-      incidents().forEach(function (x) { incActions(x).forEach(function (a) { if (!a.done) openSafe.push({ x: x, a: a }); }); });
-      slides.push({ title: "Point sécurité", html:
-        (inc.length ? inc.map(function (x) {
-          var al = incActions(x);
-          return '<div class="vinc"><strong>' + esc(x.type || "Incident") + "</strong>" + (x.heure ? " · " + esc(x.heure) : "") + (x.lieu ? " · " + esc(x.lieu) : "") +
-            (x.description ? "<div>" + esc(x.description) + "</div>" : "") +
-            (al.length ? '<div class="acts" style="margin-top: 6px">' + al.map(function (a) { return "→ " + esc(a.action) + (a.pilote ? " (" + esc(a.pilote) + ")" : "") + (a.done ? ' <span class="pill ok">Fait</span>' : safetyLate(a) ? ' <span class="pill late">En retard</span>' : ""); }).join("<br>") + "</div>" : "") + "</div>";
-        }).join("") : '<div class="vok">✓ Aucun incident sécurité déclaré</div>') +
-        (openSafe.length ? "<h3>Actions sécurité en cours : " + openSafe.length + "</h3>" + '<table class="vt"><tbody>' + openSafe.slice(0, 6).map(function (o) {
-          return "<tr><td>" + esc(o.a.action) + "</td><td>" + esc(o.a.pilote || "—") + "</td><td>" + (o.a.delai ? o.a.delai.split("-").reverse().join("/") : "—") + "</td><td>" + (safetyLate(o.a) ? '<span class="pill late">En retard</span>' : "") + "</td></tr>";
-        }).join("") + "</tbody></table>" : "") });
-      if (f.length) {
-        // 3. frise
-        slides.push({ title: "Frise chronologique (8h → 8h)", html: '<p style="margin-top: 0">' + f.length + " arrêt" + (f.length > 1 ? "s" : "") + " · " + fmtHM(tot) + " d'arrêt</p>" + timelineSVG(f.slice().sort(function (p, q) { return p.s.start - q.s.start; }), r) });
-        // 4. pareto machine
-        var by = {};
-        f.forEach(function (x) { var k = machineOf(x.s); by[k] = (by[k] || 0) + x.dur; });
-        var rows = Object.keys(by).map(function (k) { return { k: k, v: by[k] }; }).sort(function (a, b) { return b.v - a.v; }).slice(0, 10);
-        var mx = rows.length ? rows[0].v : 1;
-        slides.push({ title: "Pareto machine de la veille", html: '<div class="vbars">' + rows.map(function (x, i) {
-          return "<div>" + esc(x.k) + '</div><div><div class="bar' + (i === 0 ? " top" : "") + '" style="width: ' + Math.max(1, (x.v / mx) * 100) + '%"></div></div><div class="val">' + fmtHMS(x.v) + ' <span class="muted">' + pct(tot ? x.v / tot : 0) + "</span></div>";
-        }).join("") + "</div>" + (Object.keys(by).length > 10 ? '<p class="hint">10 premières machines sur ' + Object.keys(by).length + "</p>" : "") });
-        // 5. schéma laminoir
-        var zt = {}, zc = {};
-        f.forEach(function (x) { var z = zoneOf(x.s) || "none"; zt[z] = (zt[z] || 0) + x.dur; zc[z] = (zc[z] || 0) + 1; });
-        slides.push({ title: "Schéma laminoir", html: zoneSvgHTML(zt, zc, false, null, tot) + (zt.none ? '<p class="hint">Hors schéma : ' + fmtHM(zt.none) + "</p>" : "") });
-        // 6. arrêts (7 par page)
-        var pages = chunk(f, 7);
-        pages.forEach(function (pg, i) {
-          slides.push({ title: "Arrêts de la veille" + (pages.length > 1 ? " (" + (i + 1) + "/" + pages.length + ")" : ""), html:
-            '<table class="vt"><thead><tr><th>Début</th><th>Durée</th><th>Machine</th><th>Type</th><th>Détail et actions</th></tr></thead><tbody>' + pg.map(function (x) {
-              var acts = realActions(x.s);
-              return '<tr><td style="white-space: nowrap">' + fmtDate(x.s.start).slice(11, 16) + '</td><td class="n">' + fmtHM(x.s.end - x.s.start) + "</td><td>" + esc(machineOf(x.s)) + "</td><td>" + esc(typeOf(x.s)) + "</td><td>" + (x.s.detail ? esc(x.s.detail) : '<span class="muted">—</span>') +
-                (acts.length ? '<div class="acts">' + acts.map(function (a) { return (a.plan ? numLabel(a) + " · " : "") + esc(a.action || "—") + (a.pilote ? " (" + esc(a.pilote) + ")" : "") + " " + actStatusHTML(a); }).join("<br>") + "</div>" : "") + "</td></tr>";
-            }).join("") + "</tbody></table>" });
-        });
-      } else {
-        slides.push({ title: "Arrêts de la veille", html: '<div class="vok">✓ Aucun arrêt enregistré sur la journée</div>' });
-      }
-      // 7. actions : celles des arrêts de la veille, puis toutes les actions en retard
-      var seen = {}, dayActs = [], late = [], today = startOfDay(Date.now());
-      f.forEach(function (x) { realActions(x.s).forEach(function (a) { var k = a.plan ? "p" + a.id : x.s.id + a.id; if (!seen[k]) { seen[k] = 1; dayActs.push(a); } }); });
-      var seenL = {};
-      stops.forEach(function (st) { realActions(st).forEach(function (a) { var k = a.plan ? "p" + a.id : st.id + a.id; if (!seenL[k] && !a.closed && isLate(a, today)) { seenL[k] = 1; late.push(a); } }); });
-      late.sort(function (a, b) { return (dueOf(a) || 0) - (dueOf(b) || 0); });
-      function actTable(list) {
-        return '<table class="vt"><thead><tr><th>N°</th><th>Action</th><th>Pilote</th><th>Délai</th><th>Statut</th></tr></thead><tbody>' + list.map(function (a) {
-          return "<tr><td>" + (a.plan ? numLabel(a) : "—") + "</td><td>" + esc(a.action || "—") + "</td><td>" + esc(a.pilote || "—") + '</td><td style="white-space: nowrap">' + (a.delai ? a.delai.split("-").reverse().join("/") : "—") + "</td><td>" + actStatusHTML(a) + "</td></tr>";
-        }).join("") + "</tbody></table>";
-      }
-      if (dayActs.length) chunk(dayActs, 8).forEach(function (pg, i, all) { slides.push({ title: "Actions sur les arrêts de la veille" + (all.length > 1 ? " (" + (i + 1) + "/" + all.length + ")" : ""), html: actTable(pg) }); });
-      if (late.length) chunk(late, 8).forEach(function (pg, i, all) { slides.push({ title: "Actions en retard : " + late.length + (all.length > 1 ? " (" + (i + 1) + "/" + all.length + ")" : ""), html: actTable(pg) }); });
-      return slides;
-    }
-    function visuShow() {
-      if (!visu.slides.length) return;
-      if (visu.i >= visu.slides.length) visu.i = 0;
-      var sl = visu.slides[visu.i];
-      $("visuTitle").textContent = sl.title;
-      $("visuBody").innerHTML = sl.html;
-      $("visuPage").textContent = visu.i + 1 + " / " + visu.slides.length;
-      visuTimer();
-    }
-    function visuTimer() {
-      clearTimeout(visu.t);
-      var bar = $("visuProg"), ms = visuSec() * 1000;
-      bar.style.transition = "none";
-      bar.style.width = "0";
-      if (visu.paused) return;
-      void bar.offsetWidth;
-      bar.style.transition = "width " + ms + "ms linear";
-      bar.style.width = "100%";
-      visu.t = setTimeout(function () { visuGo(1); }, ms);
-    }
-    function visuGo(d) {
-      var n = visu.slides.length;
-      visu.i = (visu.i + d + n) % n;
-      if (visu.i === 0 && d > 0) visu.slides = buildSlides(); // nouveau tour : données à jour
-      visuShow();
-    }
-    function visuClock() {
-      $("visuClock").textContent = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    }
-    function visuOpen() {
-      if (mode === "pending") { toast("Chargement de la base…"); return; }
-      visu.on = true; visu.i = 0; visu.paused = false;
-      visu.slides = buildSlides();
-      $("visu").hidden = false;
-      $("visuPause").textContent = "Pause";
-      $("visuSecWrap").hidden = !isAdmin();
-      $("visuSec").value = visuSec();
-      visuClock();
-      visu.clock = setInterval(visuClock, 15000);
-      try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {}
-      visuShow();
-    }
-    function visuClose() {
-      visu.on = false;
-      clearTimeout(visu.t);
-      clearInterval(visu.clock);
-      $("visu").hidden = true;
-      try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {}); } catch (e) {}
-      if (location.hash === "#visu") history.replaceState(null, "", location.pathname + location.search);
-    }
-    $("btnVisu").addEventListener("click", visuOpen);
-    $("visuQuit").addEventListener("click", visuClose);
-    $("visuPrev").addEventListener("click", function () { visuGo(-1); });
-    $("visuNext").addEventListener("click", function () { visuGo(1); });
-    $("visuPause").addEventListener("click", function () {
-      visu.paused = !visu.paused;
-      this.textContent = visu.paused ? "Reprendre" : "Pause";
-      visuTimer();
-    });
-    $("visuSec").addEventListener("change", function () {
-      if (!isAdmin()) return;
-      var n = Math.min(300, Math.max(3, parseInt(this.value, 10) || 10));
-      this.value = n;
-      writeSettings({ slideSec: n }).then(function () { toast("Durée par page : " + n + " s"); if (visu.on) visuTimer(); });
-    });
-    document.addEventListener("keydown", function (e) {
-      if (!visu.on || e.target.matches("input, textarea, select")) return;
-      if (e.key === "Escape") visuClose();
-      else if (e.key === "ArrowRight") visuGo(1);
-      else if (e.key === "ArrowLeft") visuGo(-1);
-      else if (e.key === " ") { e.preventDefault(); $("visuPause").click(); }
-    });
     var crRendering = false;
     function renderCRPareto() {
       var r = crRange(), sv = { from: ui.from, to: ui.to, gran: ui.gran };
@@ -5092,13 +4689,8 @@
         }
       }
     }
-    var visuAuto = false;
     function refresh() {
       rebuild();
-      if (!visuAuto && location.hash === "#visu" && mode !== "pending" && (mode === "local" || (loaded.days && loaded.acts))) {
-        visuAuto = true;
-        setTimeout(visuOpen, 0);
-      }
       if (!ui.rangeSet && (mode === "local" || (loaded.days && loaded.acts))) {
         lastDayRange();
         ui.rangeSet = stops.length > 0;
@@ -5773,11 +5365,6 @@
           safety = d;
           refresh();
         }, onErr);
-      db.doc("config/settings").onSnapshot(function (snap) {
-        var d = snap.exists ? snap.data() : null;
-        settings = (d && d.items) || {};
-        if (typeof visu !== "undefined" && visu && visu.on) visuTimer();
-      }, onErr);
       db.doc("config/zones").onSnapshot(function (snap) {
         var d = snap.exists ? snap.data() : null;
         zones = (d && d.items) || {};
