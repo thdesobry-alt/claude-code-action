@@ -1241,7 +1241,10 @@
     const pathFor = (i) => {
       const p = S.config.paths;
       const d = (p[S.diam] = p[S.diam] || {});
-      return (d[i] = d[i] || {});
+      const o = (d[i] = d[i] || {});
+      // Cages 1 à 6 : une seule cannelure, toujours sur le tracé.
+      for (let n = 1; n <= 6; n++) o[n] = "0-0";
+      return o;
     };
     const grooveOf = (n, key) => {
       const c = S.cages[n];
