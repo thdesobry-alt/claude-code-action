@@ -1343,10 +1343,10 @@
             ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 4}px var(--surface), 0 0 0 ${4 + j * 4}px var(${OPT_VARS[i]})`).join(",")}"`
             : "";
           const tip =
-            `Cage ${n} · Frette ${f + 1} · Cannelure ${g + 1} · ${STATES[st.s]}` +
+            `Cage ${n} · Frette ${f + 1} · Cannelure ${f * c.gpf + g + 1} · ${STATES[st.s]}` +
             rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
             (st.c ? `\n${st.c}` : "");
-          gs += `<button class="g s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}"><span class="g-num">${g + 1}</span>${st.c ? `<span class="g-c">${esc(st.c)}</span>` : ""}</button>`;
+          gs += `<button class="g s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}"><span class="g-num">${f * c.gpf + g + 1}</span>${st.c ? `<span class="g-c">${esc(st.c)}</span>` : ""}</button>`;
         }
         fr += `<div class="frette"><div class="frette-label">F${f + 1}</div><div class="grooves">${gs}</div></div>`;
       }
@@ -1393,10 +1393,10 @@
             ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 3}px var(--surface-2), 0 0 0 ${4 + j * 3}px var(${OPT_VARS[i]})`).join(",")}"`
             : "";
           const tip =
-            `Cage ${n} · Frette ${f + 1} · Cannelure ${g + 1} · ${STATES[st.s]}` +
+            `Cage ${n} · Frette ${f + 1} · Cannelure ${f * c.gpf + g + 1} · ${STATES[st.s]}` +
             rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
             (st.c ? `\n${st.c}` : "");
-          gs += `<span class="vcell"><button class="vg s-${st.s}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${g + 1}</button>${st.c ? `<span class="vc">${esc(st.c)}</span>` : ""}</span>`;
+          gs += `<span class="vcell"><button class="vg s-${st.s}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${f * c.gpf + g + 1}</button>${st.c ? `<span class="vc">${esc(st.c)}</span>` : ""}</span>`;
           if (st.c) notes = true;
         }
         fr += `<div class="vfrette">${gs}</div>`;
@@ -1640,7 +1640,7 @@
       let st = cur.s;
       openModal(
         `
-      <div class="modal-head"><h2>Cage ${n} · F${f + 1} · C${g + 1}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+      <div class="modal-head"><h2>Cage ${n} · F${f + 1} · C${f * c.gpf + g + 1}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
       <form id="gf">
         <div class="modal-body">
           <p class="note">${esc(c.name)} · Ø ${esc(c.diameter)} mm</p>
@@ -1704,7 +1704,7 @@
                     return `<span class="note">${esc(o.name)} : aucune cannelure affectée</span>`;
                   const [f, g] = p[i].split("-").map(Number),
                     s = grooveOf(n, p[i]).s;
-                  return `<span style="color:var(${OPT_VARS[i]});font-weight:600">${esc(o.name)} : F${f + 1} · C${g + 1} <span class="note">(${STATES[s]})</span></span>`;
+                  return `<span style="color:var(${OPT_VARS[i]});font-weight:600">${esc(o.name)} : F${f + 1} · C${f * c.gpf + g + 1} <span class="note">(${STATES[s]})</span></span>`;
                 })
                 .join("")}</div></div>`
             : ""
