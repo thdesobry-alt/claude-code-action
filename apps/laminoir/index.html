@@ -1,1597 +1,1577 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
-    <style>
-      [hidden] {
-        display: none !important;
-      }
-      body {
-        margin: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <title>Cannelures Laminoir</title>
-    <meta name="claude:viewport-fit-sides" content="cover" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
-    />
-    <style>
-      /* Layout: sticky control bar on top, then the mill line as one horizontal strip of cage columns (rolling direction left to right) with the product paths drawn over it. */
-      :root {
-        --bg: #eceff3;
-        --surface: #ffffff;
-        --surface-2: #e2e7ed;
-        --fg: #19212a;
-        --muted: #5b6876;
-        --line: #c7d0da;
-        --accent: #f2b705;
-        --accent-ink: #19212a;
-        --new: #2f9e44;
-        --worn: #e8890c;
-        --hs: #d63a2f;
-        --o1: #16a34a;
-        --o2: #2563eb;
-        --o3: #8b3fd9;
-        --shadow:
-          0 1px 2px rgba(25, 33, 42, 0.08), 0 4px 14px rgba(25, 33, 42, 0.06);
-        --f-display:
-          "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
-        --f-body:
-          "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --f-mono:
-          "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
-          monospace;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme="light"]) {
-          --bg: #10151b;
-          --surface: #19212a;
-          --surface-2: #232d38;
-          --fg: #e5eaf0;
-          --muted: #94a2b1;
-          --line: #313d4a;
-          --accent: #f5c330;
-          --accent-ink: #10151b;
-          --new: #3fbf5a;
-          --worn: #f59f2a;
-          --hs: #f0544a;
-          --o1: #34d27b;
-          --o2: #5b95ff;
-          --o3: #b07cff;
-          --shadow:
-            0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.25);
-          color-scheme: dark;
-        }
-      }
-      :root[data-theme="dark"] {
-        --bg: #10151b;
-        --surface: #19212a;
-        --surface-2: #232d38;
-        --fg: #e5eaf0;
-        --muted: #94a2b1;
-        --line: #313d4a;
-        --accent: #f5c330;
-        --accent-ink: #10151b;
-        --new: #3fbf5a;
-        --worn: #f59f2a;
-        --hs: #f0544a;
-        --o1: #34d27b;
-        --o2: #5b95ff;
-        --o3: #b07cff;
-        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.25);
-        color-scheme: dark;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        background: var(--bg);
-        color: var(--fg);
-        font-family: var(--f-body);
-        font-size: 14px;
-        line-height: 1.45;
-      }
-      body::before {
-        content: "";
-        position: fixed;
-        inset: 0 0 auto;
-        height: env(safe-area-inset-top, 0px);
-        z-index: 10;
-        background: var(--surface);
-      }
-      button,
-      input,
-      textarea {
-        font: inherit;
-        color: inherit;
-      }
-      button {
-        cursor: pointer;
-      }
-      :focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-      }
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>Cannelures Laminoir</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+/>
+<style>
+  /* Layout: sticky control bar on top, then the mill line as one horizontal strip of cage columns (rolling direction left to right) with the product paths drawn over it. */
+  :root {
+    --bg: #eceff3;
+    --surface: #ffffff;
+    --surface-2: #e2e7ed;
+    --fg: #19212a;
+    --muted: #5b6876;
+    --line: #c7d0da;
+    --accent: #f2b705;
+    --accent-ink: #19212a;
+    --new: #2f9e44;
+    --worn: #e8890c;
+    --hs: #d63a2f;
+    --o1: #16a34a;
+    --o2: #2563eb;
+    --o3: #8b3fd9;
+    --shadow:
+      0 1px 2px rgba(25, 33, 42, 0.08), 0 4px 14px rgba(25, 33, 42, 0.06);
+    --f-display:
+      "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --f-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --f-mono:
+      "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
+      monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10151b;
+      --surface: #19212a;
+      --surface-2: #232d38;
+      --fg: #e5eaf0;
+      --muted: #94a2b1;
+      --line: #313d4a;
+      --accent: #f5c330;
+      --accent-ink: #10151b;
+      --new: #3fbf5a;
+      --worn: #f59f2a;
+      --hs: #f0544a;
+      --o1: #34d27b;
+      --o2: #5b95ff;
+      --o3: #b07cff;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.25);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10151b;
+    --surface: #19212a;
+    --surface-2: #232d38;
+    --fg: #e5eaf0;
+    --muted: #94a2b1;
+    --line: #313d4a;
+    --accent: #f5c330;
+    --accent-ink: #10151b;
+    --new: #3fbf5a;
+    --worn: #f59f2a;
+    --hs: #f0544a;
+    --o1: #34d27b;
+    --o2: #5b95ff;
+    --o3: #b07cff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.25);
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--f-body);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--surface);
+  }
+  button,
+  input,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 
-      .bar {
-        position: sticky;
-        top: env(safe-area-inset-top, 0px);
-        z-index: 5;
-        background: var(--surface);
-        border-bottom: 1px solid var(--line);
-        padding-left: max(16px, env(safe-area-inset-left, 0px));
-        padding-right: max(16px, env(safe-area-inset-right, 0px));
-        padding-block: 12px;
-        display: grid;
-        gap: 12px;
-      }
-      .bar-top {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 12px 20px;
-      }
-      h1 {
-        font-family: var(--f-display);
-        font-weight: 700;
-        font-size: 26px;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-        margin: 0;
-        line-height: 1;
-        text-wrap: balance;
-      }
-      h1 small {
-        display: block;
-        font-family: var(--f-body);
-        font-size: 12px;
-        font-weight: 500;
-        letter-spacing: 0.06em;
-        color: var(--muted);
-        margin-top: 4px;
-      }
-      .sync {
-        margin-left: auto;
-        font-size: 12px;
-        color: var(--muted);
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .sync::before {
-        content: "";
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--muted);
-      }
-      .sync.ok::before {
-        background: var(--new);
-      }
-      .sync.local::before {
-        background: var(--worn);
-      }
+  .bar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px;
+    display: grid;
+    gap: 12px;
+  }
+  .bar-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1;
+    text-wrap: balance;
+  }
+  h1 small {
+    display: block;
+    font-family: var(--f-body);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .sync {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sync::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .sync.ok::before {
+    background: var(--new);
+  }
+  .sync.local::before {
+    background: var(--worn);
+  }
 
-      .label {
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-      }
-      .group {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
-      }
-      .diams {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-      }
-      .diam {
-        border: 1px solid var(--line);
-        background: var(--surface-2);
-        border-radius: 6px;
-        padding: 4px 10px;
-        font-family: var(--f-mono);
-        font-variant-numeric: tabular-nums;
-        font-size: 13px;
-        min-width: 52px;
-      }
-      .diam[aria-pressed="true"] {
-        background: var(--accent);
-        color: var(--accent-ink);
-        border-color: var(--accent);
-        font-weight: 600;
-      }
+  .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .diams {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .diam {
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    min-width: 52px;
+  }
+  .diam[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
 
-      .tools {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: stretch;
-      }
-      .mode {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        border: 1px solid var(--line);
-        background: var(--surface);
-        border-radius: 8px;
-        padding: 6px 10px;
-        font-weight: 500;
-      }
-      .mode[aria-pressed="true"] {
-        border-color: var(--fg);
-        box-shadow: inset 0 0 0 1px var(--fg);
-        background: var(--surface-2);
-      }
-      .opt {
-        display: inline-flex;
-        align-items: center;
-        gap: 0;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--surface);
-        overflow: hidden;
-      }
-      .opt[data-on="true"] {
-        border-color: var(--oc);
-        box-shadow: inset 0 0 0 1px var(--oc);
-      }
-      .opt .mode {
-        border: 0;
-        border-radius: 0;
-        padding-right: 6px;
-        background: transparent;
-        box-shadow: none;
-      }
-      .swatch {
-        width: 18px;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--oc);
-        flex: none;
-      }
-      .opt input[type="text"] {
-        border: 0;
-        background: transparent;
-        width: 9.5em;
-        padding: 6px 4px;
-        font-weight: 600;
-        color: var(--oc);
-      }
-      .opt input[type="text"]:focus {
-        outline: none;
-        background: var(--surface-2);
-      }
-      .opt .count {
-        font-family: var(--f-mono);
-        font-size: 12px;
-        color: var(--muted);
-        padding: 0 8px;
-        font-variant-numeric: tabular-nums;
-      }
-      .opt .count.warn {
-        color: var(--hs);
-      }
-      .eye {
-        border: 0;
-        border-left: 1px solid var(--line);
-        background: transparent;
-        padding: 6px 9px;
-        color: var(--muted);
-        align-self: stretch;
-      }
-      .eye[aria-pressed="false"] {
-        opacity: 0.45;
-        text-decoration: line-through;
-      }
-      .hint {
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .legend span {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-      }
-      .legend i {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-        display: inline-block;
-      }
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-weight: 500;
+  }
+  .mode[aria-pressed="true"] {
+    border-color: var(--fg);
+    box-shadow: inset 0 0 0 1px var(--fg);
+    background: var(--surface-2);
+  }
+  .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .opt[data-on="true"] {
+    border-color: var(--oc);
+    box-shadow: inset 0 0 0 1px var(--oc);
+  }
+  .opt .mode {
+    border: 0;
+    border-radius: 0;
+    padding-right: 6px;
+    background: transparent;
+    box-shadow: none;
+  }
+  .swatch {
+    width: 18px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--oc);
+    flex: none;
+  }
+  .opt input[type="text"] {
+    border: 0;
+    background: transparent;
+    width: 9.5em;
+    padding: 6px 4px;
+    font-weight: 600;
+    color: var(--oc);
+  }
+  .opt input[type="text"]:focus {
+    outline: none;
+    background: var(--surface-2);
+  }
+  .opt .count {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .opt .count.warn {
+    color: var(--hs);
+  }
+  .eye {
+    border: 0;
+    border-left: 1px solid var(--line);
+    background: transparent;
+    padding: 6px 9px;
+    color: var(--muted);
+    align-self: stretch;
+  }
+  .eye[aria-pressed="false"] {
+    opacity: 0.45;
+    text-decoration: line-through;
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend i {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+  }
 
-      main {
-        padding-block: 16px 40px;
-      }
-      .scroller {
-        overflow-x: auto;
-        padding-left: max(16px, env(safe-area-inset-left, 0px));
-        padding-right: max(16px, env(safe-area-inset-right, 0px));
-        padding-bottom: 8px;
-      }
-      .line {
-        position: relative;
-        display: inline-flex;
-        gap: 44px;
-        align-items: flex-start;
-        min-width: 100%;
-      }
-      .paths {
-        position: absolute;
-        left: 0;
-        top: 0;
-        pointer-events: none;
-        overflow: visible;
-        z-index: 2;
-      }
-      .paths path {
-        fill: none;
-        stroke-width: 3.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-dasharray: 12 8;
-        animation: flow 1.1s linear infinite;
-        opacity: 0.9;
-      }
-      .paths path.halo {
-        stroke-dasharray: none;
-        animation: none;
-        stroke-width: 8;
-        opacity: 0.18;
-      }
-      .paths circle {
-        stroke: var(--surface);
-        stroke-width: 2;
-      }
-      @keyframes flow {
-        to {
-          stroke-dashoffset: -20;
-        }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .paths path {
-          animation: none;
-        }
-        .paths .runner {
-          display: none;
-        }
-      }
+  main {
+    padding-block: 16px 40px;
+  }
+  .scroller {
+    overflow-x: auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: 8px;
+  }
+  .line {
+    position: relative;
+    display: inline-flex;
+    gap: 44px;
+    align-items: flex-start;
+    min-width: 100%;
+  }
+  .paths {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 2;
+  }
+  .paths path {
+    fill: none;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 12 8;
+    animation: flow 1.1s linear infinite;
+    opacity: 0.9;
+  }
+  .paths path.halo {
+    stroke-dasharray: none;
+    animation: none;
+    stroke-width: 8;
+    opacity: 0.18;
+  }
+  .paths circle {
+    stroke: var(--surface);
+    stroke-width: 2;
+  }
+  @keyframes flow {
+    to {
+      stroke-dashoffset: -20;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .paths path {
+      animation: none;
+    }
+    .paths .runner {
+      display: none;
+    }
+  }
 
-      .cage {
-        position: relative;
-        width: 152px;
-        flex: none;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        box-shadow: var(--shadow);
-        display: flex;
-        flex-direction: column;
-      }
-      .cage-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 8px 6px 10px;
-        border-bottom: 1px solid var(--line);
-      }
-      .cage-num {
-        font-family: var(--f-display);
-        font-size: 15px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--muted);
-      }
-      .cage-num b {
-        font-size: 24px;
-        color: var(--fg);
-        margin-left: 2px;
-      }
-      .hs-btn {
-        border: 1.5px solid var(--hs);
-        color: var(--hs);
-        background: transparent;
-        border-radius: 5px;
-        font-family: var(--f-display);
-        font-weight: 700;
-        font-size: 13px;
-        letter-spacing: 0.06em;
-        padding: 1px 8px;
-      }
-      .hs-btn:hover {
-        background: var(--hs);
-        color: #fff;
-      }
-      .roll-id {
-        all: unset;
-        box-sizing: border-box;
-        cursor: pointer;
-        display: grid;
-        gap: 1px;
-        padding: 8px 10px;
-        border-bottom: 1px solid var(--line);
-      }
-      .roll-id:hover {
-        background: var(--surface-2);
-      }
-      .roll-id:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: -2px;
-      }
-      .roll-name {
-        font-weight: 600;
-        overflow-wrap: anywhere;
-      }
-      .roll-d {
-        font-family: var(--f-mono);
-        font-size: 13px;
-        font-variant-numeric: tabular-nums;
-      }
-      .roll-meta {
-        font-size: 11px;
-        color: var(--muted);
-      }
-      .frettes {
-        display: grid;
-        gap: 6px;
-        padding: 8px;
-      }
-      .frette {
-        display: grid;
-        grid-template-columns: 22px 1fr;
-        gap: 4px;
-        align-items: start;
-      }
-      .frette + .frette {
-        border-top: 1px dashed var(--line);
-        padding-top: 6px;
-      }
-      .frette-label {
-        font-family: var(--f-mono);
-        font-size: 11px;
-        color: var(--muted);
-        padding-top: 5px;
-      }
-      .grooves {
-        display: grid;
-        gap: 5px;
-      }
-      .g {
-        position: relative;
-        min-height: 26px;
-        border-radius: 13px;
-        border: 0;
-        color: #fff;
-        font-family: var(--f-mono);
-        font-size: 12px;
-        font-weight: 500;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-variant-numeric: tabular-nums;
-        padding: 4px 8px;
-      }
-      .g.has-c {
-        border-radius: 9px;
-        padding-bottom: 6px;
-      }
-      .g-num {
-        line-height: 18px;
-      }
-      .g-c {
-        display: block;
-        width: 100%;
-        margin-top: 2px;
-        padding-top: 3px;
-        border-top: 1px solid rgba(255, 255, 255, 0.45);
-        font-family: var(--f-body);
-        font-size: 10.5px;
-        font-weight: 500;
-        line-height: 1.25;
-        text-align: left;
-        white-space: pre-line;
-        overflow-wrap: anywhere;
-        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
-      }
-      .g.s-new {
-        background: var(--new);
-      }
-      .g.s-worn {
-        background: var(--worn);
-      }
-      .g.s-hs {
-        background: var(--hs);
-        background-image: repeating-linear-gradient(
-          135deg,
-          transparent 0 6px,
-          rgba(0, 0, 0, 0.18) 6px 9px
-        );
-      }
-      .g:hover {
-        filter: brightness(1.08);
-      }
-      .cage-foot {
-        margin-top: auto;
-        padding: 6px 10px 8px;
-        border-top: 1px solid var(--line);
-        font-size: 11px;
-        color: var(--muted);
-        display: flex;
-        gap: 8px;
-        font-variant-numeric: tabular-nums;
-      }
-      .cage-foot b {
-        font-weight: 600;
-      }
-      .cage-foot .n {
-        color: var(--new);
-      }
-      .cage-foot .w {
-        color: var(--worn);
-      }
-      .cage-foot .h {
-        color: var(--hs);
-      }
-      .empty {
-        padding: 18px 10px;
-        display: grid;
-        gap: 10px;
-        justify-items: center;
-        text-align: center;
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .empty p {
-        margin: 0;
-      }
+  .cage {
+    position: relative;
+    width: 152px;
+    flex: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+  .cage-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 8px 6px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .cage-num {
+    font-family: var(--f-display);
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .cage-num b {
+    font-size: 24px;
+    color: var(--fg);
+    margin-left: 2px;
+  }
+  .hs-btn {
+    border: 1.5px solid var(--hs);
+    color: var(--hs);
+    background: transparent;
+    border-radius: 5px;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    padding: 1px 8px;
+  }
+  .hs-btn:hover {
+    background: var(--hs);
+    color: #fff;
+  }
+  .roll-id {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: grid;
+    gap: 1px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .roll-id:hover {
+    background: var(--surface-2);
+  }
+  .roll-id:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .roll-name {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .roll-d {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .roll-meta {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .frettes {
+    display: grid;
+    gap: 6px;
+    padding: 8px;
+  }
+  .frette {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 4px;
+    align-items: start;
+  }
+  .frette + .frette {
+    border-top: 1px dashed var(--line);
+    padding-top: 6px;
+  }
+  .frette-label {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding-top: 5px;
+  }
+  .grooves {
+    display: grid;
+    gap: 5px;
+  }
+  .g {
+    position: relative;
+    min-height: 26px;
+    border-radius: 13px;
+    border: 0;
+    color: #fff;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    padding: 4px 8px;
+  }
+  .g.has-c {
+    border-radius: 9px;
+    padding-bottom: 6px;
+  }
+  .g-num {
+    line-height: 18px;
+  }
+  .g-c {
+    display: block;
+    width: 100%;
+    margin-top: 2px;
+    padding-top: 3px;
+    border-top: 1px solid rgba(255, 255, 255, 0.45);
+    font-family: var(--f-body);
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: left;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  }
+  .g.s-new {
+    background: var(--new);
+  }
+  .g.s-worn {
+    background: var(--worn);
+  }
+  .g.s-hs {
+    background: var(--hs);
+    background-image: repeating-linear-gradient(
+      135deg,
+      transparent 0 6px,
+      rgba(0, 0, 0, 0.18) 6px 9px
+    );
+  }
+  .g:hover {
+    filter: brightness(1.08);
+  }
+  .cage-foot {
+    margin-top: auto;
+    padding: 6px 10px 8px;
+    border-top: 1px solid var(--line);
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .cage-foot b {
+    font-weight: 600;
+  }
+  .cage-foot .n {
+    color: var(--new);
+  }
+  .cage-foot .w {
+    color: var(--worn);
+  }
+  .cage-foot .h {
+    color: var(--hs);
+  }
+  .empty {
+    padding: 18px 10px;
+    display: grid;
+    gap: 10px;
+    justify-items: center;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .empty p {
+    margin: 0;
+  }
 
-      .btn {
-        border: 1px solid var(--line);
-        background: var(--surface-2);
-        border-radius: 7px;
-        padding: 7px 12px;
-        font-weight: 500;
-      }
-      .btn:hover {
-        border-color: var(--fg);
-      }
-      .btn.primary {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: var(--accent-ink);
-        font-weight: 600;
-      }
-      .btn.danger {
-        color: var(--hs);
-        border-color: var(--hs);
-        background: transparent;
-      }
-      .btn.danger.armed {
-        background: var(--hs);
-        color: #fff;
-      }
+  .btn {
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    border-radius: 7px;
+    padding: 7px 12px;
+    font-weight: 500;
+  }
+  .btn:hover {
+    border-color: var(--fg);
+  }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+  .btn.danger {
+    color: var(--hs);
+    border-color: var(--hs);
+    background: transparent;
+  }
+  .btn.danger.armed {
+    background: var(--hs);
+    color: #fff;
+  }
 
-      .loading {
-        padding: 40px 0;
-        color: var(--muted);
-      }
+  .loading {
+    padding: 40px 0;
+    color: var(--muted);
+  }
 
-      .overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 20;
-        background: rgba(10, 14, 19, 0.55);
-        display: grid;
-        place-items: center;
-        padding: max(16px, env(safe-area-inset-top, 0px))
-          max(16px, env(safe-area-inset-right, 0px))
-          max(16px, env(safe-area-inset-bottom, 0px))
-          max(16px, env(safe-area-inset-left, 0px));
-      }
-      .modal {
-        width: min(520px, 100%);
-        max-height: 100%;
-        overflow: auto;
-        background: var(--surface);
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-      }
-      .modal-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--line);
-      }
-      .modal-head h2 {
-        margin: 0;
-        font-family: var(--f-display);
-        font-size: 22px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        text-wrap: balance;
-      }
-      .modal-head.hs {
-        background: var(--hs);
-        color: #fff;
-        border-bottom-color: var(--hs);
-        border-radius: 11px 11px 0 0;
-      }
-      .x {
-        border: 0;
-        background: transparent;
-        font-size: 22px;
-        line-height: 1;
-        padding: 2px 6px;
-        color: inherit;
-      }
-      .modal-body {
-        padding: 16px;
-        display: grid;
-        gap: 14px;
-      }
-      .modal-foot {
-        padding: 12px 16px;
-        border-top: 1px solid var(--line);
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        justify-content: flex-end;
-      }
-      .modal-foot .spacer {
-        flex: 1;
-      }
-      .field {
-        display: grid;
-        gap: 4px;
-      }
-      .field input,
-      .field textarea {
-        border: 1px solid var(--line);
-        background: var(--bg);
-        border-radius: 7px;
-        padding: 8px 10px;
-        width: 100%;
-      }
-      .field input:disabled {
-        opacity: 0.6;
-      }
-      .field textarea {
-        min-height: 90px;
-        resize: vertical;
-      }
-      .db-tab #tools,
-      .db-tab .legend,
-      .db-tab .diams,
-      .db-tab .group {
-        display: none;
-      }
-      .db-file {
-        display: inline-flex;
-        gap: 8px;
-      }
-      .base-body {
-        justify-items: stretch;
-      }
-      .db-file label {
-        cursor: pointer;
-      }
-      .dbview {
-        padding-left: max(16px, env(safe-area-inset-left, 0px));
-        padding-right: max(16px, env(safe-area-inset-right, 0px));
-        display: grid;
-        gap: 12px;
-      }
-      .db-head {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px 16px;
-      }
-      .db-head h2 {
-        margin: 0;
-        font-family: var(--f-display);
-        font-size: 22px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-      }
-      .db-count {
-        color: var(--muted);
-        font-size: 13px;
-        font-variant-numeric: tabular-nums;
-      }
-      .db-head input {
-        margin-left: auto;
-        border: 1px solid var(--line);
-        background: var(--surface);
-        border-radius: 7px;
-        padding: 7px 10px;
-        min-width: 0;
-        width: 15em;
-        max-width: 100%;
-      }
-      .db-table {
-        overflow-x: auto;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-      }
-      .dbt {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-      }
-      .dbt th {
-        text-align: left;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-        padding: 10px 12px;
-        border-bottom: 1px solid var(--line);
-        white-space: nowrap;
-      }
-      .dbt td {
-        padding: 9px 12px;
-        border-bottom: 1px solid var(--line);
-        white-space: nowrap;
-      }
-      .dbt tr:last-child td {
-        border-bottom: 0;
-      }
-      .dbt .num {
-        font-family: var(--f-mono);
-        font-variant-numeric: tabular-nums;
-      }
-      .linkbtn {
-        border: 0;
-        background: none;
-        padding: 0;
-        font-weight: 600;
-        text-decoration: underline;
-        text-underline-offset: 3px;
-        text-decoration-color: var(--line);
-      }
-      .linkbtn:hover {
-        text-decoration-color: currentColor;
-      }
-      .where {
-        display: inline-block;
-        font-size: 12px;
-        font-weight: 600;
-        padding: 2px 8px;
-        border-radius: 999px;
-        background: var(--surface-2);
-        color: var(--muted);
-      }
-      .where.on {
-        background: var(--fg);
-        color: var(--bg);
-      }
-      .mini {
-        display: inline-flex;
-        gap: 8px;
-        font-size: 12px;
-        font-variant-numeric: tabular-nums;
-      }
-      .mini b {
-        font-weight: 600;
-      }
-      .mini .n {
-        color: var(--new);
-      }
-      .mini .w {
-        color: var(--worn);
-      }
-      .mini .h {
-        color: var(--hs);
-      }
-      .db-empty {
-        margin: 0;
-        padding: 24px 16px;
-        color: var(--muted);
-        text-align: center;
-      }
-      .pick-q {
-        border: 1px solid var(--line);
-        background: var(--bg);
-        border-radius: 7px;
-        padding: 8px 10px;
-        width: 100%;
-      }
-      .picklist {
-        display: grid;
-        gap: 6px;
-        max-height: 50vh;
-        overflow: auto;
-      }
-      .pick {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 2px 12px;
-        text-align: left;
-        border: 1px solid var(--line);
-        background: var(--bg);
-        border-radius: 8px;
-        padding: 8px 12px;
-      }
-      .pick:hover {
-        border-color: var(--fg);
-      }
-      .pick span:not(.mini) {
-        grid-column: 1;
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .pick .mini {
-        grid-column: 2;
-        grid-row: 1 / span 2;
-        align-self: center;
-      }
-      .fcounts {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-        gap: 8px;
-      }
-      .fc {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-family: var(--f-mono);
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .fc input {
-        border: 1px solid var(--line);
-        background: var(--bg);
-        border-radius: 7px;
-        padding: 6px 8px;
-        width: 100%;
-        min-width: 0;
-      }
-      .fc input:disabled {
-        opacity: 0.6;
-      }
-      .row2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-      .note {
-        font-size: 12px;
-        color: var(--muted);
-        margin: 0;
-      }
-      .states {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .states button {
-        border: 2px solid transparent;
-        border-radius: 999px;
-        padding: 6px 14px;
-        color: #fff;
-        font-weight: 600;
-      }
-      .states button[aria-pressed="true"] {
-        border-color: var(--fg);
-        box-shadow: 0 0 0 2px var(--surface) inset;
-      }
-      .proc {
-        margin: 0;
-        padding-left: 0;
-        list-style: none;
-        counter-reset: s;
-        display: grid;
-        gap: 10px;
-      }
-      .proc li {
-        counter-increment: s;
-        display: grid;
-        grid-template-columns: 30px 1fr;
-        gap: 10px;
-        align-items: start;
-        max-width: 65ch;
-      }
-      .proc li::before {
-        content: counter(s);
-        font-family: var(--f-display);
-        font-weight: 700;
-        font-size: 18px;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        background: var(--surface-2);
-      }
-      .tag {
-        display: inline-block;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        padding: 2px 8px;
-        border-radius: 4px;
-        background: var(--surface-2);
-        color: var(--muted);
-      }
-      .warnings {
-        display: grid;
-        gap: 4px;
-        font-size: 13px;
-      }
-      .warnings div {
-        color: var(--hs);
-      }
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(10, 14, 19, 0.55);
+    display: grid;
+    place-items: center;
+    padding: max(16px, env(safe-area-inset-top, 0px))
+      max(16px, env(safe-area-inset-right, 0px))
+      max(16px, env(safe-area-inset-bottom, 0px))
+      max(16px, env(safe-area-inset-left, 0px));
+  }
+  .modal {
+    width: min(520px, 100%);
+    max-height: 100%;
+    overflow: auto;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .modal-head h2 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-wrap: balance;
+  }
+  .modal-head.hs {
+    background: var(--hs);
+    color: #fff;
+    border-bottom-color: var(--hs);
+    border-radius: 11px 11px 0 0;
+  }
+  .x {
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    padding: 2px 6px;
+    color: inherit;
+  }
+  .modal-body {
+    padding: 16px;
+    display: grid;
+    gap: 14px;
+  }
+  .modal-foot {
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .modal-foot .spacer {
+    flex: 1;
+  }
+  .field {
+    display: grid;
+    gap: 4px;
+  }
+  .field input,
+  .field textarea {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 8px 10px;
+    width: 100%;
+  }
+  .field input:disabled {
+    opacity: 0.6;
+  }
+  .field textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+  .db-tab #tools,
+  .db-tab .legend,
+  .db-tab .diams,
+  .db-tab .group {
+    display: none;
+  }
+  .db-file {
+    display: inline-flex;
+    gap: 8px;
+  }
+  .base-body {
+    justify-items: stretch;
+  }
+  .db-file label {
+    cursor: pointer;
+  }
+  .dbview {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid;
+    gap: 12px;
+  }
+  .db-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+  }
+  .db-head h2 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .db-count {
+    color: var(--muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .db-head input {
+    margin-left: auto;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 7px;
+    padding: 7px 10px;
+    min-width: 0;
+    width: 15em;
+    max-width: 100%;
+  }
+  .db-table {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .dbt {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .dbt th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .dbt td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .dbt tr:last-child td {
+    border-bottom: 0;
+  }
+  .dbt .num {
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .linkbtn {
+    border: 0;
+    background: none;
+    padding: 0;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--line);
+  }
+  .linkbtn:hover {
+    text-decoration-color: currentColor;
+  }
+  .where {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--muted);
+  }
+  .where.on {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .mini {
+    display: inline-flex;
+    gap: 8px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .mini b {
+    font-weight: 600;
+  }
+  .mini .n {
+    color: var(--new);
+  }
+  .mini .w {
+    color: var(--worn);
+  }
+  .mini .h {
+    color: var(--hs);
+  }
+  .db-empty {
+    margin: 0;
+    padding: 24px 16px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .pick-q {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 8px 10px;
+    width: 100%;
+  }
+  .picklist {
+    display: grid;
+    gap: 6px;
+    max-height: 50vh;
+    overflow: auto;
+  }
+  .pick {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    text-align: left;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .pick:hover {
+    border-color: var(--fg);
+  }
+  .pick span:not(.mini) {
+    grid-column: 1;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .pick .mini {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+  .fcounts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 8px;
+  }
+  .fc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .fc input {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 6px 8px;
+    width: 100%;
+    min-width: 0;
+  }
+  .fc input:disabled {
+    opacity: 0.6;
+  }
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .note {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .states {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .states button {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    padding: 6px 14px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .states button[aria-pressed="true"] {
+    border-color: var(--fg);
+    box-shadow: 0 0 0 2px var(--surface) inset;
+  }
+  .proc {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: s;
+    display: grid;
+    gap: 10px;
+  }
+  .proc li {
+    counter-increment: s;
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 10px;
+    align-items: start;
+    max-width: 65ch;
+  }
+  .proc li::before {
+    content: counter(s);
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 18px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--surface-2);
+  }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--muted);
+  }
+  .warnings {
+    display: grid;
+    gap: 4px;
+    font-size: 13px;
+  }
+  .warnings div {
+    color: var(--hs);
+  }
 
-      .toast {
-        position: fixed;
-        left: 50%;
-        translate: -50% 0;
-        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-        z-index: 30;
-        background: var(--fg);
-        color: var(--bg);
-        padding: 9px 14px;
-        border-radius: 8px;
-        font-size: 13px;
-        box-shadow: var(--shadow);
-        max-width: calc(100% - 32px);
-      }
-      .tabs {
-        display: inline-flex;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      .tab {
-        border: 0;
-        background: var(--surface);
-        padding: 6px 14px;
-        font-weight: 600;
-        color: var(--muted);
-      }
-      .tab + .tab {
-        border-left: 1px solid var(--line);
-      }
-      .tab[aria-pressed="true"] {
-        background: var(--fg);
-        color: var(--bg);
-      }
-      .view-tab #tools .mode,
-      .view-tab #hint {
-        display: none;
-      }
-      .view-tab .opt input[type="text"] {
-        padding-left: 10px;
-      }
+  .toast {
+    position: fixed;
+    left: 50%;
+    translate: -50% 0;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 30;
+    background: var(--fg);
+    color: var(--bg);
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    box-shadow: var(--shadow);
+    max-width: calc(100% - 32px);
+  }
+  .tabs {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tab {
+    border: 0;
+    background: var(--surface);
+    padding: 6px 14px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .tab + .tab {
+    border-left: 1px solid var(--line);
+  }
+  .tab[aria-pressed="true"] {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .view-tab #tools .mode,
+  .view-tab #hint {
+    display: none;
+  }
+  .view-tab .opt input[type="text"] {
+    padding-left: 10px;
+  }
 
-      /* Visualisation: one row per cage, top to bottom; rolls centred on a common axis. */
-      .vline {
-        position: relative;
-        display: grid;
-        gap: 14px;
-        width: max-content;
-        min-width: 100%;
-      }
-      .vrow {
-        display: grid;
-        grid-template-columns: 112px 74px minmax(0, 1fr) 74px;
-        align-items: center;
-        gap: 8px;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 10px 12px;
-        box-shadow: var(--shadow);
-      }
-      .vrow.vhead {
-        background: transparent;
-        border: 0;
-        box-shadow: none;
-        padding-block: 0;
-      }
-      .vside {
-        white-space: nowrap;
-        font-family: var(--f-display);
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-      }
-      .vside.l {
-        text-align: left;
-      }
-      .vside.r {
-        text-align: right;
-      }
-      .vhead .vside {
-        font-size: 16px;
-        color: var(--fg);
-      }
-      .vcage {
-        display: grid;
-        gap: 2px;
-      }
-      .vcage-top {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .vcage .cage-num b {
-        font-size: 22px;
-      }
-      .vcage small {
-        font-size: 11px;
-        color: var(--muted);
-        overflow-wrap: anywhere;
-      }
-      .vcenter {
-        display: grid;
-        justify-items: center;
-        gap: 6px;
-      }
-      .vroll {
-        display: flex;
-        align-items: center;
-      }
-      .journal {
-        width: 16px;
-        height: 20px;
-        background: var(--line);
-        border-radius: 3px;
-      }
-      /* Numbering starts on the motor side (right): frettes and grooves run right to left. */
-      .barrel {
-        display: flex;
-        flex-direction: row-reverse;
-        gap: 0;
-        padding: 8px 6px;
-        background: var(--surface-2);
-        border: 1px solid var(--line);
-        border-radius: 6px;
-      }
-      .barrel.empty-roll {
-        padding: 12px 24px;
-        border-style: dashed;
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .vfrette {
-        display: flex;
-        flex-direction: row-reverse;
-        gap: 4px;
-        padding: 0 6px;
-      }
-      .vfrette + .vfrette {
-        border-right: 2px solid var(--line);
-      }
-      .vg {
-        position: relative;
-        width: 30px;
-        height: 30px;
-        border: 0;
-        border-radius: 6px;
-        color: #fff;
-        font-family: var(--f-mono);
-        font-size: 12px;
-        font-weight: 500;
-        display: grid;
-        place-items: center;
-        font-variant-numeric: tabular-nums;
-      }
-      .vg.s-new {
-        background: var(--new);
-      }
-      .vg.s-worn {
-        background: var(--worn);
-      }
-      .vg.s-hs {
-        background: var(--hs);
-        background-image: repeating-linear-gradient(
-          135deg,
-          transparent 0 5px,
-          rgba(0, 0, 0, 0.18) 5px 8px
-        );
-      }
-      .vg.has-c::after {
-        content: "";
-        position: absolute;
-        top: 3px;
-        right: 3px;
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #fff;
-      }
-      .vcell {
-        position: relative;
-        display: flex;
-      }
-      .vc {
-        position: absolute;
-        top: calc(100% + 26px);
-        left: 50%;
-        translate: -50% 0;
-        width: max-content;
-        max-width: 120px;
-        font-size: 10.5px;
-        line-height: 1.25;
-        text-align: center;
-        color: var(--fg);
-        white-space: pre-line;
-        overflow-wrap: anywhere;
-      }
-      .paths line.lead {
-        stroke: var(--fg);
-        stroke-width: 1;
-        opacity: 0.55;
-      }
-      .paths circle.lead-dot {
-        fill: var(--fg);
-        stroke: none;
-        opacity: 0.55;
-      }
-      .vnotes {
-        display: grid;
-        gap: 2px;
-        font-size: 11px;
-        line-height: 1.3;
-        max-width: 60ch;
-      }
-      .vnotes span b {
-        font-family: var(--f-mono);
-        font-weight: 500;
-      }
-      .vnotes .s-new b {
-        color: var(--new);
-      }
-      .vnotes .s-worn b {
-        color: var(--worn);
-      }
-      .vnotes .s-hs b {
-        color: var(--hs);
-      }
-      @media (max-width: 560px) {
-        .bar {
-          position: static;
-        }
-        .row2 {
-          grid-template-columns: 1fr;
-        }
-        .sync {
-          margin-left: 0;
-        }
-      }
-    </style>
+  /* Visualisation: one row per cage, top to bottom; rolls centred on a common axis. */
+  .vline {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    width: max-content;
+    min-width: 100%;
+  }
+  .vrow {
+    display: grid;
+    grid-template-columns: 112px 74px minmax(0, 1fr) 74px;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow);
+  }
+  .vrow.vhead {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding-block: 0;
+  }
+  .vside {
+    white-space: nowrap;
+    font-family: var(--f-display);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .vside.l {
+    text-align: left;
+  }
+  .vside.r {
+    text-align: right;
+  }
+  .vhead .vside {
+    font-size: 16px;
+    color: var(--fg);
+  }
+  .vcage {
+    display: grid;
+    gap: 2px;
+  }
+  .vcage-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .vcage .cage-num b {
+    font-size: 22px;
+  }
+  .vcage small {
+    font-size: 11px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .vcenter {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+  }
+  .vroll {
+    display: flex;
+    align-items: center;
+  }
+  .journal {
+    width: 16px;
+    height: 20px;
+    background: var(--line);
+    border-radius: 3px;
+  }
+  /* Numbering starts on the motor side (right): frettes and grooves run right to left. */
+  /* Tous les cylindres ont la même longueur de table ; frettes de même largeur,
+     cannelures réparties régulièrement dans chaque frette. */
+  .barrel {
+    display: flex;
+    flex-direction: row-reverse;
+    width: 600px;
+    gap: 0;
+    padding: 8px 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+  .barrel.empty-roll {
+    justify-content: center;
+    padding: 12px 24px;
+    border-style: dashed;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .vfrette {
+    display: flex;
+    flex-direction: row-reverse;
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: space-evenly;
+    gap: 4px;
+    padding: 0 6px;
+  }
+  .vfrette + .vfrette {
+    border-right: 2px solid var(--line);
+  }
+  .vg {
+    position: relative;
+    flex: 0 1 30px;
+    min-width: 18px;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 6px;
+    color: #fff;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 500;
+    display: grid;
+    place-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .vg.s-new {
+    background: var(--new);
+  }
+  .vg.s-worn {
+    background: var(--worn);
+  }
+  .vg.s-hs {
+    background: var(--hs);
+    background-image: repeating-linear-gradient(
+      135deg,
+      transparent 0 5px,
+      rgba(0, 0, 0, 0.18) 5px 8px
+    );
+  }
+  .vg.has-c::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  .vcell {
+    position: relative;
+    display: flex;
+  }
+  .vc {
+    position: absolute;
+    top: calc(100% + 26px);
+    left: 50%;
+    translate: -50% 0;
+    width: max-content;
+    max-width: 120px;
+    font-size: 10.5px;
+    line-height: 1.25;
+    text-align: center;
+    color: var(--fg);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+  .paths line.lead {
+    stroke: var(--fg);
+    stroke-width: 1;
+    opacity: 0.55;
+  }
+  .paths circle.lead-dot {
+    fill: var(--fg);
+    stroke: none;
+    opacity: 0.55;
+  }
+  .vnotes {
+    display: grid;
+    gap: 2px;
+    font-size: 11px;
+    line-height: 1.3;
+    max-width: 60ch;
+  }
+  .vnotes span b {
+    font-family: var(--f-mono);
+    font-weight: 500;
+  }
+  .vnotes .s-new b {
+    color: var(--new);
+  }
+  .vnotes .s-worn b {
+    color: var(--worn);
+  }
+  .vnotes .s-hs b {
+    color: var(--hs);
+  }
+  @media (max-width: 560px) {
+    .bar {
+      position: static;
+    }
+    .row2 {
+      grid-template-columns: 1fr;
+    }
+    .sync {
+      margin-left: 0;
+    }
+  }
+</style>
 
-    <header class="bar" id="bar">
-      <div class="bar-top">
-        <h1>
-          Train de laminage<small
-            >Répartition des cannelures · cages 1 à 16</small
-          >
-        </h1>
-        <div class="group">
-          <span class="label">Ø laminé</span>
-          <div
-            class="diams"
-            id="diams"
-            role="group"
-            aria-label="Diamètre laminé"
-          ></div>
-        </div>
-        <nav class="tabs" id="tabs" aria-label="Affichage">
-          <button class="tab" data-tab="edit" aria-pressed="true">
-            Renseignement
-          </button>
-          <button class="tab" data-tab="view" aria-pressed="false">
-            Visualisation
-          </button>
-          <button class="tab" data-tab="db" aria-pressed="false">
-            Cylindres
-          </button>
-        </nav>
-        <span class="sync" id="sync">Connexion…</span>
-      </div>
-      <div class="tools" id="tools">
-        <button
-          class="mode"
-          id="mode-state"
-          data-mode="state"
-          aria-pressed="true"
-        >
-          État · clic = neuve › usée › HS
+<header class="bar" id="bar">
+  <div class="bar-top">
+    <h1>
+      Train de laminage<small>Répartition des cannelures · cages 1 à 16</small>
+    </h1>
+    <div class="group">
+      <span class="label">Ø laminé</span>
+      <div
+        class="diams"
+        id="diams"
+        role="group"
+        aria-label="Diamètre laminé"
+      ></div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Affichage">
+      <button class="tab" data-tab="edit" aria-pressed="true">
+        Renseignement
+      </button>
+      <button class="tab" data-tab="view" aria-pressed="false">
+        Visualisation
+      </button>
+      <button class="tab" data-tab="db" aria-pressed="false">Cylindres</button>
+    </nav>
+    <span class="sync" id="sync">Connexion…</span>
+  </div>
+  <div class="tools" id="tools">
+    <button class="mode" id="mode-state" data-mode="state" aria-pressed="true">
+      État · clic = neuve › usée › HS
+    </button>
+    <button class="mode" id="mode-note" data-mode="note" aria-pressed="false">
+      Commentaire
+    </button>
+  </div>
+  <div class="legend">
+    <span><i style="background: var(--new)"></i>Neuve</span>
+    <span><i style="background: var(--worn)"></i>Usée</span>
+    <span><i style="background: var(--hs)"></i>HS</span>
+    <span
+      ><i
+        style="
+          background: var(--surface-2);
+          border-radius: 50%;
+          box-shadow: inset 0 0 0 4px var(--fg);
+        "
+      ></i
+      >Commentaire</span
+    >
+    <span class="hint" id="hint"></span>
+  </div>
+</header>
+
+<main>
+  <div class="scroller" id="scroller">
+    <div class="line" id="line">
+      <p class="loading">Chargement des cylindres…</p>
+    </div>
+  </div>
+  <div class="scroller" id="vscroller" hidden>
+    <div class="vline" id="vline"></div>
+  </div>
+  <section class="dbview" id="dbview" hidden>
+    <div class="db-head">
+      <h2>Base des cylindres</h2>
+      <span class="db-count" id="db-count"></span>
+      <input
+        type="search"
+        id="db-q"
+        placeholder="Rechercher un cylindre"
+        aria-label="Rechercher un cylindre"
+      />
+      <span class="db-file" id="db-file" hidden>
+        <button class="btn" id="db-switch" type="button" hidden>
+          Changer de base…
         </button>
-        <button
-          class="mode"
-          id="mode-note"
-          data-mode="note"
-          aria-pressed="false"
-        >
-          Commentaire
-        </button>
-      </div>
-      <div class="legend">
-        <span><i style="background: var(--new)"></i>Neuve</span>
-        <span><i style="background: var(--worn)"></i>Usée</span>
-        <span><i style="background: var(--hs)"></i>HS</span>
-        <span
-          ><i
-            style="
-              background: var(--surface-2);
-              border-radius: 50%;
-              box-shadow: inset 0 0 0 4px var(--fg);
-            "
-          ></i
-          >Commentaire</span
-        >
-        <span class="hint" id="hint"></span>
-      </div>
-    </header>
+        <button class="btn" id="db-export" type="button">Exporter JSON</button>
+        <label class="btn" for="db-import">Importer JSON</label>
+        <input
+          type="file"
+          id="db-import"
+          accept=".json,application/json"
+          hidden
+        />
+      </span>
+      <button class="btn primary" id="db-new" type="button">
+        Nouveau cylindre
+      </button>
+    </div>
+    <div class="db-table" id="db-table"></div>
+  </section>
+</main>
 
-    <main>
-      <div class="scroller" id="scroller">
-        <div class="line" id="line">
-          <p class="loading">Chargement des cylindres…</p>
-        </div>
-      </div>
-      <div class="scroller" id="vscroller" hidden>
-        <div class="vline" id="vline"></div>
-      </div>
-      <section class="dbview" id="dbview" hidden>
-        <div class="db-head">
-          <h2>Base des cylindres</h2>
-          <span class="db-count" id="db-count"></span>
-          <input
-            type="search"
-            id="db-q"
-            placeholder="Rechercher un cylindre"
-            aria-label="Rechercher un cylindre"
-          />
-          <span class="db-file" id="db-file" hidden>
-            <button class="btn" id="db-switch" type="button" hidden>
-              Changer de base…
-            </button>
-            <button class="btn" id="db-export" type="button">
-              Exporter JSON
-            </button>
-            <label class="btn" for="db-import">Importer JSON</label>
-            <input
-              type="file"
-              id="db-import"
-              accept=".json,application/json"
-              hidden
-            />
-          </span>
-          <button class="btn primary" id="db-new" type="button">
-            Nouveau cylindre
-          </button>
-        </div>
-        <div class="db-table" id="db-table"></div>
-      </section>
-    </main>
+<div class="overlay" id="overlay" hidden></div>
+<div class="toast" id="toast" hidden></div>
 
-    <div class="overlay" id="overlay" hidden></div>
-    <div class="toast" id="toast" hidden></div>
+<script>
+  (() => {
+    const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+    const without = (arr, ex) => arr.filter((n) => !ex.includes(n));
+    const DIAMS = {
+      16: without(range(1, 16), [7, 8]),
+      18: range(1, 14),
+      20: range(1, 14),
+      25: range(1, 12),
+      28: without(range(1, 12), [7, 8]),
+      32: range(1, 10),
+      40: without(range(1, 9), [7]),
+    };
+    const STATES = { new: "Neuve", worn: "Usée", hs: "HS" };
+    const NEXT = { new: "worn", worn: "hs", hs: "new" };
+    const OPT_VARS = ["--o1", "--o2", "--o3"];
+    const S = {
+      cages: {},
+      cyl: {},
+      config: {
+        options: [
+          { name: "Option 1" },
+          { name: "Option 2" },
+          { name: "Option 3" },
+        ],
+        paths: {},
+        procedures: {},
+      },
+      diam: 16,
+      mode: "state",
+      tab: "edit",
+      show: [true, true, true],
+      ready: false,
+    };
+    try {
+      const d = Number(localStorage.getItem("laminoir-diam"));
+      if (DIAMS[d]) S.diam = d;
+      const t = localStorage.getItem("laminoir-tab");
+      if (t === "view" || t === "db") S.tab = t;
+    } catch (e) {}
 
-    <script>
-      (() => {
-        const range = (a, b) =>
-          Array.from({ length: b - a + 1 }, (_, i) => a + i);
-        const without = (arr, ex) => arr.filter((n) => !ex.includes(n));
-        const DIAMS = {
-          16: without(range(1, 16), [7, 8]),
-          18: range(1, 14),
-          20: range(1, 14),
-          25: range(1, 12),
-          28: without(range(1, 12), [7, 8]),
-          32: range(1, 10),
-          40: without(range(1, 9), [7]),
-        };
-        const STATES = { new: "Neuve", worn: "Usée", hs: "HS" };
-        const NEXT = { new: "worn", worn: "hs", hs: "new" };
-        const OPT_VARS = ["--o1", "--o2", "--o3"];
-        const S = {
-          cages: {},
-          cyl: {},
-          config: {
-            options: [
-              { name: "Option 1" },
-              { name: "Option 2" },
-              { name: "Option 3" },
-            ],
-            paths: {},
-            procedures: {},
-          },
-          diam: 16,
-          mode: "state",
-          tab: "edit",
-          show: [true, true, true],
-          ready: false,
-        };
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) =>
+      String(s ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+    const clone = (o) => JSON.parse(JSON.stringify(o));
+
+    // ---------- Storage: shared artifact db when available, else this browser ----------
+    let backend = null;
+    const pending = {},
+      busy = {};
+    function queueWrite(path, data) {
+      pending[path] = data === null ? null : clone(data);
+      if (!busy[path]) flush(path);
+    }
+    async function flush(path) {
+      busy[path] = true;
+      while (path in pending) {
+        const data = pending[path];
+        delete pending[path];
         try {
-          const d = Number(localStorage.getItem("laminoir-diam"));
-          if (DIAMS[d]) S.diam = d;
-          const t = localStorage.getItem("laminoir-tab");
-          if (t === "view" || t === "db") S.tab = t;
-        } catch (e) {}
-
-        const $ = (id) => document.getElementById(id);
-        const esc = (s) =>
-          String(s ?? "").replace(
-            /[&<>"']/g,
-            (c) =>
-              ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#39;",
-              })[c],
+          if (data === null) await backend.del(path);
+          else await backend.set(path, data);
+        } catch (e) {
+          const code = e && e.code;
+          toast(
+            code === "invalid_argument"
+              ? "Modification refusée : accès en lecture seule."
+              : code === "quota_exceeded"
+                ? "Stockage plein : supprimez des données inutiles."
+                : "Échec de l'enregistrement. Réessayez.",
           );
-        const clone = (o) => JSON.parse(JSON.stringify(o));
-
-        // ---------- Storage: shared artifact db when available, else this browser ----------
-        let backend = null;
-        const pending = {},
-          busy = {};
-        function queueWrite(path, data) {
-          pending[path] = data === null ? null : clone(data);
-          if (!busy[path]) flush(path);
         }
-        async function flush(path) {
-          busy[path] = true;
-          while (path in pending) {
-            const data = pending[path];
-            delete pending[path];
-            try {
-              if (data === null) await backend.del(path);
-              else await backend.set(path, data);
-            } catch (e) {
-              const code = e && e.code;
-              toast(
-                code === "invalid_argument"
-                  ? "Modification refusée : accès en lecture seule."
-                  : code === "quota_exceeded"
-                    ? "Stockage plein : supprimez des données inutiles."
-                    : "Échec de l'enregistrement. Réessayez.",
-              );
-            }
-          }
-          busy[path] = false;
-        }
-        const isBusy = (path) => busy[path] || path in pending;
+      }
+      busy[path] = false;
+    }
+    const isBusy = (path) => busy[path] || path in pending;
 
-        function useLocal(reason) {
-          const KEY = "laminoir-data-v1";
-          let store = {};
-          try {
-            const raw = localStorage.getItem(KEY);
-            if (raw) store = JSON.parse(raw);
-          } catch (e) {}
-          S.cyl = store.cylinders || {};
-          // Ancien format : un cylindre enregistré par cage.
-          Object.entries(store.cages || {}).forEach(([n, c]) => {
-            const id = "m-c" + n;
-            if (!S.cyl[id])
-              S.cyl[id] = Object.assign({}, c, { id, cage: Number(n) });
-          });
-          if (store.config) S.config = Object.assign(S.config, store.config);
-          rebuildCages();
-          const persist = () => {
-            try {
-              localStorage.setItem(
-                KEY,
-                JSON.stringify({ cylinders: S.cyl, config: S.config }),
-              );
-            } catch (e) {
-              toast("Impossible d'enregistrer dans ce navigateur.");
-            }
-          };
-          backend = { set: async () => persist(), del: async () => persist() };
-          setSync("local", reason || "Enregistré dans ce navigateur");
+    function useLocal(reason) {
+      const KEY = "laminoir-data-v1";
+      let store = {};
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (raw) store = JSON.parse(raw);
+      } catch (e) {}
+      S.cyl = store.cylinders || {};
+      // Ancien format : un cylindre enregistré par cage.
+      Object.entries(store.cages || {}).forEach(([n, c]) => {
+        const id = "m-c" + n;
+        if (!S.cyl[id])
+          S.cyl[id] = Object.assign({}, c, { id, cage: Number(n) });
+      });
+      if (store.config) S.config = Object.assign(S.config, store.config);
+      rebuildCages();
+      const persist = () => {
+        try {
+          localStorage.setItem(
+            KEY,
+            JSON.stringify({ cylinders: S.cyl, config: S.config }),
+          );
+        } catch (e) {
+          toast("Impossible d'enregistrer dans ce navigateur.");
+        }
+      };
+      backend = { set: async () => persist(), del: async () => persist() };
+      setSync("local", reason || "Enregistré dans ce navigateur");
+      S.ready = true;
+      renderAll();
+    }
+
+    function useDb(db) {
+      backend = {
+        set: (path, data) => db.doc(path).set(data),
+        del: (path) => db.doc(path).delete(),
+      };
+      let gotCyl = false,
+        gotConfig = false;
+      const ready = () => {
+        if (gotCyl && gotConfig && !S.ready) {
           S.ready = true;
-          renderAll();
+          setSync("ok", "Base de données partagée");
         }
-
-        function useDb(db) {
-          backend = {
-            set: (path, data) => db.doc(path).set(data),
-            del: (path) => db.doc(path).delete(),
-          };
-          let gotCyl = false,
-            gotConfig = false;
-          const ready = () => {
-            if (gotCyl && gotConfig && !S.ready) {
-              S.ready = true;
-              setSync("ok", "Base de données partagée");
-            }
-            renderAll();
-          };
-          db.collection("cylinders").onSnapshot((snap) => {
-            const next = {};
-            snap.docs.forEach((d) => {
-              const path = "cylinders/" + d.id;
-              if (isBusy(path)) {
-                if (S.cyl[d.id]) next[d.id] = S.cyl[d.id];
-              } else next[d.id] = Object.assign(clone(d.data()), { id: d.id });
-            });
-            Object.keys(S.cyl).forEach((id) => {
-              if (isBusy("cylinders/" + id)) next[id] = S.cyl[id];
-            });
-            S.cyl = next;
-            rebuildCages();
-            gotCyl = true;
-            ready();
-          }, onDbError);
-          db.doc("config/main").onSnapshot((snap) => {
-            if (snap.exists && !isBusy("config/main"))
-              S.config = Object.assign(S.config, clone(snap.data()));
-            gotConfig = true;
-            ready();
-          }, onDbError);
-        }
-
-        function onDbError(e) {
-          setSync(
-            "",
-            e && e.code === "revoked"
-              ? "Accès retiré"
-              : "Connexion perdue · rechargez la page",
-          );
-        }
-        function setSync(cls, text) {
-          const el = $("sync");
-          el.className = "sync " + cls;
-          el.textContent = text;
-        }
-
-        async function init() {
-          renderToolbar();
-          let db = null;
-          if (window.claude && typeof window.claude.use === "function") {
-            try {
-              db = await window.claude.use("db");
-            } catch (e) {
-              db = null;
-            }
-            if (db) return useDb(db);
-            return useLocal("Non connecté · enregistré dans ce navigateur");
-          }
-          useFileOrLocal();
-        }
-
-        // ---------- Fichier laminoir-db.json (Chrome / Edge) ----------
-        // L'application lit et écrit directement la base JSON choisie par l'opérateur.
-        const FSA = "showOpenFilePicker" in window;
-        const JSON_TYPES = [
-          {
-            description: "Base laminoir (JSON)",
-            accept: { "application/json": [".json"] },
-          },
-        ];
-        const emptyDb = () => ({
-          format: "laminoir-db",
-          version: 1,
-          config: {
-            options: [
-              { name: "Option 1" },
-              { name: "Option 2" },
-              { name: "Option 3" },
-            ],
-            paths: {},
-            procedures: {},
-          },
-          cylinders: {},
+        renderAll();
+      };
+      db.collection("cylinders").onSnapshot((snap) => {
+        const next = {};
+        snap.docs.forEach((d) => {
+          const path = "cylinders/" + d.id;
+          if (isBusy(path)) {
+            if (S.cyl[d.id]) next[d.id] = S.cyl[d.id];
+          } else next[d.id] = Object.assign(clone(d.data()), { id: d.id });
         });
-        // Mémorise le fichier ouvert pour le reprendre en un clic au prochain démarrage.
-        function idb(mode, fn) {
-          return new Promise((resolve, reject) => {
-            const r = indexedDB.open("laminoir", 1);
-            r.onupgradeneeded = () => r.result.createObjectStore("kv");
-            r.onerror = () => reject(r.error);
-            r.onsuccess = () => {
-              try {
-                const tx = r.result.transaction("kv", mode);
-                const q = fn(tx.objectStore("kv"));
-                tx.oncomplete = () => resolve(q && q.result);
-                tx.onerror = () => reject(tx.error);
-              } catch (e) {
-                reject(e);
-              }
-            };
-          });
-        }
-        const saveHandle = (h) =>
-          idb("readwrite", (st) => st.put(h, "db")).catch(() => {});
-        const loadHandle = () =>
-          idb("readonly", (st) => st.get("db")).catch(() => null);
+        Object.keys(S.cyl).forEach((id) => {
+          if (isBusy("cylinders/" + id)) next[id] = S.cyl[id];
+        });
+        S.cyl = next;
+        rebuildCages();
+        gotCyl = true;
+        ready();
+      }, onDbError);
+      db.doc("config/main").onSnapshot((snap) => {
+        if (snap.exists && !isBusy("config/main"))
+          S.config = Object.assign(S.config, clone(snap.data()));
+        gotConfig = true;
+        ready();
+      }, onDbError);
+    }
 
-        async function readJson(h) {
-          const f = await h.getFile();
-          const t = (await f.text()).trim();
-          let d;
+    function onDbError(e) {
+      setSync(
+        "",
+        e && e.code === "revoked"
+          ? "Accès retiré"
+          : "Connexion perdue · rechargez la page",
+      );
+    }
+    function setSync(cls, text) {
+      const el = $("sync");
+      el.className = "sync " + cls;
+      el.textContent = text;
+    }
+
+    async function init() {
+      renderToolbar();
+      let db = null;
+      if (window.claude && typeof window.claude.use === "function") {
+        try {
+          db = await window.claude.use("db");
+        } catch (e) {
+          db = null;
+        }
+        if (db) return useDb(db);
+        return useLocal("Non connecté · enregistré dans ce navigateur");
+      }
+      useFileOrLocal();
+    }
+
+    // ---------- Fichier laminoir-db.json (Chrome / Edge) ----------
+    // L'application lit et écrit directement la base JSON choisie par l'opérateur.
+    const FSA = "showOpenFilePicker" in window;
+    const JSON_TYPES = [
+      {
+        description: "Base laminoir (JSON)",
+        accept: { "application/json": [".json"] },
+      },
+    ];
+    const emptyDb = () => ({
+      format: "laminoir-db",
+      version: 1,
+      config: {
+        options: [
+          { name: "Option 1" },
+          { name: "Option 2" },
+          { name: "Option 3" },
+        ],
+        paths: {},
+        procedures: {},
+      },
+      cylinders: {},
+    });
+    // Mémorise le fichier ouvert pour le reprendre en un clic au prochain démarrage.
+    function idb(mode, fn) {
+      return new Promise((resolve, reject) => {
+        const r = indexedDB.open("laminoir", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("kv");
+        r.onerror = () => reject(r.error);
+        r.onsuccess = () => {
           try {
-            d = t ? JSON.parse(t) : emptyDb();
+            const tx = r.result.transaction("kv", mode);
+            const q = fn(tx.objectStore("kv"));
+            tx.oncomplete = () => resolve(q && q.result);
+            tx.onerror = () => reject(tx.error);
           } catch (e) {
-            throw new Error(`« ${h.name} » n'est pas un fichier JSON valide.`);
+            reject(e);
           }
-          if (!d || typeof d !== "object" || Array.isArray(d))
-            throw new Error(`« ${h.name} » n'est pas une base laminoir.`);
-          d.cylinders = d.cylinders || {};
-          d.config = d.config || emptyDb().config;
-          return { d, mod: f.lastModified };
-        }
-        async function writeJson(h, d) {
-          const w = await h.createWritable();
-          await w.write(JSON.stringify(d, null, 2));
-          await w.close();
-        }
+        };
+      });
+    }
+    const saveHandle = (h) =>
+      idb("readwrite", (st) => st.put(h, "db")).catch(() => {});
+    const loadHandle = () =>
+      idb("readonly", (st) => st.get("db")).catch(() => null);
 
-        let lastSig = "";
-        function applyData(d) {
-          const sig = JSON.stringify([d.cylinders, d.config]);
-          if (sig === lastSig) return;
-          lastSig = sig;
-          const next = {};
-          Object.entries(d.cylinders || {}).forEach(([id, c]) => {
-            if (isBusy("cylinders/" + id)) {
-              if (S.cyl[id]) next[id] = S.cyl[id];
-            } else next[id] = Object.assign(c, { id });
-          });
-          Object.keys(S.cyl).forEach((id) => {
-            if (isBusy("cylinders/" + id)) next[id] = S.cyl[id];
-          });
-          S.cyl = next;
-          if (d.config && !isBusy("config/main"))
-            S.config = Object.assign(S.config, d.config);
-          rebuildCages();
-          if (S.ready && $("overlay").hidden) renderAll();
-        }
+    async function readJson(h) {
+      const f = await h.getFile();
+      const t = (await f.text()).trim();
+      let d;
+      try {
+        d = t ? JSON.parse(t) : emptyDb();
+      } catch (e) {
+        throw new Error(`« ${h.name} » n'est pas un fichier JSON valide.`);
+      }
+      if (!d || typeof d !== "object" || Array.isArray(d))
+        throw new Error(`« ${h.name} » n'est pas une base laminoir.`);
+      d.cylinders = d.cylinders || {};
+      d.config = d.config || emptyDb().config;
+      return { d, mod: f.lastModified };
+    }
+    async function writeJson(h, d) {
+      const w = await h.createWritable();
+      await w.write(JSON.stringify(d, null, 2));
+      await w.close();
+    }
 
-        async function useFileOrLocal() {
-          if (!FSA)
-            return useLocal(
-              "Données dans ce navigateur · ouvrez avec Chrome ou Edge pour travailler sur le fichier JSON",
-            );
-          setSync("local", "Aucune base ouverte");
-          openBaseDialog(await loadHandle());
-        }
+    let lastSig = "";
+    function applyData(d) {
+      const sig = JSON.stringify([d.cylinders, d.config]);
+      if (sig === lastSig) return;
+      lastSig = sig;
+      const next = {};
+      Object.entries(d.cylinders || {}).forEach(([id, c]) => {
+        if (isBusy("cylinders/" + id)) {
+          if (S.cyl[id]) next[id] = S.cyl[id];
+        } else next[id] = Object.assign(c, { id });
+      });
+      Object.keys(S.cyl).forEach((id) => {
+        if (isBusy("cylinders/" + id)) next[id] = S.cyl[id];
+      });
+      S.cyl = next;
+      if (d.config && !isBusy("config/main"))
+        S.config = Object.assign(S.config, d.config);
+      rebuildCages();
+      if (S.ready && $("overlay").hidden) renderAll();
+    }
 
-        function openBaseDialog(remembered) {
-          openModal(
-            `
+    async function useFileOrLocal() {
+      if (!FSA)
+        return useLocal(
+          "Données dans ce navigateur · ouvrez avec Chrome ou Edge pour travailler sur le fichier JSON",
+        );
+      setSync("local", "Aucune base ouverte");
+      openBaseDialog(await loadHandle());
+    }
+
+    function openBaseDialog(remembered) {
+      openModal(
+        `
       <div class="modal-head"><h2>Base de données</h2>${S.ready ? `<button class="x" data-close aria-label="Fermer">×</button>` : ""}</div>
       <div class="modal-body base-body">
         <p class="note">L'application travaille sur un fichier <b>laminoir-db.json</b>. Chaque modification y est enregistrée aussitôt.</p>
@@ -1599,592 +1579,575 @@
         <button type="button" class="btn${remembered ? "" : " primary"}" id="base-open">Ouvrir un fichier JSON…</button>
         <button type="button" class="btn" id="base-new">Créer une nouvelle base…</button>
       </div>`,
-            (m) => {
-              m.classList.add("base-dialog");
-              const go = (pick) => async () => {
-                try {
-                  const h = await pick();
-                  if (h) await useFile(h);
-                } catch (e) {
-                  if (!e || e.name !== "AbortError")
-                    toast(
-                      (e && e.message) || "Impossible d'ouvrir ce fichier.",
-                    );
-                }
-              };
-              const resume = m.querySelector("#base-resume");
-              if (resume)
-                resume.addEventListener(
-                  "click",
-                  go(async () => remembered),
-                );
-              m.querySelector("#base-open").addEventListener(
-                "click",
-                go(
-                  async () =>
-                    (await showOpenFilePicker({ types: JSON_TYPES }))[0],
-                ),
-              );
-              m.querySelector("#base-new").addEventListener(
-                "click",
-                go(async () => {
-                  const h = await showSaveFilePicker({
-                    suggestedName: "laminoir-db.json",
-                    types: JSON_TYPES,
-                  });
-                  await writeJson(h, emptyDb());
-                  return h;
-                }),
-              );
-            },
-          );
-        }
-
-        async function useFile(h) {
-          if (
-            (await h.queryPermission({ mode: "readwrite" })) !== "granted" &&
-            (await h.requestPermission({ mode: "readwrite" })) !== "granted"
-          )
-            throw new Error("Accès en écriture au fichier refusé.");
-          let { d, mod } = await readJson(h);
-          S.file = h;
-          saveHandle(h);
-          // Chaque écriture relit le fichier puis n'y change que l'élément modifié :
-          // plusieurs postes peuvent travailler sur le même fichier partagé.
-          let chain = Promise.resolve();
-          const write = (path, data) =>
-            (chain = chain
-              .catch(() => {})
-              .then(async () => {
-                const cur = (await readJson(h)).d;
-                if (path === "config/main") cur.config = data;
-                else if (path === "all") {
-                  cur.config = S.config;
-                  cur.cylinders = S.cyl;
-                } else {
-                  const id = path.slice("cylinders/".length);
-                  if (data === null) delete cur.cylinders[id];
-                  else cur.cylinders[id] = data;
-                }
-                cur.format = "laminoir-db";
-                cur.version = 1;
-                cur.updatedAt = new Date().toISOString();
-                await writeJson(h, cur);
-                mod = (await h.getFile()).lastModified;
-              }));
-          backend = { set: write, del: (path) => write(path, null) };
-          lastSig = "";
-          S.cyl = {};
-          applyData(d);
-          S.ready = true;
-          closeModal();
-          setSync("ok", h.name);
-          renderAll();
-          // Relit le fichier toutes les 4 s pour voir les modifications des autres postes.
-          clearInterval(S.poll);
-          S.poll = setInterval(async () => {
-            if (S.file !== h) return;
+        (m) => {
+          m.classList.add("base-dialog");
+          const go = (pick) => async () => {
             try {
-              const f = await h.getFile();
-              const writing =
-                Object.values(busy).some(Boolean) ||
-                Object.keys(pending).length;
-              if (f.lastModified === mod || writing) return;
-              const r = await readJson(h);
-              mod = r.mod;
-              applyData(r.d);
-              setSync("ok", h.name);
+              const h = await pick();
+              if (h) await useFile(h);
             } catch (e) {
-              setSync("", "Fichier inaccessible");
+              if (!e || e.name !== "AbortError")
+                toast((e && e.message) || "Impossible d'ouvrir ce fichier.");
             }
-          }, 4000);
-        }
-
-        // ---------- Export / import du fichier JSON ----------
-        function exportJson() {
-          const data = {
-            format: "laminoir-db",
-            version: 1,
-            exportedAt: new Date().toISOString(),
-            config: S.config,
-            cylinders: S.cyl,
           };
-          const blob = new Blob([JSON.stringify(data, null, 2)], {
-            type: "application/json",
-          });
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
-          a.download = "laminoir-db.json";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-        }
-        async function importJson(file) {
-          let d;
-          try {
-            d = JSON.parse(await file.text());
-          } catch (e) {
-            return toast("Fichier illisible : ce n'est pas un JSON valide.");
-          }
-          if (
-            !d ||
-            typeof d.cylinders !== "object" ||
-            typeof d.config !== "object"
-          )
-            return toast("Ce fichier n'est pas une base laminoir-db.json.");
-          Object.entries(d.cylinders).forEach(([id, c]) => (c.id = id));
-          S.cyl = d.cylinders;
-          S.config = Object.assign(S.config, d.config);
-          rebuildCages();
-          backend.set("all", null);
-          renderAll();
-          toast(
-            `Base importée : ${Object.keys(d.cylinders).length} cylindres.`,
+          const resume = m.querySelector("#base-resume");
+          if (resume)
+            resume.addEventListener(
+              "click",
+              go(async () => remembered),
+            );
+          m.querySelector("#base-open").addEventListener(
+            "click",
+            go(async () => (await showOpenFilePicker({ types: JSON_TYPES }))[0]),
           );
-        }
-
-        // ---------- Helpers on state ----------
-        const visible = () => DIAMS[S.diam];
-        const pathFor = (i) => {
-          const p = S.config.paths;
-          const d = (p[S.diam] = p[S.diam] || {});
-          const o = (d[i] = d[i] || {});
-          // Cages 1 à 6 : une seule cannelure, toujours sur le tracé.
-          for (let n = 1; n <= 6; n++) o[n] = "0-0";
-          return o;
-        };
-        const grooveOf = (n, key) => {
-          const c = S.cages[n];
-          return c ? (c.grooves && c.grooves[key]) || { s: "new" } : null;
-        };
-        const validKey = (n, key) => {
-          const c = S.cages[n];
-          if (!c || !key) return false;
-          const [f, g] = key.split("-").map(Number);
-          return f < c.frettes && g < fcount(c, f);
-        };
-        // Nombre de cannelures de chaque frette (anciens cylindres : même nombre partout).
-        const countsOf = (c) =>
-          Array.from({ length: c.frettes }, (_, f) =>
-            c.counts ? c.counts[f] || 0 : c.gpf || 0,
-          );
-        const fcount = (c, f) => countsOf(c)[f] || 0;
-        // Numérotation continue sur tout le cylindre, frette 1 en premier.
-        const gnum = (c, f, g) =>
-          countsOf(c)
-            .slice(0, f)
-            .reduce((a, b) => a + b, 0) +
-          g +
-          1;
-        const saveCyl = (c) => queueWrite("cylinders/" + c.id, c);
-        const saveCage = (n) => S.cages[n] && saveCyl(S.cages[n]);
-        const newId = () =>
-          "cyl-" +
-          Date.now().toString(36) +
-          Math.random().toString(36).slice(2, 6);
-        function rebuildCages() {
-          const next = {};
-          Object.values(S.cyl).forEach((c) => {
-            if (c.cage && !next[c.cage]) next[c.cage] = c;
-          });
-          S.cages = next;
-        }
-        const saveConfig = () => queueWrite("config/main", S.config);
-
-        // ---------- Toolbar ----------
-        function renderToolbar() {
-          $("diams").innerHTML = Object.keys(DIAMS)
-            .map(
-              (d) =>
-                `<button class="diam" data-diam="${d}" aria-pressed="${Number(d) === S.diam}">Ø${d}</button>`,
-            )
-            .join("");
-          const tools = $("tools");
-          tools.querySelectorAll(".opt").forEach((el) => el.remove());
-          S.config.options.forEach((o, i) => {
-            const wrap = document.createElement("div");
-            wrap.className = "opt";
-            wrap.style.setProperty("--oc", `var(${OPT_VARS[i]})`);
-            wrap.innerHTML =
-              `<button class="mode" data-mode="o${i}" aria-pressed="false" title="Tracer ce chemin : cliquez une cannelure par cage"><span class="swatch"></span>Tracer</button>` +
-              `<input type="text" id="opt-name-${i}" maxlength="30" aria-label="Nom de l'option ${i + 1}" value="${esc(o.name)}">` +
-              `<span class="count" id="opt-count-${i}"></span>` +
-              `<button class="eye" data-eye="${i}" aria-pressed="${S.show[i]}" title="Afficher ou masquer ce chemin">voir</button>`;
-            tools.appendChild(wrap);
-          });
-          syncToolbar();
-        }
-        function syncToolbar() {
-          document
-            .querySelectorAll("[data-diam]")
-            .forEach((b) =>
-              b.setAttribute(
-                "aria-pressed",
-                String(Number(b.dataset.diam) === S.diam),
-              ),
-            );
-          document
-            .querySelectorAll("[data-mode]")
-            .forEach((b) =>
-              b.setAttribute("aria-pressed", String(b.dataset.mode === S.mode)),
-            );
-          document
-            .querySelectorAll(".opt")
-            .forEach((el, i) => (el.dataset.on = String(S.mode === "o" + i)));
-          S.config.options.forEach((o, i) => {
-            const inp = $("opt-name-" + i);
-            if (inp && document.activeElement !== inp) inp.value = o.name;
-            const p = pathFor(i),
-              vis = visible();
-            const used = vis.filter((n) => validKey(n, p[n]));
-            const bad = used.filter((n) => grooveOf(n, p[n]).s === "hs").length;
-            const c = $("opt-count-" + i);
-            c.textContent =
-              `${used.length}/${vis.length}` + (bad ? ` · ${bad} HS` : "");
-            c.className = "count" + (bad ? " warn" : "");
-            c.title = bad
-              ? `${bad} cannelure(s) HS sur ce chemin`
-              : "Cages renseignées sur ce chemin";
-          });
-          const m = S.mode;
-          $("hint").textContent =
-            m === "state"
-              ? "Cliquez une cannelure pour changer son état."
-              : m === "note"
-                ? "Cliquez une cannelure pour ajouter un commentaire."
-                : `Tracé « ${S.config.options[+m[1]].name} » : cliquez une cannelure par cage (re-cliquez pour retirer).`;
-        }
-
-        // ---------- Mill line ----------
-        function cageHTML(n) {
-          const c = S.cages[n];
-          const head =
-            `<div class="cage-head"><span class="cage-num">Cage<b>${n}</b></span>` +
-            `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Commentaire HS de la cage">HS</button></div>`;
-          if (!c) {
-            return (
-              `<section class="cage" data-cage="${n}">${head}<div class="empty"><p>Aucun cylindre</p>` +
-              `<button class="btn" data-act="config" data-cage="${n}">Insérer un cylindre</button></div></section>`
-            );
-          }
-          const sel = [0, 1, 2].map((i) => pathFor(i)[n]);
-          let counts = { new: 0, worn: 0, hs: 0 };
-          let fr = "";
-          for (let f = 0; f < c.frettes; f++) {
-            let gs = "";
-            for (let g = 0; g < fcount(c, f); g++) {
-              const key = `${f}-${g}`;
-              const st = grooveOf(n, key);
-              counts[st.s]++;
-              const rings = [];
-              sel.forEach((k, i) => {
-                if (k === key) rings.push(i);
+          m.querySelector("#base-new").addEventListener(
+            "click",
+            go(async () => {
+              const h = await showSaveFilePicker({
+                suggestedName: "laminoir-db.json",
+                types: JSON_TYPES,
               });
-              const shadow = rings.length
-                ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 4}px var(--surface), 0 0 0 ${4 + j * 4}px var(${OPT_VARS[i]})`).join(",")}"`
-                : "";
-              const tip =
-                `Cage ${n} · Frette ${f + 1} · Cannelure ${gnum(c, f, g)} · ${STATES[st.s]}` +
-                rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
-                (st.c ? `\n${st.c}` : "");
-              gs += `<button class="g s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}"><span class="g-num">${gnum(c, f, g)}</span>${st.c ? `<span class="g-c">${esc(st.c)}</span>` : ""}</button>`;
-            }
-            fr += `<div class="frette"><div class="frette-label">F${f + 1}</div><div class="grooves">${gs}</div></div>`;
-          }
-          return (
-            `<section class="cage" data-cage="${n}">${head}` +
-            `<button class="roll-id" data-act="config" data-cage="${n}" title="Modifier le cylindre"><span class="roll-name">${esc(c.name) || "Sans nom"}</span>` +
-            `<span class="roll-d">Ø ${esc(c.diameter)} mm</span><span class="roll-meta">${c.frettes} frette${c.frettes > 1 ? "s" : ""} · ${countsOf(c).join(" + ")} cannelures</span></button>` +
-            `<div class="frettes">${fr}</div>` +
-            `<div class="cage-foot"><span class="n"><b>${counts.new}</b> N</span><span class="w"><b>${counts.worn}</b> U</span><span class="h"><b>${counts.hs}</b> HS</span></div></section>`
-          );
-        }
-
-        // ---------- Visualisation (cages top to bottom) ----------
-        function vrowHTML(n) {
-          const c = S.cages[n];
-          const label =
-            `<div class="vcage"><div class="vcage-top"><span class="cage-num">Cage<b>${n}</b></span>` +
-            `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Commentaire HS de la cage">HS</button></div>` +
-            (c
-              ? `<small>${esc(c.name) || "Sans nom"} · Ø ${esc(c.diameter)} mm</small>`
-              : "") +
-            `</div>`;
-          const sides = (mid) =>
-            `<section class="vrow" data-cage="${n}">${label}<span class="vside l">Côté piste</span>` +
-            `<div class="vcenter">${mid}</div><span class="vside r">Côté moteur</span></section>`;
-          if (!c) {
-            return sides(
-              `<div class="vroll"><span class="journal"></span><div class="barrel empty-roll">Aucun cylindre</div><span class="journal"></span></div>`,
-            );
-          }
-          const sel = [0, 1, 2].map((i) => pathFor(i)[n]);
-          let fr = "",
-            notes = false;
-          for (let f = 0; f < c.frettes; f++) {
-            let gs = "";
-            for (let g = 0; g < fcount(c, f); g++) {
-              const key = `${f}-${g}`;
-              const st = grooveOf(n, key);
-              const rings = [];
-              sel.forEach((k, i) => {
-                if (k === key) rings.push(i);
-              });
-              const shadow = rings.length
-                ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 3}px var(--surface-2), 0 0 0 ${4 + j * 3}px var(${OPT_VARS[i]})`).join(",")}"`
-                : "";
-              const tip =
-                `Cage ${n} · Frette ${f + 1} · Cannelure ${gnum(c, f, g)} · ${STATES[st.s]}` +
-                rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
-                (st.c ? `\n${st.c}` : "");
-              gs += `<span class="vcell"><button class="vg s-${st.s}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${gnum(c, f, g)}</button>${st.c ? `<span class="vc">${esc(st.c)}</span>` : ""}</span>`;
-              if (st.c) notes = true;
-            }
-            fr += `<div class="vfrette">${gs}</div>`;
-          }
-          return sides(
-            `<div class="vroll${notes ? " has-notes" : ""}"><span class="journal"></span><div class="barrel">${fr}</div><span class="journal"></span></div>`,
-          );
-        }
-
-        function renderAll() {
-          syncToolbar();
-          document.body.classList.toggle("view-tab", S.tab !== "edit");
-          document.body.classList.toggle("db-tab", S.tab === "db");
-          document
-            .querySelectorAll("[data-tab]")
-            .forEach((b) =>
-              b.setAttribute("aria-pressed", String(b.dataset.tab === S.tab)),
-            );
-          $("scroller").hidden = S.tab !== "edit";
-          $("vscroller").hidden = S.tab !== "view";
-          $("dbview").hidden = S.tab !== "db";
-          if (!S.ready) return;
-          if (S.tab === "db") return renderDb();
-          if (S.tab === "view") {
-            $("vline").innerHTML =
-              visible().map(vrowHTML).join("") +
-              `<svg class="paths" id="vpaths" aria-hidden="true"></svg>`;
-          } else {
-            $("line").innerHTML =
-              visible().map(cageHTML).join("") +
-              `<svg class="paths" id="paths" aria-hidden="true"></svg>`;
-          }
-          requestAnimationFrame(drawPaths);
-        }
-
-        function drawPaths() {
-          if (S.tab === "db") return;
-          if (S.tab === "view") return drawVPaths();
-          const line = $("line"),
-            svg = $("paths");
-          if (!svg) return;
-          const base = line.getBoundingClientRect();
-          svg.setAttribute("width", line.scrollWidth);
-          svg.setAttribute("height", line.scrollHeight);
-          let out = "";
-          [0, 1, 2].forEach((i) => {
-            if (!S.show[i]) return;
-            const p = pathFor(i),
-              off = (i - 1) * 4;
-            const pts = [];
-            visible().forEach((n) => {
-              if (!validKey(n, p[n])) return;
-              const el = line.querySelector(
-                `.g[data-cage="${n}"][data-g="${p[n]}"]`,
-              );
-              if (!el) return;
-              const r = el.getBoundingClientRect();
-              pts.push({
-                l: r.left - base.left - 5,
-                r: r.right - base.left + 5,
-                y: r.top - base.top + 13 + off,
-              });
-            });
-            if (pts.length < 2) return;
-            let d = "";
-            for (let k = 1; k < pts.length; k++) {
-              const a = pts[k - 1],
-                b = pts[k],
-                dx = (b.l - a.r) / 2;
-              d += `M${a.r},${a.y} C${a.r + dx},${a.y} ${b.l - dx},${b.y} ${b.l},${b.y} `;
-            }
-            const col = `var(${OPT_VARS[i]})`;
-            const dur = Math.max(3, pts.length * 0.8).toFixed(1);
-            out +=
-              `<path class="halo" d="${d}" stroke="${col}"></path><path d="${d}" stroke="${col}"></path>` +
-              `<circle class="runner" r="5.5" fill="${col}"><animateMotion dur="${dur}s" repeatCount="indefinite" path="${d}"></animateMotion></circle>`;
-          });
-          svg.innerHTML = out;
-        }
-
-        // Commentaires : sur une ligne sous le cylindre, sans chevauchement,
-        // chacun relié à sa cannelure par un trait fin.
-        const NOTE_GAP = 26;
-        function layoutNotes(base) {
-          const rolls = [...document.querySelectorAll("#vline .vroll")];
-          rolls.forEach((roll) => {
-            const hs = [...roll.querySelectorAll(".vc")].map(
-              (el) => el.offsetHeight,
-            );
-            roll.style.marginBottom = hs.length
-              ? `${NOTE_GAP + Math.max(...hs) - 6}px`
-              : "";
-          });
-          const leads = [];
-          rolls.forEach((roll) => {
-            const items = [...roll.querySelectorAll(".vc")]
-              .map((el) => {
-                const cell = el.parentElement.getBoundingClientRect();
-                return {
-                  el,
-                  cell,
-                  cx: cell.left + cell.width / 2,
-                  w: el.offsetWidth,
-                };
-              })
-              .sort((a, b) => a.cx - b.cx);
-            if (!items.length) return;
-            let prev = -Infinity;
-            items.forEach((it) => {
-              it.x = Math.max(it.cx - it.w / 2, prev + 10);
-              prev = it.x + it.w;
-            });
-            const shift =
-              items.reduce((s, it) => s + (it.x - (it.cx - it.w / 2)), 0) /
-              items.length;
-            items.forEach((it) => {
-              const center = it.x - shift + it.w / 2;
-              it.el.style.left = `${center - it.cell.left}px`;
-              leads.push({
-                x1: it.cx - base.left,
-                y1: it.cell.bottom - base.top + 2,
-                x2: center - base.left,
-                y2: it.cell.bottom - base.top + NOTE_GAP - 2,
-              });
-            });
-          });
-          return leads;
-        }
-        function drawVPaths() {
-          const line = $("vline"),
-            svg = $("vpaths");
-          if (!svg) return;
-          const base = line.getBoundingClientRect();
-          const leads = layoutNotes(base);
-          svg.setAttribute("width", line.scrollWidth);
-          svg.setAttribute("height", line.scrollHeight);
-          let out = "";
-          [0, 1, 2].forEach((i) => {
-            if (!S.show[i]) return;
-            const p = pathFor(i),
-              off = (i - 1) * 4;
-            const pts = [];
-            visible().forEach((n) => {
-              if (!validKey(n, p[n])) return;
-              const el = line.querySelector(
-                `.vg[data-cage="${n}"][data-g="${p[n]}"]`,
-              );
-              if (!el) return;
-              const r = el.getBoundingClientRect();
-              pts.push({
-                x: r.left - base.left + r.width / 2 + off,
-                t: r.top - base.top - 6,
-                b: r.bottom - base.top + 6,
-              });
-            });
-            if (pts.length < 2) return;
-            let d = "";
-            for (let k = 1; k < pts.length; k++) {
-              const a = pts[k - 1],
-                b = pts[k],
-                dy = (b.t - a.b) / 2;
-              d += `M${a.x},${a.b} C${a.x},${a.b + dy} ${b.x},${b.t - dy} ${b.x},${b.t} `;
-            }
-            const col = `var(${OPT_VARS[i]})`;
-            const dur = Math.max(3, pts.length * 0.8).toFixed(1);
-            out +=
-              `<path class="halo" d="${d}" stroke="${col}"></path><path d="${d}" stroke="${col}"></path>` +
-              `<circle class="runner" r="5.5" fill="${col}"><animateMotion dur="${dur}s" repeatCount="indefinite" path="${d}"></animateMotion></circle>`;
-          });
-          out += leads
-            .map(
-              (l) =>
-                `<line class="lead" x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}"></line><circle class="lead-dot" cx="${l.x1}" cy="${l.y1}" r="2"></circle>`,
-            )
-            .join("");
-          svg.innerHTML = out;
-        }
-        if ("ResizeObserver" in window) {
-          const ro = new ResizeObserver(() => requestAnimationFrame(drawPaths));
-          ro.observe($("line"));
-          ro.observe($("vline"));
-        }
-        window.addEventListener("resize", () =>
-          requestAnimationFrame(drawPaths),
-        );
-
-        // ---------- Modals ----------
-        function openModal(html, mount) {
-          const ov = $("overlay");
-          ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
-          ov.hidden = false;
-          mount && mount(ov.firstElementChild);
-          const first = ov.querySelector(
-            "input:not([disabled]), textarea, .modal-foot .primary",
-          );
-          first && first.focus();
-        }
-        function closeModal() {
-          const ov = $("overlay");
-          ov.hidden = true;
-          ov.innerHTML = "";
-        }
-        $("overlay").addEventListener("click", (e) => {
-          const locked = !S.ready && $("overlay").querySelector(".base-dialog");
-          if (locked) return;
-          if (e.target.id === "overlay" || e.target.closest("[data-close]"))
-            closeModal();
-        });
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape" && !$("overlay").hidden && S.ready)
-            closeModal();
-        });
-
-        // ---------- Base de données des cylindres ----------
-        const compatible = (c, n) =>
-          n > 6 || (c.frettes === 1 && countsOf(c)[0] === 1);
-        const stock = () =>
-          Object.values(S.cyl)
-            .filter((c) => !c.cage)
-            .sort((a, b) => a.name.localeCompare(b.name));
-        function stateCounts(c) {
-          const k = { new: 0, worn: 0, hs: 0 };
-          countsOf(c).forEach((cnt, f) => {
-            for (let g = 0; g < cnt; g++)
-              k[((c.grooves && c.grooves[`${f}-${g}`]) || { s: "new" }).s]++;
-          });
-          return k;
-        }
-        const stateSummary = (c) => {
-          const k = stateCounts(c);
-          return `<span class="mini"><b class="n">${k.new} N</b><b class="w">${k.worn} U</b><b class="h">${k.hs} HS</b></span>`;
-        };
-        const clearPaths = (n) =>
-          Object.values(S.config.paths).forEach((byOpt) =>
-            Object.values(byOpt).forEach((p) => {
-              delete p[n];
+              await writeJson(h, emptyDb());
+              return h;
             }),
           );
+        },
+      );
+    }
 
-        function openConfig(n) {
-          const c = S.cages[n];
-          if (c) return openCyl(c.id, n);
-          const list = stock().filter((c) => compatible(c, n));
-          if (!list.length) return openCyl(null, n);
-          openModal(
-            `
+    async function useFile(h) {
+      if (
+        (await h.queryPermission({ mode: "readwrite" })) !== "granted" &&
+        (await h.requestPermission({ mode: "readwrite" })) !== "granted"
+      )
+        throw new Error("Accès en écriture au fichier refusé.");
+      let { d, mod } = await readJson(h);
+      S.file = h;
+      saveHandle(h);
+      // Chaque écriture relit le fichier puis n'y change que l'élément modifié :
+      // plusieurs postes peuvent travailler sur le même fichier partagé.
+      let chain = Promise.resolve();
+      const write = (path, data) =>
+        (chain = chain
+          .catch(() => {})
+          .then(async () => {
+            const cur = (await readJson(h)).d;
+            if (path === "config/main") cur.config = data;
+            else if (path === "all") {
+              cur.config = S.config;
+              cur.cylinders = S.cyl;
+            } else {
+              const id = path.slice("cylinders/".length);
+              if (data === null) delete cur.cylinders[id];
+              else cur.cylinders[id] = data;
+            }
+            cur.format = "laminoir-db";
+            cur.version = 1;
+            cur.updatedAt = new Date().toISOString();
+            await writeJson(h, cur);
+            mod = (await h.getFile()).lastModified;
+          }));
+      backend = { set: write, del: (path) => write(path, null) };
+      lastSig = "";
+      S.cyl = {};
+      applyData(d);
+      S.ready = true;
+      closeModal();
+      setSync("ok", h.name);
+      renderAll();
+      // Relit le fichier toutes les 4 s pour voir les modifications des autres postes.
+      clearInterval(S.poll);
+      S.poll = setInterval(async () => {
+        if (S.file !== h) return;
+        try {
+          const f = await h.getFile();
+          const writing =
+            Object.values(busy).some(Boolean) || Object.keys(pending).length;
+          if (f.lastModified === mod || writing) return;
+          const r = await readJson(h);
+          mod = r.mod;
+          applyData(r.d);
+          setSync("ok", h.name);
+        } catch (e) {
+          setSync("", "Fichier inaccessible");
+        }
+      }, 4000);
+    }
+
+    // ---------- Export / import du fichier JSON ----------
+    function exportJson() {
+      const data = {
+        format: "laminoir-db",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        config: S.config,
+        cylinders: S.cyl,
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "laminoir-db.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    async function importJson(file) {
+      let d;
+      try {
+        d = JSON.parse(await file.text());
+      } catch (e) {
+        return toast("Fichier illisible : ce n'est pas un JSON valide.");
+      }
+      if (!d || typeof d.cylinders !== "object" || typeof d.config !== "object")
+        return toast("Ce fichier n'est pas une base laminoir-db.json.");
+      Object.entries(d.cylinders).forEach(([id, c]) => (c.id = id));
+      S.cyl = d.cylinders;
+      S.config = Object.assign(S.config, d.config);
+      rebuildCages();
+      backend.set("all", null);
+      renderAll();
+      toast(`Base importée : ${Object.keys(d.cylinders).length} cylindres.`);
+    }
+
+    // ---------- Helpers on state ----------
+    const visible = () => DIAMS[S.diam];
+    const pathFor = (i) => {
+      const p = S.config.paths;
+      const d = (p[S.diam] = p[S.diam] || {});
+      const o = (d[i] = d[i] || {});
+      // Cages 1 à 6 : une seule cannelure, toujours sur le tracé.
+      for (let n = 1; n <= 6; n++) o[n] = "0-0";
+      return o;
+    };
+    const grooveOf = (n, key) => {
+      const c = S.cages[n];
+      return c ? (c.grooves && c.grooves[key]) || { s: "new" } : null;
+    };
+    const validKey = (n, key) => {
+      const c = S.cages[n];
+      if (!c || !key) return false;
+      const [f, g] = key.split("-").map(Number);
+      return f < c.frettes && g < fcount(c, f);
+    };
+    // Nombre de cannelures de chaque frette (anciens cylindres : même nombre partout).
+    const countsOf = (c) =>
+      Array.from({ length: c.frettes }, (_, f) =>
+        c.counts ? c.counts[f] || 0 : c.gpf || 0,
+      );
+    const fcount = (c, f) => countsOf(c)[f] || 0;
+    // Numérotation continue sur tout le cylindre, frette 1 en premier.
+    const gnum = (c, f, g) =>
+      countsOf(c)
+        .slice(0, f)
+        .reduce((a, b) => a + b, 0) +
+      g +
+      1;
+    const saveCyl = (c) => queueWrite("cylinders/" + c.id, c);
+    const saveCage = (n) => S.cages[n] && saveCyl(S.cages[n]);
+    const newId = () =>
+      "cyl-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    function rebuildCages() {
+      const next = {};
+      Object.values(S.cyl).forEach((c) => {
+        if (c.cage && !next[c.cage]) next[c.cage] = c;
+      });
+      S.cages = next;
+    }
+    const saveConfig = () => queueWrite("config/main", S.config);
+
+    // ---------- Toolbar ----------
+    function renderToolbar() {
+      $("diams").innerHTML = Object.keys(DIAMS)
+        .map(
+          (d) =>
+            `<button class="diam" data-diam="${d}" aria-pressed="${Number(d) === S.diam}">Ø${d}</button>`,
+        )
+        .join("");
+      const tools = $("tools");
+      tools.querySelectorAll(".opt").forEach((el) => el.remove());
+      S.config.options.forEach((o, i) => {
+        const wrap = document.createElement("div");
+        wrap.className = "opt";
+        wrap.style.setProperty("--oc", `var(${OPT_VARS[i]})`);
+        wrap.innerHTML =
+          `<button class="mode" data-mode="o${i}" aria-pressed="false" title="Tracer ce chemin : cliquez une cannelure par cage"><span class="swatch"></span>Tracer</button>` +
+          `<input type="text" id="opt-name-${i}" maxlength="30" aria-label="Nom de l'option ${i + 1}" value="${esc(o.name)}">` +
+          `<span class="count" id="opt-count-${i}"></span>` +
+          `<button class="eye" data-eye="${i}" aria-pressed="${S.show[i]}" title="Afficher ou masquer ce chemin">voir</button>`;
+        tools.appendChild(wrap);
+      });
+      syncToolbar();
+    }
+    function syncToolbar() {
+      document
+        .querySelectorAll("[data-diam]")
+        .forEach((b) =>
+          b.setAttribute(
+            "aria-pressed",
+            String(Number(b.dataset.diam) === S.diam),
+          ),
+        );
+      document
+        .querySelectorAll("[data-mode]")
+        .forEach((b) =>
+          b.setAttribute("aria-pressed", String(b.dataset.mode === S.mode)),
+        );
+      document
+        .querySelectorAll(".opt")
+        .forEach((el, i) => (el.dataset.on = String(S.mode === "o" + i)));
+      S.config.options.forEach((o, i) => {
+        const inp = $("opt-name-" + i);
+        if (inp && document.activeElement !== inp) inp.value = o.name;
+        const p = pathFor(i),
+          vis = visible();
+        const used = vis.filter((n) => validKey(n, p[n]));
+        const bad = used.filter((n) => grooveOf(n, p[n]).s === "hs").length;
+        const c = $("opt-count-" + i);
+        c.textContent =
+          `${used.length}/${vis.length}` + (bad ? ` · ${bad} HS` : "");
+        c.className = "count" + (bad ? " warn" : "");
+        c.title = bad
+          ? `${bad} cannelure(s) HS sur ce chemin`
+          : "Cages renseignées sur ce chemin";
+      });
+      const m = S.mode;
+      $("hint").textContent =
+        m === "state"
+          ? "Cliquez une cannelure pour changer son état."
+          : m === "note"
+            ? "Cliquez une cannelure pour ajouter un commentaire."
+            : `Tracé « ${S.config.options[+m[1]].name} » : cliquez une cannelure par cage (re-cliquez pour retirer).`;
+    }
+
+    // ---------- Mill line ----------
+    function cageHTML(n) {
+      const c = S.cages[n];
+      const head =
+        `<div class="cage-head"><span class="cage-num">Cage<b>${n}</b></span>` +
+        `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Commentaire HS de la cage">HS</button></div>`;
+      if (!c) {
+        return (
+          `<section class="cage" data-cage="${n}">${head}<div class="empty"><p>Aucun cylindre</p>` +
+          `<button class="btn" data-act="config" data-cage="${n}">Insérer un cylindre</button></div></section>`
+        );
+      }
+      const sel = [0, 1, 2].map((i) => pathFor(i)[n]);
+      let counts = { new: 0, worn: 0, hs: 0 };
+      let fr = "";
+      for (let f = 0; f < c.frettes; f++) {
+        let gs = "";
+        for (let g = 0; g < fcount(c, f); g++) {
+          const key = `${f}-${g}`;
+          const st = grooveOf(n, key);
+          counts[st.s]++;
+          const rings = [];
+          sel.forEach((k, i) => {
+            if (k === key) rings.push(i);
+          });
+          const shadow = rings.length
+            ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 4}px var(--surface), 0 0 0 ${4 + j * 4}px var(${OPT_VARS[i]})`).join(",")}"`
+            : "";
+          const tip =
+            `Cage ${n} · Frette ${f + 1} · Cannelure ${gnum(c, f, g)} · ${STATES[st.s]}` +
+            rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
+            (st.c ? `\n${st.c}` : "");
+          gs += `<button class="g s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}"><span class="g-num">${gnum(c, f, g)}</span>${st.c ? `<span class="g-c">${esc(st.c)}</span>` : ""}</button>`;
+        }
+        fr += `<div class="frette"><div class="frette-label">F${f + 1}</div><div class="grooves">${gs}</div></div>`;
+      }
+      return (
+        `<section class="cage" data-cage="${n}">${head}` +
+        `<button class="roll-id" data-act="config" data-cage="${n}" title="Modifier le cylindre"><span class="roll-name">${esc(c.name) || "Sans nom"}</span>` +
+        `<span class="roll-d">Ø ${esc(c.diameter)} mm</span><span class="roll-meta">${c.frettes} frette${c.frettes > 1 ? "s" : ""} · ${countsOf(c).join(" + ")} cannelures</span></button>` +
+        `<div class="frettes">${fr}</div>` +
+        `<div class="cage-foot"><span class="n"><b>${counts.new}</b> N</span><span class="w"><b>${counts.worn}</b> U</span><span class="h"><b>${counts.hs}</b> HS</span></div></section>`
+      );
+    }
+
+    // ---------- Visualisation (cages top to bottom) ----------
+    function vrowHTML(n) {
+      const c = S.cages[n];
+      const label =
+        `<div class="vcage"><div class="vcage-top"><span class="cage-num">Cage<b>${n}</b></span>` +
+        `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Commentaire HS de la cage">HS</button></div>` +
+        (c
+          ? `<small>${esc(c.name) || "Sans nom"} · Ø ${esc(c.diameter)} mm</small>`
+          : "") +
+        `</div>`;
+      const sides = (mid) =>
+        `<section class="vrow" data-cage="${n}">${label}<span class="vside l">Côté piste</span>` +
+        `<div class="vcenter">${mid}</div><span class="vside r">Côté moteur</span></section>`;
+      if (!c) {
+        return sides(
+          `<div class="vroll"><span class="journal"></span><div class="barrel empty-roll">Aucun cylindre</div><span class="journal"></span></div>`,
+        );
+      }
+      const sel = [0, 1, 2].map((i) => pathFor(i)[n]);
+      let fr = "",
+        notes = false;
+      for (let f = 0; f < c.frettes; f++) {
+        let gs = "";
+        for (let g = 0; g < fcount(c, f); g++) {
+          const key = `${f}-${g}`;
+          const st = grooveOf(n, key);
+          const rings = [];
+          sel.forEach((k, i) => {
+            if (k === key) rings.push(i);
+          });
+          const shadow = rings.length
+            ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 3}px var(--surface-2), 0 0 0 ${4 + j * 3}px var(${OPT_VARS[i]})`).join(",")}"`
+            : "";
+          const tip =
+            `Cage ${n} · Frette ${f + 1} · Cannelure ${gnum(c, f, g)} · ${STATES[st.s]}` +
+            rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
+            (st.c ? `\n${st.c}` : "");
+          gs += `<span class="vcell"><button class="vg s-${st.s}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${gnum(c, f, g)}</button>${st.c ? `<span class="vc">${esc(st.c)}</span>` : ""}</span>`;
+          if (st.c) notes = true;
+        }
+        fr += `<div class="vfrette">${gs}</div>`;
+      }
+      return sides(
+        `<div class="vroll${notes ? " has-notes" : ""}"><span class="journal"></span><div class="barrel">${fr}</div><span class="journal"></span></div>`,
+      );
+    }
+
+    function renderAll() {
+      syncToolbar();
+      document.body.classList.toggle("view-tab", S.tab !== "edit");
+      document.body.classList.toggle("db-tab", S.tab === "db");
+      document
+        .querySelectorAll("[data-tab]")
+        .forEach((b) =>
+          b.setAttribute("aria-pressed", String(b.dataset.tab === S.tab)),
+        );
+      $("scroller").hidden = S.tab !== "edit";
+      $("vscroller").hidden = S.tab !== "view";
+      $("dbview").hidden = S.tab !== "db";
+      if (!S.ready) return;
+      if (S.tab === "db") return renderDb();
+      if (S.tab === "view") {
+        $("vline").innerHTML =
+          visible().map(vrowHTML).join("") +
+          `<svg class="paths" id="vpaths" aria-hidden="true"></svg>`;
+      } else {
+        $("line").innerHTML =
+          visible().map(cageHTML).join("") +
+          `<svg class="paths" id="paths" aria-hidden="true"></svg>`;
+      }
+      requestAnimationFrame(drawPaths);
+    }
+
+    function drawPaths() {
+      if (S.tab === "db") return;
+      if (S.tab === "view") return drawVPaths();
+      const line = $("line"),
+        svg = $("paths");
+      if (!svg) return;
+      const base = line.getBoundingClientRect();
+      svg.setAttribute("width", line.scrollWidth);
+      svg.setAttribute("height", line.scrollHeight);
+      let out = "";
+      [0, 1, 2].forEach((i) => {
+        if (!S.show[i]) return;
+        const p = pathFor(i),
+          off = (i - 1) * 4;
+        const pts = [];
+        visible().forEach((n) => {
+          if (!validKey(n, p[n])) return;
+          const el = line.querySelector(
+            `.g[data-cage="${n}"][data-g="${p[n]}"]`,
+          );
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          pts.push({
+            l: r.left - base.left - 5,
+            r: r.right - base.left + 5,
+            y: r.top - base.top + 13 + off,
+          });
+        });
+        if (pts.length < 2) return;
+        let d = "";
+        for (let k = 1; k < pts.length; k++) {
+          const a = pts[k - 1],
+            b = pts[k],
+            dx = (b.l - a.r) / 2;
+          d += `M${a.r},${a.y} C${a.r + dx},${a.y} ${b.l - dx},${b.y} ${b.l},${b.y} `;
+        }
+        const col = `var(${OPT_VARS[i]})`;
+        const dur = Math.max(3, pts.length * 0.8).toFixed(1);
+        out +=
+          `<path class="halo" d="${d}" stroke="${col}"></path><path d="${d}" stroke="${col}"></path>` +
+          `<circle class="runner" r="5.5" fill="${col}"><animateMotion dur="${dur}s" repeatCount="indefinite" path="${d}"></animateMotion></circle>`;
+      });
+      svg.innerHTML = out;
+    }
+
+    // Commentaires : sur une ligne sous le cylindre, sans chevauchement,
+    // chacun relié à sa cannelure par un trait fin.
+    const NOTE_GAP = 26;
+    function layoutNotes(base) {
+      const rolls = [...document.querySelectorAll("#vline .vroll")];
+      rolls.forEach((roll) => {
+        const hs = [...roll.querySelectorAll(".vc")].map(
+          (el) => el.offsetHeight,
+        );
+        roll.style.marginBottom = hs.length
+          ? `${NOTE_GAP + Math.max(...hs) - 6}px`
+          : "";
+      });
+      const leads = [];
+      rolls.forEach((roll) => {
+        const items = [...roll.querySelectorAll(".vc")]
+          .map((el) => {
+            const cell = el.parentElement.getBoundingClientRect();
+            return {
+              el,
+              cell,
+              cx: cell.left + cell.width / 2,
+              w: el.offsetWidth,
+            };
+          })
+          .sort((a, b) => a.cx - b.cx);
+        if (!items.length) return;
+        let prev = -Infinity;
+        items.forEach((it) => {
+          it.x = Math.max(it.cx - it.w / 2, prev + 10);
+          prev = it.x + it.w;
+        });
+        const shift =
+          items.reduce((s, it) => s + (it.x - (it.cx - it.w / 2)), 0) /
+          items.length;
+        items.forEach((it) => {
+          const center = it.x - shift + it.w / 2;
+          it.el.style.left = `${center - it.cell.left}px`;
+          leads.push({
+            x1: it.cx - base.left,
+            y1: it.cell.bottom - base.top + 2,
+            x2: center - base.left,
+            y2: it.cell.bottom - base.top + NOTE_GAP - 2,
+          });
+        });
+      });
+      return leads;
+    }
+    function drawVPaths() {
+      const line = $("vline"),
+        svg = $("vpaths");
+      if (!svg) return;
+      const base = line.getBoundingClientRect();
+      const leads = layoutNotes(base);
+      svg.setAttribute("width", line.scrollWidth);
+      svg.setAttribute("height", line.scrollHeight);
+      let out = "";
+      [0, 1, 2].forEach((i) => {
+        if (!S.show[i]) return;
+        const p = pathFor(i),
+          off = (i - 1) * 4;
+        const pts = [];
+        visible().forEach((n) => {
+          if (!validKey(n, p[n])) return;
+          const el = line.querySelector(
+            `.vg[data-cage="${n}"][data-g="${p[n]}"]`,
+          );
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          pts.push({
+            x: r.left - base.left + r.width / 2 + off,
+            t: r.top - base.top - 6,
+            b: r.bottom - base.top + 6,
+          });
+        });
+        if (pts.length < 2) return;
+        let d = "";
+        for (let k = 1; k < pts.length; k++) {
+          const a = pts[k - 1],
+            b = pts[k],
+            dy = (b.t - a.b) / 2;
+          d += `M${a.x},${a.b} C${a.x},${a.b + dy} ${b.x},${b.t - dy} ${b.x},${b.t} `;
+        }
+        const col = `var(${OPT_VARS[i]})`;
+        const dur = Math.max(3, pts.length * 0.8).toFixed(1);
+        out +=
+          `<path class="halo" d="${d}" stroke="${col}"></path><path d="${d}" stroke="${col}"></path>` +
+          `<circle class="runner" r="5.5" fill="${col}"><animateMotion dur="${dur}s" repeatCount="indefinite" path="${d}"></animateMotion></circle>`;
+      });
+      out += leads
+        .map(
+          (l) =>
+            `<line class="lead" x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}"></line><circle class="lead-dot" cx="${l.x1}" cy="${l.y1}" r="2"></circle>`,
+        )
+        .join("");
+      svg.innerHTML = out;
+    }
+    if ("ResizeObserver" in window) {
+      const ro = new ResizeObserver(() => requestAnimationFrame(drawPaths));
+      ro.observe($("line"));
+      ro.observe($("vline"));
+    }
+    window.addEventListener("resize", () => requestAnimationFrame(drawPaths));
+
+    // ---------- Modals ----------
+    function openModal(html, mount) {
+      const ov = $("overlay");
+      ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+      ov.hidden = false;
+      mount && mount(ov.firstElementChild);
+      const first = ov.querySelector(
+        "input:not([disabled]), textarea, .modal-foot .primary",
+      );
+      first && first.focus();
+    }
+    function closeModal() {
+      const ov = $("overlay");
+      ov.hidden = true;
+      ov.innerHTML = "";
+    }
+    $("overlay").addEventListener("click", (e) => {
+      const locked = !S.ready && $("overlay").querySelector(".base-dialog");
+      if (locked) return;
+      if (e.target.id === "overlay" || e.target.closest("[data-close]"))
+        closeModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !$("overlay").hidden && S.ready) closeModal();
+    });
+
+    // ---------- Base de données des cylindres ----------
+    const compatible = (c, n) =>
+      n > 6 || (c.frettes === 1 && countsOf(c)[0] === 1);
+    const stock = () =>
+      Object.values(S.cyl)
+        .filter((c) => !c.cage)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    function stateCounts(c) {
+      const k = { new: 0, worn: 0, hs: 0 };
+      countsOf(c).forEach((cnt, f) => {
+        for (let g = 0; g < cnt; g++)
+          k[((c.grooves && c.grooves[`${f}-${g}`]) || { s: "new" }).s]++;
+      });
+      return k;
+    }
+    const stateSummary = (c) => {
+      const k = stateCounts(c);
+      return `<span class="mini"><b class="n">${k.new} N</b><b class="w">${k.worn} U</b><b class="h">${k.hs} HS</b></span>`;
+    };
+    const clearPaths = (n) =>
+      Object.values(S.config.paths).forEach((byOpt) =>
+        Object.values(byOpt).forEach((p) => {
+          delete p[n];
+        }),
+      );
+
+    function openConfig(n) {
+      const c = S.cages[n];
+      if (c) return openCyl(c.id, n);
+      const list = stock().filter((c) => compatible(c, n));
+      if (!list.length) return openCyl(null, n);
+      openModal(
+        `
       <div class="modal-head"><h2>Cage ${n} · Insérer un cylindre</h2><button class="x" data-close aria-label="Fermer">×</button></div>
       <div class="modal-body">
         <div class="field"><span class="label">Choisir un cylindre en stock</span>
@@ -2200,52 +2163,52 @@
         </div>
       </div>
       <div class="modal-foot"><button type="button" class="btn" data-close>Annuler</button><span class="spacer"></span><button type="button" class="btn primary" id="mount-new">Nouveau cylindre</button></div>`,
-            (m) => {
-              m.querySelector("#pick-q").addEventListener("input", (e) => {
-                const q = e.target.value.trim().toLowerCase();
-                let shown = 0;
-                m.querySelectorAll("[data-search]").forEach((b) => {
-                  b.hidden = !!q && !b.dataset.search.includes(q);
-                  if (!b.hidden) shown++;
-                });
-                m.querySelector("#pick-none").hidden = shown > 0;
-              });
-              m.querySelector("#mount-new").addEventListener("click", () =>
-                openCyl(null, n),
-              );
-              m.querySelector(".picklist").addEventListener("click", (e) => {
-                const b = e.target.closest("[data-pick]");
-                if (!b) return;
-                const c = S.cyl[b.dataset.pick];
-                if (!c || c.cage || S.cages[n]) return;
-                c.cage = n;
-                saveCyl(c);
-                rebuildCages();
-                closeModal();
-                renderAll();
-                toast(`${c.name} monté dans la cage ${n}.`);
-              });
-            },
+        (m) => {
+          m.querySelector("#pick-q").addEventListener("input", (e) => {
+            const q = e.target.value.trim().toLowerCase();
+            let shown = 0;
+            m.querySelectorAll("[data-search]").forEach((b) => {
+              b.hidden = !!q && !b.dataset.search.includes(q);
+              if (!b.hidden) shown++;
+            });
+            m.querySelector("#pick-none").hidden = shown > 0;
+          });
+          m.querySelector("#mount-new").addEventListener("click", () =>
+            openCyl(null, n),
           );
-        }
+          m.querySelector(".picklist").addEventListener("click", (e) => {
+            const b = e.target.closest("[data-pick]");
+            if (!b) return;
+            const c = S.cyl[b.dataset.pick];
+            if (!c || c.cage || S.cages[n]) return;
+            c.cage = n;
+            saveCyl(c);
+            rebuildCages();
+            closeModal();
+            renderAll();
+            toast(`${c.name} monté dans la cage ${n}.`);
+          });
+        },
+      );
+    }
 
-        // Créer (id null) ou modifier un cylindre. n : cage où le monter à la création.
-        function openCyl(id, n) {
-          const c = id ? S.cyl[id] : null;
-          const locked = !!c;
-          const fixed = !c && n && n <= 6;
-          const title = c
-            ? esc(c.name)
-            : n
-              ? `Cage ${n} · Nouveau cylindre`
-              : "Nouveau cylindre";
-          const note = fixed
-            ? "Les cages 1 à 6 ont toujours 1 frette et 1 cannelure."
-            : locked
-              ? "Le nombre de frettes et de cannelures est fixé à la création du cylindre."
-              : "Attention : le nombre de frettes et de cannelures ne pourra plus être modifié après l'enregistrement.";
-          openModal(
-            `
+    // Créer (id null) ou modifier un cylindre. n : cage où le monter à la création.
+    function openCyl(id, n) {
+      const c = id ? S.cyl[id] : null;
+      const locked = !!c;
+      const fixed = !c && n && n <= 6;
+      const title = c
+        ? esc(c.name)
+        : n
+          ? `Cage ${n} · Nouveau cylindre`
+          : "Nouveau cylindre";
+      const note = fixed
+        ? "Les cages 1 à 6 ont toujours 1 frette et 1 cannelure."
+        : locked
+          ? "Le nombre de frettes et de cannelures est fixé à la création du cylindre."
+          : "Attention : le nombre de frettes et de cannelures ne pourra plus être modifié après l'enregistrement.";
+      openModal(
+        `
       <div class="modal-head"><h2>${title}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
       <form id="cfg">
         <div class="modal-body">
@@ -2272,137 +2235,137 @@
           <button type="submit" class="btn primary">Enregistrer</button>
         </div>
       </form>`,
-            (m) => {
-              const prev = c ? countsOf(c) : fixed ? [1] : [];
-              const buildCounts = () => {
-                const box = m.querySelector("#cfg-counts");
-                const cur = [...box.querySelectorAll("[data-fc]")].map(
-                  (i) => i.value,
-                );
-                const nf = Math.max(
-                  1,
-                  Math.min(12, parseInt($("cfg-fr").value, 10) || 1),
-                );
-                box.innerHTML = Array.from(
-                  { length: nf },
-                  (_, f) =>
-                    `<label class="fc"><span>F${f + 1}</span><input type="number" min="1" max="30" required data-fc="${f}" id="cfg-c-${f}" aria-label="Cannelures de la frette ${f + 1}" value="${esc(cur[f] ?? prev[f] ?? 6)}" ${locked || fixed ? "disabled" : ""}></label>`,
-                ).join("");
-              };
-              buildCounts();
-              $("cfg-fr").addEventListener("input", buildCounts);
-              m.querySelector("#cfg").addEventListener("submit", (e) => {
-                e.preventDefault();
-                const name = $("cfg-name").value.trim();
-                const diameter = Number($("cfg-diam").value);
-                if (!name || !(diameter > 0)) return;
-                const dup = Object.values(S.cyl).find(
-                  (x) => x !== c && x.name.toLowerCase() === name.toLowerCase(),
-                );
-                if (dup) {
-                  toast(`Un cylindre s'appelle déjà « ${dup.name} ».`);
-                  return;
-                }
-                let cyl = c;
-                if (cyl) {
-                  cyl.name = name;
-                  cyl.diameter = diameter;
-                } else {
-                  const counts = fixed
-                    ? [1]
-                    : [...m.querySelectorAll("[data-fc]")].map((i) =>
-                        Math.max(1, Math.min(30, parseInt(i.value, 10) || 1)),
-                      );
-                  cyl = {
-                    id: newId(),
-                    name,
-                    diameter,
-                    frettes: counts.length,
-                    counts,
-                    grooves: {},
-                    cage: n && !S.cages[n] ? n : null,
-                  };
-                  S.cyl[cyl.id] = cyl;
-                }
-                saveCyl(cyl);
-                rebuildCages();
-                closeModal();
-                renderAll();
-                toast(`${cyl.name} enregistré.`);
-              });
-              const arm = (id, label, action) => {
-                const b = m.querySelector(id);
-                if (!b) return;
-                b.addEventListener("click", () => {
-                  if (!b.classList.contains("armed")) {
-                    b.classList.add("armed");
-                    b.textContent = label;
-                    return;
-                  }
-                  action();
-                });
-              };
-              arm("#cfg-reset", "Confirmer : tout à neuf", () => {
-                c.grooves = {};
-                saveCyl(c);
-                closeModal();
-                renderAll();
-                toast(`${c.name} : cannelures remises à neuf.`);
-              });
-              arm("#cfg-remove", "Confirmer le retrait", () => {
-                const k = c.cage;
-                c.cage = null;
-                clearPaths(k);
-                saveCyl(c);
-                saveConfig();
-                rebuildCages();
-                closeModal();
-                renderAll();
-                toast(`${c.name} retiré de la cage ${k} et remis en stock.`);
-              });
-              arm("#cfg-delete", "Confirmer la suppression", () => {
-                delete S.cyl[c.id];
-                queueWrite("cylinders/" + c.id, null);
-                rebuildCages();
-                closeModal();
-                renderAll();
-                toast(`${c.name} supprimé de la base.`);
-              });
-            },
-          );
-        }
-
-        function renderDb() {
-          const q = ($("db-q").value || "").trim().toLowerCase();
-          const all = Object.values(S.cyl);
-          const list = all
-            .filter((c) => !q || c.name.toLowerCase().includes(q))
-            .sort(
-              (a, b) =>
-                (a.cage || 99) - (b.cage || 99) || a.name.localeCompare(b.name),
+        (m) => {
+          const prev = c ? countsOf(c) : fixed ? [1] : [];
+          const buildCounts = () => {
+            const box = m.querySelector("#cfg-counts");
+            const cur = [...box.querySelectorAll("[data-fc]")].map(
+              (i) => i.value,
             );
-          const mounted = all.filter((c) => c.cage).length;
-          $("db-count").textContent =
-            `${all.length} cylindre${all.length > 1 ? "s" : ""} · ${mounted} monté${mounted > 1 ? "s" : ""} · ${all.length - mounted} en stock`;
-          $("db-table").innerHTML = !all.length
-            ? `<p class="db-empty">Aucun cylindre enregistré. Ajoutez-en un avec « Nouveau cylindre » ou depuis une cage.</p>`
-            : !list.length
-              ? `<p class="db-empty">Aucun cylindre ne correspond à « ${esc(q)} ».</p>`
-              : `<table class="dbt"><thead><tr><th>Cylindre</th><th class="num">Ø (mm)</th><th class="num">Frettes</th><th>Cannelures</th><th>État</th><th>Emplacement</th></tr></thead><tbody>${list
-                  .map(
-                    (c) =>
-                      `<tr><td><button class="linkbtn" data-cyl="${esc(c.id)}">${esc(c.name)}</button></td><td class="num">${esc(c.diameter)}</td><td class="num">${c.frettes}</td><td class="num">${countsOf(c).join(" + ")}</td><td>${stateSummary(c)}</td><td>${c.cage ? `<span class="where on">Cage ${c.cage}</span>` : `<span class="where">En stock</span>`}</td></tr>`,
-                  )
-                  .join("")}</tbody></table>`;
-        }
+            const nf = Math.max(
+              1,
+              Math.min(12, parseInt($("cfg-fr").value, 10) || 1),
+            );
+            box.innerHTML = Array.from(
+              { length: nf },
+              (_, f) =>
+                `<label class="fc"><span>F${f + 1}</span><input type="number" min="1" max="30" required data-fc="${f}" id="cfg-c-${f}" aria-label="Cannelures de la frette ${f + 1}" value="${esc(cur[f] ?? prev[f] ?? 6)}" ${locked || fixed ? "disabled" : ""}></label>`,
+            ).join("");
+          };
+          buildCounts();
+          $("cfg-fr").addEventListener("input", buildCounts);
+          m.querySelector("#cfg").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const name = $("cfg-name").value.trim();
+            const diameter = Number($("cfg-diam").value);
+            if (!name || !(diameter > 0)) return;
+            const dup = Object.values(S.cyl).find(
+              (x) => x !== c && x.name.toLowerCase() === name.toLowerCase(),
+            );
+            if (dup) {
+              toast(`Un cylindre s'appelle déjà « ${dup.name} ».`);
+              return;
+            }
+            let cyl = c;
+            if (cyl) {
+              cyl.name = name;
+              cyl.diameter = diameter;
+            } else {
+              const counts = fixed
+                ? [1]
+                : [...m.querySelectorAll("[data-fc]")].map((i) =>
+                    Math.max(1, Math.min(30, parseInt(i.value, 10) || 1)),
+                  );
+              cyl = {
+                id: newId(),
+                name,
+                diameter,
+                frettes: counts.length,
+                counts,
+                grooves: {},
+                cage: n && !S.cages[n] ? n : null,
+              };
+              S.cyl[cyl.id] = cyl;
+            }
+            saveCyl(cyl);
+            rebuildCages();
+            closeModal();
+            renderAll();
+            toast(`${cyl.name} enregistré.`);
+          });
+          const arm = (id, label, action) => {
+            const b = m.querySelector(id);
+            if (!b) return;
+            b.addEventListener("click", () => {
+              if (!b.classList.contains("armed")) {
+                b.classList.add("armed");
+                b.textContent = label;
+                return;
+              }
+              action();
+            });
+          };
+          arm("#cfg-reset", "Confirmer : tout à neuf", () => {
+            c.grooves = {};
+            saveCyl(c);
+            closeModal();
+            renderAll();
+            toast(`${c.name} : cannelures remises à neuf.`);
+          });
+          arm("#cfg-remove", "Confirmer le retrait", () => {
+            const k = c.cage;
+            c.cage = null;
+            clearPaths(k);
+            saveCyl(c);
+            saveConfig();
+            rebuildCages();
+            closeModal();
+            renderAll();
+            toast(`${c.name} retiré de la cage ${k} et remis en stock.`);
+          });
+          arm("#cfg-delete", "Confirmer la suppression", () => {
+            delete S.cyl[c.id];
+            queueWrite("cylinders/" + c.id, null);
+            rebuildCages();
+            closeModal();
+            renderAll();
+            toast(`${c.name} supprimé de la base.`);
+          });
+        },
+      );
+    }
 
-        function openGroove(n, key) {
-          const c = S.cages[n];
-          const [f, g] = key.split("-").map(Number);
-          const cur = Object.assign({ s: "new", c: "" }, grooveOf(n, key));
-          let st = cur.s;
-          openModal(
-            `
+    function renderDb() {
+      const q = ($("db-q").value || "").trim().toLowerCase();
+      const all = Object.values(S.cyl);
+      const list = all
+        .filter((c) => !q || c.name.toLowerCase().includes(q))
+        .sort(
+          (a, b) =>
+            (a.cage || 99) - (b.cage || 99) || a.name.localeCompare(b.name),
+        );
+      const mounted = all.filter((c) => c.cage).length;
+      $("db-count").textContent =
+        `${all.length} cylindre${all.length > 1 ? "s" : ""} · ${mounted} monté${mounted > 1 ? "s" : ""} · ${all.length - mounted} en stock`;
+      $("db-table").innerHTML = !all.length
+        ? `<p class="db-empty">Aucun cylindre enregistré. Ajoutez-en un avec « Nouveau cylindre » ou depuis une cage.</p>`
+        : !list.length
+          ? `<p class="db-empty">Aucun cylindre ne correspond à « ${esc(q)} ».</p>`
+          : `<table class="dbt"><thead><tr><th>Cylindre</th><th class="num">Ø (mm)</th><th class="num">Frettes</th><th>Cannelures</th><th>État</th><th>Emplacement</th></tr></thead><tbody>${list
+              .map(
+                (c) =>
+                  `<tr><td><button class="linkbtn" data-cyl="${esc(c.id)}">${esc(c.name)}</button></td><td class="num">${esc(c.diameter)}</td><td class="num">${c.frettes}</td><td class="num">${countsOf(c).join(" + ")}</td><td>${stateSummary(c)}</td><td>${c.cage ? `<span class="where on">Cage ${c.cage}</span>` : `<span class="where">En stock</span>`}</td></tr>`,
+              )
+              .join("")}</tbody></table>`;
+    }
+
+    function openGroove(n, key) {
+      const c = S.cages[n];
+      const [f, g] = key.split("-").map(Number);
+      const cur = Object.assign({ s: "new", c: "" }, grooveOf(n, key));
+      let st = cur.s;
+      openModal(
+        `
       <div class="modal-head"><h2>Cage ${n} · F${f + 1} · C${gnum(c, f, g)}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
       <form id="gf">
         <div class="modal-body">
@@ -2419,170 +2382,169 @@
         </div>
         <div class="modal-foot"><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>
       </form>`,
-            (m) => {
-              m.querySelector("#gf-states").addEventListener("click", (e) => {
-                const b = e.target.closest("[data-s]");
-                if (!b) return;
-                st = b.dataset.s;
-                m.querySelectorAll("[data-s]").forEach((x) =>
-                  x.setAttribute("aria-pressed", String(x === b)),
-                );
-              });
-              m.querySelector("#gf").addEventListener("submit", (e) => {
-                e.preventDefault();
-                const comment = $("gf-c").value.trim();
-                c.grooves = c.grooves || {};
-                if (st === "new" && !comment) delete c.grooves[key];
-                else
-                  c.grooves[key] = comment ? { s: st, c: comment } : { s: st };
-                saveCage(n);
-                closeModal();
-                renderAll();
-              });
-            },
-          );
-        }
+        (m) => {
+          m.querySelector("#gf-states").addEventListener("click", (e) => {
+            const b = e.target.closest("[data-s]");
+            if (!b) return;
+            st = b.dataset.s;
+            m.querySelectorAll("[data-s]").forEach((x) =>
+              x.setAttribute("aria-pressed", String(x === b)),
+            );
+          });
+          m.querySelector("#gf").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const comment = $("gf-c").value.trim();
+            c.grooves = c.grooves || {};
+            if (st === "new" && !comment) delete c.grooves[key];
+            else c.grooves[key] = comment ? { s: st, c: comment } : { s: st };
+            saveCage(n);
+            closeModal();
+            renderAll();
+          });
+        },
+      );
+    }
 
-        // Fenêtre HS : commentaire libre de l'opérateur, vide par défaut.
-        function openHS(n) {
-          const cur = (S.config.procedures && S.config.procedures[n]) || "";
-          openModal(
-            `
+    // Fenêtre HS : commentaire libre de l'opérateur, vide par défaut.
+    function openHS(n) {
+      const cur = (S.config.procedures && S.config.procedures[n]) || "";
+      openModal(
+        `
       <div class="modal-head hs"><h2>Cage ${n} · HS</h2><button class="x" data-close aria-label="Fermer">×</button></div>
       <form id="hsf"><div class="modal-body">
         <label class="field"><span class="label">Commentaire</span><textarea id="hs-text" maxlength="2000" style="min-height:200px">${esc(cur)}</textarea></label>
       </div>
       <div class="modal-foot"><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>`,
-            (m) => {
-              m.querySelector("#hsf").addEventListener("submit", (e) => {
-                e.preventDefault();
-                const t = $("hs-text").value.trim();
-                S.config.procedures = S.config.procedures || {};
-                if (t) S.config.procedures[n] = t;
-                else delete S.config.procedures[n];
-                saveConfig();
-                closeModal();
-                toast(`Cage ${n} : commentaire HS enregistré.`);
-              });
-            },
-          );
-        }
+        (m) => {
+          m.querySelector("#hsf").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const t = $("hs-text").value.trim();
+            S.config.procedures = S.config.procedures || {};
+            if (t) S.config.procedures[n] = t;
+            else delete S.config.procedures[n];
+            saveConfig();
+            closeModal();
+            toast(`Cage ${n} : commentaire HS enregistré.`);
+          });
+        },
+      );
+    }
 
-        // ---------- Events ----------
-        $("bar").addEventListener("click", (e) => {
-          const t = e.target.closest("[data-tab]");
-          if (t) {
-            S.tab = t.dataset.tab;
-            try {
-              localStorage.setItem("laminoir-tab", S.tab);
-            } catch (err) {}
-            renderAll();
-            return;
-          }
-          const d = e.target.closest("[data-diam]");
-          if (d) {
-            S.diam = Number(d.dataset.diam);
-            try {
-              localStorage.setItem("laminoir-diam", String(S.diam));
-            } catch (err) {}
-            renderAll();
-            return;
-          }
-          const m = e.target.closest("[data-mode]");
-          if (m) {
-            S.mode = m.dataset.mode;
-            syncToolbar();
-            return;
-          }
-          const eye = e.target.closest("[data-eye]");
-          if (eye) {
-            const i = +eye.dataset.eye;
-            S.show[i] = !S.show[i];
-            eye.setAttribute("aria-pressed", String(S.show[i]));
-            drawPaths();
-          }
-        });
-        $("tools").addEventListener("change", (e) => {
-          const m = e.target.id && e.target.id.match(/^opt-name-(\d)$/);
-          if (!m) return;
-          const v = e.target.value.trim() || `Option ${+m[1] + 1}`;
-          e.target.value = v;
-          S.config.options[+m[1]].name = v;
-          saveConfig();
-          syncToolbar();
-        });
-        $("tools").addEventListener("keydown", (e) => {
-          if (e.key === "Enter" && e.target.matches("input")) e.target.blur();
-        });
+    // ---------- Events ----------
+    $("bar").addEventListener("click", (e) => {
+      const t = e.target.closest("[data-tab]");
+      if (t) {
+        S.tab = t.dataset.tab;
+        try {
+          localStorage.setItem("laminoir-tab", S.tab);
+        } catch (err) {}
+        renderAll();
+        return;
+      }
+      const d = e.target.closest("[data-diam]");
+      if (d) {
+        S.diam = Number(d.dataset.diam);
+        try {
+          localStorage.setItem("laminoir-diam", String(S.diam));
+        } catch (err) {}
+        renderAll();
+        return;
+      }
+      const m = e.target.closest("[data-mode]");
+      if (m) {
+        S.mode = m.dataset.mode;
+        syncToolbar();
+        return;
+      }
+      const eye = e.target.closest("[data-eye]");
+      if (eye) {
+        const i = +eye.dataset.eye;
+        S.show[i] = !S.show[i];
+        eye.setAttribute("aria-pressed", String(S.show[i]));
+        drawPaths();
+      }
+    });
+    $("tools").addEventListener("change", (e) => {
+      const m = e.target.id && e.target.id.match(/^opt-name-(\d)$/);
+      if (!m) return;
+      const v = e.target.value.trim() || `Option ${+m[1] + 1}`;
+      e.target.value = v;
+      S.config.options[+m[1]].name = v;
+      saveConfig();
+      syncToolbar();
+    });
+    $("tools").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && e.target.matches("input")) e.target.blur();
+    });
 
-        $("dbview").addEventListener("click", (e) => {
-          if (e.target.closest("#db-new")) return openCyl(null, null);
-          const b = e.target.closest("[data-cyl]");
-          if (b) openCyl(b.dataset.cyl, null);
-        });
-        $("db-q").addEventListener("input", () => renderDb());
-        // Export/import de fichier : hors claude.ai (les téléchargements y sont bloqués).
-        $("db-file").hidden = !!(window.claude && window.claude.use);
-        $("db-export").addEventListener("click", exportJson);
-        $("db-switch").hidden = !FSA;
-        $("db-switch").addEventListener("click", () => openBaseDialog(null));
-        $("db-import").addEventListener("change", (e) => {
-          const f = e.target.files[0];
-          e.target.value = "";
-          if (f) importJson(f);
-        });
+    $("dbview").addEventListener("click", (e) => {
+      if (e.target.closest("#db-new")) return openCyl(null, null);
+      const b = e.target.closest("[data-cyl]");
+      if (b) openCyl(b.dataset.cyl, null);
+    });
+    $("db-q").addEventListener("input", () => renderDb());
+    // Export/import de fichier : hors claude.ai (les téléchargements y sont bloqués).
+    $("db-file").hidden = !!(window.claude && window.claude.use);
+    $("db-export").addEventListener("click", exportJson);
+    $("db-switch").hidden = !FSA;
+    $("db-switch").addEventListener("click", () => openBaseDialog(null));
+    $("db-import").addEventListener("change", (e) => {
+      const f = e.target.files[0];
+      e.target.value = "";
+      if (f) importJson(f);
+    });
 
-        // Visualisation: HS opens the procedure, a groove opens its state and comment.
-        $("vline").addEventListener("click", (e) => {
-          const b = e.target.closest("[data-act]");
-          if (!b) return;
-          const n = Number(b.dataset.cage);
-          if (b.dataset.act === "hs") return openHS(n);
-          if (b.dataset.act === "g") return openGroove(n, b.dataset.g);
-        });
+    // Visualisation: HS opens the procedure, a groove opens its state and comment.
+    $("vline").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-act]");
+      if (!b) return;
+      const n = Number(b.dataset.cage);
+      if (b.dataset.act === "hs") return openHS(n);
+      if (b.dataset.act === "g") return openGroove(n, b.dataset.g);
+    });
 
-        $("line").addEventListener("click", (e) => {
-          const b = e.target.closest("[data-act]");
-          if (!b) return;
-          const n = Number(b.dataset.cage),
-            act = b.dataset.act;
-          if (act === "hs") return openHS(n);
-          if (act === "config") return openConfig(n);
-          if (act !== "g") return;
-          const key = b.dataset.g,
-            c = S.cages[n];
-          if (S.mode === "note") return openGroove(n, key);
-          if (S.mode === "state") {
-            const cur = grooveOf(n, key);
-            const next = Object.assign({}, cur, { s: NEXT[cur.s] });
-            c.grooves = c.grooves || {};
-            if (next.s === "new" && !next.c) delete c.grooves[key];
-            else c.grooves[key] = next;
-            saveCage(n);
-            renderAll();
-            return;
-          }
-          const i = +S.mode[1],
-            p = pathFor(i);
-          if (p[n] === key) delete p[n];
-          else p[n] = key;
-          saveConfig();
-          renderAll();
-        });
+    $("line").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-act]");
+      if (!b) return;
+      const n = Number(b.dataset.cage),
+        act = b.dataset.act;
+      if (act === "hs") return openHS(n);
+      if (act === "config") return openConfig(n);
+      if (act !== "g") return;
+      const key = b.dataset.g,
+        c = S.cages[n];
+      if (S.mode === "note") return openGroove(n, key);
+      if (S.mode === "state") {
+        const cur = grooveOf(n, key);
+        const next = Object.assign({}, cur, { s: NEXT[cur.s] });
+        c.grooves = c.grooves || {};
+        if (next.s === "new" && !next.c) delete c.grooves[key];
+        else c.grooves[key] = next;
+        saveCage(n);
+        renderAll();
+        return;
+      }
+      const i = +S.mode[1],
+        p = pathFor(i);
+      if (p[n] === key) delete p[n];
+      else p[n] = key;
+      saveConfig();
+      renderAll();
+    });
 
-        let toastTimer;
-        function toast(msg) {
-          const t = $("toast");
-          t.textContent = msg;
-          t.hidden = false;
-          clearTimeout(toastTimer);
-          toastTimer = setTimeout(() => {
-            t.hidden = true;
-          }, 2600);
-        }
+    let toastTimer;
+    function toast(msg) {
+      const t = $("toast");
+      t.textContent = msg;
+      t.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        t.hidden = true;
+      }, 2600);
+    }
 
-        init();
-      })();
-    </script>
-  </body>
+    init();
+  })();
+</script>
+</body>
 </html>
