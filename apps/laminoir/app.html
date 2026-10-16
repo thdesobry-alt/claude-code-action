@@ -459,7 +459,7 @@
   }
   .g {
     position: relative;
-    height: 26px;
+    min-height: 26px;
     border-radius: 13px;
     border: 0;
     color: #fff;
@@ -467,9 +467,33 @@
     font-size: 12px;
     font-weight: 500;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     font-variant-numeric: tabular-nums;
+    padding: 4px 8px;
+  }
+  .g.has-c {
+    border-radius: 9px;
+    padding-bottom: 6px;
+  }
+  .g-num {
+    line-height: 18px;
+  }
+  .g-c {
+    display: block;
+    width: 100%;
+    margin-top: 2px;
+    padding-top: 3px;
+    border-top: 1px solid rgba(255, 255, 255, 0.45);
+    font-family: var(--f-body);
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: left;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
   }
   .g.s-new {
     background: var(--new);
@@ -484,17 +508,6 @@
       transparent 0 6px,
       rgba(0, 0, 0, 0.18) 6px 9px
     );
-  }
-  .g .dot {
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    translate: 0 -50%;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.25);
   }
   .g:hover {
     filter: brightness(1.08);
@@ -1101,7 +1114,7 @@
             `Cage ${n} · Frette ${f + 1} · Cannelure ${g + 1} · ${STATES[st.s]}` +
             rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
             (st.c ? `\n${st.c}` : "");
-          gs += `<button class="g s-${st.s}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${g + 1}${st.c ? '<i class="dot"></i>' : ""}</button>`;
+          gs += `<button class="g s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}"><span class="g-num">${g + 1}</span>${st.c ? `<span class="g-c">${esc(st.c)}</span>` : ""}</button>`;
         }
         fr += `<div class="frette"><div class="frette-label">F${f + 1}</div><div class="grooves">${gs}</div></div>`;
       }
@@ -1147,7 +1160,7 @@
           pts.push({
             l: r.left - base.left - 5,
             r: r.right - base.left + 5,
-            y: r.top - base.top + r.height / 2 + off,
+            y: r.top - base.top + 13 + off,
           });
         });
         if (pts.length < 2) return;
