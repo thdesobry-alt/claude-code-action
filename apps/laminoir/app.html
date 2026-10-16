@@ -665,6 +665,30 @@
     min-height: 90px;
     resize: vertical;
   }
+  .fcounts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 8px;
+  }
+  .fc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .fc input {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 6px 8px;
+    width: 100%;
+    min-width: 0;
+  }
+  .fc input:disabled {
+    opacity: 0.6;
+  }
   .row2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1237,8 +1261,21 @@
       const c = S.cages[n];
       if (!c || !key) return false;
       const [f, g] = key.split("-").map(Number);
-      return f < c.frettes && g < c.gpf;
+      return f < c.frettes && g < fcount(c, f);
     };
+    // Nombre de cannelures de chaque frette (anciens cylindres : même nombre partout).
+    const countsOf = (c) =>
+      Array.from({ length: c.frettes }, (_, f) =>
+        c.counts ? c.counts[f] || 0 : c.gpf || 0,
+      );
+    const fcount = (c, f) => countsOf(c)[f] || 0;
+    // Numérotation continue sur tout le cylindre, frette 1 en premier.
+    const gnum = (c, f, g) =>
+      countsOf(c)
+        .slice(0, f)
+        .reduce((a, b) => a + b, 0) +
+      g +
+      1;
     const saveCage = (n) => queueWrite("cages/c" + n, S.cages[n] || null);
     const saveConfig = () => queueWrite("config/main", S.config);
 
@@ -1323,7 +1360,7 @@
       let fr = "";
       for (let f = 0; f < c.frettes; f++) {
         let gs = "";
-        for (let g = 0; g < c.gpf; g++) {
+        for (let g = 0; g < fcount(c, f); g++) {
           const key = `${f}-${g}`;
           const st = grooveOf(n, key);
           counts[st.s]++;
@@ -1335,17 +1372,17 @@
             ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 4}px var(--surface), 0 0 0 ${4 + j * 4}px var(${OPT_VARS[i]})`).join(",")}"`
             : "";
           const tip =
-            `Cage ${n} · Frette ${f + 1} · Cannelure ${f * c.gpf + g + 1} · ${STATES[st.s]}` +
+            `Cage ${n} · Frette ${f + 1} · Cannelure ${gnum(c, f, g)} · ${STATES[st.s]}` +
             rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
             (st.c ? `\n${st.c}` : "");
-          gs += `<button class="g s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}"><span class="g-num">${f * c.gpf + g + 1}</span>${st.c ? `<span class="g-c">${esc(st.c)}</span>` : ""}</button>`;
+          gs += `<button class="g s-${st.s}${st.c ? " has-c" : ""}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}"><span class="g-num">${gnum(c, f, g)}</span>${st.c ? `<span class="g-c">${esc(st.c)}</span>` : ""}</button>`;
         }
         fr += `<div class="frette"><div class="frette-label">F${f + 1}</div><div class="grooves">${gs}</div></div>`;
       }
       return (
         `<section class="cage" data-cage="${n}">${head}` +
         `<button class="roll-id" data-act="config" data-cage="${n}" title="Modifier le cylindre"><span class="roll-name">${esc(c.name) || "Sans nom"}</span>` +
-        `<span class="roll-d">Ø ${esc(c.diameter)} mm</span><span class="roll-meta">${c.frettes} frette${c.frettes > 1 ? "s" : ""} × ${c.gpf} cannelure${c.gpf > 1 ? "s" : ""}</span></button>` +
+        `<span class="roll-d">Ø ${esc(c.diameter)} mm</span><span class="roll-meta">${c.frettes} frette${c.frettes > 1 ? "s" : ""} · ${countsOf(c).join(" + ")} cannelures</span></button>` +
         `<div class="frettes">${fr}</div>` +
         `<div class="cage-foot"><span class="n"><b>${counts.new}</b> N</span><span class="w"><b>${counts.worn}</b> U</span><span class="h"><b>${counts.hs}</b> HS</span></div></section>`
       );
@@ -1374,7 +1411,7 @@
         notes = false;
       for (let f = 0; f < c.frettes; f++) {
         let gs = "";
-        for (let g = 0; g < c.gpf; g++) {
+        for (let g = 0; g < fcount(c, f); g++) {
           const key = `${f}-${g}`;
           const st = grooveOf(n, key);
           const rings = [];
@@ -1385,10 +1422,10 @@
             ? `style="box-shadow:${rings.map((i, j) => `0 0 0 ${2 + j * 3}px var(--surface-2), 0 0 0 ${4 + j * 3}px var(${OPT_VARS[i]})`).join(",")}"`
             : "";
           const tip =
-            `Cage ${n} · Frette ${f + 1} · Cannelure ${f * c.gpf + g + 1} · ${STATES[st.s]}` +
+            `Cage ${n} · Frette ${f + 1} · Cannelure ${gnum(c, f, g)} · ${STATES[st.s]}` +
             rings.map((i) => ` · ${S.config.options[i].name}`).join("") +
             (st.c ? `\n${st.c}` : "");
-          gs += `<span class="vcell"><button class="vg s-${st.s}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${f * c.gpf + g + 1}</button>${st.c ? `<span class="vc">${esc(st.c)}</span>` : ""}</span>`;
+          gs += `<span class="vcell"><button class="vg s-${st.s}" data-act="g" data-cage="${n}" data-g="${key}" ${shadow} title="${esc(tip)}" aria-label="${esc(tip)}">${gnum(c, f, g)}</button>${st.c ? `<span class="vc">${esc(st.c)}</span>` : ""}</span>`;
           if (st.c) notes = true;
         }
         fr += `<div class="vfrette">${gs}</div>`;
@@ -1552,8 +1589,8 @@
           <label class="field"><span class="label">Diamètre du cylindre (mm)</span><input id="cfg-diam" type="number" inputmode="decimal" step="0.1" min="1" required value="${esc(c ? c.diameter : "")}" placeholder="ex. 420"></label>
           <div class="row2">
             <label class="field"><span class="label">Nombre de frettes</span><input id="cfg-fr" type="number" min="1" max="12" required value="${fixed ? 1 : c ? c.frettes : 1}" ${locked || fixed ? "disabled" : ""}></label>
-            <label class="field"><span class="label">Cannelures par frette</span><input id="cfg-gpf" type="number" min="1" max="30" required value="${fixed ? 1 : c ? c.gpf : 6}" ${locked || fixed ? "disabled" : ""}></label>
           </div>
+          <div class="field"><span class="label">Cannelures par frette · frette 1 côté moteur</span><div class="fcounts" id="cfg-counts"></div></div>
           <p class="note">${fixed ? "Les cages 1 à 6 ont toujours 1 frette et 1 cannelure." : locked ? "Le nombre de frettes et de cannelures est fixé à la création du cylindre." : "Attention : le nombre de frettes et de cannelures ne pourra plus être modifié après l'enregistrement."}</p>
         </div>
         <div class="modal-foot">
@@ -1563,6 +1600,24 @@
         </div>
       </form>`,
         (m) => {
+          const prev = c ? countsOf(c) : fixed ? [1] : [];
+          const buildCounts = () => {
+            const box = m.querySelector("#cfg-counts");
+            const cur = [...box.querySelectorAll("[data-fc]")].map(
+              (i) => i.value,
+            );
+            const nf = Math.max(
+              1,
+              Math.min(12, parseInt($("cfg-fr").value, 10) || 1),
+            );
+            box.innerHTML = Array.from(
+              { length: nf },
+              (_, f) =>
+                `<label class="fc"><span>F${f + 1}</span><input type="number" min="1" max="30" required data-fc="${f}" id="cfg-c-${f}" aria-label="Cannelures de la frette ${f + 1}" value="${esc(cur[f] ?? prev[f] ?? 6)}" ${locked || fixed ? "disabled" : ""}></label>`,
+            ).join("");
+          };
+          buildCounts();
+          $("cfg-fr").addEventListener("input", buildCounts);
           m.querySelector("#cfg").addEventListener("submit", (e) => {
             e.preventDefault();
             const name = $("cfg-name").value.trim();
@@ -1572,17 +1627,18 @@
               c.name = name;
               c.diameter = diameter;
             } else {
-              const frettes = Math.max(
-                1,
-                Math.min(12, parseInt($("cfg-fr").value, 10) || 1),
-              );
-              const gpf = Math.max(
-                1,
-                Math.min(30, parseInt($("cfg-gpf").value, 10) || 1),
-              );
-              S.cages[n] = fixed
-                ? { name, diameter, frettes: 1, gpf: 1, grooves: {} }
-                : { name, diameter, frettes, gpf, grooves: {} };
+              const counts = fixed
+                ? [1]
+                : [...m.querySelectorAll("[data-fc]")].map((i) =>
+                    Math.max(1, Math.min(30, parseInt(i.value, 10) || 1)),
+                  );
+              S.cages[n] = {
+                name,
+                diameter,
+                frettes: counts.length,
+                counts,
+                grooves: {},
+              };
             }
             saveCage(n);
             closeModal();
@@ -1632,7 +1688,7 @@
       let st = cur.s;
       openModal(
         `
-      <div class="modal-head"><h2>Cage ${n} · F${f + 1} · C${f * c.gpf + g + 1}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+      <div class="modal-head"><h2>Cage ${n} · F${f + 1} · C${gnum(c, f, g)}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
       <form id="gf">
         <div class="modal-body">
           <p class="note">${esc(c.name)} · Ø ${esc(c.diameter)} mm</p>
@@ -1696,7 +1752,7 @@
                     return `<span class="note">${esc(o.name)} : aucune cannelure affectée</span>`;
                   const [f, g] = p[i].split("-").map(Number),
                     s = grooveOf(n, p[i]).s;
-                  return `<span style="color:var(${OPT_VARS[i]});font-weight:600">${esc(o.name)} : F${f + 1} · C${f * c.gpf + g + 1} <span class="note">(${STATES[s]})</span></span>`;
+                  return `<span style="color:var(${OPT_VARS[i]});font-weight:600">${esc(o.name)} : F${f + 1} · C${gnum(c, f, g)} <span class="note">(${STATES[s]})</span></span>`;
                 })
                 .join("")}</div></div>`
             : ""
