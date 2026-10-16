@@ -671,6 +671,13 @@
   .db-tab .group {
     display: none;
   }
+  .db-file {
+    display: inline-flex;
+    gap: 8px;
+  }
+  .db-file label {
+    cursor: pointer;
+  }
   .dbview {
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -1235,6 +1242,16 @@
         placeholder="Rechercher un cylindre"
         aria-label="Rechercher un cylindre"
       />
+      <span class="db-file" id="db-file" hidden>
+        <button class="btn" id="db-export" type="button">Exporter JSON</button>
+        <label class="btn" for="db-import">Importer JSON</label>
+        <input
+          type="file"
+          id="db-import"
+          accept=".json,application/json"
+          hidden
+        />
+      </span>
       <button class="btn primary" id="db-new" type="button">
         Nouveau cylindre
       </button>
@@ -1344,7 +1361,8 @@
       // Ancien format : un cylindre enregistré par cage.
       Object.entries(store.cages || {}).forEach(([n, c]) => {
         const id = "m-c" + n;
-        if (!S.cyl[id]) S.cyl[id] = Object.assign({}, c, { id, cage: Number(n) });
+        if (!S.cyl[id])
+          S.cyl[id] = Object.assign({}, c, { id, cage: Number(n) });
       });
       if (store.config) S.config = Object.assign(S.config, store.config);
       rebuildCages();
@@ -1428,7 +1446,116 @@
         if (db) return useDb(db);
         return useLocal("Non connecté · enregistré dans ce navigateur");
       }
+      if (location.protocol.startsWith("http") && (await useServer())) return;
       useLocal();
+    }
+
+    // ---------- Serveur local (serveur.py) : base laminoir-db.json ----------
+    async function useServer() {
+      const api = async (method, path, body) => {
+        const r = await fetch("api/" + path, {
+          method,
+          cache: "no-store",
+          headers: body ? { "Content-Type": "application/json" } : {},
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        if (!r.ok)
+          throw { code: r.status === 400 ? "invalid_argument" : "unavailable" };
+        return r.json();
+      };
+      let first;
+      try {
+        first = await api("GET", "db");
+      } catch (e) {
+        return false;
+      }
+      S.server = api;
+      backend = {
+        set: (path, data) => api("PUT", path, data),
+        del: (path) => api("DELETE", path),
+      };
+      let last = "";
+      const apply = (d) => {
+        const sig = JSON.stringify([d.cylinders, d.config]);
+        if (sig === last) return;
+        last = sig;
+        const next = {};
+        Object.entries(d.cylinders || {}).forEach(([id, c]) => {
+          if (isBusy("cylinders/" + id)) {
+            if (S.cyl[id]) next[id] = S.cyl[id];
+          } else next[id] = Object.assign(c, { id });
+        });
+        Object.keys(S.cyl).forEach((id) => {
+          if (isBusy("cylinders/" + id)) next[id] = S.cyl[id];
+        });
+        S.cyl = next;
+        if (d.config && !isBusy("config/main"))
+          S.config = Object.assign(S.config, d.config);
+        rebuildCages();
+        if ($("overlay").hidden) renderAll();
+      };
+      apply(first);
+      S.ready = true;
+      setSync("ok", "Base laminoir-db.json");
+      renderAll();
+      // Rafraîchit toutes les 5 s pour voir les modifications des autres postes.
+      setInterval(async () => {
+        try {
+          apply(await api("GET", "db"));
+          setSync("ok", "Base laminoir-db.json");
+        } catch (e) {
+          setSync("", "Serveur injoignable");
+        }
+      }, 5000);
+      return true;
+    }
+
+    // ---------- Export / import du fichier JSON ----------
+    function exportJson() {
+      const data = {
+        format: "laminoir-db",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        config: S.config,
+        cylinders: S.cyl,
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "laminoir-db.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    async function importJson(file) {
+      let d;
+      try {
+        d = JSON.parse(await file.text());
+      } catch (e) {
+        return toast("Fichier illisible : ce n'est pas un JSON valide.");
+      }
+      if (!d || typeof d.cylinders !== "object" || typeof d.config !== "object")
+        return toast("Ce fichier n'est pas une base laminoir-db.json.");
+      Object.entries(d.cylinders).forEach(([id, c]) => (c.id = id));
+      if (S.server) {
+        try {
+          await S.server("PUT", "db", {
+            config: d.config,
+            cylinders: d.cylinders,
+          });
+        } catch (e) {
+          return toast("Import refusé par le serveur.");
+        }
+      }
+      S.cyl = d.cylinders;
+      S.config = Object.assign(S.config, d.config);
+      rebuildCages();
+      if (!S.server) backend.set("all", null);
+      renderAll();
+      toast(`Base importée : ${Object.keys(d.cylinders).length} cylindres.`);
     }
 
     // ---------- Helpers on state ----------
@@ -1467,9 +1594,7 @@
     const saveCyl = (c) => queueWrite("cylinders/" + c.id, c);
     const saveCage = (n) => S.cages[n] && saveCyl(S.cages[n]);
     const newId = () =>
-      "cyl-" +
-      Date.now().toString(36) +
-      Math.random().toString(36).slice(2, 6);
+      "cyl-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     function rebuildCages() {
       const next = {};
       Object.values(S.cyl).forEach((c) => {
@@ -1712,7 +1837,9 @@
     function layoutNotes(base) {
       const rolls = [...document.querySelectorAll("#vline .vroll")];
       rolls.forEach((roll) => {
-        const hs = [...roll.querySelectorAll(".vc")].map((el) => el.offsetHeight);
+        const hs = [...roll.querySelectorAll(".vc")].map(
+          (el) => el.offsetHeight,
+        );
         roll.style.marginBottom = hs.length
           ? `${NOTE_GAP + Math.max(...hs) - 6}px`
           : "";
@@ -1722,7 +1849,12 @@
         const items = [...roll.querySelectorAll(".vc")]
           .map((el) => {
             const cell = el.parentElement.getBoundingClientRect();
-            return { el, cell, cx: cell.left + cell.width / 2, w: el.offsetWidth };
+            return {
+              el,
+              cell,
+              cx: cell.left + cell.width / 2,
+              w: el.offsetWidth,
+            };
           })
           .sort((a, b) => a.cx - b.cx);
         if (!items.length) return;
@@ -1869,7 +2001,9 @@
               (c) =>
                 `<button type="button" class="pick" data-pick="${esc(c.id)}" data-search="${esc((c.name + " " + c.diameter).toLowerCase())}"><b>${esc(c.name)}</b><span>Ø ${esc(c.diameter)} mm · ${countsOf(c).join(" + ")} cannelures</span>${stateSummary(c)}</button>`,
             )
-            .join("")}<p class="note" id="pick-none" hidden>Aucun cylindre en stock ne correspond.</p></div>
+            .join(
+              "",
+            )}<p class="note" id="pick-none" hidden>Aucun cylindre en stock ne correspond.</p></div>
         </div>
       </div>
       <div class="modal-foot"><button type="button" class="btn" data-close>Annuler</button><span class="spacer"></span><button type="button" class="btn primary" id="mount-new">Nouveau cylindre</button></div>`,
@@ -1970,8 +2104,7 @@
             const diameter = Number($("cfg-diam").value);
             if (!name || !(diameter > 0)) return;
             const dup = Object.values(S.cyl).find(
-              (x) =>
-                x !== c && x.name.toLowerCase() === name.toLowerCase(),
+              (x) => x !== c && x.name.toLowerCase() === name.toLowerCase(),
             );
             if (dup) {
               toast(`Un cylindre s'appelle déjà « ${dup.name} ».`);
@@ -2056,7 +2189,8 @@
             (a.cage || 99) - (b.cage || 99) || a.name.localeCompare(b.name),
         );
       const mounted = all.filter((c) => c.cage).length;
-      $("db-count").textContent = `${all.length} cylindre${all.length > 1 ? "s" : ""} · ${mounted} monté${mounted > 1 ? "s" : ""} · ${all.length - mounted} en stock`;
+      $("db-count").textContent =
+        `${all.length} cylindre${all.length > 1 ? "s" : ""} · ${mounted} monté${mounted > 1 ? "s" : ""} · ${all.length - mounted} en stock`;
       $("db-table").innerHTML = !all.length
         ? `<p class="db-empty">Aucun cylindre enregistré. Ajoutez-en un avec « Nouveau cylindre » ou depuis une cage.</p>`
         : !list.length
@@ -2193,6 +2327,14 @@
       if (b) openCyl(b.dataset.cyl, null);
     });
     $("db-q").addEventListener("input", () => renderDb());
+    // Export/import de fichier : hors claude.ai (les téléchargements y sont bloqués).
+    $("db-file").hidden = !!(window.claude && window.claude.use);
+    $("db-export").addEventListener("click", exportJson);
+    $("db-import").addEventListener("change", (e) => {
+      const f = e.target.files[0];
+      e.target.value = "";
+      if (f) importJson(f);
+    });
 
     // Visualisation: HS opens the procedure, a groove opens its state and comment.
     $("vline").addEventListener("click", (e) => {
