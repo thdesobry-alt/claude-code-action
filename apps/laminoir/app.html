@@ -1078,16 +1078,6 @@
     const STATES = { new: "Neuve", worn: "Usée", hs: "HS" };
     const NEXT = { new: "worn", worn: "hs", hs: "new" };
     const OPT_VARS = ["--o1", "--o2", "--o3"];
-    const DEFAULT_PROC = [
-      "Arrêter l'alimentation de la cage et mettre le train en sécurité.",
-      "Consigner la cage (électrique, hydraulique, eau de refroidissement) selon le mode opératoire de consignation.",
-      "Prévenir le chef de poste et la maintenance.",
-      "Identifier l'élément HS (cannelure, frette, guide, palier) et le noter dans le cahier de poste.",
-      "Basculer sur l'option de cannelures de secours ou préparer le changement de cylindre.",
-      "Contrôler les réglages (écartement, guidage, alignement) avant remise en service.",
-      "Déconsigner et redémarrer après validation du chef de poste.",
-    ].join("\n");
-
     const S = {
       cages: {},
       config: {
@@ -1348,7 +1338,7 @@
       const c = S.cages[n];
       const head =
         `<div class="cage-head"><span class="cage-num">Cage<b>${n}</b></span>` +
-        `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Procédure en cas de cage HS">HS</button></div>`;
+        `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Commentaire HS de la cage">HS</button></div>`;
       if (!c) {
         return (
           `<section class="cage" data-cage="${n}">${head}<div class="empty"><p>Aucun cylindre</p>` +
@@ -1393,7 +1383,7 @@
       const c = S.cages[n];
       const label =
         `<div class="vcage"><div class="vcage-top"><span class="cage-num">Cage<b>${n}</b></span>` +
-        `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Procédure en cas de cage HS">HS</button></div>` +
+        `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Commentaire HS de la cage">HS</button></div>` +
         (c
           ? `<small>${esc(c.name) || "Sans nom"} · Ø ${esc(c.diameter)} mm</small>`
           : "") +
@@ -1727,60 +1717,29 @@
       );
     }
 
-    function procedureOf(n) {
-      return (S.config.procedures && S.config.procedures[n]) || DEFAULT_PROC;
-    }
+    // Fenêtre HS : commentaire libre de l'opérateur, vide par défaut.
     function openHS(n) {
-      const custom = !!(S.config.procedures && S.config.procedures[n]);
-      const c = S.cages[n];
-      const p = [0, 1, 2].map((i) => pathFor(i)[n]);
-      const view = () => `
-      <div class="modal-head hs"><h2>Cage ${n} HS · Procédure</h2><button class="x" data-close aria-label="Fermer">×</button></div>
-      <div class="modal-body">
-        ${custom ? "" : `<span class="tag">Procédure type · à adapter à votre site</span>`}
-        <ol class="proc">${procedureOf(n)
-          .split("\n")
-          .map((l) => l.trim())
-          .filter(Boolean)
-          .map((l) => `<li><span>${esc(l)}</span></li>`)
-          .join("")}</ol>
-        ${
-          c
-            ? `<div class="field"><span class="label">Cannelures de secours prévues</span><div class="warnings">${S.config.options
-                .map((o, i) => {
-                  if (!validKey(n, p[i]))
-                    return `<span class="note">${esc(o.name)} : aucune cannelure affectée</span>`;
-                  const [f, g] = p[i].split("-").map(Number),
-                    s = grooveOf(n, p[i]).s;
-                  return `<span style="color:var(${OPT_VARS[i]});font-weight:600">${esc(o.name)} : F${f + 1} · C${gnum(c, f, g)} <span class="note">(${STATES[s]})</span></span>`;
-                })
-                .join("")}</div></div>`
-            : ""
-        }
+      const cur = (S.config.procedures && S.config.procedures[n]) || "";
+      openModal(
+        `
+      <div class="modal-head hs"><h2>Cage ${n} · HS</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+      <form id="hsf"><div class="modal-body">
+        <label class="field"><span class="label">Commentaire</span><textarea id="hs-text" maxlength="2000" style="min-height:200px">${esc(cur)}</textarea></label>
       </div>
-      <div class="modal-foot"><button type="button" class="btn" id="hs-edit">Modifier la procédure</button><span class="spacer"></span><button type="button" class="btn primary" data-close>Fermer</button></div>`;
-      openModal(view(), (m) => {
-        m.querySelector("#hs-edit").addEventListener("click", () => {
-          m.innerHTML = `
-          <div class="modal-head hs"><h2>Cage ${n} · Modifier la procédure</h2><button class="x" data-close aria-label="Fermer">×</button></div>
-          <form id="hsf"><div class="modal-body">
-            <label class="field"><span class="label">Une étape par ligne</span><textarea id="hs-text" style="min-height:220px">${esc(procedureOf(n))}</textarea></label>
-            <p class="note">Laissez vide pour revenir à la procédure type.</p>
-          </div>
-          <div class="modal-foot"><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>`;
-          $("hs-text").focus();
+      <div class="modal-foot"><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>`,
+        (m) => {
           m.querySelector("#hsf").addEventListener("submit", (e) => {
             e.preventDefault();
             const t = $("hs-text").value.trim();
             S.config.procedures = S.config.procedures || {};
-            if (t && t !== DEFAULT_PROC) S.config.procedures[n] = t;
+            if (t) S.config.procedures[n] = t;
             else delete S.config.procedures[n];
             saveConfig();
             closeModal();
-            toast(`Procédure de la cage ${n} enregistrée.`);
+            toast(`Cage ${n} : commentaire HS enregistré.`);
           });
-        });
-      });
+        },
+      );
     }
 
     // ---------- Events ----------
