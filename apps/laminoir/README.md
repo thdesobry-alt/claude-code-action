@@ -17,3 +17,10 @@ Cages affichées selon le diamètre laminé :
 | 28       | 1 à 12, sauf 7 et 8 |
 | 32       | 1 à 10              |
 | 40       | 1 à 9, sauf 7       |
+
+## Base des cylindres
+
+Chaque cylindre est un enregistrement de la base (`cylinders`) : nom, diamètre, frettes,
+cannelures par frette, état et commentaire de chaque cannelure, et cage où il est monté
+(ou « en stock »). Retirer un cylindre d'une cage le remet en stock avec son usure ;
+on peut ensuite le remonter dans une autre cage. L'onglet « Cylindres » liste toute la base.

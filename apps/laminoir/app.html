@@ -665,6 +665,159 @@
     min-height: 90px;
     resize: vertical;
   }
+  .db-tab #tools,
+  .db-tab .legend,
+  .db-tab .diams,
+  .db-tab .group {
+    display: none;
+  }
+  .dbview {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid;
+    gap: 12px;
+  }
+  .db-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+  }
+  .db-head h2 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .db-count {
+    color: var(--muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .db-head input {
+    margin-left: auto;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 7px;
+    padding: 7px 10px;
+    min-width: 0;
+    width: 15em;
+    max-width: 100%;
+  }
+  .db-table {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .dbt {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .dbt th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .dbt td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .dbt tr:last-child td {
+    border-bottom: 0;
+  }
+  .dbt .num {
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .linkbtn {
+    border: 0;
+    background: none;
+    padding: 0;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--line);
+  }
+  .linkbtn:hover {
+    text-decoration-color: currentColor;
+  }
+  .where {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--muted);
+  }
+  .where.on {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .mini {
+    display: inline-flex;
+    gap: 8px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .mini b {
+    font-weight: 600;
+  }
+  .mini .n {
+    color: var(--new);
+  }
+  .mini .w {
+    color: var(--worn);
+  }
+  .mini .h {
+    color: var(--hs);
+  }
+  .db-empty {
+    margin: 0;
+    padding: 24px 16px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .picklist {
+    display: grid;
+    gap: 6px;
+    max-height: 50vh;
+    overflow: auto;
+  }
+  .pick {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    text-align: left;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .pick:hover {
+    border-color: var(--fg);
+  }
+  .pick span:not(.mini) {
+    grid-column: 1;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .pick .mini {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
   .fcounts {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
@@ -1019,6 +1172,7 @@
       <button class="tab" data-tab="view" aria-pressed="false">
         Visualisation
       </button>
+      <button class="tab" data-tab="db" aria-pressed="false">Cylindres</button>
     </nav>
     <span class="sync" id="sync">Connexion…</span>
   </div>
@@ -1057,6 +1211,22 @@
   <div class="scroller" id="vscroller" hidden>
     <div class="vline" id="vline"></div>
   </div>
+  <section class="dbview" id="dbview" hidden>
+    <div class="db-head">
+      <h2>Base des cylindres</h2>
+      <span class="db-count" id="db-count"></span>
+      <input
+        type="search"
+        id="db-q"
+        placeholder="Rechercher un cylindre"
+        aria-label="Rechercher un cylindre"
+      />
+      <button class="btn primary" id="db-new" type="button">
+        Nouveau cylindre
+      </button>
+    </div>
+    <div class="db-table" id="db-table"></div>
+  </section>
 </main>
 
 <div class="overlay" id="overlay" hidden></div>
@@ -1080,6 +1250,7 @@
     const OPT_VARS = ["--o1", "--o2", "--o3"];
     const S = {
       cages: {},
+      cyl: {},
       config: {
         options: [
           { name: "Option 1" },
@@ -1098,7 +1269,8 @@
     try {
       const d = Number(localStorage.getItem("laminoir-diam"));
       if (DIAMS[d]) S.diam = d;
-      if (localStorage.getItem("laminoir-tab") === "view") S.tab = "view";
+      const t = localStorage.getItem("laminoir-tab");
+      if (t === "view" || t === "db") S.tab = t;
     } catch (e) {}
 
     const $ = (id) => document.getElementById(id);
@@ -1149,18 +1321,24 @@
 
     function useLocal(reason) {
       const KEY = "laminoir-data-v1";
-      let store = { cages: {}, config: null };
+      let store = {};
       try {
         const raw = localStorage.getItem(KEY);
         if (raw) store = JSON.parse(raw);
       } catch (e) {}
-      S.cages = store.cages || {};
+      S.cyl = store.cylinders || {};
+      // Ancien format : un cylindre enregistré par cage.
+      Object.entries(store.cages || {}).forEach(([n, c]) => {
+        const id = "m-c" + n;
+        if (!S.cyl[id]) S.cyl[id] = Object.assign({}, c, { id, cage: Number(n) });
+      });
       if (store.config) S.config = Object.assign(S.config, store.config);
+      rebuildCages();
       const persist = () => {
         try {
           localStorage.setItem(
             KEY,
-            JSON.stringify({ cages: S.cages, config: S.config }),
+            JSON.stringify({ cylinders: S.cyl, config: S.config }),
           );
         } catch (e) {
           toast("Impossible d'enregistrer dans ce navigateur.");
@@ -1177,27 +1355,29 @@
         set: (path, data) => db.doc(path).set(data),
         del: (path) => db.doc(path).delete(),
       };
-      let gotCages = false,
+      let gotCyl = false,
         gotConfig = false;
       const ready = () => {
-        if (gotCages && gotConfig && !S.ready) {
+        if (gotCyl && gotConfig && !S.ready) {
           S.ready = true;
-          setSync("ok", "Enregistré · partagé");
+          setSync("ok", "Base de données partagée");
         }
         renderAll();
       };
-      db.collection("cages").onSnapshot((snap) => {
+      db.collection("cylinders").onSnapshot((snap) => {
         const next = {};
         snap.docs.forEach((d) => {
-          const n = parseInt(d.id.slice(1), 10);
-          if (!n) return;
-          next[n] = isBusy("cages/" + d.id) ? S.cages[n] : clone(d.data());
+          const path = "cylinders/" + d.id;
+          if (isBusy(path)) {
+            if (S.cyl[d.id]) next[d.id] = S.cyl[d.id];
+          } else next[d.id] = Object.assign(clone(d.data()), { id: d.id });
         });
-        Object.keys(S.cages).forEach((n) => {
-          if (isBusy("cages/c" + n) && S.cages[n]) next[n] = S.cages[n];
+        Object.keys(S.cyl).forEach((id) => {
+          if (isBusy("cylinders/" + id)) next[id] = S.cyl[id];
         });
-        S.cages = next;
-        gotCages = true;
+        S.cyl = next;
+        rebuildCages();
+        gotCyl = true;
         ready();
       }, onDbError);
       db.doc("config/main").onSnapshot((snap) => {
@@ -1207,6 +1387,7 @@
         ready();
       }, onDbError);
     }
+
     function onDbError(e) {
       setSync(
         "",
@@ -1269,7 +1450,19 @@
         .reduce((a, b) => a + b, 0) +
       g +
       1;
-    const saveCage = (n) => queueWrite("cages/c" + n, S.cages[n] || null);
+    const saveCyl = (c) => queueWrite("cylinders/" + c.id, c);
+    const saveCage = (n) => S.cages[n] && saveCyl(S.cages[n]);
+    const newId = () =>
+      "cyl-" +
+      Date.now().toString(36) +
+      Math.random().toString(36).slice(2, 6);
+    function rebuildCages() {
+      const next = {};
+      Object.values(S.cyl).forEach((c) => {
+        if (c.cage && !next[c.cage]) next[c.cage] = c;
+      });
+      S.cages = next;
+    }
     const saveConfig = () => queueWrite("config/main", S.config);
 
     // ---------- Toolbar ----------
@@ -1430,15 +1623,18 @@
 
     function renderAll() {
       syncToolbar();
-      document.body.classList.toggle("view-tab", S.tab === "view");
+      document.body.classList.toggle("view-tab", S.tab !== "edit");
+      document.body.classList.toggle("db-tab", S.tab === "db");
       document
         .querySelectorAll("[data-tab]")
         .forEach((b) =>
           b.setAttribute("aria-pressed", String(b.dataset.tab === S.tab)),
         );
-      $("scroller").hidden = S.tab === "view";
+      $("scroller").hidden = S.tab !== "edit";
       $("vscroller").hidden = S.tab !== "view";
+      $("dbview").hidden = S.tab !== "db";
       if (!S.ready) return;
+      if (S.tab === "db") return renderDb();
       if (S.tab === "view") {
         $("vline").innerHTML =
           visible().map(vrowHTML).join("") +
@@ -1452,6 +1648,7 @@
     }
 
     function drawPaths() {
+      if (S.tab === "db") return;
       if (S.tab === "view") return drawVPaths();
       const line = $("line"),
         svg = $("paths");
@@ -1568,26 +1765,110 @@
       if (e.key === "Escape" && !$("overlay").hidden) closeModal();
     });
 
+    // ---------- Base de données des cylindres ----------
+    const compatible = (c, n) =>
+      n > 6 || (c.frettes === 1 && countsOf(c)[0] === 1);
+    const stock = () =>
+      Object.values(S.cyl)
+        .filter((c) => !c.cage)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    function stateCounts(c) {
+      const k = { new: 0, worn: 0, hs: 0 };
+      countsOf(c).forEach((cnt, f) => {
+        for (let g = 0; g < cnt; g++)
+          k[((c.grooves && c.grooves[`${f}-${g}`]) || { s: "new" }).s]++;
+      });
+      return k;
+    }
+    const stateSummary = (c) => {
+      const k = stateCounts(c);
+      return `<span class="mini"><b class="n">${k.new} N</b><b class="w">${k.worn} U</b><b class="h">${k.hs} HS</b></span>`;
+    };
+    const clearPaths = (n) =>
+      Object.values(S.config.paths).forEach((byOpt) =>
+        Object.values(byOpt).forEach((p) => {
+          delete p[n];
+        }),
+      );
+
     function openConfig(n) {
       const c = S.cages[n];
-      const locked = !!c;
-      // Les cages 1 à 6 ont toujours 1 frette et 1 cannelure.
-      const fixed = n <= 6;
+      if (c) return openCyl(c.id, n);
+      const list = stock().filter((c) => compatible(c, n));
+      if (!list.length) return openCyl(null, n);
       openModal(
         `
-      <div class="modal-head"><h2>Cage ${n} · ${locked ? "Cylindre" : "Insérer un cylindre"}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+      <div class="modal-head"><h2>Cage ${n} · Insérer un cylindre</h2><button class="x" data-close aria-label="Fermer">×</button></div>
+      <div class="modal-body">
+        <div class="field"><span class="label">Choisir un cylindre en stock</span>
+          <div class="picklist">${list
+            .map(
+              (c) =>
+                `<button type="button" class="pick" data-pick="${esc(c.id)}"><b>${esc(c.name)}</b><span>Ø ${esc(c.diameter)} mm · ${countsOf(c).join(" + ")} cannelures</span>${stateSummary(c)}</button>`,
+            )
+            .join("")}</div>
+        </div>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn" data-close>Annuler</button><span class="spacer"></span><button type="button" class="btn primary" id="mount-new">Nouveau cylindre</button></div>`,
+        (m) => {
+          m.querySelector("#mount-new").addEventListener("click", () =>
+            openCyl(null, n),
+          );
+          m.querySelector(".picklist").addEventListener("click", (e) => {
+            const b = e.target.closest("[data-pick]");
+            if (!b) return;
+            const c = S.cyl[b.dataset.pick];
+            if (!c || c.cage || S.cages[n]) return;
+            c.cage = n;
+            saveCyl(c);
+            rebuildCages();
+            closeModal();
+            renderAll();
+            toast(`${c.name} monté dans la cage ${n}.`);
+          });
+        },
+      );
+    }
+
+    // Créer (id null) ou modifier un cylindre. n : cage où le monter à la création.
+    function openCyl(id, n) {
+      const c = id ? S.cyl[id] : null;
+      const locked = !!c;
+      const fixed = !c && n && n <= 6;
+      const title = c
+        ? esc(c.name)
+        : n
+          ? `Cage ${n} · Nouveau cylindre`
+          : "Nouveau cylindre";
+      const note = fixed
+        ? "Les cages 1 à 6 ont toujours 1 frette et 1 cannelure."
+        : locked
+          ? "Le nombre de frettes et de cannelures est fixé à la création du cylindre."
+          : "Attention : le nombre de frettes et de cannelures ne pourra plus être modifié après l'enregistrement.";
+      openModal(
+        `
+      <div class="modal-head"><h2>${title}</h2><button class="x" data-close aria-label="Fermer">×</button></div>
       <form id="cfg">
         <div class="modal-body">
+          ${c ? `<p class="note">Emplacement : <b>${c.cage ? `cage ${c.cage}` : "en stock"}</b></p>` : ""}
           <label class="field"><span class="label">Nom du cylindre</span><input id="cfg-name" required maxlength="40" value="${esc(c ? c.name : "")}" placeholder="ex. CYL-0412"></label>
           <label class="field"><span class="label">Diamètre du cylindre (mm)</span><input id="cfg-diam" type="number" inputmode="decimal" step="0.1" min="1" required value="${esc(c ? c.diameter : "")}" placeholder="ex. 420"></label>
           <div class="row2">
             <label class="field"><span class="label">Nombre de frettes</span><input id="cfg-fr" type="number" min="1" max="12" required value="${fixed ? 1 : c ? c.frettes : 1}" ${locked || fixed ? "disabled" : ""}></label>
           </div>
           <div class="field"><span class="label">Cannelures par frette · frette 1 côté moteur</span><div class="fcounts" id="cfg-counts"></div></div>
-          <p class="note">${fixed ? "Les cages 1 à 6 ont toujours 1 frette et 1 cannelure." : locked ? "Le nombre de frettes et de cannelures est fixé à la création du cylindre." : "Attention : le nombre de frettes et de cannelures ne pourra plus être modifié après l'enregistrement."}</p>
+          <p class="note">${note}</p>
         </div>
         <div class="modal-foot">
-          ${locked ? `<button type="button" class="btn danger" id="cfg-reset">Tout remettre à neuf</button><button type="button" class="btn danger" id="cfg-remove">Retirer le cylindre</button><span class="spacer"></span>` : ""}
+          ${
+            c
+              ? `<button type="button" class="btn danger" id="cfg-reset">Tout remettre à neuf</button>` +
+                (c.cage
+                  ? `<button type="button" class="btn danger" id="cfg-remove">Retirer de la cage</button>`
+                  : `<button type="button" class="btn danger" id="cfg-delete">Supprimer de la base</button>`) +
+                `<span class="spacer"></span>`
+              : ""
+          }
           <button type="button" class="btn" data-close>Annuler</button>
           <button type="submit" class="btn primary">Enregistrer</button>
         </div>
@@ -1616,27 +1897,40 @@
             const name = $("cfg-name").value.trim();
             const diameter = Number($("cfg-diam").value);
             if (!name || !(diameter > 0)) return;
-            if (c) {
-              c.name = name;
-              c.diameter = diameter;
+            const dup = Object.values(S.cyl).find(
+              (x) =>
+                x !== c && x.name.toLowerCase() === name.toLowerCase(),
+            );
+            if (dup) {
+              toast(`Un cylindre s'appelle déjà « ${dup.name} ».`);
+              return;
+            }
+            let cyl = c;
+            if (cyl) {
+              cyl.name = name;
+              cyl.diameter = diameter;
             } else {
               const counts = fixed
                 ? [1]
                 : [...m.querySelectorAll("[data-fc]")].map((i) =>
                     Math.max(1, Math.min(30, parseInt(i.value, 10) || 1)),
                   );
-              S.cages[n] = {
+              cyl = {
+                id: newId(),
                 name,
                 diameter,
                 frettes: counts.length,
                 counts,
                 grooves: {},
+                cage: n && !S.cages[n] ? n : null,
               };
+              S.cyl[cyl.id] = cyl;
             }
-            saveCage(n);
+            saveCyl(cyl);
+            rebuildCages();
             closeModal();
             renderAll();
-            toast(`Cage ${n} enregistrée.`);
+            toast(`${cyl.name} enregistré.`);
           });
           const arm = (id, label, action) => {
             const b = m.querySelector(id);
@@ -1652,26 +1946,55 @@
           };
           arm("#cfg-reset", "Confirmer : tout à neuf", () => {
             c.grooves = {};
-            saveCage(n);
+            saveCyl(c);
             closeModal();
             renderAll();
-            toast(`Cage ${n} : cannelures remises à neuf.`);
+            toast(`${c.name} : cannelures remises à neuf.`);
           });
           arm("#cfg-remove", "Confirmer le retrait", () => {
-            delete S.cages[n];
-            Object.values(S.config.paths).forEach((byOpt) =>
-              Object.values(byOpt).forEach((p) => {
-                delete p[n];
-              }),
-            );
-            saveCage(n);
+            const k = c.cage;
+            c.cage = null;
+            clearPaths(k);
+            saveCyl(c);
             saveConfig();
+            rebuildCages();
             closeModal();
             renderAll();
-            toast(`Cylindre retiré de la cage ${n}.`);
+            toast(`${c.name} retiré de la cage ${k} et remis en stock.`);
+          });
+          arm("#cfg-delete", "Confirmer la suppression", () => {
+            delete S.cyl[c.id];
+            queueWrite("cylinders/" + c.id, null);
+            rebuildCages();
+            closeModal();
+            renderAll();
+            toast(`${c.name} supprimé de la base.`);
           });
         },
       );
+    }
+
+    function renderDb() {
+      const q = ($("db-q").value || "").trim().toLowerCase();
+      const all = Object.values(S.cyl);
+      const list = all
+        .filter((c) => !q || c.name.toLowerCase().includes(q))
+        .sort(
+          (a, b) =>
+            (a.cage || 99) - (b.cage || 99) || a.name.localeCompare(b.name),
+        );
+      const mounted = all.filter((c) => c.cage).length;
+      $("db-count").textContent = `${all.length} cylindre${all.length > 1 ? "s" : ""} · ${mounted} monté${mounted > 1 ? "s" : ""} · ${all.length - mounted} en stock`;
+      $("db-table").innerHTML = !all.length
+        ? `<p class="db-empty">Aucun cylindre enregistré. Ajoutez-en un avec « Nouveau cylindre » ou depuis une cage.</p>`
+        : !list.length
+          ? `<p class="db-empty">Aucun cylindre ne correspond à « ${esc(q)} ».</p>`
+          : `<table class="dbt"><thead><tr><th>Cylindre</th><th class="num">Ø (mm)</th><th class="num">Frettes</th><th>Cannelures</th><th>État</th><th>Emplacement</th></tr></thead><tbody>${list
+              .map(
+                (c) =>
+                  `<tr><td><button class="linkbtn" data-cyl="${esc(c.id)}">${esc(c.name)}</button></td><td class="num">${esc(c.diameter)}</td><td class="num">${c.frettes}</td><td class="num">${countsOf(c).join(" + ")}</td><td>${stateSummary(c)}</td><td>${c.cage ? `<span class="where on">Cage ${c.cage}</span>` : `<span class="where">En stock</span>`}</td></tr>`,
+              )
+              .join("")}</tbody></table>`;
     }
 
     function openGroove(n, key) {
@@ -1791,6 +2114,13 @@
     $("tools").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && e.target.matches("input")) e.target.blur();
     });
+
+    $("dbview").addEventListener("click", (e) => {
+      if (e.target.closest("#db-new")) return openCyl(null, null);
+      const b = e.target.closest("[data-cyl]");
+      if (b) openCyl(b.dataset.cyl, null);
+    });
+    $("db-q").addEventListener("input", () => renderDb());
 
     // Visualisation: HS opens the procedure, a groove opens its state and comment.
     $("vline").addEventListener("click", (e) => {
