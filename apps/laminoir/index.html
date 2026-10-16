@@ -695,6 +695,9 @@
         display: inline-flex;
         gap: 8px;
       }
+      .base-body {
+        justify-items: stretch;
+      }
       .db-file label {
         cursor: pointer;
       }
@@ -1277,6 +1280,9 @@
             aria-label="Rechercher un cylindre"
           />
           <span class="db-file" id="db-file" hidden>
+            <button class="btn" id="db-switch" type="button" hidden>
+              Changer de base…
+            </button>
             <button class="btn" id="db-export" type="button">
               Exporter JSON
             </button>
@@ -1483,71 +1489,215 @@
             if (db) return useDb(db);
             return useLocal("Non connecté · enregistré dans ce navigateur");
           }
-          if (location.protocol.startsWith("http") && (await useServer()))
-            return;
-          useLocal();
+          useFileOrLocal();
         }
 
-        // ---------- Serveur local (serveur.py) : base laminoir-db.json ----------
-        async function useServer() {
-          const api = async (method, path, body) => {
-            const r = await fetch("api/" + path, {
-              method,
-              cache: "no-store",
-              headers: body ? { "Content-Type": "application/json" } : {},
-              body: body ? JSON.stringify(body) : undefined,
-            });
-            if (!r.ok)
-              throw {
-                code: r.status === 400 ? "invalid_argument" : "unavailable",
-              };
-            return r.json();
-          };
-          let first;
+        // ---------- Fichier laminoir-db.json (Chrome / Edge) ----------
+        // L'application lit et écrit directement la base JSON choisie par l'opérateur.
+        const FSA = "showOpenFilePicker" in window;
+        const JSON_TYPES = [
+          {
+            description: "Base laminoir (JSON)",
+            accept: { "application/json": [".json"] },
+          },
+        ];
+        const emptyDb = () => ({
+          format: "laminoir-db",
+          version: 1,
+          config: {
+            options: [
+              { name: "Option 1" },
+              { name: "Option 2" },
+              { name: "Option 3" },
+            ],
+            paths: {},
+            procedures: {},
+          },
+          cylinders: {},
+        });
+        // Mémorise le fichier ouvert pour le reprendre en un clic au prochain démarrage.
+        function idb(mode, fn) {
+          return new Promise((resolve, reject) => {
+            const r = indexedDB.open("laminoir", 1);
+            r.onupgradeneeded = () => r.result.createObjectStore("kv");
+            r.onerror = () => reject(r.error);
+            r.onsuccess = () => {
+              try {
+                const tx = r.result.transaction("kv", mode);
+                const q = fn(tx.objectStore("kv"));
+                tx.oncomplete = () => resolve(q && q.result);
+                tx.onerror = () => reject(tx.error);
+              } catch (e) {
+                reject(e);
+              }
+            };
+          });
+        }
+        const saveHandle = (h) =>
+          idb("readwrite", (st) => st.put(h, "db")).catch(() => {});
+        const loadHandle = () =>
+          idb("readonly", (st) => st.get("db")).catch(() => null);
+
+        async function readJson(h) {
+          const f = await h.getFile();
+          const t = (await f.text()).trim();
+          let d;
           try {
-            first = await api("GET", "db");
+            d = t ? JSON.parse(t) : emptyDb();
           } catch (e) {
-            return false;
+            throw new Error(`« ${h.name} » n'est pas un fichier JSON valide.`);
           }
-          S.server = api;
-          backend = {
-            set: (path, data) => api("PUT", path, data),
-            del: (path) => api("DELETE", path),
-          };
-          let last = "";
-          const apply = (d) => {
-            const sig = JSON.stringify([d.cylinders, d.config]);
-            if (sig === last) return;
-            last = sig;
-            const next = {};
-            Object.entries(d.cylinders || {}).forEach(([id, c]) => {
-              if (isBusy("cylinders/" + id)) {
-                if (S.cyl[id]) next[id] = S.cyl[id];
-              } else next[id] = Object.assign(c, { id });
-            });
-            Object.keys(S.cyl).forEach((id) => {
-              if (isBusy("cylinders/" + id)) next[id] = S.cyl[id];
-            });
-            S.cyl = next;
-            if (d.config && !isBusy("config/main"))
-              S.config = Object.assign(S.config, d.config);
-            rebuildCages();
-            if ($("overlay").hidden) renderAll();
-          };
-          apply(first);
+          if (!d || typeof d !== "object" || Array.isArray(d))
+            throw new Error(`« ${h.name} » n'est pas une base laminoir.`);
+          d.cylinders = d.cylinders || {};
+          d.config = d.config || emptyDb().config;
+          return { d, mod: f.lastModified };
+        }
+        async function writeJson(h, d) {
+          const w = await h.createWritable();
+          await w.write(JSON.stringify(d, null, 2));
+          await w.close();
+        }
+
+        let lastSig = "";
+        function applyData(d) {
+          const sig = JSON.stringify([d.cylinders, d.config]);
+          if (sig === lastSig) return;
+          lastSig = sig;
+          const next = {};
+          Object.entries(d.cylinders || {}).forEach(([id, c]) => {
+            if (isBusy("cylinders/" + id)) {
+              if (S.cyl[id]) next[id] = S.cyl[id];
+            } else next[id] = Object.assign(c, { id });
+          });
+          Object.keys(S.cyl).forEach((id) => {
+            if (isBusy("cylinders/" + id)) next[id] = S.cyl[id];
+          });
+          S.cyl = next;
+          if (d.config && !isBusy("config/main"))
+            S.config = Object.assign(S.config, d.config);
+          rebuildCages();
+          if (S.ready && $("overlay").hidden) renderAll();
+        }
+
+        async function useFileOrLocal() {
+          if (!FSA)
+            return useLocal(
+              "Données dans ce navigateur · ouvrez avec Chrome ou Edge pour travailler sur le fichier JSON",
+            );
+          setSync("local", "Aucune base ouverte");
+          openBaseDialog(await loadHandle());
+        }
+
+        function openBaseDialog(remembered) {
+          openModal(
+            `
+      <div class="modal-head"><h2>Base de données</h2>${S.ready ? `<button class="x" data-close aria-label="Fermer">×</button>` : ""}</div>
+      <div class="modal-body base-body">
+        <p class="note">L'application travaille sur un fichier <b>laminoir-db.json</b>. Chaque modification y est enregistrée aussitôt.</p>
+        ${remembered ? `<button type="button" class="btn primary" id="base-resume">Reprendre « ${esc(remembered.name)} »</button>` : ""}
+        <button type="button" class="btn${remembered ? "" : " primary"}" id="base-open">Ouvrir un fichier JSON…</button>
+        <button type="button" class="btn" id="base-new">Créer une nouvelle base…</button>
+      </div>`,
+            (m) => {
+              m.classList.add("base-dialog");
+              const go = (pick) => async () => {
+                try {
+                  const h = await pick();
+                  if (h) await useFile(h);
+                } catch (e) {
+                  if (!e || e.name !== "AbortError")
+                    toast(
+                      (e && e.message) || "Impossible d'ouvrir ce fichier.",
+                    );
+                }
+              };
+              const resume = m.querySelector("#base-resume");
+              if (resume)
+                resume.addEventListener(
+                  "click",
+                  go(async () => remembered),
+                );
+              m.querySelector("#base-open").addEventListener(
+                "click",
+                go(
+                  async () =>
+                    (await showOpenFilePicker({ types: JSON_TYPES }))[0],
+                ),
+              );
+              m.querySelector("#base-new").addEventListener(
+                "click",
+                go(async () => {
+                  const h = await showSaveFilePicker({
+                    suggestedName: "laminoir-db.json",
+                    types: JSON_TYPES,
+                  });
+                  await writeJson(h, emptyDb());
+                  return h;
+                }),
+              );
+            },
+          );
+        }
+
+        async function useFile(h) {
+          if (
+            (await h.queryPermission({ mode: "readwrite" })) !== "granted" &&
+            (await h.requestPermission({ mode: "readwrite" })) !== "granted"
+          )
+            throw new Error("Accès en écriture au fichier refusé.");
+          let { d, mod } = await readJson(h);
+          S.file = h;
+          saveHandle(h);
+          // Chaque écriture relit le fichier puis n'y change que l'élément modifié :
+          // plusieurs postes peuvent travailler sur le même fichier partagé.
+          let chain = Promise.resolve();
+          const write = (path, data) =>
+            (chain = chain
+              .catch(() => {})
+              .then(async () => {
+                const cur = (await readJson(h)).d;
+                if (path === "config/main") cur.config = data;
+                else if (path === "all") {
+                  cur.config = S.config;
+                  cur.cylinders = S.cyl;
+                } else {
+                  const id = path.slice("cylinders/".length);
+                  if (data === null) delete cur.cylinders[id];
+                  else cur.cylinders[id] = data;
+                }
+                cur.format = "laminoir-db";
+                cur.version = 1;
+                cur.updatedAt = new Date().toISOString();
+                await writeJson(h, cur);
+                mod = (await h.getFile()).lastModified;
+              }));
+          backend = { set: write, del: (path) => write(path, null) };
+          lastSig = "";
+          S.cyl = {};
+          applyData(d);
           S.ready = true;
-          setSync("ok", "Base laminoir-db.json");
+          closeModal();
+          setSync("ok", h.name);
           renderAll();
-          // Rafraîchit toutes les 5 s pour voir les modifications des autres postes.
-          setInterval(async () => {
+          // Relit le fichier toutes les 4 s pour voir les modifications des autres postes.
+          clearInterval(S.poll);
+          S.poll = setInterval(async () => {
+            if (S.file !== h) return;
             try {
-              apply(await api("GET", "db"));
-              setSync("ok", "Base laminoir-db.json");
+              const f = await h.getFile();
+              const writing =
+                Object.values(busy).some(Boolean) ||
+                Object.keys(pending).length;
+              if (f.lastModified === mod || writing) return;
+              const r = await readJson(h);
+              mod = r.mod;
+              applyData(r.d);
+              setSync("ok", h.name);
             } catch (e) {
-              setSync("", "Serveur injoignable");
+              setSync("", "Fichier inaccessible");
             }
-          }, 5000);
-          return true;
+          }, 4000);
         }
 
         // ---------- Export / import du fichier JSON ----------
@@ -1584,20 +1734,10 @@
           )
             return toast("Ce fichier n'est pas une base laminoir-db.json.");
           Object.entries(d.cylinders).forEach(([id, c]) => (c.id = id));
-          if (S.server) {
-            try {
-              await S.server("PUT", "db", {
-                config: d.config,
-                cylinders: d.cylinders,
-              });
-            } catch (e) {
-              return toast("Import refusé par le serveur.");
-            }
-          }
           S.cyl = d.cylinders;
           S.config = Object.assign(S.config, d.config);
           rebuildCages();
-          if (!S.server) backend.set("all", null);
+          backend.set("all", null);
           renderAll();
           toast(
             `Base importée : ${Object.keys(d.cylinders).length} cylindres.`,
@@ -2002,11 +2142,14 @@
           ov.innerHTML = "";
         }
         $("overlay").addEventListener("click", (e) => {
+          const locked = !S.ready && $("overlay").querySelector(".base-dialog");
+          if (locked) return;
           if (e.target.id === "overlay" || e.target.closest("[data-close]"))
             closeModal();
         });
         document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape" && !$("overlay").hidden) closeModal();
+          if (e.key === "Escape" && !$("overlay").hidden && S.ready)
+            closeModal();
         });
 
         // ---------- Base de données des cylindres ----------
@@ -2381,6 +2524,8 @@
         // Export/import de fichier : hors claude.ai (les téléchargements y sont bloqués).
         $("db-file").hidden = !!(window.claude && window.claude.use);
         $("db-export").addEventListener("click", exportJson);
+        $("db-switch").hidden = !FSA;
+        $("db-switch").addEventListener("click", () => openBaseDialog(null));
         $("db-import").addEventListener("change", (e) => {
           const f = e.target.files[0];
           e.target.value = "";

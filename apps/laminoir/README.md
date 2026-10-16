@@ -1,40 +1,33 @@
 # Cannelures Laminoir
 
-Gestion des cylindres des cages de laminage 1 à 16 : état des cannelures, commentaires,
-tracés des options et base des cylindres.
+Deux fichiers seulement :
 
-## Fichiers
+| Fichier            | Rôle                                                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `index.html`       | L'application.                                                                                                  |
+| `laminoir-db.json` | La base de données : cylindres, état et commentaires des cannelures, noms des options, tracés, commentaires HS. |
 
-| Fichier                        | Rôle                                                                                                            |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `index.html`                   | L'application.                                                                                                  |
-| `laminoir-db.json`             | La base de données : cylindres, état et commentaires des cannelures, noms des options, tracés, commentaires HS. |
-| `serveur.py`                   | Petit serveur (Python, sans dépendance) qui fait travailler l'application sur `laminoir-db.json`.               |
-| `demarrer.bat` / `demarrer.sh` | Lancent le serveur (Windows / Linux).                                                                           |
-| `app.html`                     | Même application, version publiée sur claude.ai.                                                                |
+## Utilisation
 
-## Installer sur un poste
+1. Copier `index.html` et `laminoir-db.json` sur le poste (ou dans un dossier partagé du réseau).
+2. Ouvrir `index.html` avec **Chrome** ou **Edge**.
+3. Cliquer sur « Ouvrir un fichier JSON… » et choisir `laminoir-db.json`, puis autoriser la modification du fichier.
 
-1. Installer Python 3 (https://www.python.org ; sous Windows, cocher « Add python to PATH »).
-2. Copier le dossier (`index.html`, `serveur.py`, `laminoir-db.json`, `demarrer.bat`) sur le poste.
-3. Double-cliquer sur `demarrer.bat`. Le navigateur s'ouvre sur http://localhost:8080.
-
-Chaque modification est écrite tout de suite dans `laminoir-db.json`. La version précédente
-est gardée dans `laminoir-db.sauvegarde.json`.
+Chaque modification est écrite aussitôt dans le fichier JSON. Aux ouvertures suivantes,
+le bouton « Reprendre « laminoir-db.json » » rouvre la même base en un clic.
 
 ## Plusieurs machines
 
-- **Une base commune** : lancer le serveur sur un seul poste. Les autres postes ouvrent
-  `http://<nom-ou-IP-du-poste>:8080`. Tous travaillent sur le même `laminoir-db.json` et
-  voient les modifications des autres en moins de 5 secondes. Le port 8080 doit être
-  autorisé dans le pare-feu de ce poste.
-- **Une base par machine** : copier le dossier sur chaque machine et lancer `demarrer.bat`
-  sur chacune. Pour reprendre les données d'une autre machine, copier son `laminoir-db.json`
-  (serveur arrêté) ou utiliser « Importer JSON » dans l'onglet Cylindres.
+- **Une base commune** : mettre `laminoir-db.json` dans un dossier partagé du réseau et
+  l'ouvrir depuis chaque poste. L'application relit le fichier toutes les 4 secondes et
+  n'écrit que l'élément modifié, pour ne pas écraser le travail des autres postes.
+- **Une base par machine** : copier les deux fichiers sur chaque machine.
 
-Sans serveur (`index.html` ouvert directement), les données restent dans le navigateur ;
-les boutons « Exporter JSON » et « Importer JSON » de l'onglet Cylindres permettent de les
-sortir ou de les charger.
+Onglet Cylindres : « Changer de base… », « Exporter JSON » (copie de sauvegarde) et
+« Importer JSON » (remplace la base ouverte par le contenu d'un autre fichier).
+
+Firefox et Safari ne permettent pas d'écrire dans un fichier : l'application y garde les
+données dans le navigateur, et « Exporter JSON » / « Importer JSON » servent à les échanger.
 
 ## Cages affichées selon le diamètre laminé
 
