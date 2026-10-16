@@ -857,8 +857,10 @@
     background: var(--line);
     border-radius: 3px;
   }
+  /* Numbering starts on the motor side (right): frettes and grooves run right to left. */
   .barrel {
     display: flex;
+    flex-direction: row-reverse;
     gap: 0;
     padding: 8px 6px;
     background: var(--surface-2);
@@ -873,11 +875,12 @@
   }
   .vfrette {
     display: flex;
+    flex-direction: row-reverse;
     gap: 4px;
     padding: 0 6px;
   }
   .vfrette + .vfrette {
-    border-left: 2px solid var(--line);
+    border-right: 2px solid var(--line);
   }
   .vg {
     position: relative;
