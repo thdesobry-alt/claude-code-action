@@ -6,20 +6,21 @@
     <title>Consommations Laminoir</title>
     <style>
       :root {
-        --bg: #10141a;
-        --panel: #19202a;
-        --panel2: #202835;
-        --line: #2c3645;
-        --text: #e8ecf1;
-        --muted: #8e9aaa;
-        --accent: #ff7a1a;
-        --ricambi: #4f9dde;
-        --epi: #f2a33a;
-        --outillage: #6cc47a;
-        --ok: #3fae5a;
-        --warn: #f2c230;
-        --danger: #e8452c;
-        --neutral: #3b4556;
+        --bg: #eef1f1;
+        --panel: #ffffff;
+        --panel2: #f2f5f5;
+        --line: #d8dfdf;
+        --text: #2e3536;
+        --muted: #6e7a7b;
+        --accent: #3e8580;
+        --accent-dark: #2f6964;
+        --ricambi: #3e8580;
+        --epi: #5d6b78;
+        --outillage: #b07d4f;
+        --ok: #3e8580;
+        --warn: #d99a2b;
+        --danger: #c0392b;
+        --neutral: #e1e7e7;
         --radius: 12px;
       }
       * {
@@ -46,8 +47,22 @@
         position: sticky;
         top: 0;
         z-index: 10;
-        background: linear-gradient(180deg, #161c25, #121821);
+        background: var(--panel);
         border-bottom: 1px solid var(--line);
+        box-shadow: 0 1px 4px rgba(46, 53, 54, 0.08);
+      }
+      .topband {
+        background: var(--accent);
+        color: #fff;
+      }
+      .topband .btn {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.35);
+        color: #fff;
+      }
+      .topband .btn:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: #fff;
       }
       .bar {
         max-width: 1280px;
@@ -68,18 +83,18 @@
         width: 34px;
         height: 34px;
         border-radius: 8px;
-        background: linear-gradient(135deg, var(--accent), #c43d0a);
+        background: #fff;
         display: grid;
         place-items: center;
         font-weight: 800;
-        color: #fff;
+        color: var(--accent);
       }
       .brand h1 {
         font-size: 17px;
         margin: 0;
       }
       .brand small {
-        color: var(--muted);
+        color: rgba(255, 255, 255, 0.8);
         display: block;
         font-size: 12px;
       }
@@ -87,8 +102,8 @@
         display: flex;
         align-items: center;
         gap: 4px;
-        background: var(--panel2);
-        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.35);
         border-radius: 10px;
         padding: 3px;
       }
@@ -97,6 +112,7 @@
         border: 0;
         padding: 4px 6px;
         color-scheme: dark;
+        color: #fff;
       }
       .btn {
         border: 1px solid var(--line);
@@ -111,7 +127,7 @@
       .btn.primary {
         background: var(--accent);
         border-color: var(--accent);
-        color: #1a0d03;
+        color: #fff;
         font-weight: 600;
       }
       .btn.icon {
@@ -171,6 +187,7 @@
       }
       .tabhead h2 {
         margin: 0;
+        color: var(--accent-dark);
         font-size: 22px;
       }
       .tabhead p {
@@ -187,6 +204,7 @@
       }
       .panel h3 {
         margin: 0 0 12px;
+        color: var(--accent-dark);
         font-size: 15px;
       }
       .grid2 {
@@ -263,7 +281,7 @@
         place-items: center;
         font-size: 12px;
         font-weight: 700;
-        color: #111;
+        color: #fff;
         min-width: 0;
         overflow: hidden;
         white-space: nowrap;
@@ -323,7 +341,7 @@
         font-weight: 700;
         padding: 1px 7px;
         border-radius: 10px;
-        color: #111;
+        color: #fff;
         background: var(--c);
       }
       table {
@@ -375,7 +393,6 @@
         border-radius: 8px;
         padding: 7px 9px;
         width: 100%;
-        color-scheme: dark;
       }
       input:focus {
         outline: 2px solid var(--accent);
@@ -426,7 +443,7 @@
         max-height: 620px;
       }
       .figure .zone {
-        stroke: var(--bg);
+        stroke: #fff;
         stroke-width: 2;
         transition: opacity 0.15s;
       }
@@ -446,7 +463,7 @@
       .heatlegend {
         height: 10px;
         border-radius: 5px;
-        background: linear-gradient(90deg, #3fae5a, #f2c230, #e8452c);
+        background: linear-gradient(90deg, #9ccbc6, #e3a53c, #c0392b);
         margin: 6px 0 2px;
       }
       .heatlegend + div {
@@ -603,38 +620,44 @@
   </head>
   <body>
     <header>
-      <div class="bar">
-        <div class="brand">
-          <div class="logo">L</div>
-          <div>
-            <h1>Suivi des consommations</h1>
-            <small id="service-name">Service Laminoir</small>
+      <div class="topband">
+        <div class="bar">
+          <div class="brand">
+            <div class="logo">L</div>
+            <div>
+              <h1>Suivi des consommations</h1>
+              <small id="service-name">Service Laminoir</small>
+            </div>
           </div>
-        </div>
-        <div class="month">
-          <button class="btn icon" id="prev-month" title="Mois précédent">
-            ‹
+          <div class="month">
+            <button class="btn icon" id="prev-month" title="Mois précédent">
+              ‹
+            </button>
+            <input type="month" id="month" aria-label="Mois" />
+            <button class="btn icon" id="next-month" title="Mois suivant">
+              ›
+            </button>
+          </div>
+          <button
+            class="btn"
+            id="open-json"
+            title="Ouvrir un fichier data.json"
+          >
+            📂 <span>Ouvrir JSON</span>
           </button>
-          <input type="month" id="month" aria-label="Mois" />
-          <button class="btn icon" id="next-month" title="Mois suivant">
-            ›
+          <button class="btn" id="save-json" title="Enregistrer la base JSON">
+            💾 <span>Enregistrer JSON</span>
           </button>
+          <button class="btn" id="export-csv" title="Exporter le mois en CSV">
+            ⬇ <span>CSV du mois</span>
+          </button>
+          <input
+            type="file"
+            id="file-input"
+            accept=".json,application/json"
+            hidden
+          />
         </div>
-        <button class="btn" id="open-json" title="Ouvrir un fichier data.json">
-          📂 <span>Ouvrir JSON</span>
-        </button>
-        <button class="btn" id="save-json" title="Enregistrer la base JSON">
-          💾 <span>Enregistrer JSON</span>
-        </button>
-        <button class="btn" id="export-csv" title="Exporter le mois en CSV">
-          ⬇ <span>CSV du mois</span>
-        </button>
-        <input
-          type="file"
-          id="file-input"
-          accept=".json,application/json"
-          hidden
-        />
       </div>
       <nav class="tabs" id="tabs"></nav>
     </header>
@@ -3383,17 +3406,17 @@
         ricambi: {
           label: "Ricambi",
           sub: "Pièces de rechange",
-          hex: "#4f9dde",
+          hex: "#3e8580",
         },
         epi: {
           label: "EPI",
           sub: "Équipements de protection individuelle",
-          hex: "#f2a33a",
+          hex: "#5d6b78",
         },
         outillage: {
           label: "Outillage",
           sub: "Outils et petit matériel, regroupés par catégorie",
-          hex: "#6cc47a",
+          hex: "#b07d4f",
         },
       };
       const TYPE_KEYS = Object.keys(TYPES);
@@ -3540,9 +3563,9 @@
       /* ---------- Couleurs ---------- */
       function heat(t) {
         const stops = [
-          [0, [63, 174, 90]],
-          [0.5, [242, 194, 48]],
-          [1, [232, 69, 44]],
+          [0, [156, 203, 198]],
+          [0.5, [227, 165, 60]],
+          [1, [192, 57, 43]],
         ];
         t = Math.max(0, Math.min(1, t));
         const i = t <= 0.5 ? 0 : 1;
@@ -3734,7 +3757,7 @@
             const h = (v / max) * ph;
             y -= h;
             if (h > 0)
-              s += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="${TYPES[TYPE_KEYS[j]].hex}" opacity="${isCur ? 1 : 0.55}"><title>${TYPES[TYPE_KEYS[j]].label} — ${monthLabel(d.m)} : ${eur.format(v)}</title></rect>`;
+              s += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="${TYPES[TYPE_KEYS[j]].hex}" opacity="${isCur ? 1 : 0.7}"><title>${TYPES[TYPE_KEYS[j]].label} — ${monthLabel(d.m)} : ${eur.format(v)}</title></rect>`;
           });
           s += `<text x="${x + bw / 2}" y="${y - 6}" text-anchor="middle" font-size="12" fill="var(--text)" font-weight="${isCur ? 700 : 400}">${tot ? eur.format(tot).replace(/\s?€/, "") + " €" : ""}</text>`;
           s += `<text x="${x + bw / 2}" y="${H - bottom + 18}" text-anchor="middle" font-size="12" fill="${isCur ? "var(--text)" : "var(--muted)"}" font-weight="${isCur ? 700 : 400}">${monthLabel(d.m, true)}</text>`;
@@ -3908,7 +3931,7 @@
         const max = Math.max(1, ...groups.map((g) => g.total));
         let s = `<svg viewBox="0 0 ${FW} 520" role="img" aria-label="Répartition des coûts EPI sur une silhouette">`;
         // Base de la silhouette (tête, cou)
-        s += `<g fill="#566275"><circle cx="280" cy="100" r="34"/><rect x="269" y="130" width="22" height="20" rx="4"/></g>`;
+        s += `<g fill="#b9c3c4"><circle cx="280" cy="100" r="34"/><rect x="269" y="130" width="22" height="20" rx="4"/></g>`;
         for (const z of ZONES) {
           const v = byCat[z.cat] || 0;
           const col = v ? heat(v / max) : "var(--neutral)";
@@ -3922,9 +3945,9 @@
           const lx = L ? 12 : FW - 12;
           const lineX = L ? 158 : FW - 158;
           s += `<polyline points="${lineX},${z.ly - 4} ${L ? lineX + 12 : lineX - 12},${z.ly - 4} ${ax},${ay}" fill="none" stroke="${col}" stroke-width="1.5"/>`;
-          s += `<circle cx="${ax}" cy="${ay}" r="3.5" fill="${col}" stroke="var(--bg)"/>`;
+          s += `<circle cx="${ax}" cy="${ay}" r="3.5" fill="${col}" stroke="#fff"/>`;
           s += `<text x="${lx}" y="${z.ly - 8}" text-anchor="${L ? "start" : "end"}" class="zl">${esc(z.cat)}</text>`;
-          s += `<text x="${lx}" y="${z.ly + 10}" text-anchor="${L ? "start" : "end"}" class="zv"><tspan fill="${col}" font-weight="700">${pct(total ? v / total : 0)}</tspan> · ${eur.format(v)}</text>`;
+          s += `<text x="${lx}" y="${z.ly + 10}" text-anchor="${L ? "start" : "end"}" class="zv"><tspan fill="var(--text)" font-weight="700">${pct(total ? v / total : 0)}</tspan> · ${eur.format(v)}</text>`;
         }
         return s + "</svg>";
       }
