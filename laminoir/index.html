@@ -1,0 +1,4469 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Consommations Laminoir</title>
+    <style>
+      :root {
+        --bg: #10141a;
+        --panel: #19202a;
+        --panel2: #202835;
+        --line: #2c3645;
+        --text: #e8ecf1;
+        --muted: #8e9aaa;
+        --accent: #ff7a1a;
+        --ricambi: #4f9dde;
+        --epi: #f2a33a;
+        --outillage: #6cc47a;
+        --ok: #3fae5a;
+        --warn: #f2c230;
+        --danger: #e8452c;
+        --neutral: #3b4556;
+        --radius: 12px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          14px/1.45 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: linear-gradient(180deg, #161c25, #121821);
+        border-bottom: 1px solid var(--line);
+      }
+      .bar {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 12px 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-right: auto;
+      }
+      .logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--accent), #c43d0a);
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        color: #fff;
+      }
+      .brand h1 {
+        font-size: 17px;
+        margin: 0;
+      }
+      .brand small {
+        color: var(--muted);
+        display: block;
+        font-size: 12px;
+      }
+      .month {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 3px;
+      }
+      .month input {
+        background: transparent;
+        border: 0;
+        padding: 4px 6px;
+        color-scheme: dark;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        border-radius: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      .btn:hover {
+        border-color: var(--muted);
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #1a0d03;
+        font-weight: 600;
+      }
+      .btn.icon {
+        padding: 4px 9px;
+      }
+      .btn.small {
+        padding: 2px 8px;
+        font-size: 12px;
+      }
+      nav.tabs {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 16px;
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+      }
+      nav.tabs button {
+        background: none;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        padding: 10px 14px;
+        cursor: pointer;
+        color: var(--muted);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      nav.tabs button.active {
+        color: var(--text);
+        border-bottom-color: var(--c, var(--accent));
+      }
+      nav.tabs .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c, var(--accent));
+        margin-right: 6px;
+      }
+      main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 18px 16px 40px;
+      }
+      .tab {
+        display: none;
+      }
+      .tab.active {
+        display: block;
+      }
+      .tabhead {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .tabhead h2 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .tabhead p {
+        margin: 0;
+        color: var(--muted);
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 16px;
+        min-width: 0;
+      }
+      .panel h3 {
+        margin: 0 0 12px;
+        font-size: 15px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .grid2 > .panel {
+        margin-bottom: 0;
+      }
+      .stack {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .kpi {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--c, var(--accent));
+        border-radius: var(--radius);
+        padding: 12px 14px;
+      }
+      .kpi .lbl {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .kpi .val {
+        font-size: 24px;
+        font-weight: 700;
+        margin: 2px 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .kpi .sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .up {
+        color: var(--danger);
+        font-weight: 600;
+      }
+      .down {
+        color: var(--ok);
+        font-weight: 600;
+      }
+      .gauge {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--panel2);
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .gauge > i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+      }
+      .split {
+        display: flex;
+        height: 30px;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 10px;
+      }
+      .split > div {
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: #111;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+      .hbars {
+        display: grid;
+        gap: 9px;
+      }
+      .hbar .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 13px;
+      }
+      .hbar .top b {
+        font-variant-numeric: tabular-nums;
+      }
+      .hbar .track {
+        height: 8px;
+        background: var(--panel2);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 3px;
+      }
+      .hbar .track > i {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .insights {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 6px;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 10px;
+        color: #111;
+        background: var(--c);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 7px 8px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      tfoot td {
+        font-weight: 700;
+        border-bottom: 0;
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+      .listhead {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+      .listhead h3 {
+        margin: 0;
+      }
+      input[type="search"],
+      .entry input {
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px 9px;
+        width: 100%;
+        color-scheme: dark;
+      }
+      input:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: -1px;
+      }
+      .listhead input {
+        max-width: 260px;
+      }
+      .entry .fields {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      .entry label {
+        display: grid;
+        gap: 4px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .entry .wide {
+        grid-column: span 2;
+      }
+      .entry .actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 12px;
+      }
+      .entry .ftotal {
+        margin-right: auto;
+        color: var(--muted);
+      }
+      .entry.editing {
+        outline: 2px solid var(--accent);
+      }
+      /* EPI */
+      .epi-wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+      .figure svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        max-height: 620px;
+      }
+      .figure .zone {
+        stroke: var(--bg);
+        stroke-width: 2;
+        transition: opacity 0.15s;
+      }
+      .figure .zone:hover {
+        opacity: 0.8;
+      }
+      .figure .zl {
+        fill: var(--text);
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .figure .zv {
+        fill: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .heatlegend {
+        height: 10px;
+        border-radius: 5px;
+        background: linear-gradient(90deg, #3fae5a, #f2c230, #e8452c);
+        margin: 6px 0 2px;
+      }
+      .heatlegend + div {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      /* Outillage */
+      .cats {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+      }
+      .cat {
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-top: 4px solid var(--c);
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .cat .head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .cat .ico {
+        font-size: 22px;
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        background: var(--panel);
+        border-radius: 8px;
+      }
+      .cat .name {
+        font-weight: 700;
+      }
+      .cat .amt {
+        margin-left: auto;
+        text-align: right;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .cat .amt small {
+        display: block;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .cat details {
+        margin-top: 8px;
+        font-size: 12px;
+      }
+      .cat summary {
+        cursor: pointer;
+        color: var(--muted);
+      }
+      .cat td {
+        padding: 4px 4px;
+      }
+      .empty {
+        color: var(--muted);
+        text-align: center;
+        padding: 24px;
+      }
+      footer {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 16px 30px;
+        color: var(--muted);
+        font-size: 12px;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .dirty {
+        color: var(--warn);
+      }
+      .toast {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        padding: 10px 16px;
+        border-radius: 10px;
+        transition:
+          transform 0.25s,
+          opacity 0.25s;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 50;
+        max-width: calc(100% - 32px);
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+      .budgets {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: end;
+      }
+      .budgets label {
+        display: grid;
+        gap: 4px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .budgets input {
+        width: 140px;
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 6px 8px;
+      }
+      @media (max-width: 900px) {
+        .grid2,
+        .epi-wrap {
+          grid-template-columns: 1fr;
+        }
+        .entry .fields {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 520px) {
+        .entry .fields {
+          grid-template-columns: 1fr;
+        }
+        .entry .wide {
+          grid-column: auto;
+        }
+        .bar .btn span {
+          display: none;
+        }
+      }
+      @media print {
+        header nav,
+        .entry,
+        .bar .btn,
+        footer,
+        .listhead input,
+        td .btn {
+          display: none !important;
+        }
+        .tab {
+          display: block !important;
+          page-break-after: always;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="bar">
+        <div class="brand">
+          <div class="logo">L</div>
+          <div>
+            <h1>Suivi des consommations</h1>
+            <small id="service-name">Service Laminoir</small>
+          </div>
+        </div>
+        <div class="month">
+          <button class="btn icon" id="prev-month" title="Mois précédent">
+            ‹
+          </button>
+          <input type="month" id="month" aria-label="Mois" />
+          <button class="btn icon" id="next-month" title="Mois suivant">
+            ›
+          </button>
+        </div>
+        <button class="btn" id="open-json" title="Ouvrir un fichier data.json">
+          📂 <span>Ouvrir JSON</span>
+        </button>
+        <button class="btn" id="save-json" title="Enregistrer la base JSON">
+          💾 <span>Enregistrer JSON</span>
+        </button>
+        <button class="btn" id="export-csv" title="Exporter le mois en CSV">
+          ⬇ <span>CSV du mois</span>
+        </button>
+        <input
+          type="file"
+          id="file-input"
+          accept=".json,application/json"
+          hidden
+        />
+      </div>
+      <nav class="tabs" id="tabs"></nav>
+    </header>
+
+    <main>
+      <section class="tab" id="tab-synthese">
+        <div class="tabhead">
+          <h2>Synthèse — <span class="month-label"></span></h2>
+          <p>Vue d'ensemble des dépenses du mois</p>
+        </div>
+        <div class="kpis" id="syn-kpis"></div>
+        <div class="grid2">
+          <div class="panel">
+            <h3>Répartition des dépenses</h3>
+            <div id="syn-split"></div>
+            <h3 style="margin-top: 18px">Points clés</h3>
+            <ul class="insights" id="syn-insights"></ul>
+          </div>
+          <div class="panel">
+            <h3>Évolution sur 6 mois</h3>
+            <div id="syn-trend"></div>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top: 16px">
+          <div class="panel">
+            <h3>Top 5 des dépenses du mois</h3>
+            <div id="syn-top"></div>
+          </div>
+          <div class="panel">
+            <h3>Catégorie la plus coûteuse par onglet</h3>
+            <div id="syn-topcats"></div>
+            <h3 style="margin-top: 18px">Budgets mensuels</h3>
+            <div class="budgets" id="syn-budgets"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span id="src"></span>
+      <span>Sauvegarde automatique dans le navigateur</span>
+      <span id="dirty" class="dirty" hidden
+        >● Modifications non encore enregistrées dans le fichier JSON</span
+      >
+    </footer>
+    <div class="toast" id="toast"></div>
+
+    <!-- Données de démonstration utilisées si data.json est inaccessible (ouverture en file://) -->
+    <script id="seed" type="application/json">
+      {
+        "version": 1,
+        "service": "Laminoir",
+        "devise": "EUR",
+        "budgets": { "ricambi": 22000, "epi": 4500, "outillage": 4000 },
+        "categories": {
+          "ricambi": [
+            "Roulements",
+            "Hydraulique",
+            "Pneumatique",
+            "Électrique",
+            "Transmission",
+            "Guidage",
+            "Étanchéité"
+          ],
+          "epi": [
+            "Casque",
+            "Lunettes",
+            "Masque",
+            "Bouchons d'oreille",
+            "Gants",
+            "Vêtements",
+            "Chaussures",
+            "Manchettes"
+          ],
+          "outillage": [
+            "Vérins",
+            "Clés",
+            "Marteaux",
+            "Tournevis",
+            "Pinces",
+            "Électroportatif",
+            "Levage",
+            "Mesure",
+            "Consommables",
+            "Extracteurs"
+          ]
+        },
+        "consommations": [
+          {
+            "id": "c0034",
+            "date": "2026-05-01",
+            "type": "outillage",
+            "categorie": "Électroportatif",
+            "designation": "Perceuse visseuse 18 V",
+            "reference": "PV-18V",
+            "quantite": 1,
+            "prixUnitaire": 204.89,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0006",
+            "date": "2026-05-03",
+            "type": "ricambi",
+            "categorie": "Étanchéité",
+            "designation": "Bague d'étanchéité 120x150x12",
+            "reference": "BE-120150",
+            "quantite": 1,
+            "prixUnitaire": 48.02,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0015",
+            "date": "2026-05-03",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 3,
+            "prixUnitaire": 118.43,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0022",
+            "date": "2026-05-04",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 6,
+            "prixUnitaire": 80.94,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0023",
+            "date": "2026-05-04",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Gilet haute visibilité",
+            "reference": "VET-HV",
+            "quantite": 12,
+            "prixUnitaire": 8.94,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0026",
+            "date": "2026-05-05",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Gilet haute visibilité",
+            "reference": "VET-HV",
+            "quantite": 8,
+            "prixUnitaire": 9.0,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0041",
+            "date": "2026-05-05",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Clé à frapper 65",
+            "reference": "CAF-65",
+            "quantite": 2,
+            "prixUnitaire": 72.27,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0011",
+            "date": "2026-05-06",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Distributeur 5/2 bistable",
+            "reference": "FESTO-VUVG",
+            "quantite": 3,
+            "prixUnitaire": 159.94,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0036",
+            "date": "2026-05-07",
+            "type": "outillage",
+            "categorie": "Marteaux",
+            "designation": "Marteau bronze",
+            "reference": "MBR-1",
+            "quantite": 2,
+            "prixUnitaire": 96.25,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0001",
+            "date": "2026-05-08",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement à rouleaux coniques 32222",
+            "reference": "TIMKEN-32222",
+            "quantite": 3,
+            "prixUnitaire": 306.24,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0017",
+            "date": "2026-05-08",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-chaleur Kevlar",
+            "reference": "GAN-KEV",
+            "quantite": 6,
+            "prixUnitaire": 14.93,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0033",
+            "date": "2026-05-08",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 2,
+            "prixUnitaire": 117.01,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0005",
+            "date": "2026-05-11",
+            "type": "ricambi",
+            "categorie": "Étanchéité",
+            "designation": "Kit joints chock cylindre",
+            "reference": "KJ-CH-500",
+            "quantite": 4,
+            "prixUnitaire": 307.59,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0013",
+            "date": "2026-05-13",
+            "type": "ricambi",
+            "categorie": "Guidage",
+            "designation": "Galet de guidage",
+            "reference": "GG-120",
+            "quantite": 4,
+            "prixUnitaire": 257.81,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0038",
+            "date": "2026-05-14",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Clé dynamométrique 60-340 Nm",
+            "reference": "CDY-340",
+            "quantite": 3,
+            "prixUnitaire": 259.57,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0004",
+            "date": "2026-05-15",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Accouplement à denture",
+            "reference": "FLX-GD-125",
+            "quantite": 1,
+            "prixUnitaire": 966.28,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0021",
+            "date": "2026-05-15",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 21,
+            "prixUnitaire": 9.11,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0016",
+            "date": "2026-05-16",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 6,
+            "prixUnitaire": 120.2,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0019",
+            "date": "2026-05-16",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Manchettes aluminisées",
+            "reference": "MAN-ALU",
+            "quantite": 18,
+            "prixUnitaire": 33.23,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0003",
+            "date": "2026-05-18",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement à rouleaux sphériques 22320 EK",
+            "reference": "SKF-22320EK",
+            "quantite": 1,
+            "prixUnitaire": 473.24,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0008",
+            "date": "2026-05-18",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Moteur 7,5 kW",
+            "reference": "LS-7K5-4P",
+            "quantite": 1,
+            "prixUnitaire": 1291.49,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0031",
+            "date": "2026-05-18",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 8,
+            "prixUnitaire": 9.27,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0002",
+            "date": "2026-05-19",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement à rouleaux coniques 32222",
+            "reference": "TIMKEN-32222",
+            "quantite": 1,
+            "prixUnitaire": 311.16,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0018",
+            "date": "2026-05-19",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Cartouche A2P3",
+            "reference": "CART-A2P3",
+            "quantite": 15,
+            "prixUnitaire": 22.04,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0012",
+            "date": "2026-05-20",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Croisillon d'allonge à cardan",
+            "reference": "CRD-2850",
+            "quantite": 1,
+            "prixUnitaire": 2143.68,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0027",
+            "date": "2026-05-20",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants nitrile (boîte 100)",
+            "reference": "GAN-NIT",
+            "quantite": 2,
+            "prixUnitaire": 11.95,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0039",
+            "date": "2026-05-21",
+            "type": "outillage",
+            "categorie": "Pinces",
+            "designation": "Pince multiprise",
+            "reference": "PMP-250",
+            "quantite": 3,
+            "prixUnitaire": 33.56,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0030",
+            "date": "2026-05-22",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Manchettes aluminisées",
+            "reference": "MAN-ALU",
+            "quantite": 6,
+            "prixUnitaire": 34.27,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0032",
+            "date": "2026-05-22",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Masque FFP3 à soupape (boîte de 10)",
+            "reference": "FFP3-10",
+            "quantite": 14,
+            "prixUnitaire": 34.75,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0009",
+            "date": "2026-05-23",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Accouplement à denture",
+            "reference": "FLX-GD-125",
+            "quantite": 1,
+            "prixUnitaire": 926.79,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0024",
+            "date": "2026-05-24",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants nitrile (boîte 100)",
+            "reference": "GAN-NIT",
+            "quantite": 30,
+            "prixUnitaire": 11.89,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0029",
+            "date": "2026-05-24",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Lunettes de sécurité incolores",
+            "reference": "LUN-INC",
+            "quantite": 4,
+            "prixUnitaire": 6.56,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0007",
+            "date": "2026-05-26",
+            "type": "ricambi",
+            "categorie": "Guidage",
+            "designation": "Rouleau de table à rouleaux",
+            "reference": "RT-350",
+            "quantite": 1,
+            "prixUnitaire": 525.68,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0020",
+            "date": "2026-05-26",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 2,
+            "prixUnitaire": 80.93,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0037",
+            "date": "2026-05-26",
+            "type": "outillage",
+            "categorie": "Extracteurs",
+            "designation": "Extracteur hydraulique 3 griffes",
+            "reference": "EXT-H3",
+            "quantite": 1,
+            "prixUnitaire": 544.23,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0040",
+            "date": "2026-05-26",
+            "type": "outillage",
+            "categorie": "Vérins",
+            "designation": "Pompe à main pour vérin",
+            "reference": "PAM-700",
+            "quantite": 2,
+            "prixUnitaire": 301.29,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0042",
+            "date": "2026-05-26",
+            "type": "outillage",
+            "categorie": "Pinces",
+            "designation": "Pince multiprise",
+            "reference": "PMP-250",
+            "quantite": 2,
+            "prixUnitaire": 33.25,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0014",
+            "date": "2026-05-27",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Courroie trapézoïdale SPB 2000",
+            "reference": "SPB-2000",
+            "quantite": 3,
+            "prixUnitaire": 39.2,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0028",
+            "date": "2026-05-27",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 30,
+            "prixUnitaire": 9.31,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0043",
+            "date": "2026-05-27",
+            "type": "outillage",
+            "categorie": "Vérins",
+            "designation": "Pompe à main pour vérin",
+            "reference": "PAM-700",
+            "quantite": 3,
+            "prixUnitaire": 281.64,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0010",
+            "date": "2026-05-28",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Kit joints vérin d'équilibrage",
+            "reference": "KJ-VE-160",
+            "quantite": 1,
+            "prixUnitaire": 118.63,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0025",
+            "date": "2026-05-28",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Gilet haute visibilité",
+            "reference": "VET-HV",
+            "quantite": 5,
+            "prixUnitaire": 9.18,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0035",
+            "date": "2026-05-28",
+            "type": "outillage",
+            "categorie": "Vérins",
+            "designation": "Vérin hydraulique 20 t",
+            "reference": "VH-20T",
+            "quantite": 1,
+            "prixUnitaire": 378.65,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0067",
+            "date": "2026-06-01",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 4,
+            "prixUnitaire": 77.76,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0047",
+            "date": "2026-06-02",
+            "type": "ricambi",
+            "categorie": "Étanchéité",
+            "designation": "Kit joints chock cylindre",
+            "reference": "KJ-CH-500",
+            "quantite": 3,
+            "prixUnitaire": 301.94,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0060",
+            "date": "2026-06-02",
+            "type": "epi",
+            "categorie": "Casque",
+            "designation": "Casque avec visière aluminisée",
+            "reference": "CAS-ALU",
+            "quantite": 3,
+            "prixUnitaire": 92.18,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0076",
+            "date": "2026-06-02",
+            "type": "outillage",
+            "categorie": "Tournevis",
+            "designation": "Jeu de tournevis isolés 1000 V",
+            "reference": "TV-ISO",
+            "quantite": 2,
+            "prixUnitaire": 56.47,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0062",
+            "date": "2026-06-03",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 5,
+            "prixUnitaire": 8.16,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0057",
+            "date": "2026-06-04",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 1,
+            "prixUnitaire": 81.32,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0073",
+            "date": "2026-06-04",
+            "type": "outillage",
+            "categorie": "Extracteurs",
+            "designation": "Extracteur hydraulique 3 griffes",
+            "reference": "EXT-H3",
+            "quantite": 1,
+            "prixUnitaire": 561.69,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0074",
+            "date": "2026-06-04",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Coffret clés mixtes 8-32",
+            "reference": "CCM-832",
+            "quantite": 1,
+            "prixUnitaire": 147.57,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0046",
+            "date": "2026-06-05",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Moteur 7,5 kW",
+            "reference": "LS-7K5-4P",
+            "quantite": 1,
+            "prixUnitaire": 1280.75,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0054",
+            "date": "2026-06-05",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants nitrile (boîte 100)",
+            "reference": "GAN-NIT",
+            "quantite": 10,
+            "prixUnitaire": 12.54,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0044",
+            "date": "2026-06-07",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Pompe hydraulique à palettes",
+            "reference": "PV-V20-45",
+            "quantite": 1,
+            "prixUnitaire": 1922.47,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0045",
+            "date": "2026-06-09",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Flexible hydraulique DN20 - 1 m",
+            "reference": "HYD-DN20-1000",
+            "quantite": 4,
+            "prixUnitaire": 88.75,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0059",
+            "date": "2026-06-09",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Pantalon ignifugé",
+            "reference": "VET-IGN-P",
+            "quantite": 4,
+            "prixUnitaire": 64.63,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0056",
+            "date": "2026-06-10",
+            "type": "epi",
+            "categorie": "Bouchons d'oreille",
+            "designation": "Bouchons mousse (boîte 200 paires)",
+            "reference": "BOU-200",
+            "quantite": 5,
+            "prixUnitaire": 50.14,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0049",
+            "date": "2026-06-13",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement à rouleaux sphériques 22320 EK",
+            "reference": "SKF-22320EK",
+            "quantite": 2,
+            "prixUnitaire": 470.2,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0069",
+            "date": "2026-06-13",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Cartouche A2P3",
+            "reference": "CART-A2P3",
+            "quantite": 5,
+            "prixUnitaire": 22.88,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0071",
+            "date": "2026-06-13",
+            "type": "outillage",
+            "categorie": "Marteaux",
+            "designation": "Marteau bronze",
+            "reference": "MBR-1",
+            "quantite": 1,
+            "prixUnitaire": 94.64,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0050",
+            "date": "2026-06-14",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Flexible hydraulique DN20 - 1 m",
+            "reference": "HYD-DN20-1000",
+            "quantite": 1,
+            "prixUnitaire": 86.92,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0052",
+            "date": "2026-06-15",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Électrovanne 4/3 NG10",
+            "reference": "REX-4WE10",
+            "quantite": 1,
+            "prixUnitaire": 636.99,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0055",
+            "date": "2026-06-15",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 2,
+            "prixUnitaire": 124.4,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0070",
+            "date": "2026-06-15",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 28,
+            "prixUnitaire": 7.78,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0048",
+            "date": "2026-06-17",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Codeur incrémental",
+            "reference": "HEID-ERN420",
+            "quantite": 1,
+            "prixUnitaire": 410.09,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0063",
+            "date": "2026-06-19",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 3,
+            "prixUnitaire": 80.12,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0053",
+            "date": "2026-06-20",
+            "type": "ricambi",
+            "categorie": "Étanchéité",
+            "designation": "Kit joints chock cylindre",
+            "reference": "KJ-CH-500",
+            "quantite": 4,
+            "prixUnitaire": 325.46,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0075",
+            "date": "2026-06-20",
+            "type": "outillage",
+            "categorie": "Mesure",
+            "designation": "Comparateur à cadran",
+            "reference": "CMP-10",
+            "quantite": 2,
+            "prixUnitaire": 73.41,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0072",
+            "date": "2026-06-21",
+            "type": "outillage",
+            "categorie": "Vérins",
+            "designation": "Vérin creux 30 t",
+            "reference": "VC-30T",
+            "quantite": 1,
+            "prixUnitaire": 727.74,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0051",
+            "date": "2026-06-22",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Contacteur 65 A",
+            "reference": "SCH-LC1D65",
+            "quantite": 2,
+            "prixUnitaire": 184.91,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0065",
+            "date": "2026-06-22",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 2,
+            "prixUnitaire": 77.28,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0058",
+            "date": "2026-06-23",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Cartouche A2P3",
+            "reference": "CART-A2P3",
+            "quantite": 8,
+            "prixUnitaire": 21.94,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0061",
+            "date": "2026-06-24",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 7,
+            "prixUnitaire": 9.05,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0066",
+            "date": "2026-06-24",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-chaleur Kevlar",
+            "reference": "GAN-KEV",
+            "quantite": 21,
+            "prixUnitaire": 14.24,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0077",
+            "date": "2026-06-24",
+            "type": "outillage",
+            "categorie": "Électroportatif",
+            "designation": "Perceuse visseuse 18 V",
+            "reference": "PV-18V",
+            "quantite": 3,
+            "prixUnitaire": 219.5,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0064",
+            "date": "2026-06-26",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 13,
+            "prixUnitaire": 9.43,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0068",
+            "date": "2026-06-28",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 6,
+            "prixUnitaire": 123.46,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0090",
+            "date": "2026-07-02",
+            "type": "ricambi",
+            "categorie": "Guidage",
+            "designation": "Rouleau de table à rouleaux",
+            "reference": "RT-350",
+            "quantite": 1,
+            "prixUnitaire": 547.88,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0085",
+            "date": "2026-07-03",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Croisillon d'allonge à cardan",
+            "reference": "CRD-2850",
+            "quantite": 1,
+            "prixUnitaire": 2174.5,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0097",
+            "date": "2026-07-03",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Gilet haute visibilité",
+            "reference": "VET-HV",
+            "quantite": 8,
+            "prixUnitaire": 9.03,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0096",
+            "date": "2026-07-05",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants nitrile (boîte 100)",
+            "reference": "GAN-NIT",
+            "quantite": 4,
+            "prixUnitaire": 11.78,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0105",
+            "date": "2026-07-06",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Veste ignifugée",
+            "reference": "VET-IGN-V",
+            "quantite": 4,
+            "prixUnitaire": 82.79,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0080",
+            "date": "2026-07-07",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Distributeur 5/2 bistable",
+            "reference": "FESTO-VUVG",
+            "quantite": 2,
+            "prixUnitaire": 160.58,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0098",
+            "date": "2026-07-07",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-chaleur Kevlar",
+            "reference": "GAN-KEV",
+            "quantite": 3,
+            "prixUnitaire": 15.03,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0109",
+            "date": "2026-07-07",
+            "type": "epi",
+            "categorie": "Casque",
+            "designation": "Casque chantier avec jugulaire",
+            "reference": "CAS-JUG",
+            "quantite": 9,
+            "prixUnitaire": 18.67,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0101",
+            "date": "2026-07-08",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Gilet haute visibilité",
+            "reference": "VET-HV",
+            "quantite": 30,
+            "prixUnitaire": 9.08,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0102",
+            "date": "2026-07-11",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 14,
+            "prixUnitaire": 7.98,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0106",
+            "date": "2026-07-11",
+            "type": "epi",
+            "categorie": "Bouchons d'oreille",
+            "designation": "Bouchons réutilisables à cordon",
+            "reference": "BOU-COR",
+            "quantite": 12,
+            "prixUnitaire": 3.3,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0111",
+            "date": "2026-07-12",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-chaleur Kevlar",
+            "reference": "GAN-KEV",
+            "quantite": 26,
+            "prixUnitaire": 14.26,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0116",
+            "date": "2026-07-12",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Clé à frapper 65",
+            "reference": "CAF-65",
+            "quantite": 1,
+            "prixUnitaire": 72.91,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0081",
+            "date": "2026-07-13",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Courroie trapézoïdale SPB 2000",
+            "reference": "SPB-2000",
+            "quantite": 3,
+            "prixUnitaire": 38.53,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0099",
+            "date": "2026-07-13",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 5,
+            "prixUnitaire": 79.64,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0087",
+            "date": "2026-07-15",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement 6312-2RS",
+            "reference": "SKF-6312-2RS",
+            "quantite": 1,
+            "prixUnitaire": 45.14,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0103",
+            "date": "2026-07-15",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 28,
+            "prixUnitaire": 8.14,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0088",
+            "date": "2026-07-16",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Croisillon d'allonge à cardan",
+            "reference": "CRD-2850",
+            "quantite": 1,
+            "prixUnitaire": 2104.14,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0079",
+            "date": "2026-07-17",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Vérin pneumatique Ø80 course 200",
+            "reference": "FESTO-DSBC80",
+            "quantite": 3,
+            "prixUnitaire": 208.9,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0092",
+            "date": "2026-07-17",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Tablier aluminisé",
+            "reference": "TAB-ALU",
+            "quantite": 6,
+            "prixUnitaire": 58.24,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0104",
+            "date": "2026-07-19",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-chaleur Kevlar",
+            "reference": "GAN-KEV",
+            "quantite": 20,
+            "prixUnitaire": 14.83,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0114",
+            "date": "2026-07-19",
+            "type": "outillage",
+            "categorie": "Tournevis",
+            "designation": "Jeu de tournevis isolés 1000 V",
+            "reference": "TV-ISO",
+            "quantite": 1,
+            "prixUnitaire": 56.39,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0108",
+            "date": "2026-07-21",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Veste ignifugée",
+            "reference": "VET-IGN-V",
+            "quantite": 2,
+            "prixUnitaire": 82.92,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0078",
+            "date": "2026-07-22",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Pompe hydraulique à palettes",
+            "reference": "PV-V20-45",
+            "quantite": 1,
+            "prixUnitaire": 1930.77,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0083",
+            "date": "2026-07-22",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Distributeur 5/2 bistable",
+            "reference": "FESTO-VUVG",
+            "quantite": 4,
+            "prixUnitaire": 157.94,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0084",
+            "date": "2026-07-22",
+            "type": "ricambi",
+            "categorie": "Guidage",
+            "designation": "Rouleau de table à rouleaux",
+            "reference": "RT-350",
+            "quantite": 1,
+            "prixUnitaire": 527.46,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0091",
+            "date": "2026-07-22",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement à rouleaux sphériques 22320 EK",
+            "reference": "SKF-22320EK",
+            "quantite": 4,
+            "prixUnitaire": 486.0,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0110",
+            "date": "2026-07-22",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Lunettes de sécurité incolores",
+            "reference": "LUN-INC",
+            "quantite": 17,
+            "prixUnitaire": 6.36,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0113",
+            "date": "2026-07-22",
+            "type": "outillage",
+            "categorie": "Électroportatif",
+            "designation": "Clé à chocs 1/2\" sur batterie",
+            "reference": "CAC-18V",
+            "quantite": 3,
+            "prixUnitaire": 354.5,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0095",
+            "date": "2026-07-23",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Pantalon ignifugé",
+            "reference": "VET-IGN-P",
+            "quantite": 1,
+            "prixUnitaire": 61.56,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0089",
+            "date": "2026-07-25",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Courroie trapézoïdale SPB 2000",
+            "reference": "SPB-2000",
+            "quantite": 1,
+            "prixUnitaire": 38.15,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0094",
+            "date": "2026-07-25",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Gilet haute visibilité",
+            "reference": "VET-HV",
+            "quantite": 10,
+            "prixUnitaire": 9.29,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0082",
+            "date": "2026-07-26",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Vérin pneumatique Ø80 course 200",
+            "reference": "FESTO-DSBC80",
+            "quantite": 4,
+            "prixUnitaire": 213.44,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0086",
+            "date": "2026-07-26",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Kit joints vérin d'équilibrage",
+            "reference": "KJ-VE-160",
+            "quantite": 2,
+            "prixUnitaire": 118.31,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0100",
+            "date": "2026-07-27",
+            "type": "epi",
+            "categorie": "Bouchons d'oreille",
+            "designation": "Bouchons réutilisables à cordon",
+            "reference": "BOU-COR",
+            "quantite": 29,
+            "prixUnitaire": 3.21,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0107",
+            "date": "2026-07-27",
+            "type": "epi",
+            "categorie": "Bouchons d'oreille",
+            "designation": "Bouchons réutilisables à cordon",
+            "reference": "BOU-COR",
+            "quantite": 10,
+            "prixUnitaire": 3.12,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0112",
+            "date": "2026-07-27",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Manchettes aluminisées",
+            "reference": "MAN-ALU",
+            "quantite": 26,
+            "prixUnitaire": 33.43,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0118",
+            "date": "2026-07-27",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Coffret clés mixtes 8-32",
+            "reference": "CCM-832",
+            "quantite": 3,
+            "prixUnitaire": 145.98,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0093",
+            "date": "2026-07-28",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 25,
+            "prixUnitaire": 7.86,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0115",
+            "date": "2026-07-28",
+            "type": "outillage",
+            "categorie": "Marteaux",
+            "designation": "Marteau bronze",
+            "reference": "MBR-1",
+            "quantite": 2,
+            "prixUnitaire": 97.35,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0117",
+            "date": "2026-07-28",
+            "type": "outillage",
+            "categorie": "Tournevis",
+            "designation": "Jeu de tournevis isolés 1000 V",
+            "reference": "TV-ISO",
+            "quantite": 1,
+            "prixUnitaire": 55.2,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0158",
+            "date": "2026-08-02",
+            "type": "outillage",
+            "categorie": "Consommables",
+            "designation": "Coffret forets HSS",
+            "reference": "FHSS-19",
+            "quantite": 2,
+            "prixUnitaire": 47.28,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0156",
+            "date": "2026-08-03",
+            "type": "outillage",
+            "categorie": "Mesure",
+            "designation": "Pied à coulisse digital",
+            "reference": "PAC-150",
+            "quantite": 2,
+            "prixUnitaire": 84.59,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0140",
+            "date": "2026-08-04",
+            "type": "epi",
+            "categorie": "Bouchons d'oreille",
+            "designation": "Bouchons mousse (boîte 200 paires)",
+            "reference": "BOU-200",
+            "quantite": 6,
+            "prixUnitaire": 50.2,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0122",
+            "date": "2026-08-06",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Distributeur 5/2 bistable",
+            "reference": "FESTO-VUVG",
+            "quantite": 3,
+            "prixUnitaire": 161.44,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0141",
+            "date": "2026-08-06",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Pantalon ignifugé",
+            "reference": "VET-IGN-P",
+            "quantite": 1,
+            "prixUnitaire": 61.33,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0146",
+            "date": "2026-08-06",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 1,
+            "prixUnitaire": 81.64,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0130",
+            "date": "2026-08-07",
+            "type": "ricambi",
+            "categorie": "Étanchéité",
+            "designation": "Kit joints chock cylindre",
+            "reference": "KJ-CH-500",
+            "quantite": 2,
+            "prixUnitaire": 319.02,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0131",
+            "date": "2026-08-07",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 28,
+            "prixUnitaire": 7.75,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0124",
+            "date": "2026-08-08",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Codeur incrémental",
+            "reference": "HEID-ERN420",
+            "quantite": 1,
+            "prixUnitaire": 431.59,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0126",
+            "date": "2026-08-08",
+            "type": "ricambi",
+            "categorie": "Guidage",
+            "designation": "Galet de guidage",
+            "reference": "GG-120",
+            "quantite": 3,
+            "prixUnitaire": 260.61,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0137",
+            "date": "2026-08-08",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 4,
+            "prixUnitaire": 8.82,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0134",
+            "date": "2026-08-10",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Lunettes de sécurité incolores",
+            "reference": "LUN-INC",
+            "quantite": 20,
+            "prixUnitaire": 6.55,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0143",
+            "date": "2026-08-10",
+            "type": "epi",
+            "categorie": "Bouchons d'oreille",
+            "designation": "Bouchons mousse (boîte 200 paires)",
+            "reference": "BOU-200",
+            "quantite": 6,
+            "prixUnitaire": 49.26,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0129",
+            "date": "2026-08-11",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Flexible hydraulique DN20 - 1 m",
+            "reference": "HYD-DN20-1000",
+            "quantite": 2,
+            "prixUnitaire": 83.26,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0154",
+            "date": "2026-08-11",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-chaleur Kevlar",
+            "reference": "GAN-KEV",
+            "quantite": 12,
+            "prixUnitaire": 14.84,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0149",
+            "date": "2026-08-14",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Lunettes de sécurité incolores",
+            "reference": "LUN-INC",
+            "quantite": 30,
+            "prixUnitaire": 6.69,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0119",
+            "date": "2026-08-15",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Kit joints vérin d'équilibrage",
+            "reference": "KJ-VE-160",
+            "quantite": 4,
+            "prixUnitaire": 120.58,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0142",
+            "date": "2026-08-15",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Lunettes de sécurité incolores",
+            "reference": "LUN-INC",
+            "quantite": 15,
+            "prixUnitaire": 6.66,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0147",
+            "date": "2026-08-15",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Gilet haute visibilité",
+            "reference": "VET-HV",
+            "quantite": 11,
+            "prixUnitaire": 8.82,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0159",
+            "date": "2026-08-15",
+            "type": "outillage",
+            "categorie": "Levage",
+            "designation": "Manille lyre 4,75 t",
+            "reference": "MAN-475",
+            "quantite": 3,
+            "prixUnitaire": 24.74,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0160",
+            "date": "2026-08-15",
+            "type": "outillage",
+            "categorie": "Marteaux",
+            "designation": "Massette 2 kg",
+            "reference": "MAS-2KG",
+            "quantite": 2,
+            "prixUnitaire": 29.13,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0148",
+            "date": "2026-08-17",
+            "type": "epi",
+            "categorie": "Bouchons d'oreille",
+            "designation": "Bouchons réutilisables à cordon",
+            "reference": "BOU-COR",
+            "quantite": 10,
+            "prixUnitaire": 3.24,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0152",
+            "date": "2026-08-17",
+            "type": "epi",
+            "categorie": "Casque",
+            "designation": "Casque chantier avec jugulaire",
+            "reference": "CAS-JUG",
+            "quantite": 17,
+            "prixUnitaire": 18.4,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0127",
+            "date": "2026-08-18",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Distributeur 5/2 bistable",
+            "reference": "FESTO-VUVG",
+            "quantite": 4,
+            "prixUnitaire": 162.0,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0132",
+            "date": "2026-08-18",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Masque FFP2 (boîte de 20)",
+            "reference": "FFP2-20",
+            "quantite": 24,
+            "prixUnitaire": 23.52,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0145",
+            "date": "2026-08-18",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Veste ignifugée",
+            "reference": "VET-IGN-V",
+            "quantite": 1,
+            "prixUnitaire": 83.98,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0121",
+            "date": "2026-08-19",
+            "type": "ricambi",
+            "categorie": "Étanchéité",
+            "designation": "Kit joints chock cylindre",
+            "reference": "KJ-CH-500",
+            "quantite": 4,
+            "prixUnitaire": 315.84,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0136",
+            "date": "2026-08-19",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 4,
+            "prixUnitaire": 9.18,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0123",
+            "date": "2026-08-20",
+            "type": "ricambi",
+            "categorie": "Guidage",
+            "designation": "Guide entrée cage finisseuse",
+            "reference": "GE-CF-07",
+            "quantite": 1,
+            "prixUnitaire": 800.35,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0138",
+            "date": "2026-08-20",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants nitrile (boîte 100)",
+            "reference": "GAN-NIT",
+            "quantite": 27,
+            "prixUnitaire": 11.86,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0125",
+            "date": "2026-08-21",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Codeur incrémental",
+            "reference": "HEID-ERN420",
+            "quantite": 4,
+            "prixUnitaire": 431.32,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0133",
+            "date": "2026-08-21",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Tablier aluminisé",
+            "reference": "TAB-ALU",
+            "quantite": 2,
+            "prixUnitaire": 60.29,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0153",
+            "date": "2026-08-21",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Cartouche A2P3",
+            "reference": "CART-A2P3",
+            "quantite": 15,
+            "prixUnitaire": 22.77,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0150",
+            "date": "2026-08-22",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Masque FFP2 (boîte de 20)",
+            "reference": "FFP2-20",
+            "quantite": 9,
+            "prixUnitaire": 24.89,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0151",
+            "date": "2026-08-22",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 26,
+            "prixUnitaire": 8.08,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0155",
+            "date": "2026-08-22",
+            "type": "outillage",
+            "categorie": "Tournevis",
+            "designation": "Jeu de tournevis isolés 1000 V",
+            "reference": "TV-ISO",
+            "quantite": 2,
+            "prixUnitaire": 57.51,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0128",
+            "date": "2026-08-23",
+            "type": "ricambi",
+            "categorie": "Étanchéité",
+            "designation": "Bague d'étanchéité 120x150x12",
+            "reference": "BE-120150",
+            "quantite": 3,
+            "prixUnitaire": 48.3,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0144",
+            "date": "2026-08-26",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Lunettes de sécurité incolores",
+            "reference": "LUN-INC",
+            "quantite": 10,
+            "prixUnitaire": 6.72,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0161",
+            "date": "2026-08-26",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Clé à frapper 65",
+            "reference": "CAF-65",
+            "quantite": 3,
+            "prixUnitaire": 71.22,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0120",
+            "date": "2026-08-27",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Accouplement à denture",
+            "reference": "FLX-GD-125",
+            "quantite": 1,
+            "prixUnitaire": 992.53,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0157",
+            "date": "2026-08-27",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Coffret clés mixtes 8-32",
+            "reference": "CCM-832",
+            "quantite": 3,
+            "prixUnitaire": 152.11,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0135",
+            "date": "2026-08-28",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 10,
+            "prixUnitaire": 7.86,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0139",
+            "date": "2026-08-28",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-chaleur Kevlar",
+            "reference": "GAN-KEV",
+            "quantite": 11,
+            "prixUnitaire": 14.75,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0198",
+            "date": "2026-09-01",
+            "type": "outillage",
+            "categorie": "Électroportatif",
+            "designation": "Meuleuse Ø125",
+            "reference": "MEU-125",
+            "quantite": 2,
+            "prixUnitaire": 163.54,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0200",
+            "date": "2026-09-01",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Clé dynamométrique 60-340 Nm",
+            "reference": "CDY-340",
+            "quantite": 2,
+            "prixUnitaire": 265.09,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0172",
+            "date": "2026-09-02",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Vérin pneumatique Ø80 course 200",
+            "reference": "FESTO-DSBC80",
+            "quantite": 4,
+            "prixUnitaire": 205.82,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0192",
+            "date": "2026-09-02",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Gilet haute visibilité",
+            "reference": "VET-HV",
+            "quantite": 22,
+            "prixUnitaire": 8.95,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0174",
+            "date": "2026-09-03",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants nitrile (boîte 100)",
+            "reference": "GAN-NIT",
+            "quantite": 6,
+            "prixUnitaire": 12.09,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0193",
+            "date": "2026-09-03",
+            "type": "epi",
+            "categorie": "Casque",
+            "designation": "Casque avec visière aluminisée",
+            "reference": "CAS-ALU",
+            "quantite": 2,
+            "prixUnitaire": 99.06,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0196",
+            "date": "2026-09-03",
+            "type": "outillage",
+            "categorie": "Tournevis",
+            "designation": "Jeu de tournevis isolés 1000 V",
+            "reference": "TV-ISO",
+            "quantite": 2,
+            "prixUnitaire": 53.97,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0201",
+            "date": "2026-09-03",
+            "type": "outillage",
+            "categorie": "Tournevis",
+            "designation": "Jeu de tournevis isolés 1000 V",
+            "reference": "TV-ISO",
+            "quantite": 3,
+            "prixUnitaire": 56.15,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0178",
+            "date": "2026-09-04",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Manchettes aluminisées",
+            "reference": "MAN-ALU",
+            "quantite": 15,
+            "prixUnitaire": 35.05,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0165",
+            "date": "2026-09-07",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Électrovanne 4/3 NG10",
+            "reference": "REX-4WE10",
+            "quantite": 1,
+            "prixUnitaire": 668.0,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0186",
+            "date": "2026-09-07",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Pantalon ignifugé",
+            "reference": "VET-IGN-P",
+            "quantite": 3,
+            "prixUnitaire": 65.1,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0162",
+            "date": "2026-09-08",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Moteur 7,5 kW",
+            "reference": "LS-7K5-4P",
+            "quantite": 1,
+            "prixUnitaire": 1364.19,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0170",
+            "date": "2026-09-08",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Électrovanne 4/3 NG10",
+            "reference": "REX-4WE10",
+            "quantite": 1,
+            "prixUnitaire": 664.63,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0177",
+            "date": "2026-09-08",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 1,
+            "prixUnitaire": 80.62,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0190",
+            "date": "2026-09-08",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Veste ignifugée",
+            "reference": "VET-IGN-V",
+            "quantite": 3,
+            "prixUnitaire": 86.78,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0166",
+            "date": "2026-09-09",
+            "type": "ricambi",
+            "categorie": "Guidage",
+            "designation": "Galet de guidage",
+            "reference": "GG-120",
+            "quantite": 1,
+            "prixUnitaire": 268.27,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0183",
+            "date": "2026-09-09",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 22,
+            "prixUnitaire": 9.06,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0167",
+            "date": "2026-09-10",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Distributeur 5/2 bistable",
+            "reference": "FESTO-VUVG",
+            "quantite": 1,
+            "prixUnitaire": 164.49,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0179",
+            "date": "2026-09-10",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 6,
+            "prixUnitaire": 125.07,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0185",
+            "date": "2026-09-10",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-chaleur Kevlar",
+            "reference": "GAN-KEV",
+            "quantite": 20,
+            "prixUnitaire": 14.81,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0180",
+            "date": "2026-09-12",
+            "type": "epi",
+            "categorie": "Bouchons d'oreille",
+            "designation": "Bouchons mousse (boîte 200 paires)",
+            "reference": "BOU-200",
+            "quantite": 3,
+            "prixUnitaire": 48.21,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0194",
+            "date": "2026-09-12",
+            "type": "outillage",
+            "categorie": "Clés",
+            "designation": "Clé dynamométrique 60-340 Nm",
+            "reference": "CDY-340",
+            "quantite": 3,
+            "prixUnitaire": 263.24,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0188",
+            "date": "2026-09-13",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Tablier aluminisé",
+            "reference": "TAB-ALU",
+            "quantite": 6,
+            "prixUnitaire": 57.53,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0197",
+            "date": "2026-09-13",
+            "type": "outillage",
+            "categorie": "Consommables",
+            "designation": "Disques à lamelles (x10)",
+            "reference": "DL-125",
+            "quantite": 3,
+            "prixUnitaire": 40.85,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0199",
+            "date": "2026-09-13",
+            "type": "outillage",
+            "categorie": "Pinces",
+            "designation": "Pince à circlips",
+            "reference": "PCC-1",
+            "quantite": 3,
+            "prixUnitaire": 39.36,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0202",
+            "date": "2026-09-14",
+            "type": "outillage",
+            "categorie": "Extracteurs",
+            "designation": "Extracteur hydraulique 3 griffes",
+            "reference": "EXT-H3",
+            "quantite": 1,
+            "prixUnitaire": 528.84,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0169",
+            "date": "2026-09-15",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Contacteur 65 A",
+            "reference": "SCH-LC1D65",
+            "quantite": 4,
+            "prixUnitaire": 188.03,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0173",
+            "date": "2026-09-15",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 5,
+            "prixUnitaire": 116.55,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0163",
+            "date": "2026-09-16",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Capteur inductif M18",
+            "reference": "IFM-IGS204",
+            "quantite": 2,
+            "prixUnitaire": 67.9,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0189",
+            "date": "2026-09-16",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 6,
+            "prixUnitaire": 81.89,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0187",
+            "date": "2026-09-19",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 14,
+            "prixUnitaire": 7.79,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0175",
+            "date": "2026-09-21",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants nitrile (boîte 100)",
+            "reference": "GAN-NIT",
+            "quantite": 14,
+            "prixUnitaire": 11.72,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0182",
+            "date": "2026-09-22",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 21,
+            "prixUnitaire": 8.9,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0184",
+            "date": "2026-09-22",
+            "type": "epi",
+            "categorie": "Casque",
+            "designation": "Casque avec visière aluminisée",
+            "reference": "CAS-ALU",
+            "quantite": 3,
+            "prixUnitaire": 96.3,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0191",
+            "date": "2026-09-22",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Cartouche A2P3",
+            "reference": "CART-A2P3",
+            "quantite": 26,
+            "prixUnitaire": 22.54,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0171",
+            "date": "2026-09-23",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement à rouleaux coniques 32222",
+            "reference": "TIMKEN-32222",
+            "quantite": 4,
+            "prixUnitaire": 323.35,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0176",
+            "date": "2026-09-23",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 6,
+            "prixUnitaire": 124.92,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0181",
+            "date": "2026-09-26",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants nitrile (boîte 100)",
+            "reference": "GAN-NIT",
+            "quantite": 23,
+            "prixUnitaire": 11.81,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0195",
+            "date": "2026-09-26",
+            "type": "outillage",
+            "categorie": "Consommables",
+            "designation": "Coffret forets HSS",
+            "reference": "FHSS-19",
+            "quantite": 2,
+            "prixUnitaire": 47.69,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0164",
+            "date": "2026-09-27",
+            "type": "ricambi",
+            "categorie": "Électrique",
+            "designation": "Contacteur 65 A",
+            "reference": "SCH-LC1D65",
+            "quantite": 4,
+            "prixUnitaire": 181.55,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0168",
+            "date": "2026-09-28",
+            "type": "ricambi",
+            "categorie": "Transmission",
+            "designation": "Croisillon d'allonge à cardan",
+            "reference": "CRD-2850",
+            "quantite": 1,
+            "prixUnitaire": 2061.96,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0211",
+            "date": "2026-10-01",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 2,
+            "prixUnitaire": 119.06,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0217",
+            "date": "2026-10-01",
+            "type": "epi",
+            "categorie": "Vêtements",
+            "designation": "Pantalon ignifugé",
+            "reference": "VET-IGN-P",
+            "quantite": 6,
+            "prixUnitaire": 60.44,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          },
+          {
+            "id": "c0216",
+            "date": "2026-10-02",
+            "type": "epi",
+            "categorie": "Gants",
+            "designation": "Gants anti-coupure niveau D",
+            "reference": "GAN-COUP-D",
+            "quantite": 21,
+            "prixUnitaire": 8.02,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0203",
+            "date": "2026-10-04",
+            "type": "ricambi",
+            "categorie": "Pneumatique",
+            "designation": "Distributeur 5/2 bistable",
+            "reference": "FESTO-VUVG",
+            "quantite": 1,
+            "prixUnitaire": 158.21,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0212",
+            "date": "2026-10-04",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Tablier aluminisé",
+            "reference": "TAB-ALU",
+            "quantite": 2,
+            "prixUnitaire": 59.33,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0219",
+            "date": "2026-10-05",
+            "type": "outillage",
+            "categorie": "Consommables",
+            "designation": "Coffret forets HSS",
+            "reference": "FHSS-19",
+            "quantite": 3,
+            "prixUnitaire": 46.81,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0208",
+            "date": "2026-10-07",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Tablier aluminisé",
+            "reference": "TAB-ALU",
+            "quantite": 6,
+            "prixUnitaire": 59.24,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0210",
+            "date": "2026-10-07",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Chaussures de sécurité S3 HRO",
+            "reference": "CHA-S3",
+            "quantite": 5,
+            "prixUnitaire": 80.34,
+            "demandeur": "Cylindrerie",
+            "commentaire": ""
+          },
+          {
+            "id": "c0213",
+            "date": "2026-10-08",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 27,
+            "prixUnitaire": 9.15,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0209",
+            "date": "2026-10-11",
+            "type": "epi",
+            "categorie": "Manchettes",
+            "designation": "Manchettes aluminisées",
+            "reference": "MAN-ALU",
+            "quantite": 27,
+            "prixUnitaire": 33.64,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0220",
+            "date": "2026-10-11",
+            "type": "outillage",
+            "categorie": "Levage",
+            "designation": "Palan à levier 1,5 t",
+            "reference": "PAL-15",
+            "quantite": 3,
+            "prixUnitaire": 260.12,
+            "demandeur": "Maintenance méca",
+            "commentaire": ""
+          },
+          {
+            "id": "c0207",
+            "date": "2026-10-12",
+            "type": "ricambi",
+            "categorie": "Guidage",
+            "designation": "Galet de guidage",
+            "reference": "GG-120",
+            "quantite": 3,
+            "prixUnitaire": 253.46,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0215",
+            "date": "2026-10-12",
+            "type": "epi",
+            "categorie": "Lunettes",
+            "designation": "Surlunettes",
+            "reference": "LUN-SUR",
+            "quantite": 26,
+            "prixUnitaire": 9.1,
+            "demandeur": "Équipe A",
+            "commentaire": ""
+          },
+          {
+            "id": "c0204",
+            "date": "2026-10-14",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement 6312-2RS",
+            "reference": "SKF-6312-2RS",
+            "quantite": 3,
+            "prixUnitaire": 45.76,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0214",
+            "date": "2026-10-14",
+            "type": "epi",
+            "categorie": "Masque",
+            "designation": "Masque FFP2 (boîte de 20)",
+            "reference": "FFP2-20",
+            "quantite": 6,
+            "prixUnitaire": 24.29,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0221",
+            "date": "2026-10-14",
+            "type": "outillage",
+            "categorie": "Électroportatif",
+            "designation": "Clé à chocs 1/2\" sur batterie",
+            "reference": "CAC-18V",
+            "quantite": 3,
+            "prixUnitaire": 332.5,
+            "demandeur": "Maintenance élec",
+            "commentaire": ""
+          },
+          {
+            "id": "c0206",
+            "date": "2026-10-15",
+            "type": "ricambi",
+            "categorie": "Roulements",
+            "designation": "Roulement 6312-2RS",
+            "reference": "SKF-6312-2RS",
+            "quantite": 2,
+            "prixUnitaire": 45.25,
+            "demandeur": "Équipe B",
+            "commentaire": ""
+          },
+          {
+            "id": "c0205",
+            "date": "2026-10-16",
+            "type": "ricambi",
+            "categorie": "Hydraulique",
+            "designation": "Pompe hydraulique à palettes",
+            "reference": "PV-V20-45",
+            "quantite": 1,
+            "prixUnitaire": 1885.62,
+            "demandeur": "Équipe C",
+            "commentaire": ""
+          },
+          {
+            "id": "c0218",
+            "date": "2026-10-16",
+            "type": "epi",
+            "categorie": "Chaussures",
+            "designation": "Bottes fonderie",
+            "reference": "CHA-BOT",
+            "quantite": 1,
+            "prixUnitaire": 123.24,
+            "demandeur": "Équipe D",
+            "commentaire": ""
+          }
+        ]
+      }
+    </script>
+    <script>
+      const TYPES = {
+        ricambi: {
+          label: "Ricambi",
+          sub: "Pièces de rechange",
+          hex: "#4f9dde",
+        },
+        epi: {
+          label: "EPI",
+          sub: "Équipements de protection individuelle",
+          hex: "#f2a33a",
+        },
+        outillage: {
+          label: "Outillage",
+          sub: "Outils et petit matériel, regroupés par catégorie",
+          hex: "#6cc47a",
+        },
+      };
+      const TYPE_KEYS = Object.keys(TYPES);
+      const STORE_KEY = "laminoir-consommations-v1";
+      const MOIS = [
+        "janvier",
+        "février",
+        "mars",
+        "avril",
+        "mai",
+        "juin",
+        "juillet",
+        "août",
+        "septembre",
+        "octobre",
+        "novembre",
+        "décembre",
+      ];
+      const TOOL_ICONS = {
+        Vérins: "🛢️",
+        Clés: "🔧",
+        Marteaux: "🔨",
+        Tournevis: "🪛",
+        Pinces: "🗜️",
+        Électroportatif: "🔌",
+        Levage: "⛓️",
+        Mesure: "📏",
+        Consommables: "💿",
+        Extracteurs: "⚙️",
+      };
+
+      const eur = new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 0,
+      });
+      const eur2 = new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+      });
+      const num = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
+      const pct = (v) =>
+        (isFinite(v) ? v * 100 : 0).toFixed(1).replace(".", ",") + " %";
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      const $ = (s, el = document) => el.querySelector(s);
+
+      let db = null;
+      let fileHandle = null;
+      let source = "";
+      let dirty = false;
+      const state = {
+        month: null,
+        tab: "synthese",
+        editing: {},
+        search: {},
+      };
+
+      /* ---------- Données ---------- */
+      const amount = (c) =>
+        (Number(c.quantite) || 0) * (Number(c.prixUnitaire) || 0);
+      const sum = (arr) => arr.reduce((a, c) => a + amount(c), 0);
+      const monthOf = (d) => String(d).slice(0, 7);
+      const inMonth = (t, m) =>
+        db.consommations.filter((c) => c.type === t && monthOf(c.date) === m);
+      function shiftMonth(m, k) {
+        const [y, mo] = m.split("-").map(Number);
+        const d = new Date(y, mo - 1 + k, 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      }
+      function monthLabel(m, short) {
+        const [y, mo] = m.split("-").map(Number);
+        const n = MOIS[mo - 1];
+        if (short)
+          return (
+            (n.length > 4 ? n.slice(0, 4) + "." : n) + " " + String(y).slice(2)
+          );
+        return n.charAt(0).toUpperCase() + n.slice(1) + " " + y;
+      }
+      function groupBy(list, key) {
+        const map = new Map();
+        for (const c of list) {
+          const k = c[key] || "Divers";
+          if (!map.has(k)) map.set(k, { name: k, total: 0, qty: 0, items: [] });
+          const g = map.get(k);
+          g.total += amount(c);
+          g.qty += Number(c.quantite) || 0;
+          g.items.push(c);
+        }
+        return [...map.values()].sort((a, b) => b.total - a.total);
+      }
+      const newId = () =>
+        "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+      function normalize(d) {
+        if (!d || !Array.isArray(d.consommations))
+          throw new Error(
+            "Fichier invalide : tableau « consommations » manquant",
+          );
+        d.version ??= 1;
+        d.service ??= "Laminoir";
+        d.budgets ??= {};
+        d.categories ??= {};
+        for (const t of TYPE_KEYS) {
+          d.budgets[t] ??= 0;
+          d.categories[t] ??= [];
+        }
+        d.consommations = d.consommations
+          .filter((c) => TYPES[c.type])
+          .map((c) => ({
+            id: c.id || newId(),
+            date: c.date,
+            type: c.type,
+            categorie: c.categorie || "Divers",
+            designation: c.designation || "",
+            reference: c.reference || "",
+            quantite: Number(c.quantite) || 0,
+            prixUnitaire: Number(c.prixUnitaire) || 0,
+            demandeur: c.demandeur || "",
+            commentaire: c.commentaire || "",
+          }));
+        return d;
+      }
+      function persist() {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(db));
+        } catch (e) {
+          /* stockage indisponible : les données restent en mémoire */
+        }
+        dirty = true;
+        renderFooter();
+      }
+
+      /* ---------- Couleurs ---------- */
+      function heat(t) {
+        const stops = [
+          [0, [63, 174, 90]],
+          [0.5, [242, 194, 48]],
+          [1, [232, 69, 44]],
+        ];
+        t = Math.max(0, Math.min(1, t));
+        const i = t <= 0.5 ? 0 : 1;
+        const [t0, a] = stops[i];
+        const [t1, b] = stops[i + 1];
+        const f = (t - t0) / (t1 - t0);
+        const c = a.map((v, j) => Math.round(v + (b[j] - v) * f));
+        return `rgb(${c.join(",")})`;
+      }
+      const gaugeColor = (r) =>
+        r >= 1 ? "var(--danger)" : r >= 0.8 ? "var(--warn)" : "var(--ok)";
+
+      /* ---------- Composants ---------- */
+      function delta(cur, prev) {
+        if (!prev) return `<span class="muted">pas de référence M-1</span>`;
+        const d = (cur - prev) / prev;
+        const cls = d > 0 ? "up" : "down";
+        return `<span class="${cls}">${d > 0 ? "▲ +" : "▼ "}${pct(d)}</span> vs ${eur.format(prev)} en M-1`;
+      }
+      function kpiCard({ label, value, sub, color, budget, cur }) {
+        let g = "";
+        if (budget) {
+          const r = cur / budget;
+          g = `<div class="gauge" title="${pct(r)} du budget"><i style="width:${Math.min(100, r * 100)}%;background:${gaugeColor(r)}"></i></div>
+            <div class="sub">${pct(r)} du budget (${eur.format(budget)})</div>`;
+        }
+        return `<div class="kpi" style="--c:${color || "var(--accent)"}">
+          <div class="lbl">${label}</div><div class="val">${value}</div>
+          <div class="sub">${sub || ""}</div>${g}</div>`;
+      }
+      function hbars(groups, total, colorFn) {
+        if (!groups.length)
+          return `<div class="empty">Aucune donnée ce mois-ci</div>`;
+        const max = groups[0].total || 1;
+        return `<div class="hbars">${groups
+          .map(
+            (
+              g,
+              i,
+            ) => `<div class="hbar"><div class="top"><span>${esc(g.name)}</span>
+            <span><b>${eur.format(g.total)}</b> <span class="muted">· ${pct(g.total / total)}</span></span></div>
+            <div class="track"><i style="width:${(g.total / max) * 100}%;background:${colorFn(g, i, max)}"></i></div></div>`,
+          )
+          .join("")}</div>`;
+      }
+
+      /* ---------- Synthèse ---------- */
+      function renderSynthese() {
+        const m = state.month;
+        const p = shiftMonth(m, -1);
+        const cur = Object.fromEntries(
+          TYPE_KEYS.map((t) => [t, sum(inMonth(t, m))]),
+        );
+        const prev = Object.fromEntries(
+          TYPE_KEYS.map((t) => [t, sum(inMonth(t, p))]),
+        );
+        const total = TYPE_KEYS.reduce((a, t) => a + cur[t], 0);
+        const totalPrev = TYPE_KEYS.reduce((a, t) => a + prev[t], 0);
+        const budgetTotal = TYPE_KEYS.reduce(
+          (a, t) => a + (Number(db.budgets[t]) || 0),
+          0,
+        );
+
+        $("#syn-kpis").innerHTML =
+          kpiCard({
+            label: "Total du mois",
+            value: eur.format(total),
+            sub: delta(total, totalPrev),
+            budget: budgetTotal,
+            cur: total,
+          }) +
+          TYPE_KEYS.map((t) =>
+            kpiCard({
+              label: TYPES[t].label,
+              value: eur.format(cur[t]),
+              sub: delta(cur[t], prev[t]),
+              color: TYPES[t].hex,
+              budget: Number(db.budgets[t]) || 0,
+              cur: cur[t],
+            }),
+          ).join("");
+
+        $("#syn-split").innerHTML = total
+          ? `<div class="split">${TYPE_KEYS.filter((t) => cur[t])
+              .map(
+                (t) =>
+                  `<div style="width:${(cur[t] / total) * 100}%;background:${TYPES[t].hex}" title="${TYPES[t].label} : ${eur.format(cur[t])}">${cur[t] / total > 0.08 ? pct(cur[t] / total) : ""}</div>`,
+              )
+              .join("")}</div>
+            <div class="legend">${TYPE_KEYS.map((t) => `<span><i style="background:${TYPES[t].hex}"></i>${TYPES[t].label} ${eur.format(cur[t])} (${pct(cur[t] / total)})</span>`).join("")}</div>`
+          : `<div class="empty">Aucune consommation saisie pour ce mois.</div>`;
+
+        // Points clés
+        const all = TYPE_KEYS.flatMap((t) => inMonth(t, m));
+        const ins = [];
+        if (total) {
+          ins.push(
+            `Dépense totale de <b>${eur.format(total)}</b> sur ${all.length} lignes` +
+              (totalPrev
+                ? `, soit <span class="${total > totalPrev ? "up" : "down"}">${total > totalPrev ? "+" : ""}${pct((total - totalPrev) / totalPrev)}</span> par rapport à ${monthLabel(p)}.`
+                : "."),
+          );
+          const main = TYPE_KEYS.reduce((a, t) => (cur[t] > cur[a] ? t : a));
+          ins.push(
+            `<b>${TYPES[main].label}</b> représente le premier poste de dépense (${pct(cur[main] / total)}).`,
+          );
+          const biggest = [...all].sort((a, b) => amount(b) - amount(a))[0];
+          ins.push(
+            `Plus grosse dépense : <b>${esc(biggest.designation)}</b> (${eur.format(amount(biggest))}, ${TYPES[biggest.type].label}).`,
+          );
+          for (const t of TYPE_KEYS) {
+            const b = Number(db.budgets[t]) || 0;
+            if (b && cur[t] > b)
+              ins.push(
+                `<span class="up">⚠ Budget ${TYPES[t].label} dépassé de ${eur.format(cur[t] - b)}.</span>`,
+              );
+            else if (b && cur[t] > 0.8 * b)
+              ins.push(
+                `<span style="color:var(--warn)">Budget ${TYPES[t].label} consommé à ${pct(cur[t] / b)}.</span>`,
+              );
+          }
+          const [top] = groupBy(inMonth("epi", m), "categorie");
+          if (top)
+            ins.push(
+              `EPI : les <b>${esc(top.name.toLowerCase())}</b> concentrent ${pct(top.total / (cur.epi || 1))} du budget EPI.`,
+            );
+        } else {
+          ins.push("Aucune dépense enregistrée ce mois-ci.");
+        }
+        $("#syn-insights").innerHTML = ins.map((s) => `<li>${s}</li>`).join("");
+
+        $("#syn-trend").innerHTML = trendSVG(m);
+
+        const top5 = [...all].sort((a, b) => amount(b) - amount(a)).slice(0, 5);
+        $("#syn-top").innerHTML = top5.length
+          ? `<div class="tablewrap"><table><thead><tr><th>Onglet</th><th>Désignation</th><th>Catégorie</th><th class="num">Montant</th></tr></thead><tbody>
+            ${top5
+              .map(
+                (c) =>
+                  `<tr><td><span class="badge" style="--c:${TYPES[c.type].hex}">${TYPES[c.type].label}</span></td>
+                  <td>${esc(c.designation)}<div class="muted">${num.format(c.quantite)} × ${eur2.format(c.prixUnitaire)}</div></td>
+                  <td>${esc(c.categorie)}</td><td class="num">${eur.format(amount(c))}</td></tr>`,
+              )
+              .join("")}</tbody></table></div>`
+          : `<div class="empty">—</div>`;
+
+        $("#syn-topcats").innerHTML = `<div class="hbars">${TYPE_KEYS.map(
+          (t) => {
+            const [g] = groupBy(inMonth(t, m), "categorie");
+            if (!g)
+              return `<div class="hbar"><div class="top"><span>${TYPES[t].label}</span><span class="muted">—</span></div></div>`;
+            return `<div class="hbar"><div class="top"><span><span class="badge" style="--c:${TYPES[t].hex}">${TYPES[t].label}</span> ${esc(g.name)}</span>
+            <span><b>${eur.format(g.total)}</b> <span class="muted">· ${pct(g.total / cur[t])}</span></span></div>
+            <div class="track"><i style="width:${(g.total / cur[t]) * 100}%;background:${TYPES[t].hex}"></i></div></div>`;
+          },
+        ).join("")}</div>`;
+
+        $("#syn-budgets").innerHTML = TYPE_KEYS.map(
+          (t) =>
+            `<label>${TYPES[t].label} (€ / mois)<input type="number" min="0" step="100" data-budget="${t}" value="${Number(db.budgets[t]) || 0}"></label>`,
+        ).join("");
+      }
+
+      function trendSVG(m) {
+        const months = [-5, -4, -3, -2, -1, 0].map((k) => shiftMonth(m, k));
+        const data = months.map((mm) => ({
+          m: mm,
+          v: TYPE_KEYS.map((t) => sum(inMonth(t, mm))),
+        }));
+        const max = Math.max(
+          1,
+          ...data.map((d) => d.v.reduce((a, b) => a + b, 0)),
+        );
+        const W = 600,
+          H = 250,
+          top = 24,
+          bottom = 30,
+          bw = 58;
+        const gap = (W - 6 * bw) / 6;
+        const ph = H - top - bottom;
+        let s = `<svg viewBox="0 0 ${W} ${H + 24}" width="100%" role="img" aria-label="Évolution des dépenses sur 6 mois">`;
+        s += `<line x1="0" x2="${W}" y1="${H - bottom}" y2="${H - bottom}" stroke="var(--line)"/>`;
+        data.forEach((d, i) => {
+          const x = gap / 2 + i * (bw + gap);
+          let y = H - bottom;
+          const tot = d.v.reduce((a, b) => a + b, 0);
+          const isCur = d.m === m;
+          d.v.forEach((v, j) => {
+            const h = (v / max) * ph;
+            y -= h;
+            if (h > 0)
+              s += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="${TYPES[TYPE_KEYS[j]].hex}" opacity="${isCur ? 1 : 0.55}"><title>${TYPES[TYPE_KEYS[j]].label} — ${monthLabel(d.m)} : ${eur.format(v)}</title></rect>`;
+          });
+          s += `<text x="${x + bw / 2}" y="${y - 6}" text-anchor="middle" font-size="12" fill="var(--text)" font-weight="${isCur ? 700 : 400}">${tot ? eur.format(tot).replace(/\s?€/, "") + " €" : ""}</text>`;
+          s += `<text x="${x + bw / 2}" y="${H - bottom + 18}" text-anchor="middle" font-size="12" fill="${isCur ? "var(--text)" : "var(--muted)"}" font-weight="${isCur ? 700 : 400}">${monthLabel(d.m, true)}</text>`;
+        });
+        let lx = 0;
+        TYPE_KEYS.forEach((t) => {
+          s += `<rect x="${lx}" y="${H + 8}" width="10" height="10" rx="2" fill="${TYPES[t].hex}"/><text x="${lx + 15}" y="${H + 17}" font-size="12" fill="var(--muted)">${TYPES[t].label}</text>`;
+          lx += 110;
+        });
+        return s + "</svg>";
+      }
+
+      /* ---------- Onglets de saisie ---------- */
+      function tabKpis(t) {
+        const m = state.month;
+        const list = inMonth(t, m);
+        const cur = sum(list);
+        const prev = sum(inMonth(t, shiftMonth(m, -1)));
+        const b = Number(db.budgets[t]) || 0;
+        const [g] = groupBy(list, "categorie");
+        $(`#kpi-${t}`).innerHTML =
+          kpiCard({
+            label: `Dépenses ${monthLabel(m)}`,
+            value: eur.format(cur),
+            sub: delta(cur, prev),
+            color: TYPES[t].hex,
+            budget: b,
+            cur,
+          }) +
+          kpiCard({
+            label: "Lignes saisies",
+            value: list.length,
+            sub: `${num.format(list.reduce((a, c) => a + c.quantite, 0))} unités consommées`,
+            color: TYPES[t].hex,
+          }) +
+          kpiCard({
+            label: "Catégorie la plus coûteuse",
+            value: g ? esc(g.name) : "—",
+            sub: g ? `${eur.format(g.total)} · ${pct(g.total / cur)}` : "",
+            color: TYPES[t].hex,
+          });
+      }
+
+      function renderRicambi() {
+        const list = inMonth("ricambi", state.month);
+        const total = sum(list);
+        const groups = groupBy(list, "categorie");
+        const items = groupBy(list, "designation").slice(0, 6);
+        $("#viz-ricambi").innerHTML = `<div class="grid2">
+          <div><h3>Dépenses par famille</h3>${hbars(groups, total, (g, i, max) => heat(g.total / max))}</div>
+          <div><h3>Articles les plus coûteux</h3>${hbars(items, total, () => TYPES.ricambi.hex)}</div></div>`;
+      }
+
+      /* Silhouette EPI : zones du corps -> catégories */
+      const FW = 560;
+      const mir = (pts) => pts.map(([x, y]) => [FW - x, y]);
+      const poly = (pts) =>
+        `<polygon points="${pts.map((p) => p.join(",")).join(" ")}"/>`;
+      const UPPER_ARM = [
+        [224, 148],
+        [206, 156],
+        [186, 240],
+        [208, 246],
+        [218, 184],
+      ];
+      const FOREARM = [
+        [186, 240],
+        [208, 246],
+        [203, 314],
+        [180, 310],
+      ];
+      const LEG = [
+        [222, 278],
+        [278, 278],
+        [272, 474],
+        [232, 474],
+      ];
+      const FOOT = [
+        [230, 474],
+        [274, 474],
+        [277, 500],
+        [210, 500],
+        [214, 488],
+      ];
+      const TORSO = [
+        [226, 146],
+        [334, 146],
+        [346, 182],
+        [338, 278],
+        [222, 278],
+        [214, 182],
+      ];
+      const ZONES = [
+        {
+          cat: "Vêtements",
+          shapes: [
+            poly(TORSO),
+            poly(UPPER_ARM),
+            poly(mir(UPPER_ARM)),
+            poly(LEG),
+            poly(mir(LEG)),
+          ],
+          anchor: [306, 212],
+          side: "R",
+          ly: 196,
+        },
+        {
+          cat: "Manchettes",
+          shapes: [poly(FOREARM), poly(mir(FOREARM))],
+          anchor: [366, 278],
+          side: "R",
+          ly: 290,
+        },
+        {
+          cat: "Gants",
+          shapes: [
+            `<ellipse cx="191" cy="332" rx="14" ry="19"/>`,
+            `<ellipse cx="369" cy="332" rx="14" ry="19"/>`,
+          ],
+          anchor: [191, 334],
+          side: "L",
+          ly: 336,
+        },
+        {
+          cat: "Chaussures",
+          shapes: [poly(FOOT), poly(mir(FOOT))],
+          anchor: [322, 490],
+          side: "R",
+          ly: 470,
+        },
+        {
+          cat: "Masque",
+          shapes: [
+            `<path d="M257,110 Q280,103 303,110 L299,125 Q280,136 261,125 Z"/>`,
+          ],
+          anchor: [262, 120],
+          side: "L",
+          ly: 196,
+        },
+        {
+          cat: "Lunettes",
+          shapes: [`<rect x="251" y="92" width="58" height="13" rx="6"/>`],
+          anchor: [254, 98],
+          side: "L",
+          ly: 128,
+        },
+        {
+          cat: "Bouchons d'oreille",
+          shapes: [
+            `<circle cx="246" cy="102" r="7"/>`,
+            `<circle cx="314" cy="102" r="7"/>`,
+          ],
+          anchor: [318, 102],
+          side: "R",
+          ly: 112,
+        },
+        {
+          cat: "Casque",
+          shapes: [
+            `<path d="M244,86 C244,44 316,44 316,86 Z"/>`,
+            `<rect x="235" y="80" width="90" height="9" rx="4"/>`,
+          ],
+          anchor: [262, 60],
+          side: "L",
+          ly: 54,
+        },
+      ];
+
+      function figureSVG(groups, total) {
+        const byCat = Object.fromEntries(groups.map((g) => [g.name, g.total]));
+        const max = Math.max(1, ...groups.map((g) => g.total));
+        let s = `<svg viewBox="0 0 ${FW} 520" role="img" aria-label="Répartition des coûts EPI sur une silhouette">`;
+        // Base de la silhouette (tête, cou)
+        s += `<g fill="#566275"><circle cx="280" cy="100" r="34"/><rect x="269" y="130" width="22" height="20" rx="4"/></g>`;
+        for (const z of ZONES) {
+          const v = byCat[z.cat] || 0;
+          const col = v ? heat(v / max) : "var(--neutral)";
+          s += `<g class="zone" fill="${col}"><title>${esc(z.cat)} : ${eur.format(v)} (${pct(total ? v / total : 0)})</title>${z.shapes.join("")}</g>`;
+        }
+        for (const z of ZONES) {
+          const v = byCat[z.cat] || 0;
+          const col = v ? heat(v / max) : "var(--neutral)";
+          const [ax, ay] = z.anchor;
+          const L = z.side === "L";
+          const lx = L ? 12 : FW - 12;
+          const lineX = L ? 158 : FW - 158;
+          s += `<polyline points="${lineX},${z.ly - 4} ${L ? lineX + 12 : lineX - 12},${z.ly - 4} ${ax},${ay}" fill="none" stroke="${col}" stroke-width="1.5"/>`;
+          s += `<circle cx="${ax}" cy="${ay}" r="3.5" fill="${col}" stroke="var(--bg)"/>`;
+          s += `<text x="${lx}" y="${z.ly - 8}" text-anchor="${L ? "start" : "end"}" class="zl">${esc(z.cat)}</text>`;
+          s += `<text x="${lx}" y="${z.ly + 10}" text-anchor="${L ? "start" : "end"}" class="zv"><tspan fill="${col}" font-weight="700">${pct(total ? v / total : 0)}</tspan> · ${eur.format(v)}</text>`;
+        }
+        return s + "</svg>";
+      }
+
+      function renderEpi() {
+        const list = inMonth("epi", state.month);
+        const total = sum(list);
+        const groups = groupBy(list, "categorie");
+        const max = groups[0]?.total || 1;
+        const known = new Set(ZONES.map((z) => z.cat));
+        const others = groups.filter((g) => !known.has(g.name));
+        $("#viz-epi").innerHTML = `<div class="epi-wrap">
+          <div class="figure">${figureSVG(groups, total)}</div>
+          <div>
+            <h3>Classement par coût</h3>
+            ${hbars(groups, total, (g) => heat(g.total / max))}
+            <div style="margin-top:16px"><div class="muted" style="font-size:12px">Échelle de coût (du moins cher au plus cher)</div>
+            <div class="heatlegend"></div><div><span>${eur.format(0)}</span><span>${eur.format(groups[0]?.total || 0)}</span></div></div>
+            ${others.length ? `<p class="muted" style="font-size:12px">Hors silhouette : ${others.map((g) => esc(g.name)).join(", ")}</p>` : ""}
+          </div></div>`;
+      }
+
+      function renderOutillage() {
+        const list = inMonth("outillage", state.month);
+        const total = sum(list);
+        const groups = groupBy(list, "categorie");
+        const max = groups[0]?.total || 1;
+        const unused = (db.categories.outillage || []).filter(
+          (c) => !groups.some((g) => g.name === c),
+        );
+        $("#viz-outillage").innerHTML = groups.length
+          ? `<h3>Dépenses regroupées par catégorie</h3><div class="cats">${groups
+              .map((g) => {
+                const arts = groupBy(g.items, "designation");
+                return `<div class="cat" style="--c:${heat(g.total / max)}">
+                <div class="head"><div class="ico">${TOOL_ICONS[g.name] || "🧰"}</div>
+                  <div><div class="name">${esc(g.name)}</div><div class="muted" style="font-size:12px">${g.items.length} ligne(s) · ${num.format(g.qty)} unité(s)</div></div>
+                  <div class="amt">${eur.format(g.total)}<small>${pct(g.total / total)}</small></div></div>
+                <div class="gauge"><i style="width:${(g.total / max) * 100}%;background:var(--c)"></i></div>
+                <details><summary>Détail des articles</summary><table>${arts
+                  .map(
+                    (a) =>
+                      `<tr><td>${esc(a.name)}</td><td class="num">× ${num.format(a.qty)}</td><td class="num">${eur.format(a.total)}</td></tr>`,
+                  )
+                  .join("")}</table></details></div>`;
+              })
+              .join("")}</div>
+            ${unused.length ? `<p class="muted" style="font-size:12px;margin-bottom:0">Sans dépense ce mois : ${unused.map(esc).join(", ")}</p>` : ""}`
+          : `<div class="empty">Aucune dépense d'outillage ce mois-ci.</div>`;
+      }
+
+      function formHTML(t) {
+        return `<form class="entry" data-type="${t}" autocomplete="off">
+          <h3 class="ftitle">Nouvelle consommation ${TYPES[t].label}</h3>
+          <div class="fields">
+            <label>Date<input type="date" name="date" required></label>
+            <label>Catégorie<input name="categorie" list="cats-${t}" required placeholder="Choisir ou saisir"></label>
+            <label class="wide">Désignation<input name="designation" list="des-${t}" required></label>
+            <label>Référence<input name="reference"></label>
+            <label>Quantité<input type="number" name="quantite" min="0" step="any" required></label>
+            <label>Prix unitaire (€)<input type="number" name="prixUnitaire" min="0" step="0.01" required></label>
+            <label>Demandeur<input name="demandeur" list="dem-list"></label>
+            <label class="wide">Commentaire<input name="commentaire"></label>
+          </div>
+          <div class="actions"><span class="ftotal"></span>
+            <button type="button" class="btn cancel" hidden>Annuler</button>
+            <button type="submit" class="btn primary">Ajouter</button></div>
+          <datalist id="cats-${t}"></datalist><datalist id="des-${t}"></datalist>
+        </form>`;
+      }
+
+      function renderList(t) {
+        const q = (state.search[t] || "").toLowerCase();
+        const list = inMonth(t, state.month)
+          .filter(
+            (c) =>
+              !q ||
+              [
+                c.designation,
+                c.reference,
+                c.categorie,
+                c.demandeur,
+                c.commentaire,
+              ]
+                .join(" ")
+                .toLowerCase()
+                .includes(q),
+          )
+          .sort((a, b) => b.date.localeCompare(a.date));
+        const total = sum(list);
+        $(`#list-${t}`).innerHTML = list.length
+          ? `<div class="tablewrap"><table><thead><tr><th>Date</th><th>Catégorie</th><th>Désignation</th><th>Réf.</th><th class="num">Qté</th><th class="num">P.U.</th><th class="num">Total</th><th>Demandeur</th><th></th></tr></thead>
+            <tbody>${list
+              .map(
+                (
+                  c,
+                ) => `<tr><td class="num">${c.date.split("-").reverse().join("/")}</td><td>${esc(c.categorie)}</td>
+                <td>${esc(c.designation)}${c.commentaire ? `<div class="muted">${esc(c.commentaire)}</div>` : ""}</td>
+                <td class="muted">${esc(c.reference)}</td><td class="num">${num.format(c.quantite)}</td>
+                <td class="num">${eur2.format(c.prixUnitaire)}</td><td class="num"><b>${eur2.format(amount(c))}</b></td>
+                <td>${esc(c.demandeur)}</td>
+                <td class="num"><button class="btn small" data-edit="${c.id}" title="Modifier">✎</button>
+                <button class="btn small" data-del="${c.id}" title="Supprimer">✕</button></td></tr>`,
+              )
+              .join("")}</tbody>
+            <tfoot><tr><td colspan="6">${list.length} ligne(s)${q ? " (filtrées)" : ""}</td><td class="num">${eur2.format(total)}</td><td colspan="2"></td></tr></tfoot></table></div>`
+          : `<div class="empty">Aucune ligne pour ${monthLabel(state.month)}${q ? " correspondant à la recherche" : ""}.</div>`;
+      }
+
+      function refreshDatalists() {
+        for (const t of TYPE_KEYS) {
+          const rows = db.consommations.filter((c) => c.type === t);
+          const cats = [
+            ...new Set([
+              ...(db.categories[t] || []),
+              ...rows.map((c) => c.categorie),
+            ]),
+          ].sort((a, b) => a.localeCompare(b, "fr"));
+          $(`#cats-${t}`).innerHTML = cats
+            .map((c) => `<option value="${esc(c)}">`)
+            .join("");
+          const des = [...new Set(rows.map((c) => c.designation))].sort(
+            (a, b) => a.localeCompare(b, "fr"),
+          );
+          $(`#des-${t}`).innerHTML = des
+            .map((c) => `<option value="${esc(c)}">`)
+            .join("");
+        }
+        const dem = [
+          ...new Set(db.consommations.map((c) => c.demandeur).filter(Boolean)),
+        ].sort();
+        $("#dem-list").innerHTML = dem
+          .map((c) => `<option value="${esc(c)}">`)
+          .join("");
+      }
+
+      function defaultDate() {
+        const today = new Date();
+        const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        return monthOf(iso) === state.month ? iso : `${state.month}-01`;
+      }
+      function resetForm(t) {
+        const f = $(`form[data-type="${t}"]`);
+        f.reset();
+        f.date.value = defaultDate();
+        state.editing[t] = null;
+        f.classList.remove("editing");
+        $(".ftitle", f).textContent = `Nouvelle consommation ${TYPES[t].label}`;
+        $("button[type=submit]", f).textContent = "Ajouter";
+        $(".cancel", f).hidden = true;
+        updateFormTotal(f);
+      }
+      function updateFormTotal(f) {
+        const v =
+          (Number(f.quantite.value) || 0) * (Number(f.prixUnitaire.value) || 0);
+        $(".ftotal", f).textContent = v ? `Montant : ${eur2.format(v)}` : "";
+      }
+
+      function renderFooter() {
+        $("#src").textContent =
+          `Source : ${source}${fileHandle ? ` (${fileHandle.name})` : ""} · ${db.consommations.length} lignes`;
+        $("#dirty").hidden = !dirty;
+      }
+
+      function renderAll() {
+        $("#month").value = state.month;
+        $("#service-name").textContent = `Service ${db.service}`;
+        document
+          .querySelectorAll(".month-label")
+          .forEach((el) => (el.textContent = monthLabel(state.month)));
+        renderSynthese();
+        for (const t of TYPE_KEYS) {
+          tabKpis(t);
+          renderList(t);
+        }
+        renderRicambi();
+        renderEpi();
+        renderOutillage();
+        refreshDatalists();
+        renderFooter();
+      }
+
+      /* ---------- Construction de l'interface ---------- */
+      function buildUI() {
+        const tabs = [
+          ["synthese", "Synthèse", "var(--accent)"],
+          ...TYPE_KEYS.map((t) => [t, TYPES[t].label, TYPES[t].hex]),
+        ];
+        $("#tabs").innerHTML = tabs
+          .map(
+            ([id, l, c]) =>
+              `<button data-tab="${id}" style="--c:${c}"><span class="dot"></span>${l}</button>`,
+          )
+          .join("");
+        const main = $("main");
+        for (const t of TYPE_KEYS) {
+          main.insertAdjacentHTML(
+            "beforeend",
+            `<section class="tab" id="tab-${t}">
+              <div class="tabhead"><h2>${TYPES[t].label} — <span class="month-label"></span></h2><p>${TYPES[t].sub}</p></div>
+              <div class="kpis" id="kpi-${t}"></div>
+              <div class="panel" id="viz-${t}"></div>
+              <div class="panel">${formHTML(t)}</div>
+              <div class="panel"><div class="listhead"><h3>Détail du mois</h3>
+                <input type="search" data-search="${t}" placeholder="Rechercher…"></div>
+                <div id="list-${t}"></div></div>
+            </section>`,
+          );
+        }
+        main.insertAdjacentHTML(
+          "beforeend",
+          `<datalist id="dem-list"></datalist>`,
+        );
+      }
+
+      function showTab(id) {
+        state.tab = id;
+        document
+          .querySelectorAll(".tab")
+          .forEach((s) => s.classList.toggle("active", s.id === `tab-${id}`));
+        document
+          .querySelectorAll("#tabs button")
+          .forEach((b) => b.classList.toggle("active", b.dataset.tab === id));
+        try {
+          localStorage.setItem(STORE_KEY + "-tab", id);
+        } catch (e) {}
+      }
+
+      function toast(msg) {
+        const el = $("#toast");
+        el.textContent = msg;
+        el.classList.add("show");
+        clearTimeout(toast.t);
+        toast.t = setTimeout(() => el.classList.remove("show"), 2600);
+      }
+
+      /* ---------- Fichier JSON ---------- */
+      const jsonText = () => JSON.stringify(db, null, 2);
+      async function writeHandle() {
+        const w = await fileHandle.createWritable();
+        await w.write(jsonText());
+        await w.close();
+        dirty = false;
+        source = "Fichier JSON";
+        renderFooter();
+        toast(`Base enregistrée dans ${fileHandle.name}`);
+      }
+      function download(name, text, type) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([text], { type }));
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }
+      async function saveJSON() {
+        try {
+          if (fileHandle) return await writeHandle();
+          if (window.showSaveFilePicker) {
+            fileHandle = await window.showSaveFilePicker({
+              suggestedName: "data.json",
+              types: [
+                {
+                  description: "Base JSON",
+                  accept: { "application/json": [".json"] },
+                },
+              ],
+            });
+            return await writeHandle();
+          }
+        } catch (e) {
+          if (e.name === "AbortError") return;
+          fileHandle = null;
+        }
+        download("data.json", jsonText(), "application/json");
+        dirty = false;
+        renderFooter();
+        toast("data.json téléchargé — remplacez l'ancien fichier par celui-ci");
+      }
+      function loadText(text, name) {
+        db = normalize(JSON.parse(text));
+        source = name;
+        persist();
+        dirty = false;
+        pickMonth();
+        renderAll();
+        toast(`${db.consommations.length} lignes chargées depuis ${name}`);
+      }
+      async function openJSON() {
+        if (window.showOpenFilePicker) {
+          try {
+            [fileHandle] = await window.showOpenFilePicker({
+              types: [
+                {
+                  description: "Base JSON",
+                  accept: { "application/json": [".json"] },
+                },
+              ],
+            });
+            const f = await fileHandle.getFile();
+            return loadText(await f.text(), f.name);
+          } catch (e) {
+            if (e.name === "AbortError") return;
+            if (e instanceof SyntaxError || /invalide/.test(e.message))
+              return toast("Erreur : " + e.message);
+            fileHandle = null;
+          }
+        }
+        $("#file-input").click();
+      }
+      function exportCSV() {
+        const rows = TYPE_KEYS.flatMap((t) => inMonth(t, state.month)).sort(
+          (a, b) => a.date.localeCompare(b.date),
+        );
+        const head = [
+          "Date",
+          "Onglet",
+          "Catégorie",
+          "Désignation",
+          "Référence",
+          "Quantité",
+          "Prix unitaire",
+          "Montant",
+          "Demandeur",
+          "Commentaire",
+        ];
+        const cell = (v) => `"${String(v).replace(/"/g, '""')}"`;
+        const dec = (v) => String(Math.round(v * 100) / 100).replace(".", ",");
+        const lines = [
+          head,
+          ...rows.map((c) => [
+            c.date,
+            TYPES[c.type].label,
+            c.categorie,
+            c.designation,
+            c.reference,
+            dec(c.quantite),
+            dec(c.prixUnitaire),
+            dec(amount(c)),
+            c.demandeur,
+            c.commentaire,
+          ]),
+        ];
+        download(
+          `laminoir-${state.month}.csv`,
+          "﻿" + lines.map((l) => l.map(cell).join(";")).join("\r\n"),
+          "text/csv",
+        );
+      }
+
+      function pickMonth() {
+        const now = new Date();
+        const cur = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const months = db.consommations.map((c) => monthOf(c.date)).sort();
+        state.month =
+          !months.length || months.includes(cur)
+            ? cur
+            : months[months.length - 1];
+      }
+
+      /* ---------- Événements ---------- */
+      function bindEvents() {
+        $("#tabs").addEventListener("click", (e) => {
+          const b = e.target.closest("button[data-tab]");
+          if (b) showTab(b.dataset.tab);
+        });
+        const setMonth = (m) => {
+          if (!/^\d{4}-\d{2}$/.test(m)) return;
+          state.month = m;
+          for (const t of TYPE_KEYS) if (!state.editing[t]) resetForm(t);
+          renderAll();
+        };
+        $("#month").addEventListener("change", (e) => setMonth(e.target.value));
+        $("#prev-month").addEventListener("click", () =>
+          setMonth(shiftMonth(state.month, -1)),
+        );
+        $("#next-month").addEventListener("click", () =>
+          setMonth(shiftMonth(state.month, 1)),
+        );
+        $("#open-json").addEventListener("click", openJSON);
+        $("#save-json").addEventListener("click", saveJSON);
+        $("#export-csv").addEventListener("click", exportCSV);
+        $("#file-input").addEventListener("change", async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          try {
+            loadText(await f.text(), f.name);
+          } catch (err) {
+            toast("Erreur : " + err.message);
+          }
+          e.target.value = "";
+        });
+
+        document.addEventListener("input", (e) => {
+          const s = e.target.dataset.search;
+          if (s) {
+            state.search[s] = e.target.value;
+            renderList(s);
+          }
+          const f = e.target.closest("form.entry");
+          if (f) updateFormTotal(f);
+        });
+        document.addEventListener("change", (e) => {
+          const b = e.target.dataset.budget;
+          if (b) {
+            db.budgets[b] = Math.max(0, Number(e.target.value) || 0);
+            persist();
+            renderAll();
+            return;
+          }
+          // Préremplissage depuis une désignation déjà connue
+          const f = e.target.closest("form.entry");
+          if (f && e.target.name === "designation") {
+            const t = f.dataset.type;
+            const last = db.consommations
+              .filter((c) => c.type === t && c.designation === e.target.value)
+              .sort((a, b) => b.date.localeCompare(a.date))[0];
+            if (last) {
+              f.categorie.value ||= last.categorie;
+              f.reference.value ||= last.reference;
+              if (!f.prixUnitaire.value)
+                f.prixUnitaire.value = last.prixUnitaire;
+              updateFormTotal(f);
+            }
+          }
+        });
+        document.addEventListener("submit", (e) => {
+          const f = e.target.closest("form.entry");
+          if (!f) return;
+          e.preventDefault();
+          const t = f.dataset.type;
+          const data = Object.fromEntries(new FormData(f));
+          const rec = {
+            id: state.editing[t] || newId(),
+            date: data.date,
+            type: t,
+            categorie: data.categorie.trim(),
+            designation: data.designation.trim(),
+            reference: data.reference.trim(),
+            quantite: Number(data.quantite) || 0,
+            prixUnitaire: Number(data.prixUnitaire) || 0,
+            demandeur: data.demandeur.trim(),
+            commentaire: data.commentaire.trim(),
+          };
+          if (!db.categories[t].includes(rec.categorie))
+            db.categories[t].push(rec.categorie);
+          const i = db.consommations.findIndex((c) => c.id === rec.id);
+          if (i >= 0) db.consommations[i] = rec;
+          else db.consommations.push(rec);
+          const edited = i >= 0;
+          persist();
+          if (monthOf(rec.date) !== state.month)
+            state.month = monthOf(rec.date);
+          resetForm(t);
+          renderAll();
+          toast(
+            edited
+              ? "Ligne mise à jour"
+              : `Ajouté : ${rec.designation} (${eur2.format(amount(rec))})`,
+          );
+        });
+        document.addEventListener("click", (e) => {
+          const ed = e.target.closest("[data-edit]");
+          const del = e.target.closest("[data-del]");
+          const cancel = e.target.closest("form.entry .cancel");
+          if (cancel) return resetForm(cancel.closest("form").dataset.type);
+          if (ed) {
+            const c = db.consommations.find((x) => x.id === ed.dataset.edit);
+            const f = $(`form[data-type="${c.type}"]`);
+            for (const k of [
+              "date",
+              "categorie",
+              "designation",
+              "reference",
+              "quantite",
+              "prixUnitaire",
+              "demandeur",
+              "commentaire",
+            ])
+              f[k].value = c[k];
+            state.editing[c.type] = c.id;
+            f.classList.add("editing");
+            $(".ftitle", f).textContent = "Modifier la ligne";
+            $("button[type=submit]", f).textContent = "Mettre à jour";
+            $(".cancel", f).hidden = false;
+            updateFormTotal(f);
+            f.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          if (del) {
+            const c = db.consommations.find((x) => x.id === del.dataset.del);
+            if (
+              !confirm(
+                `Supprimer « ${c.designation} » du ${c.date.split("-").reverse().join("/")} ?`,
+              )
+            )
+              return;
+            db.consommations = db.consommations.filter((x) => x.id !== c.id);
+            if (state.editing[c.type] === c.id) resetForm(c.type);
+            persist();
+            renderAll();
+            toast("Ligne supprimée");
+          }
+        });
+        window.addEventListener("beforeunload", (e) => {
+          if (dirty && fileHandle) e.preventDefault();
+        });
+      }
+
+      /* ---------- Démarrage ---------- */
+      async function init() {
+        let saved = null;
+        try {
+          saved = JSON.parse(localStorage.getItem(STORE_KEY));
+        } catch (e) {}
+        if (saved) {
+          db = normalize(saved);
+          source = "sauvegarde du navigateur";
+        } else {
+          try {
+            const r = await fetch("data.json", { cache: "no-store" });
+            if (!r.ok) throw new Error(r.status);
+            db = normalize(await r.json());
+            source = "data.json";
+          } catch (e) {
+            db = normalize(JSON.parse($("#seed").textContent));
+            source = "données de démonstration";
+          }
+        }
+        pickMonth();
+        buildUI();
+        bindEvents();
+        for (const t of TYPE_KEYS) resetForm(t);
+        let tab = "synthese";
+        try {
+          tab = localStorage.getItem(STORE_KEY + "-tab") || tab;
+        } catch (e) {}
+        showTab(tab in TYPES || tab === "synthese" ? tab : "synthese");
+        renderAll();
+      }
+      init();
+    </script>
+  </body>
+</html>
