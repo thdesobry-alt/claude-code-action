@@ -616,6 +616,11 @@
         color: var(--warn);
         line-height: 1.1;
       }
+      .finfield {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
       .list tr.moverow td {
         background: var(--accent-soft);
         white-space: normal;
@@ -3087,6 +3092,10 @@
   </div>`;
         }
 
+        // Fin de contrat : la date n'est enregistrée qu'au clic sur « Valider »
+        // (un champ date change de valeur à chaque chiffre tapé).
+        const finField = (a, ro) =>
+          `<div class="finfield"><input type="date" id="fin-${a.id}" data-fin="${a.id}" value="${esc(a.fin || "")}" min="2000-01-01" max="2099-12-31" ${ro} aria-label="Fin de contrat de ${esc(fullName(a))}"><button class="btn sm primary" data-act="finsave" data-id="${a.id}" hidden>Valider</button><button class="btn sm" data-act="finundo" data-id="${a.id}" hidden>Annuler</button></div>`;
         // Ligne de confirmation d'un changement d'équipe (date d'effet).
         function moveRow(a) {
           const m = S.moveAsk;
@@ -3112,7 +3121,7 @@
                       list
                         .map(
                           (a) =>
-                            `<tr><td></td><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(a.nom || "")}</td><td>${esc(a.prenom || "")}</td><td>${esc(groupShort(a.eq))}</td><td><input type="date" id="fin-${a.id}" data-f="fin" data-id="${a.id}" value="${esc(a.fin || "")}" ${ro} title="Effacez la date pour annuler la fin de contrat"></td><td></td></tr>`,
+                            `<tr><td></td><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(a.nom || "")}</td><td>${esc(a.prenom || "")}</td><td>${esc(groupShort(a.eq))}</td><td>${finField(a, ro)}</td><td></td></tr>`,
                         )
                         .join("")
                   : "";
@@ -3141,7 +3150,7 @@
                 .join("<br>")}</div>`
             : ""
         }</td>
-        <td><input type="date" id="fin-${a.id}" data-f="fin" data-id="${a.id}" value="${esc(a.fin || "")}" ${ro} aria-label="Fin de contrat de ${esc(fullName(a))}"></td>
+        <td>${finField(a, ro)}</td>
         <td>${S.canWrite ? (S.delAsk === a.id ? `<span class="confirm">Supprimer définitivement (heures comprises) ?<button class="btn sm danger" data-act="delyes" data-id="${a.id}">Oui</button><button class="btn sm" data-act="delno">Non</button></span>` : `<button class="btn sm ghost danger" data-act="del" data-id="${a.id}">Supprimer</button>`) : ""}</td>
       </tr>${S.moveAsk && S.moveAsk.id === a.id ? moveRow(a) : ""}`,
                   )
@@ -3607,6 +3616,33 @@
             toast("Agent supprimé");
             return;
           }
+          if (act === "finundo") {
+            const el = $(`#fin-${b.dataset.id}`);
+            el.value = agentById(b.dataset.id)?.fin || "";
+            finDirty(el);
+            return;
+          }
+          if (act === "finsave") {
+            const a = agentById(b.dataset.id);
+            const el = $(`#fin-${b.dataset.id}`);
+            if (!a || !el) return;
+            const v = el.value;
+            if (v && !(v >= "2000-01-01" && v <= "2099-12-31")) {
+              toast("Date de fin de contrat invalide : vérifiez l'année.");
+              el.focus();
+              return;
+            }
+            const { id, ...rest } = a;
+            if (v) rest.fin = v;
+            else delete rest.fin;
+            await S.store.set("agents/" + id, rest);
+            toast(
+              v
+                ? `Fin de contrat le ${fmtShort(v)}/${v.slice(0, 4)} : ${fullName(a)} disparaît du planning à partir du mois de ${MONTHS[Number(ymAdd(ymOf(v), 1).slice(5)) - 1]}`
+                : `Fin de contrat annulée pour ${fullName(a)}`,
+            );
+            return;
+          }
           if (act === "mvno") {
             S.moveAsk = null;
             render();
@@ -3757,12 +3793,6 @@
             }
             const { id, ...rest } = a;
             const extra = {};
-            if (el.dataset.f === "fin")
-              toast(
-                v
-                  ? `Fin de contrat le ${fmtShort(v)} : ${fullName(a)} disparaît du planning à partir de ${MONTHS[Number(ymAdd(ymOf(v), 1).slice(5)) - 1]}`
-                  : `Fin de contrat annulée pour ${fullName(a)}`,
-              );
             await S.store.set("agents/" + id, {
               ...rest,
               [el.dataset.f]: v,
@@ -3911,6 +3941,32 @@
           if (none)
             none.hidden = shown > 0 || !document.querySelector(".cand[data-q]");
         }
+        // Fin de contrat en cours de saisie : affiche Valider / Annuler si la date diffère.
+        function finDirty(el) {
+          const a = agentById(el.dataset.fin);
+          const box = el.parentElement;
+          const changed = !!a && (a.fin || "") !== el.value;
+          box.querySelector('[data-act="finsave"]').hidden = !changed;
+          box.querySelector('[data-act="finundo"]').hidden = !changed;
+        }
+        document.addEventListener("input", (ev) => {
+          if (ev.target.dataset && ev.target.dataset.fin) finDirty(ev.target);
+        });
+        document.addEventListener("change", (ev) => {
+          if (ev.target.dataset && ev.target.dataset.fin) finDirty(ev.target);
+        });
+        document.addEventListener("keydown", (ev) => {
+          if (
+            ev.key === "Enter" &&
+            ev.target.dataset &&
+            ev.target.dataset.fin
+          ) {
+            ev.preventDefault();
+            ev.target.parentElement
+              .querySelector('[data-act="finsave"]')
+              .click();
+          }
+        });
         document.addEventListener("input", (ev) => {
           if (ev.target.id !== "cand-q" || !S.drawer) return;
           S.drawer.q = ev.target.value;
