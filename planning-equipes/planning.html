@@ -365,6 +365,31 @@
   .cell.c-R.nd::after {
     content: none;
   }
+  .plan .cell.dm {
+    outline: 2px dashed var(--warn);
+    outline-offset: -2px;
+  }
+  .plan .cell.c-R.dm {
+    color: var(--warn);
+    font-weight: 700;
+  }
+  .cell.c-R.dm::after {
+    content: none;
+  }
+  .dm-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 20px;
+    border-radius: 4px;
+    outline: 2px dashed var(--warn);
+    outline-offset: -2px;
+    color: var(--warn);
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 700;
+    font-style: normal;
+  }
   .nd-mark {
     display: inline-grid;
     place-items: center;
@@ -938,6 +963,23 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
     gap: 16px;
     align-items: start;
+  }
+  /* Onglet Agents : tableau large à gauche, formulaires étroits à droite. */
+  .cols.agentcols {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  }
+  .agentcols .addrow label,
+  .agentcols .addrow input,
+  .agentcols .addrow select {
+    width: 100%;
+  }
+  .agentcols .addrow label {
+    flex: 1 1 100%;
+  }
+  @media (max-width: 1100px) {
+    .cols.agentcols {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
   .tablewrap {
     overflow-x: auto;
@@ -2153,6 +2195,8 @@
     const noteOf = (id, ds) => S.months[ymOf(ds)]?.n?.[id]?.[ds] || "";
     // « Non disponible » : l'agent a été contacté pour ce jour et a refusé.
     const ndOf = (id, ds) => !!S.months[ymOf(ds)]?.nd?.[id]?.[ds];
+    // « Demande en cours » : une demande du salarié pour ce jour attend une réponse.
+    const dmOf = (id, ds) => !!S.months[ymOf(ds)]?.dm?.[id]?.[ds];
     function codeOf(a, ds) {
       const k = a.id + ds;
       if (memo.has(k)) return memo.get(k);
@@ -2328,6 +2372,15 @@
             if (!Object.keys(mm.nd[id]).length) delete mm.nd[id];
           }
         },
+        dm(id, ds, v) {
+          const mm = m(ds);
+          mm.dm ??= {};
+          if (v) (mm.dm[id] ??= {})[ds] = v;
+          else if (mm.dm[id]) {
+            delete mm.dm[id][ds];
+            if (!Object.keys(mm.dm[id]).length) delete mm.dm[id];
+          }
+        },
         note(id, ds, v) {
           const mm = m(ds);
           mm.n ??= {};
@@ -2438,6 +2491,11 @@
       t.put(absentId, ds, rest);
       t.commit();
     }
+    function setDm(id, ds, v) {
+      const t = tx();
+      t.dm(id, ds, v ? 1 : null);
+      t.commit();
+    }
     async function setNd(id, days, v) {
       await ensureMonths([...new Set(days.map(ymOf))]);
       const t = tx();
@@ -2526,6 +2584,12 @@
         }
         if (worst > S.cycle.maxWeek)
           flags.push(["warn", `${fmtH(worst)} h sur la semaine`]);
+        const dmDays = days.filter((d) => dmOf(c.id, d));
+        if (dmDays.length)
+          flags.push([
+            "warn",
+            `demande en cours ${dmDays.map(fmtShort).join(", ")}`,
+          ]);
         const ndDays = days.filter((d) => ndOf(c.id, d));
         if (ndDays.length)
           flags.unshift([
@@ -2845,12 +2909,17 @@
                   k.push("nd");
                   tip += " · contacté : NON disponible";
                 }
+                const dm = dmOf(a.id, ds);
+                if (dm) {
+                  k.push("dm");
+                  tip += " · demande en cours";
+                }
                 const nt = noteOf(a.id, ds);
                 if (nt) {
                   k.push("cmt");
                   tip += `\n💬 ${nt}`;
                 }
-                return `<td class="${cls(ds)}"><button class="${k.join(" ")}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(tip)}">${c === "R" ? (nd ? "ND" : "") : disp(c)}</button></td>`;
+                return `<td class="${cls(ds)}"><button class="${k.join(" ")}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(tip)}">${c === "R" ? (nd ? "ND" : dm ? "?" : "") : disp(c)}</button></td>`;
               })
               .join("") +
             `<td class="tot" title="Prévu sur le mois${list.length && segDays(a, t, days).length < days.length ? " (jours dans ce groupe)" : ""} : ${fmtH(segHours(a, t, days, false))} h">${fmtH(segHours(a, t, days, true))} h</td></tr>`;
@@ -2926,7 +2995,7 @@
     </table></div>
     <div class="legend">
       <span><i class="c c-J">J</i>Jour 8h–20h</span><span><i class="c c-N">N</i>Nuit 20h–8h</span><span><i class="c c-R" style="width:30px">·</i>Repos</span>
-      <span><i class="c c-CP">CP</i>Congé</span><span><i class="c c-RCR">RCR</i>RCR/RCE</span><span><i class="c c-MAL">MAL</i>Maladie</span><span><i class="c c-FOR">FOR</i>Formation</span><span><i class="c c-ANA">ANA</i>Abs. non autorisée</span><span><i class="c c-MJ">MF</i>Maintien four jour</span><span><i class="c c-MN">MF</i>Maintien four nuit</span><span><i class="nd-mark">ND</i>contacté, non disponible</span><span><i class="cmt-mark"></i>commentaire</span>
+      <span><i class="c c-CP">CP</i>Congé</span><span><i class="c c-RCR">RCR</i>RCR/RCE</span><span><i class="c c-MAL">MAL</i>Maladie</span><span><i class="c c-FOR">FOR</i>Formation</span><span><i class="c c-ANA">ANA</i>Abs. non autorisée</span><span><i class="c c-MJ">MF</i>Maintien four jour</span><span><i class="c c-MN">MF</i>Maintien four nuit</span><span><i class="nd-mark">ND</i>contacté, non disponible</span><span><i class="dm-mark">?</i>demande en cours</span><span><i class="cmt-mark"></i>commentaire</span>
       <span><i class="c cell need" style="width:14px;height:14px"></i>à remplacer</span><span><i class="c cell cov" style="width:14px;height:14px"></i>remplacé</span>
       <span><i class="c c-J cell rp">J</i>en remplacement</span><span><i class="c c-J cell ovr">J</i>modifié hors cycle</span><span><i class="c c-J cell part">J</i>absence partielle</span>
     </div>
@@ -3092,7 +3161,7 @@
           );
         })
         .join("");
-      return `<div class="cols">
+      return `<div class="cols agentcols">
     <div class="panel">
       <h2>Agents</h2>
       <p class="note">Les modifications sont enregistrées dès que vous quittez le champ. Changer l'équipe d'un agent demande une date d'effet : son historique et ses heures restent dans l'ancienne équipe avant cette date. Une date de début de contrat le fait apparaître à partir de ce mois-là (jours précédents hachurés) ; une date de fin de contrat le retire du planning à partir du mois suivant, sans effacer ses mois de présence. Les dates s'enregistrent avec « Valider ». L'ordre des agents (flèches ou poignée ⠿ à faire glisser) est celui du planning et du tableau des heures.</p>
@@ -3298,9 +3367,9 @@
       ${rp}
       ${
         can
-          ? `<div class="sec"><div class="label">Disponibilité</div><div class="choices"><button class="choice" data-act="nd" aria-pressed="${ndOf(id, ds)}"><span class="nd-mark">ND</span>${ndOf(id, ds) ? "Contacté : NON disponible (cliquer pour retirer)" : "Contacté : NON disponible ce jour"}</button></div></div>`
-          : ndOf(id, ds)
-            ? `<div class="banner">Contacté : <b>NON disponible</b> ce jour.</div>`
+          ? `<div class="sec"><div class="label">Statut du jour</div><div class="choices"><button class="choice" data-act="dm" aria-pressed="${dmOf(id, ds)}"><span class="dm-mark">?</span>${dmOf(id, ds) ? "Demande en cours (cliquer pour retirer)" : "Demande en cours"}</button><button class="choice" data-act="nd" aria-pressed="${ndOf(id, ds)}"><span class="nd-mark">ND</span>${ndOf(id, ds) ? "Contacté : NON disponible (cliquer pour retirer)" : "Contacté : NON disponible ce jour"}</button></div></div>`
+          : ndOf(id, ds) || dmOf(id, ds)
+            ? `<div class="banner">${dmOf(id, ds) ? "<b>Demande en cours</b> pour ce jour. " : ""}${ndOf(id, ds) ? "Contacté : <b>NON disponible</b> ce jour." : ""}</div>`
             : ""
       }
       ${
@@ -3450,6 +3519,16 @@
         }
         setPartial(a.id, ds, pa);
         toast(`Absence partielle ${pa.from}–${pa.to} enregistrée`);
+        return;
+      }
+      if (act === "dm") {
+        const v = !dmOf(S.drawer.id, S.drawer.ds);
+        setDm(S.drawer.id, S.drawer.ds, v);
+        toast(
+          v
+            ? "Noté : demande en cours"
+            : "Mention « demande en cours » retirée",
+        );
         return;
       }
       if (act === "nd") {
