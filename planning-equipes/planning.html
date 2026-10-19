@@ -2144,7 +2144,8 @@
       for (const m of mv) if (ds >= m.date) t = m.to;
       return t;
     }
-    const activeOn = (a, ds) => !a.fin || ds <= a.fin;
+    const activeOn = (a, ds) =>
+      (!a.debut || ds >= a.debut) && (!a.fin || ds <= a.fin);
     const ended = (a) => !!a.fin && a.fin < todayStr();
     // L'agent figure dans le groupe g pendant au moins un jour de la liste.
     const inGroup = (a, g, days) =>
@@ -2809,7 +2810,7 @@
             days
               .map((ds) => {
                 if (!activeOn(a, ds) || eqOn(a, ds) !== t)
-                  return `<td class="${cls(ds)} out" title="${esc(fullName(a))} · ${fmtShort(ds)} · ${activeOn(a, ds) ? groupShort(eqOn(a, ds)) : "contrat terminé"}"></td>`;
+                  return `<td class="${cls(ds)} out" title="${esc(fullName(a))} · ${fmtShort(ds)} · ${activeOn(a, ds) ? groupShort(eqOn(a, ds)) : a.debut && ds < a.debut ? "pas encore sous contrat" : "contrat terminé"}"></td>`;
                 const e = entryOf(a.id, ds),
                   c = codeOf(a, ds);
                 const need = needsCover(a, ds);
@@ -2950,6 +2951,8 @@
           );
       if (a.fin && a.fin >= days[0] && a.fin <= days[days.length - 1])
         out.push(`fin de contrat le ${fmtShort(a.fin)}`);
+      if (a.debut && a.debut >= days[0] && a.debut <= days[days.length - 1])
+        out.unshift(`début de contrat le ${fmtShort(a.debut)}`);
       return out.join(" · ");
     }
 
@@ -3024,12 +3027,12 @@
 
     // Fin de contrat : la date n'est enregistrée qu'au clic sur « Valider »
     // (un champ date change de valeur à chaque chiffre tapé).
-    const finField = (a, ro) =>
-      `<div class="finfield"><input type="date" id="fin-${a.id}" data-fin="${a.id}" value="${esc(a.fin || "")}" min="2000-01-01" max="2099-12-31" ${ro} aria-label="Fin de contrat de ${esc(fullName(a))}"><button class="btn sm primary" data-act="finsave" data-id="${a.id}" hidden>Valider</button><button class="btn sm" data-act="finundo" data-id="${a.id}" hidden>Annuler</button></div>`;
+    const finField = (a, ro, k = "fin") =>
+      `<div class="finfield"><input type="date" id="${k}-${a.id}" data-fin="${a.id}" data-k="${k}" value="${esc(a[k] || "")}" min="2000-01-01" max="2099-12-31" ${ro} aria-label="${k === "fin" ? "Fin" : "Début"} de contrat de ${esc(fullName(a))}"><button class="btn sm primary" data-act="finsave" data-id="${a.id}" data-k="${k}" hidden>Valider</button><button class="btn sm" data-act="finundo" data-id="${a.id}" data-k="${k}" hidden>Annuler</button></div>`;
     // Ligne de confirmation d'un changement d'équipe (date d'effet).
     function moveRow(a) {
       const m = S.moveAsk;
-      return `<tr class="moverow"><td colspan="8"><div class="addrow">
+      return `<tr class="moverow"><td colspan="9"><div class="addrow">
         <span><b>${esc(fullName(a))}</b> : ${esc(groupShort(a.eq))} → <b>${esc(groupShort(m.to))}</b></span>
         <label>À partir du<input type="date" id="mv-date" value="${esc(m.date)}"></label>
         <label class="check"><input type="checkbox" id="mv-fix" ${m.fix ? "checked" : ""}> Correction d'erreur (cette équipe depuis toujours)</label>
@@ -3047,16 +3050,16 @@
               : agents.filter((a) => a.eq === t && !ended(a));
           if (t === "FIN")
             return list.length
-              ? `<tr class="grp"><td colspan="8">Contrats terminés <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${list.length} · n'apparaissent plus dans le planning après leur mois de fin ; leurs heures restent enregistrées</span></td></tr>` +
+              ? `<tr class="grp"><td colspan="9">Contrats terminés <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${list.length} · n'apparaissent plus dans le planning après leur mois de fin ; leurs heures restent enregistrées</span></td></tr>` +
                   list
                     .map(
                       (a) =>
-                        `<tr><td></td><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(a.nom || "")}</td><td>${esc(a.prenom || "")}</td><td>${esc(groupShort(a.eq))}</td><td>${finField(a, ro)}</td><td></td></tr>`,
+                        `<tr><td></td><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(a.nom || "")}</td><td>${esc(a.prenom || "")}</td><td>${esc(groupShort(a.eq))}</td><td>${finField(a, ro, "debut")}</td><td>${finField(a, ro)}</td><td></td></tr>`,
                     )
                     .join("")
               : "";
           return (
-            `<tr class="grp"><td colspan="8">${groupName(t)} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${t === POOL ? `${list.length} · renfort de production, sans cycle : ils remplacent les absents des équipes` : `${list.length} / 11`}</span></td></tr>` +
+            `<tr class="grp"><td colspan="9">${groupName(t)} <span class="muted" style="font-family:var(--f-body);font-size:13px;font-weight:500">${t === POOL ? `${list.length} · renfort de production, sans cycle : ils remplacent les absents des équipes` : `${list.length} / 11`}</span></td></tr>` +
             list
               .map(
                 (a, i) => `<tr data-row="${a.id}" data-team="${t}">
@@ -3080,6 +3083,7 @@
                 .join("<br>")}</div>`
             : ""
         }</td>
+        <td>${finField(a, ro, "debut")}</td>
         <td>${finField(a, ro)}</td>
         <td>${S.canWrite ? (S.delAsk === a.id ? `<span class="confirm">Supprimer définitivement (heures comprises) ?<button class="btn sm danger" data-act="delyes" data-id="${a.id}">Oui</button><button class="btn sm" data-act="delno">Non</button></span>` : `<button class="btn sm ghost danger" data-act="del" data-id="${a.id}">Supprimer</button>`) : ""}</td>
       </tr>${S.moveAsk && S.moveAsk.id === a.id ? moveRow(a) : ""}`,
@@ -3091,8 +3095,8 @@
       return `<div class="cols">
     <div class="panel">
       <h2>Agents</h2>
-      <p class="note">Les modifications sont enregistrées dès que vous quittez le champ. Changer l'équipe d'un agent demande une date d'effet : son historique et ses heures restent dans l'ancienne équipe avant cette date. Une date de fin de contrat le retire du planning à partir du mois suivant, sans effacer ses mois de présence. L'ordre des agents (flèches ou poignée ⠿ à faire glisser) est celui du planning et du tableau des heures.</p>
-      <div class="tablewrap"><table class="list"><thead><tr><th>Ordre</th><th>Fonction</th><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th>Fin de contrat</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="note">Les modifications sont enregistrées dès que vous quittez le champ. Changer l'équipe d'un agent demande une date d'effet : son historique et ses heures restent dans l'ancienne équipe avant cette date. Une date de début de contrat le fait apparaître à partir de ce mois-là (jours précédents hachurés) ; une date de fin de contrat le retire du planning à partir du mois suivant, sans effacer ses mois de présence. Les dates s'enregistrent avec « Valider ». L'ordre des agents (flèches ou poignée ⠿ à faire glisser) est celui du planning et du tableau des heures.</p>
+      <div class="tablewrap"><table class="list"><thead><tr><th>Ordre</th><th>Fonction</th><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th>Début de contrat</th><th>Fin de contrat</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
       <datalist id="fn-list">${[
         ...new Set(S.agents.map((a) => (a.fn || "").trim()).filter(Boolean)),
       ]
@@ -3110,6 +3114,7 @@
           <label>Matricule<input type="text" id="add-mat" required></label>
           <label>Nom<input type="text" id="add-nom" required></label>
           <label>Prénom<input type="text" id="add-pre"></label>
+          <label>Début de contrat<input type="date" id="add-debut" min="2000-01-01" max="2099-12-31"></label>
           <label>Équipe<select id="add-eq">${GROUPS.map((x) => `<option value="${x}">${x === POOL ? "Remplaçant" : x}</option>`).join("")}</select></label>
           <button class="btn primary" type="submit">Ajouter</button>
         </div>
@@ -3539,25 +3544,42 @@
         return;
       }
       if (act === "finundo") {
-        const el = $(`#fin-${b.dataset.id}`);
-        el.value = agentById(b.dataset.id)?.fin || "";
+        const el = $(`#${b.dataset.k}-${b.dataset.id}`);
+        el.value = agentById(b.dataset.id)?.[b.dataset.k] || "";
         finDirty(el);
         return;
       }
       if (act === "finsave") {
         const a = agentById(b.dataset.id);
-        const el = $(`#fin-${b.dataset.id}`);
+        const k = b.dataset.k;
+        const el = $(`#${k}-${b.dataset.id}`);
         if (!a || !el) return;
         const v = el.value;
+        const what = k === "fin" ? "fin" : "début";
         if (v && !(v >= "2000-01-01" && v <= "2099-12-31")) {
-          toast("Date de fin de contrat invalide : vérifiez l'année.");
+          toast(`Date de ${what} de contrat invalide : vérifiez l'année.`);
+          el.focus();
+          return;
+        }
+        const deb = k === "debut" ? v : a.debut,
+          fin = k === "fin" ? v : a.fin;
+        if (deb && fin && fin < deb) {
+          toast("La fin de contrat doit être après le début de contrat.");
           el.focus();
           return;
         }
         const { id, ...rest } = a;
-        if (v) rest.fin = v;
-        else delete rest.fin;
+        if (v) rest[k] = v;
+        else delete rest[k];
         await S.store.set("agents/" + id, rest);
+        if (k === "debut") {
+          toast(
+            v
+              ? `Début de contrat le ${fmtShort(v)}/${v.slice(0, 4)} : ${fullName(a)} apparaît dans le planning à partir de cette date`
+              : `Date de début de contrat retirée pour ${fullName(a)}`,
+          );
+          return;
+        }
         toast(
           v
             ? `Fin de contrat le ${fmtShort(v)}/${v.slice(0, 4)} : ${fullName(a)} disparaît du planning à partir du mois de ${MONTHS[Number(ymAdd(ymOf(v), 1).slice(5)) - 1]}`
@@ -3774,6 +3796,7 @@
         mat,
         nom,
         prenom: $("#add-pre").value.trim(),
+        ...($("#add-debut").value ? { debut: $("#add-debut").value } : {}),
         eq: $("#add-eq").value,
         ord: nextOrd($("#add-eq").value),
       });
@@ -3863,7 +3886,7 @@
     function finDirty(el) {
       const a = agentById(el.dataset.fin);
       const box = el.parentElement;
-      const changed = !!a && (a.fin || "") !== el.value;
+      const changed = !!a && (a[el.dataset.k] || "") !== el.value;
       box.querySelector('[data-act="finsave"]').hidden = !changed;
       box.querySelector('[data-act="finundo"]').hidden = !changed;
     }
