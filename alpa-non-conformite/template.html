@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Non-conformité ALPA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --text: #1d2330; --muted: #5f6b7a;
+    --border: #d5dae1; --accent: #1f5fae; --accent-text: #ffffff; --strike: #b42318;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171c; --card: #1d2128; --text: #e6e9ee; --muted: #9aa4b2;
+      --border: #343a45; --accent: #5b9bf0; --accent-text: #0d1117; --strike: #f07167;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 16px; max-width: 900px; margin: 0 auto; display: flex;
+           align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 20px; margin: 0; }
+  header small { color: var(--muted); }
+  main { max-width: 900px; margin: 0 auto; padding: 0 16px 48px; }
+  section.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+                 padding: 16px; margin-bottom: 16px; }
+  section.card h2 { font-size: 16px; margin: 0 0 12px; }
+  section.card.barre { opacity: .45; }
+  section.card.barre h2::after { content: " — barrée"; color: var(--strike); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  input, select, textarea { font: inherit; color: var(--text); background: var(--bg);
+         border: 1px solid var(--border); border-radius: 6px; padding: 8px; width: 100%; }
+  textarea { min-height: 70px; resize: vertical; }
+  .choices { display: flex; flex-wrap: wrap; gap: 8px; }
+  .choices label { flex-direction: row; align-items: center; gap: 6px; font-size: 15px; color: var(--text);
+                   border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+  .choices input { width: auto; }
+  .choices label:has(input:checked) { border-color: var(--accent); outline: 2px solid var(--accent); }
+  button { font: inherit; border: 1px solid var(--border); background: var(--card); color: var(--text);
+           border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .sigbox { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .sigbox canvas { background: #fff; border: 1px dashed var(--border); border-radius: 6px; touch-action: none;
+                   width: 100%; max-width: 420px; height: 160px; }
+  .sigpreview { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px;
+                min-width: 160px; min-height: 60px; }
+  .sigpreview img { max-width: 200px; max-height: 70px; display: block; }
+  .list-editor ul { list-style: none; padding: 0; margin: 0 0 8px; }
+  .list-editor li { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+                    padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .list-editor .row { display: flex; gap: 8px; }
+  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px;
+           border: 1px solid var(--border); color: var(--muted); }
+  #preview { width: 100%; height: 80vh; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+  dialog { max-width: 720px; width: calc(100% - 32px); border: 1px solid var(--border); border-radius: 10px;
+           background: var(--card); color: var(--text); padding: 16px; }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  #err { color: var(--strike); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Rapport de non-conformité</h1>
+    <small>AQA.QUAL.03 — indice 5</small>
+  </div>
+  <button type="button" id="openSettings">⚙ Paramètres</button>
+</header>
+
+<main>
+<form id="form" autocomplete="off">
+  <section class="card">
+    <h2>En-tête</h2>
+    <div class="choices" role="radiogroup" aria-label="Origine">
+      <label><input type="radio" name="origine" value="acierie" required> Aciérie</label>
+      <label><input type="radio" name="origine" value="laminoir"> Laminoir</label>
+      <label><input type="radio" name="origine" value="expedition"> Expédition</label>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <label>Équipe
+        <select name="equipe" required>
+          <option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option>
+        </select>
+      </label>
+      <label>Nom du rédacteur du présent rapport
+        <select name="redacteur" id="redacteur" required></select>
+      </label>
+      <label>Date
+        <input type="date" name="date" required>
+      </label>
+    </div>
+  </section>
+
+  <section class="card" id="sec11">
+    <h2>1.1. Billettes</h2>
+    <div class="grid">
+      <label>Long.
+        <input name="b_long" value="10.5 m">
+      </label>
+      <label>Qual.
+        <select name="b_qual">
+          <option value="">—</option><option>200S</option><option>200SG</option><option>240S</option><option>160S</option>
+        </select>
+      </label>
+      <label>N° de coulée <input name="b_coulee"></label>
+      <label>Nombre de billettes <input name="b_nombre" inputmode="numeric"></label>
+      <label>Poids <input name="b_poids"></label>
+      <label>Lieu de stockage <input name="b_lieu"></label>
+      <label>Date de fabrication <input type="date" name="b_datefab"></label>
+      <label>Le produit est-il identifié ?
+        <select name="b_identifie"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select>
+      </label>
+    </div>
+  </section>
+
+  <section class="card" id="sec12">
+    <h2>1.2. Ronds</h2>
+    <div class="grid">
+      <label>Diam. <input name="r_diam"></label>
+      <label>Long. <input name="r_long"></label>
+      <label>Qual. <input name="r_qual"></label>
+      <label>N° de coulée <input name="r_coulee"></label>
+      <label>N° du fardeau <input name="r_fardeau"></label>
+      <label>Quantité en cause <input name="r_quantite"></label>
+      <label>Nb fardeaux <input name="r_nbfardeaux" inputmode="numeric"></label>
+      <label>Lieu de stockage <input name="r_lieu"></label>
+      <label>Date de fabrication <input type="date" name="r_datefab"></label>
+      <label>Le produit est-il étiqueté en rose ?
+        <select name="r_rose"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Défaut constaté</h2>
+    <div class="grid" style="grid-template-columns:1fr">
+      <label>Défaut constaté <textarea name="defaut" required></textarea></label>
+      <label>1ère analyse par le chef de poste <textarea name="analyse"></textarea></label>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <label>Nom du chef de poste
+        <select name="chef" id="chef" required></select>
+      </label>
+      <div>
+        <span style="font-size:13px;color:var(--muted)">Visa chef de poste</span>
+        <div class="sigpreview" id="visaPreview" style="margin-top:4px"></div>
+        <p class="hint" id="visaHint"></p>
+      </div>
+    </div>
+  </section>
+
+  <p id="err" role="alert"></p>
+  <div class="actions">
+    <button type="button" class="primary" id="btnDownload">Télécharger le PDF</button>
+    <button type="button" id="btnPreview">Aperçu</button>
+    <button type="button" id="btnReset">Nouveau rapport</button>
+  </div>
+  <p class="hint">Les parties 3 à 7 restent vides (service QSE).</p>
+</form>
+
+<iframe id="preview" title="Aperçu du PDF" hidden></iframe>
+</main>
+
+<dialog id="settings">
+  <h2 style="margin-top:0">Paramètres</h2>
+  <section class="card list-editor">
+    <h2>Rédacteurs</h2>
+    <ul id="listRedacteurs"></ul>
+    <div class="row"><input id="addRedacteur" placeholder="Nom"><button type="button" data-add="redacteurs">Ajouter</button></div>
+  </section>
+  <section class="card list-editor">
+    <h2>Chefs de poste</h2>
+    <ul id="listChefs"></ul>
+    <div class="row"><input id="addChef" placeholder="Nom"><button type="button" data-add="chefs">Ajouter</button></div>
+  </section>
+  <section class="card">
+    <h2>Signature</h2>
+    <label>Nom du titulaire de la signature (signe sans « PO » quand il est chef de poste)
+      <input id="ownerName">
+    </label>
+    <p class="hint">Dessinez votre signature ou importez une image (PNG/JPG, fond blanc).</p>
+    <div class="sigbox">
+      <canvas id="pad" width="840" height="320"></canvas>
+      <div>
+        <div class="sigpreview" id="sigPreview"></div>
+        <p class="hint">Aperçu « PO » :</p>
+        <div class="sigpreview" id="sigPreviewPO"></div>
+      </div>
+    </div>
+    <div class="actions" style="margin-top:8px">
+      <button type="button" id="padClear">Effacer</button>
+      <button type="button" id="padSave" class="primary">Enregistrer le dessin</button>
+      <label style="flex-direction:row;align-items:center"><span class="badge">Importer</span>
+        <input type="file" id="sigFile" accept="image/*" style="width:auto"></label>
+    </div>
+  </section>
+  <div class="actions" style="justify-content:flex-end">
+    <button type="button" id="closeSettings" class="primary">Fermer</button>
+  </div>
+</dialog>
+
+<script id="pdf-template" type="text/plain">__PDF_BASE64__</script>
+<script>
+"use strict";
+
+// ---------- Stockage local (paramètres par poste de travail) ----------
+const STORE_KEY = "alpa-nc-settings-v1";
+const DEFAULTS = {
+  redacteurs: ["DESOBRY"],
+  chefs: ["DESOBRY"],
+  ownerName: "DESOBRY",
+  signature: null, // data URL PNG, fond transparent
+};
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return Object.assign({}, DEFAULTS, JSON.parse(raw));
+  } catch (e) { /* stockage indisponible */ }
+  return structuredClone(DEFAULTS);
+}
+function saveSettings() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
+}
+let settings = loadSettings();
+
+const $ = (s) => document.querySelector(s);
+const form = $("#form");
+
+// ---------- Listes configurables ----------
+function fillSelect(sel, items) {
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">—</option>' +
+    items.map((n) => `<option>${escapeHtml(n)}</option>`).join("");
+  if (items.includes(cur)) sel.value = cur;
+}
+function escapeHtml(s) {
+  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+function renderLists() {
+  fillSelect($("#redacteur"), settings.redacteurs);
+  fillSelect($("#chef"), settings.chefs);
+  for (const [key, ul] of [["redacteurs", $("#listRedacteurs")], ["chefs", $("#listChefs")]]) {
+    ul.innerHTML = "";
+    settings[key].forEach((name, i) => {
+      const li = document.createElement("li");
+      li.textContent = name;
+      const del = document.createElement("button");
+      del.type = "button"; del.textContent = "Supprimer";
+      del.onclick = () => { settings[key].splice(i, 1); saveSettings(); renderLists(); };
+      li.appendChild(del);
+      ul.appendChild(li);
+    });
+  }
+  updateVisa();
+}
+document.querySelectorAll("[data-add]").forEach((btn) => {
+  btn.onclick = () => {
+    const key = btn.dataset.add;
+    const input = key === "redacteurs" ? $("#addRedacteur") : $("#addChef");
+    const name = input.value.trim().toUpperCase();
+    if (name && !settings[key].includes(name)) { settings[key].push(name); saveSettings(); renderLists(); }
+    input.value = "";
+  };
+});
+
+// ---------- Signature ----------
+const pad = $("#pad");
+const ctx = pad.getContext("2d");
+let drawing = false, drawn = false;
+function padPos(e) {
+  const r = pad.getBoundingClientRect();
+  return [(e.clientX - r.left) * pad.width / r.width, (e.clientY - r.top) * pad.height / r.height];
+}
+pad.addEventListener("pointerdown", (e) => {
+  drawing = true; drawn = true; pad.setPointerCapture(e.pointerId);
+  ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#0b2a6b";
+  ctx.beginPath(); ctx.moveTo(...padPos(e));
+});
+pad.addEventListener("pointermove", (e) => { if (drawing) { ctx.lineTo(...padPos(e)); ctx.stroke(); } });
+pad.addEventListener("pointerup", () => { drawing = false; });
+$("#padClear").onclick = () => { ctx.clearRect(0, 0, pad.width, pad.height); drawn = false; };
+$("#padSave").onclick = () => {
+  if (!drawn) return;
+  settings.signature = trimToPng(pad);
+  saveSettings(); renderSignaturePreviews();
+};
+$("#sigFile").onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const cx = c.getContext("2d");
+    cx.drawImage(img, 0, 0);
+    // Fond blanc -> transparent pour ne pas masquer les pointillés du formulaire
+    const d = cx.getImageData(0, 0, c.width, c.height);
+    for (let i = 0; i < d.data.length; i += 4) {
+      const lum = (d.data[i] + d.data[i + 1] + d.data[i + 2]) / 3;
+      if (lum > 200) d.data[i + 3] = 0;
+    }
+    cx.putImageData(d, 0, 0);
+    settings.signature = trimToPng(c);
+    saveSettings(); renderSignaturePreviews();
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(file);
+};
+// Recadre sur les pixels non transparents
+function trimToPng(canvas) {
+  const cx = canvas.getContext("2d");
+  const { width: w, height: h } = canvas;
+  const d = cx.getImageData(0, 0, w, h).data;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (d[(y * w + x) * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) return null;
+  const out = document.createElement("canvas");
+  out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+  out.getContext("2d").drawImage(canvas, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+  return out.toDataURL("image/png");
+}
+// Signature « PO » : la signature avec « PO » écrit au-dessus à gauche
+function htmlSignature(withPO) {
+  if (!settings.signature) return '<span class="hint">Aucune signature enregistrée</span>';
+  return (withPO ? '<div style="font:bold 14px Helvetica,Arial,sans-serif;color:#0b2a6b">PO</div>' : "") +
+    `<img src="${settings.signature}" alt="Signature">`;
+}
+function renderSignaturePreviews() {
+  $("#sigPreview").innerHTML = htmlSignature(false);
+  $("#sigPreviewPO").innerHTML = htmlSignature(true);
+  updateVisa();
+}
+function isOwner(chef) {
+  return chef.trim().toUpperCase() === settings.ownerName.trim().toUpperCase();
+}
+function updateVisa() {
+  const chef = form.chef.value;
+  if (!chef) { $("#visaPreview").innerHTML = ""; $("#visaHint").textContent = "Choisissez un chef de poste."; return; }
+  const po = !isOwner(chef);
+  $("#visaPreview").innerHTML = htmlSignature(po);
+  $("#visaHint").textContent = po ? "Signature « PO » (chef de poste ≠ " + settings.ownerName + ")" : "Signature personnelle";
+}
+$("#ownerName").oninput = (e) => { settings.ownerName = e.target.value; saveSettings(); updateVisa(); };
+
+// ---------- Dialogue paramètres ----------
+$("#openSettings").onclick = () => { $("#ownerName").value = settings.ownerName; $("#settings").showModal(); };
+$("#closeSettings").onclick = () => $("#settings").close();
+
+// ---------- Barrer 1.1 / 1.2 dans le formulaire ----------
+function updateSections() {
+  const o = form.origine.value;
+  $("#sec11").classList.toggle("barre", o === "laminoir" || o === "expedition");
+  $("#sec12").classList.toggle("barre", o === "acierie");
+}
+form.addEventListener("change", (e) => {
+  if (e.target.name === "origine") updateSections();
+  if (e.target.name === "chef") updateVisa();
+});
+
+// ---------- Génération du PDF ----------
+// Coordonnées en points, origine en haut à gauche (converties pour pdf-lib).
+const PAGE_H = 841.68;
+const INK = [0.04, 0.16, 0.42];
+
+function frDate(iso) {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-");
+  return { d, m, y };
+}
+// Remplace les caractères absents de l'encodage WinAnsi des polices standard
+function safe(s) {
+  return (s || "").replace(/[’‘]/g, "'").replace(/[“”«»]/g, '"').replace(/[–—]/g, "-")
+    .replace(/ /g, " ").replace(/[^\x20-\x7e -ÿŒœ€]/g, "?");
+}
+
+async function buildPdf(v) {
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const b64 = document.getElementById("pdf-template").textContent.trim();
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const doc = await PDFDocument.load(bytes);
+  const page = doc.getPage(0);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const ink = rgb(...INK);
+
+  // Texte sur une ligne, réduit si trop long pour la zone
+  function text(str, x, baseline, maxW, size = 9, f = font) {
+    str = safe(str).trim();
+    if (!str) return;
+    while (size > 5 && f.widthOfTextAtSize(str, size) > maxW) size -= 0.25;
+    page.drawText(str, { x, y: PAGE_H - baseline, size, font: f, color: ink });
+  }
+  // Texte réparti sur plusieurs lignes pointillées
+  function paragraph(str, lines, size = 9) {
+    str = safe(str).replace(/\s+/g, " ").trim();
+    if (!str) return;
+    for (; size >= 5; size -= 0.25) {
+      const out = wrap(str, lines, size);
+      if (out) { out.forEach((t, i) => t && text(t, lines[i].x, lines[i].y, lines[i].w, size)); return; }
+    }
+    const out = wrap(str, lines, 5, true);
+    out.forEach((t, i) => t && text(t, lines[i].x, lines[i].y, lines[i].w, 5));
+  }
+  function wrap(str, lines, size, force = false) {
+    const words = str.split(" ");
+    const out = lines.map(() => "");
+    let li = 0;
+    for (const w of words) {
+      const cand = out[li] ? out[li] + " " + w : w;
+      if (font.widthOfTextAtSize(cand, size) <= lines[li].w) { out[li] = cand; continue; }
+      if (li + 1 >= lines.length) { if (!force) return null; out[li] = cand; continue; }
+      li++; out[li] = w;
+    }
+    return out;
+  }
+  function cross(cx, cy, s = 3.2) {
+    const o = { thickness: 1.3, color: ink };
+    page.drawLine({ start: { x: cx - s, y: PAGE_H - cy - s }, end: { x: cx + s, y: PAGE_H - cy + s }, ...o });
+    page.drawLine({ start: { x: cx - s, y: PAGE_H - cy + s }, end: { x: cx + s, y: PAGE_H - cy - s }, ...o });
+  }
+  function strike(x0, y0, x1, y1) {
+    const o = { thickness: 1.5, color: rgb(0, 0, 0) };
+    page.drawLine({ start: { x: x0, y: PAGE_H - y0 }, end: { x: x1, y: PAGE_H - y1 }, ...o });
+    page.drawLine({ start: { x: x0, y: PAGE_H - y1 }, end: { x: x1, y: PAGE_H - y0 }, ...o });
+  }
+  function date(iso, xd, xm, xy, baseline) {
+    const d = frDate(iso);
+    if (!d) return;
+    text(d.d, xd, baseline, 14);
+    text(d.m, xm, baseline, 14);
+    text(d.y, xy, baseline, 22);
+  }
+
+  // En-tête
+  const boxes = { acierie: 68.6, laminoir: 80.5, expedition: 92.4 };
+  cross(116.9, boxes[v.origine]);
+  text(v.equipe, 300, 71, 70, 10, bold);
+  date(v.date, 458, 477, 498.5, 71);
+  text(v.redacteur, 426, 95, 94);
+
+  // 1.1 Billettes / 1.2 Ronds — on barre la partie non concernée
+  const billettes = v.origine === "acierie";
+  if (billettes) {
+    text(v.b_long, 111, 148, 82);
+    text(v.b_qual, 224, 148, 60);
+    text(v.b_coulee, 146, 168, 130);
+    text(v.b_nombre, 160, 198.5, 52);
+    text(v.b_poids, 240, 198.5, 44);
+    text(v.b_lieu, 160, 215, 124);
+    date(v.b_datefab, 166, 197, 226, 231);
+    if (v.b_identifie === "oui") cross(184.8, 244.4);
+    if (v.b_identifie === "non") cross(224.2, 244.4);
+    strike(292, 118, 521, 253);
+  } else {
+    text(v.r_diam, 323, 148, 35);
+    text(v.r_long, 388, 148, 50);
+    text(v.r_qual, 469, 148, 50);
+    text(v.r_coulee, 381, 168, 95);
+    text(v.r_fardeau, 381, 182.5, 95);
+    text(v.r_quantite, 398, 198.5, 42);
+    text(v.r_nbfardeaux, 496, 198.5, 24);
+    text(v.r_lieu, 398, 215, 108);
+    date(v.r_datefab, 384, 414, 441, 231);
+    if (v.r_rose === "oui") cross(432.2, 244.4);
+    if (v.r_rose === "non") cross(466.0, 244.4);
+    strike(73, 118, 289, 253);
+  }
+
+  // 2. Défaut constaté
+  paragraph(v.defaut, [
+    { x: 236, y: 272, w: 270 },
+    { x: 94, y: 283.5, w: 412 },
+  ]);
+  paragraph(v.analyse, [
+    { x: 284, y: 295.5, w: 222 },
+    { x: 94, y: 307, w: 412 },
+    { x: 94, y: 318, w: 412 },
+  ]);
+  text(v.chef, 178, 329, 105, 9, bold);
+
+  // Visa chef de poste
+  if (settings.signature) {
+    const png = await doc.embedPng(settings.signature);
+    const po = !isOwner(v.chef);
+    const box = { x: 362, top: 320, w: 140, h: 22 }; // zone disponible à droite de « Visa chef de poste : »
+    let sx = box.x, top = box.top;
+    if (po) {
+      page.drawText("PO", { x: box.x, y: PAGE_H - (box.top + 6.5), size: 8, font: bold, color: ink });
+      sx += 9; top += 3;
+    }
+    const scale = Math.min((box.w - (sx - box.x)) / png.width, (box.top + box.h - top) / png.height);
+    page.drawImage(png, { x: sx, y: PAGE_H - top - png.height * scale, width: png.width * scale, height: png.height * scale });
+  }
+
+  doc.setTitle("Rapport de non-conformite AQA.QUAL.03");
+  return doc.save();
+}
+
+function readForm() {
+  const v = Object.fromEntries(new FormData(form).entries());
+  v.origine = form.origine.value;
+  return v;
+}
+function validate(v) {
+  const miss = [];
+  if (!v.origine) miss.push("Aciérie / Laminoir / Expédition");
+  if (!v.equipe) miss.push("Équipe");
+  if (!v.redacteur) miss.push("Rédacteur");
+  if (!v.date) miss.push("Date");
+  if (!v.chef) miss.push("Chef de poste");
+  if (!settings.signature) miss.push("Signature (Paramètres)");
+  return miss;
+}
+function fileName(v) {
+  const coulee = v.origine === "acierie" ? v.b_coulee : v.r_coulee;
+  return ["NC", v.date, coulee].filter(Boolean).join("_").replace(/[^\w.-]+/g, "-") + ".pdf";
+}
+async function generate() {
+  const v = readForm();
+  const miss = validate(v);
+  $("#err").textContent = miss.length ? "À compléter : " + miss.join(", ") : "";
+  if (miss.length) return null;
+  try {
+    const bytes = await buildPdf(v);
+    return { url: URL.createObjectURL(new Blob([bytes], { type: "application/pdf" })), name: fileName(v) };
+  } catch (e) {
+    $("#err").textContent = "Erreur lors de la génération : " + e.message;
+    return null;
+  }
+}
+$("#btnDownload").onclick = async () => {
+  const r = await generate();
+  if (!r) return;
+  const a = document.createElement("a");
+  a.href = r.url; a.download = r.name; a.click();
+};
+$("#btnPreview").onclick = async () => {
+  const r = await generate();
+  if (!r) return;
+  const f = $("#preview");
+  f.src = r.url; f.hidden = false; f.scrollIntoView({ behavior: "smooth" });
+};
+$("#btnReset").onclick = () => {
+  form.reset(); form.b_long.value = "10.5 m"; setToday();
+  $("#preview").hidden = true; $("#err").textContent = ""; updateSections(); updateVisa();
+};
+function setToday() {
+  const d = new Date();
+  form.date.value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+}
+
+setToday();
+renderLists();
+renderSignaturePreviews();
+updateSections();
+</script>
+</body>
+</html>
