@@ -156,12 +156,23 @@
 
   <p id="err" role="alert"></p>
   <div class="actions">
-    <button type="button" class="primary" id="btnDownload">Télécharger le PDF</button>
+    <button type="button" class="primary" id="btnDownload">Enregistrer le PDF</button>
+    <button type="button" id="btnShare">✉ Partager</button>
     <button type="button" id="btnPreview">Aperçu</button>
+    <button type="button" id="btnFolder">📂 Ouvrir le dossier d'enregistrement</button>
     <button type="button" id="btnReset">Nouveau rapport</button>
   </div>
+  <p class="hint" id="status" role="status"></p>
   <p class="hint">Les parties 3 à 7 restent vides (service QSE).</p>
 </form>
+
+<dialog id="folderDialog">
+  <h2 style="margin-top:0">📂 <span id="folderTitle"></span></h2>
+  <div class="list-editor"><ul id="folderFiles"></ul></div>
+  <div class="actions" style="justify-content:flex-end">
+    <button type="button" id="closeFolder" class="primary">Fermer</button>
+  </div>
+</dialog>
 
 <iframe id="preview" title="Aperçu du PDF" hidden></iframe>
 </main>
@@ -199,6 +210,32 @@
         <input type="file" id="sigFile" accept="image/*" style="width:auto"></label>
     </div>
   </section>
+  <section class="card">
+    <h2>Dossier d'enregistrement</h2>
+    <p>Dossier actuel : <strong id="folderName">aucun (téléchargements du navigateur)</strong></p>
+    <div class="actions">
+      <button type="button" id="pickFolder" class="primary">Choisir le dossier…</button>
+      <button type="button" id="clearFolder">Ne plus utiliser de dossier</button>
+    </div>
+    <p class="hint" id="folderHint">Les PDF sont enregistrés directement dans ce dossier (Chrome ou Edge).
+      Le navigateur peut redemander l'autorisation d'accès au premier enregistrement de la session.</p>
+  </section>
+  <section class="card">
+    <h2>Partage par mail</h2>
+    <div class="grid">
+      <label>Destinataires (séparés par des virgules, facultatif)
+        <input id="mailTo" placeholder="qse@exemple.fr, rqse@exemple.fr">
+      </label>
+      <label>Méthode
+        <select id="shareMode">
+          <option value="eml">Brouillon Outlook (fichier .eml)</option>
+          <option value="system">Partage Windows / téléphone</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint">« Brouillon Outlook » télécharge un mail prêt à envoyer (objet + PDF joint) :
+      cliquez dessus pour l'ouvrir dans Outlook. « Partage » ouvre le menu de partage du système.</p>
+  </section>
   <div class="actions" style="justify-content:flex-end">
     <button type="button" id="closeSettings" class="primary">Fermer</button>
   </div>
@@ -215,6 +252,8 @@ const DEFAULTS = {
   chefs: ["DESOBRY"],
   ownerName: "DESOBRY",
   signature: null, // data URL PNG, fond transparent
+  mailTo: "",
+  shareMode: "eml",
 };
 function loadSettings() {
   try {
@@ -350,8 +389,96 @@ function updateVisa() {
 $("#ownerName").oninput = (e) => { settings.ownerName = e.target.value; saveSettings(); updateVisa(); };
 
 // ---------- Dialogue paramètres ----------
-$("#openSettings").onclick = () => { $("#ownerName").value = settings.ownerName; $("#settings").showModal(); };
+$("#openSettings").onclick = () => {
+  $("#ownerName").value = settings.ownerName;
+  $("#mailTo").value = settings.mailTo;
+  $("#shareMode").value = settings.shareMode;
+  $("#settings").showModal();
+};
 $("#closeSettings").onclick = () => $("#settings").close();
+$("#mailTo").oninput = (e) => { settings.mailTo = e.target.value; saveSettings(); };
+$("#shareMode").onchange = (e) => { settings.shareMode = e.target.value; saveSettings(); };
+
+// ---------- Dossier d'enregistrement ----------
+// Le « handle » du dossier ne peut pas aller dans localStorage : il est gardé dans IndexedDB.
+const HAS_FS = "showDirectoryPicker" in window;
+function idb(mode, fn) {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("alpa-nc", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("kv");
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const tx = req.result.transaction("kv", mode);
+      const r = fn(tx.objectStore("kv"));
+      tx.oncomplete = () => resolve(r && r.result);
+      tx.onerror = () => reject(tx.error);
+    };
+  });
+}
+let folder = null;
+async function loadFolder() {
+  try { folder = (await idb("readonly", (s) => s.get("folder"))) || null; } catch (e) { folder = null; }
+  renderFolder();
+}
+function renderFolder() {
+  $("#folderName").textContent = folder ? folder.name : "aucun (téléchargements du navigateur)";
+  if (!HAS_FS) {
+    $("#pickFolder").disabled = true;
+    $("#folderHint").textContent = "Ce navigateur ne permet pas de choisir un dossier : utilisez Chrome ou Edge sur ordinateur.";
+  }
+}
+async function folderAccess() {
+  if (!folder) return false;
+  const opts = { mode: "readwrite" };
+  if ((await folder.queryPermission(opts)) === "granted") return true;
+  return (await folder.requestPermission(opts)) === "granted";
+}
+$("#pickFolder").onclick = async () => {
+  try {
+    folder = await window.showDirectoryPicker({ id: "alpa-nc", mode: "readwrite" });
+    await idb("readwrite", (s) => s.put(folder, "folder"));
+    renderFolder();
+  } catch (e) { /* choix annulé */ }
+};
+$("#clearFolder").onclick = async () => {
+  folder = null;
+  try { await idb("readwrite", (s) => s.delete("folder")); } catch (e) { /* ignore */ }
+  renderFolder();
+};
+async function saveToFolder(blob, name) {
+  if (!(await folderAccess())) return false;
+  const fh = await folder.getFileHandle(name, { create: true });
+  const w = await fh.createWritable();
+  await w.write(blob);
+  await w.close();
+  return true;
+}
+// « Ouvrir le dossier » : un navigateur ne peut pas lancer l'Explorateur Windows,
+// on affiche donc le contenu du dossier et chaque PDF s'ouvre d'un clic.
+$("#btnFolder").onclick = async () => {
+  if (!folder) { $("#status").textContent = "Aucun dossier configuré : choisissez-le dans ⚙ Paramètres."; return; }
+  if (!(await folderAccess())) { $("#status").textContent = "Accès au dossier refusé."; return; }
+  const files = [];
+  for await (const [name, h] of folder.entries()) {
+    if (h.kind === "file" && name.toLowerCase().endsWith(".pdf")) files.push(await h.getFile());
+  }
+  files.sort((a, b) => b.lastModified - a.lastModified);
+  $("#folderTitle").textContent = folder.name;
+  const ul = $("#folderFiles");
+  ul.innerHTML = files.length ? "" : '<li class="hint">Aucun PDF dans ce dossier.</li>';
+  for (const f of files) {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(f); a.target = "_blank"; a.textContent = f.name;
+    const when = document.createElement("span");
+    when.className = "hint"; when.style.margin = "0";
+    when.textContent = new Date(f.lastModified).toLocaleString("fr-FR");
+    li.append(a, when);
+    ul.appendChild(li);
+  }
+  $("#folderDialog").showModal();
+};
+$("#closeFolder").onclick = () => $("#folderDialog").close();
 
 // ---------- Barrer 1.1 / 1.2 dans le formulaire ----------
 function updateSections() {
@@ -534,17 +661,88 @@ async function generate() {
   if (miss.length) return null;
   try {
     const bytes = await buildPdf(v);
-    return { url: URL.createObjectURL(new Blob([bytes], { type: "application/pdf" })), name: fileName(v) };
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    return { v, bytes, blob, url: URL.createObjectURL(blob), name: fileName(v) };
   } catch (e) {
     $("#err").textContent = "Erreur lors de la génération : " + e.message;
     return null;
   }
 }
+function download(url, name) {
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+}
+// Enregistre dans le dossier configuré, sinon dans les téléchargements
+async function save(r) {
+  try {
+    if (folder && (await saveToFolder(r.blob, r.name))) {
+      $("#status").textContent = `Enregistré dans « ${folder.name} » : ${r.name}`;
+      return;
+    }
+  } catch (e) {
+    $("#err").textContent = "Enregistrement dans le dossier impossible (" + e.message + "), téléchargement à la place.";
+  }
+  download(r.url, r.name);
+  $("#status").textContent = "Téléchargé : " + r.name;
+}
 $("#btnDownload").onclick = async () => {
   const r = await generate();
+  if (r) await save(r);
+};
+
+// ---------- Partage par mail ----------
+function mailSubject(v) {
+  const d = frDate(v.date);
+  return `Fdx NC du ${d.d}/${d.m}/${d.y}`;
+}
+function b64(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+const utf8b64 = (s) => b64(new TextEncoder().encode(s));
+// Brouillon .eml : « X-Unsent: 1 » fait ouvrir le mail par Outlook en mode rédaction
+function buildEml(subject, to, name, bytes) {
+  const boundary = "----=_NC_" + Date.now().toString(36);
+  const body = "Bonjour,\r\n\r\nVeuillez trouver ci-joint le rapport de non-conformité.\r\n\r\nCordialement,\r\n";
+  return [
+    "MIME-Version: 1.0",
+    "X-Unsent: 1",
+    to ? "To: " + to : null,
+    `Subject: =?UTF-8?B?${utf8b64(subject)}?=`,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    "",
+    "--" + boundary,
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    utf8b64(body).replace(/.{76}/g, "$&\r\n"),
+    "--" + boundary,
+    `Content-Type: application/pdf; name="=?UTF-8?B?${utf8b64(name)}?="`,
+    "Content-Transfer-Encoding: base64",
+    `Content-Disposition: attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
+    "",
+    b64(bytes).replace(/.{76}/g, "$&\r\n"),
+    "--" + boundary + "--",
+    "",
+  ].filter((l) => l !== null).join("\r\n");
+}
+$("#btnShare").onclick = async () => {
+  const r = await generate();
   if (!r) return;
-  const a = document.createElement("a");
-  a.href = r.url; a.download = r.name; a.click();
+  const subject = mailSubject(r.v);
+  if (settings.shareMode === "system") {
+    const file = new File([r.blob], r.name, { type: "application/pdf" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: subject, text: subject }); } catch (e) { /* annulé */ }
+      return;
+    }
+    $("#err").textContent = "Le partage système n'est pas disponible ici : brouillon Outlook utilisé.";
+  }
+  const eml = buildEml(subject, settings.mailTo.trim(), r.name, r.bytes);
+  const url = URL.createObjectURL(new Blob([eml], { type: "message/rfc822" }));
+  download(url, subject.replace(/\//g, "-") + ".eml");
+  $("#status").textContent = "Brouillon de mail téléchargé : ouvrez-le pour l'envoyer depuis Outlook.";
 };
 $("#btnPreview").onclick = async () => {
   const r = await generate();
@@ -554,7 +752,7 @@ $("#btnPreview").onclick = async () => {
 };
 $("#btnReset").onclick = () => {
   form.reset(); form.b_long.value = "10.5 m"; setToday();
-  $("#preview").hidden = true; $("#err").textContent = ""; updateSections(); updateVisa();
+  $("#preview").hidden = true; $("#err").textContent = ""; $("#status").textContent = ""; updateSections(); updateVisa();
 };
 function setToday() {
   const d = new Date();
@@ -562,6 +760,7 @@ function setToday() {
 }
 
 setToday();
+loadFolder();
 renderLists();
 renderSignaturePreviews();
 updateSections();
