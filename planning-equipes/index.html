@@ -49,6 +49,7 @@
         --mf-n-bg: #7a2a12;
         --mf-n-fg: #ffe1d2;
         --mf-row: #fbe6dc;
+        --hl: #dceee8;
         --pv-m: #1e8a43;
         --pv-f: #f29a1f;
         --pv-n: #d23a26;
@@ -92,6 +93,7 @@
           --mf-n-bg: #8a3416;
           --mf-n-fg: #ffe1d2;
           --mf-row: #2a1d18;
+          --hl: #1f3a34;
           --pv-m: #23944a;
           --pv-f: #f0a43a;
           --pv-n: #d9452f;
@@ -132,6 +134,7 @@
         --mf-n-bg: #8a3416;
         --mf-n-fg: #ffe1d2;
         --mf-row: #2a1d18;
+        --hl: #1f3a34;
         --pv-m: #23944a;
         --pv-f: #f0a43a;
         --pv-n: #d9452f;
@@ -649,6 +652,20 @@
       .list tr.moverow td {
         background: var(--accent-soft);
         white-space: normal;
+      }
+      /* Survol : quadrillage ligne + colonne, cellule survolée encadrée (façon tableur). */
+      .plan tr.hl-row > th,
+      .plan tr.hl-row > td,
+      .plan .hl-col {
+        background-color: var(--hl) !important;
+        background-image: none;
+      }
+      .plan td.hl-cell {
+        box-shadow: inset 0 0 0 2px var(--accent);
+      }
+      .plan th.dh.hl-col b,
+      .plan tr.hl-row > th.name {
+        color: var(--accent);
       }
       .plan tr.team.pool th,
       .plan tr.team.pool td {
@@ -4073,6 +4090,40 @@
           if (ev.target.id !== "cand-q" || !S.drawer) return;
           S.drawer.q = ev.target.value;
           applyCandFilter();
+        });
+        // Quadrillage au survol du planning : ligne et colonne de la cellule survolée.
+        let hlKey = "";
+        function clearHl() {
+          document
+            .querySelectorAll(".plan .hl-row, .plan .hl-col, .plan .hl-cell")
+            .forEach((x) => x.classList.remove("hl-row", "hl-col", "hl-cell"));
+          hlKey = "";
+        }
+        document.addEventListener("mouseover", (ev) => {
+          const cell = ev.target.closest(".plan tbody td, .plan tbody th");
+          if (!cell) {
+            if (hlKey) clearHl();
+            return;
+          }
+          const tr = cell.parentElement;
+          const table = tr.closest("table");
+          const col = cell.cellIndex;
+          const key = [...table.tBodies[0].rows].indexOf(tr) + ":" + col;
+          if (key === hlKey && tr.classList.contains("hl-row")) return;
+          clearHl();
+          hlKey = key;
+          tr.classList.add("hl-row");
+          const days = table.tHead.rows[1];
+          // Colonnes jours : 1 à n (0 = nom, dernière = total du mois).
+          if (col > 0 && col <= days.cells.length) {
+            for (const r of table.tBodies[0].rows)
+              r.cells[col]?.classList.add("hl-col");
+            days.cells[col - 1]?.classList.add("hl-col");
+            cell.classList.add("hl-cell");
+          }
+        });
+        document.addEventListener("mouseleave", (ev) => {
+          if (ev.target === document.documentElement) clearHl();
         });
         document.addEventListener("keydown", (ev) => {
           if (ev.key === "Escape" && (S.drawer || S.pop)) {
