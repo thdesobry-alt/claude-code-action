@@ -518,9 +518,14 @@ function validate(v) {
   if (!settings.signature) miss.push("Signature (Paramètres)");
   return miss;
 }
+// Aciérie : « AAAA.MM.JJ AQA.QUAL.03 Coulée <qualité> N° <coulée> »
+// Laminoir / Expédition : « AAAA.MM.JJ AQA.QUAL.03 Fdx <fardeau> Coulée <coulée> »
 function fileName(v) {
-  const coulee = v.origine === "acierie" ? v.b_coulee : v.r_coulee;
-  return ["NC", v.date, coulee].filter(Boolean).join("_").replace(/[^\w.-]+/g, "-") + ".pdf";
+  const parts = [v.date.replace(/-/g, "."), "AQA.QUAL.03"];
+  if (v.origine === "acierie") parts.push("Coulée", v.b_qual, "N°", v.b_coulee);
+  else parts.push("Fdx", v.r_fardeau, "Coulée", v.r_coulee);
+  const name = parts.map((p) => (p || "").trim()).filter(Boolean).join(" ");
+  return name.replace(/[\\/:*?"<>|]+/g, "-") + ".pdf";
 }
 async function generate() {
   const v = readForm();

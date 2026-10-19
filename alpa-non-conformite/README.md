@@ -17,7 +17,9 @@ internet est nécessaire au premier chargement (bibliothèque `pdf-lib`).
 4. Compléter la partie 2 et choisir le **chef de poste** (liste configurable).
    - Chef de poste = DESOBRY → signature personnelle.
    - Autre chef de poste → signature « PO » (la même signature avec « PO » au-dessus à gauche).
-5. **Télécharger le PDF**. Les parties 3 à 7 restent vides.
+5. **Télécharger le PDF**. Les parties 3 à 7 restent vides. Nom du fichier :
+   - Aciérie : `AAAA.MM.JJ AQA.QUAL.03 Coulée <qualité> N° <n° de coulée>.pdf`
+   - Laminoir / Expédition : `AAAA.MM.JJ AQA.QUAL.03 Fdx <n° fardeau> Coulée <n° de coulée>.pdf`
 
 ## Paramètres (⚙)
 
