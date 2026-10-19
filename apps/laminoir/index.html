@@ -1159,6 +1159,25 @@
     stroke: none;
     opacity: 0.55;
   }
+  .roll-link {
+    border: 0;
+    background: none;
+    padding: 0;
+    text-align: left;
+    font-size: 11px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+    text-underline-offset: 2px;
+  }
+  .roll-link:hover {
+    color: var(--fg);
+  }
+  .vcage .mini {
+    font-size: 11px;
+    gap: 6px;
+  }
   .vnotes {
     display: grid;
     gap: 2px;
@@ -1874,7 +1893,8 @@
         `<div class="vcage"><div class="vcage-top"><span class="cage-num">Cage<b>${n}</b></span>` +
         `<button class="hs-btn" data-act="hs" data-cage="${n}" title="Commentaire HS de la cage">HS</button></div>` +
         (c
-          ? `<small>${esc(c.name) || "Sans nom"} · Ø ${esc(c.diameter)} mm</small>`
+          ? `<button class="roll-link" data-act="config" data-cage="${n}" title="Modifier le cylindre">${esc(c.name) || "Sans nom"} · Ø ${esc(c.diameter)} mm</button>` +
+            (S.tab === "edit" ? stateSummary(c) : "")
           : "") +
         `</div>`;
       const sides = (mid) =>
@@ -1882,7 +1902,7 @@
         `<div class="vcenter">${mid}</div><span class="vside r">Côté moteur</span></section>`;
       if (!c) {
         return sides(
-          `<div class="vroll"><span class="journal"></span><div class="barrel empty-roll">Aucun cylindre</div><span class="journal"></span></div>`,
+          `<div class="vroll"><span class="journal"></span><div class="barrel empty-roll">${S.tab === "edit" ? `<button class="btn" data-act="config" data-cage="${n}">Insérer un cylindre</button>` : "Aucun cylindre"}</div><span class="journal"></span></div>`,
         );
       }
       const sel = [0, 1, 2].map((i) => pathFor(i)[n]);
@@ -1923,12 +1943,12 @@
         .forEach((b) =>
           b.setAttribute("aria-pressed", String(b.dataset.tab === S.tab)),
         );
-      $("scroller").hidden = S.tab !== "edit";
-      $("vscroller").hidden = S.tab !== "view";
+      $("scroller").hidden = true;
+      $("vscroller").hidden = S.tab === "db";
       $("dbview").hidden = S.tab !== "db";
       if (!S.ready) return;
       if (S.tab === "db") return renderDb();
-      if (S.tab === "view") {
+      if (S.tab !== "db") {
         $("vline").innerHTML =
           visible().map(vrowHTML).join("") +
           `<svg class="paths" id="vpaths" aria-hidden="true"></svg>`;
@@ -1942,7 +1962,7 @@
 
     function drawPaths() {
       if (S.tab === "db") return;
-      if (S.tab === "view") return drawVPaths();
+      return drawVPaths();
       const line = $("line"),
         svg = $("paths");
       if (!svg) return;
@@ -2494,16 +2514,9 @@
       if (f) importJson(f);
     });
 
-    // Visualisation: HS opens the procedure, a groove opens its state and comment.
+    // Renseignement et Visualisation : cages de haut en bas. En Visualisation un clic sur
+    // une cannelure ouvre sa fiche ; en Renseignement il suit le mode choisi.
     $("vline").addEventListener("click", (e) => {
-      const b = e.target.closest("[data-act]");
-      if (!b) return;
-      const n = Number(b.dataset.cage);
-      if (b.dataset.act === "hs") return openHS(n);
-      if (b.dataset.act === "g") return openGroove(n, b.dataset.g);
-    });
-
-    $("line").addEventListener("click", (e) => {
       const b = e.target.closest("[data-act]");
       if (!b) return;
       const n = Number(b.dataset.cage),
@@ -2513,6 +2526,7 @@
       if (act !== "g") return;
       const key = b.dataset.g,
         c = S.cages[n];
+      if (S.tab === "view") return openGroove(n, key);
       if (S.mode === "note") return openGroove(n, key);
       if (S.mode === "state") {
         const cur = grooveOf(n, key);
