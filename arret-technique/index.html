@@ -701,6 +701,227 @@
         stroke-dasharray: 6 4;
         cursor: move;
       }
+      .depot {
+        border: 2px dashed var(--line);
+        border-radius: 10px;
+        padding: 10px;
+        margin-top: 6px;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .depot.over {
+        border-color: var(--accent);
+        background: var(--weekend);
+      }
+      .doc-sec {
+        border-top: 1px solid var(--line);
+        padding-top: 10px;
+        margin-top: 6px;
+      }
+      .doc-sec h4 {
+        margin: 0 0 6px;
+        font-size: 13px;
+      }
+      .doc-sec.ext {
+        background: color-mix(in srgb, var(--reportee) 10%, transparent);
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .pj a {
+        color: var(--accent);
+      }
+      .photos {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .ph-zone {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        min-height: 90px;
+      }
+      .ph {
+        position: relative;
+      }
+      .ph img {
+        width: 96px;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 6px;
+        display: block;
+        cursor: zoom-in;
+      }
+      .ph button {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        cursor: pointer;
+        font-size: 11px;
+        width: 20px;
+        height: 20px;
+      }
+      .tag.manque {
+        background: #fde2dd;
+        color: #b42318;
+        font-weight: 600;
+      }
+      dialog.dlg-ar {
+        width: min(1000px, 98vw);
+      }
+      /* Formulaire AQA.QSE.15 */
+      .arf {
+        font:
+          11px/1.25 Arial,
+          sans-serif;
+        color: #000;
+        background: #fff;
+        padding: 6px;
+      }
+      .arf table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      .arf td,
+      .arf th {
+        border: 1px solid #000;
+        padding: 1px 4px;
+        vertical-align: top;
+        position: static;
+        text-transform: none;
+        color: #000;
+        background: none;
+        font-size: inherit;
+      }
+      .arf-h td {
+        border: 2px solid #000;
+      }
+      .arf-t {
+        background: #1d7a72 !important;
+        color: #fff !important;
+        font-size: 17px !important;
+        font-weight: 700;
+        text-align: center;
+        vertical-align: middle !important;
+        padding: 10px !important;
+      }
+      .arf-r {
+        width: 150px;
+        text-align: center;
+        color: #1d4f9b !important;
+      }
+      .arf-d {
+        display: flex;
+        justify-content: space-between;
+        font-style: italic;
+        margin: 3px 0;
+      }
+      .arf-i td {
+        height: 26px;
+      }
+      .arf-i td.n1 {
+        width: 34%;
+      }
+      .arf-m {
+        font-weight: 400;
+      }
+      .arf-g th {
+        text-align: center;
+        font-weight: 700;
+        font-size: 10px !important;
+      }
+      .arf-g tbody.sec {
+        border-top: 2px solid #000;
+      }
+      .arf-g td.sit {
+        width: 15%;
+        text-align: center;
+        vertical-align: middle;
+      }
+      .arf-g td.ck,
+      .arf-g th.ck {
+        width: 22px;
+        text-align: center;
+        padding: 0;
+      }
+      .arf-g td.obs {
+        width: 18%;
+      }
+      .arf textarea {
+        width: 100%;
+        min-height: 40px;
+        font: inherit;
+        border: 1px dashed #999;
+        resize: vertical;
+        background: #fff;
+        color: #000;
+      }
+      .arf-p {
+        border: 1px solid #000;
+        border-top: 0;
+        padding: 3px 4px;
+        min-height: 34px;
+      }
+      #print-zone {
+        display: none;
+      }
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 7mm;
+        }
+        body.impression > *:not(#print-zone) {
+          display: none !important;
+        }
+        body.impression {
+          background: #fff;
+        }
+        body.impression #print-zone {
+          display: block;
+        }
+        #print-zone .pg {
+          page-break-after: always;
+          break-after: page;
+        }
+        #print-zone .pg:last-child {
+          page-break-after: auto;
+          break-after: auto;
+        }
+        #print-zone .arf {
+          font-size: 8px;
+          line-height: 1.15;
+          padding: 0;
+        }
+        #print-zone .arf td,
+        #print-zone .arf th {
+          padding: 0 3px;
+        }
+        #print-zone .arf-p {
+          min-height: 24px;
+        }
+        #print-zone .arf-t {
+          font-size: 15px !important;
+          padding: 6px !important;
+        }
+        #print-zone .arf-g th {
+          font-size: 8px !important;
+        }
+        #print-zone .arf-i td {
+          height: 18px;
+        }
+        #print-zone .pg-img img {
+          width: 100%;
+          height: auto;
+          max-height: 282mm;
+          object-fit: contain;
+        }
+      }
       #vide {
         max-width: 520px;
         margin: 80px auto;
@@ -799,9 +1020,26 @@
               <option value="oui">Planifiées</option>
               <option value="non">Non planifiées</option>
             </select>
+            <input id="f-jour" type="date" title="Activités prévues ce jour" />
+            <select id="f-doc">
+              <option value="">Tous documents</option>
+              <option value="manque-ext">
+                Entreprise ext. : commande / PdP manquant
+              </option>
+              <option value="sans-ar">Sans analyse de risque signée</option>
+              <option value="avec-ar">Avec analyse de risque signée</option>
+              <option value="photos">Avec photos</option>
+            </select>
             <button class="btn small" id="f-reset">Réinitialiser</button>
             <div class="spacer"></div>
             <span class="muted" id="f-count"></span>
+            <button
+              class="btn"
+              id="b-ar-print"
+              title="Imprime une analyse de risque par activité du filtre (ex. service Mécanique + un jour)"
+            >
+              🖨️ Analyses de risque
+            </button>
             <button class="btn primary" id="b-new">＋ Nouvelle activité</button>
           </div>
           <div class="scroll-x tall">
@@ -1024,6 +1262,24 @@
       </section>
     </main>
 
+    <dialog id="dlg-ar" class="dlg-ar">
+      <div class="dlg-h">
+        <span id="ar-t"></span
+        ><button
+          class="btn small"
+          type="button"
+          onclick="this.closest('dialog').close()"
+        >
+          ✕
+        </button>
+      </div>
+      <div class="dlg-b" id="ar-b"></div>
+      <div class="dlg-f">
+        <button type="button" class="btn" id="ar-print">🖨️ Imprimer</button>
+        <button type="button" class="btn primary" id="ar-ok">Valider</button>
+      </div>
+    </dialog>
+    <div id="print-zone"></div>
     <dialog id="dlg">
       <form method="dialog" id="dlg-form">
         <div class="dlg-h">
@@ -1147,11 +1403,25 @@
       }
 
       // ---------- Persistance ----------
+      // Copie de travail dans IndexedDB (photos et PDF dépassent vite les ~5 Mo de localStorage).
+      let tSauve = null;
+      function sauverLocal() {
+        clearTimeout(tSauve);
+        tSauve = setTimeout(() => {
+          idb("put", DB, "db").then((r) => {
+            if (r === null)
+              console.warn(
+                "Copie de travail non sauvegardée dans le navigateur",
+              );
+          });
+          try {
+            localStorage.removeItem(STORE_KEY);
+          } catch (e) {}
+        }, 300);
+      }
       function changed() {
         dirty = true;
-        try {
-          localStorage.setItem(STORE_KEY, JSON.stringify(DB));
-        } catch (e) {}
+        sauverLocal();
         renderEtat();
         render();
       }
@@ -1167,7 +1437,7 @@
             : "✓ À jour";
       }
       // Le fichier choisi est mémorisé (IndexedDB) pour réenregistrer au même endroit.
-      function idb(mode, val) {
+      function idb(mode, val, cle = "fichier") {
         return new Promise((ok) => {
           try {
             const rq = indexedDB.open("arret-technique", 1);
@@ -1180,7 +1450,11 @@
               );
               const st = tx.objectStore("kv");
               const r =
-                mode === "get" ? st.get("fichier") : st.put(val, "fichier");
+                mode === "get"
+                  ? st.get(cle)
+                  : mode === "del"
+                    ? st.delete(cle)
+                    : st.put(val, cle);
               r.onsuccess = () => ok(r.result);
               r.onerror = () => ok(null);
             };
@@ -1277,9 +1551,7 @@
           ui.admin = false;
         }
         dirty = false;
-        try {
-          localStorage.setItem(STORE_KEY, JSON.stringify(DB));
-        } catch (e) {}
+        sauverLocal();
         demarrer();
       }
       function normaliser(d) {
@@ -1306,6 +1578,17 @@
         );
         d.zones.forEach((z) => (z.machines ??= []));
         d.personnel.forEach((p) => (p.absences ??= []));
+        d.activites.forEach(
+          (a) => ((a.photos ??= []), (a.docs ??= {}), (a.ar ??= {})),
+        );
+        // N+1 par défaut des équipes (responsables de la base personnel).
+        const n1 = { mto: "p1274", meca: "p1302", elec: "p1382" };
+        d.equipes.forEach((e) => {
+          if (e.responsable === undefined)
+            e.responsable = d.personnel.some((p) => p.id === n1[e.id])
+              ? n1[e.id]
+              : "";
+        });
       }
 
       // ---------- Rendu général ----------
@@ -1390,6 +1673,13 @@
             (!f.st || a.statut === f.st) &&
             (!f.pers || a.intervenants.includes(f.pers)) &&
             (!f.plan || (f.plan === "oui") === !!a.debut) &&
+            (!f.jour ||
+              (a.debut && a.debut <= f.jour && f.jour <= (a.fin || a.debut))) &&
+            (!f.doc ||
+              (f.doc === "manque-ext" && manquesExterne(a).length > 0) ||
+              (f.doc === "sans-ar" && !a.docs?.ar) ||
+              (f.doc === "avec-ar" && !!a.docs?.ar) ||
+              (f.doc === "photos" && a.photos?.length > 0)) &&
             (!q ||
               [
                 a.designation,
@@ -1451,7 +1741,7 @@
             html += `<tr class="zone-h"><td colspan="7">📍 ${esc(zoneNom(zc))} <span class="muted">(${nz})</span></td></tr>`;
           }
           html += `<tr data-id="${a.id}">
-            <td>${esc(a.designation)}${a.machine ? ` <span class="tag">⚙️ ${esc(machineNom(a))}</span>` : ""}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}</td>
+            <td>${esc(a.designation)}${a.machine ? ` <span class="tag">⚙️ ${esc(machineNom(a))}</span>` : ""}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${a.docs?.ar ? ' <span class="tag" title="Analyse de risque signée jointe">📄 AR</span>' : ""}${a.photos?.length ? ` <span class="tag" title="Photos avant / après">📷 ${a.photos.length}</span>` : ""}${manquesExterne(a).length ? ` <span class="tag manque" title="Entreprise extérieure">⚠️ ${manquesExterne(a).join(" et ")} manquant</span>` : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}</td>
             <td><span class="svc" style="--sc:${svcColor(a.service)};padding-left:6px">${esc(a.service)}</span></td>
             <td>${a.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}</td>
             <td>${h(a.dureeH) || '<span class="muted">—</span>'}</td>
@@ -1502,6 +1792,14 @@
               ...defauts,
             };
         let inter = [...a.intervenants];
+        // Copie de travail des documents, appliquée à l'enregistrement.
+        const w = {
+          ar: structuredClone(a.ar || {}),
+          docs: structuredClone(a.docs || {}),
+          photos: structuredClone(a.photos || []),
+          commande: a.commande || "",
+          pdpRef: a.pdpRef || "",
+        };
         const zo = zoneOrder();
         const zones = [...DB.zones].sort((x, y) => zo[x.id] - zo[y.id]);
         dialogue(
@@ -1524,6 +1822,7 @@
             <label>Pont roulant nécessaire<select id="e-pont">${opt("", "Aucun", a.pont)}${DB.ponts.map((p) => opt(p.id, p.nom, a.pont)).join("")}</select></label>
             <label>Début réel<input id="e-debr" type="date" value="${a.debutReel || ""}"></label>
             <label class="full">Commentaire<textarea id="e-com" rows="2">${esc(a.commentaire)}</textarea></label>
+            <div class="full" id="e-docs"></div>
           </div>`,
           [
             ...(id && ui.admin
@@ -1551,6 +1850,8 @@
                       const c = structuredClone(a);
                       c.id = uid("a");
                       c.statut = "afaire";
+                      c.photos = [];
+                      delete c.docs?.ar;
                       DB.activites.push(c);
                       changed();
                     },
@@ -1565,6 +1866,20 @@
                 const des = $("#e-des").value.trim();
                 if (!des)
                   return (alert("La désignation est obligatoire."), false);
+                const manque = manquesExterne({
+                  ...a,
+                  intervenants: inter,
+                  commande: w.commande,
+                  pdpRef: w.pdpRef,
+                  docs: w.docs,
+                });
+                if (manque.length)
+                  return (
+                    alert(
+                      `Une entreprise extérieure intervient : ${manque.join(" et ")} obligatoire(s).`,
+                    ),
+                    false
+                  );
                 const dur =
                   $("#e-dur").value === "" ? null : Number($("#e-dur").value);
                 const deb = $("#e-deb").value || null;
@@ -1585,6 +1900,11 @@
                   pont: $("#e-pont").value,
                   debutReel: $("#e-debr").value || null,
                   commentaire: $("#e-com").value.trim(),
+                  ar: w.ar,
+                  docs: w.docs,
+                  photos: w.photos,
+                  commande: w.commande.trim(),
+                  pdpRef: w.pdpRef.trim(),
                 });
                 if (!id) DB.activites.push(a);
                 changed();
@@ -1608,7 +1928,9 @@
         };
         machines();
         $("#e-zone").onchange = machines;
+        const majDocs = blocDocuments(a, w, () => inter);
         const chips = () => {
+          majDocs();
           $("#e-chips").innerHTML =
             inter
               .map(
@@ -2269,6 +2591,13 @@
           <label>Nom<input id="o-nom" value="${esc(p.nom)}"></label><label>Prénom<input id="o-pre" value="${esc(p.prenom)}"></label>
           <label>Matricule<input id="o-mat" value="${esc(p.matricule ?? "")}"></label><label>Poste<input id="o-poste" value="${esc(p.poste)}"></label>
           <label>Équipe<select id="o-eq">${DB.equipes.map((e) => opt(e.id, e.nom, p.equipe)).join("")}</select></label>
+          <label>Responsable hiérarchique (N+1)<select id="o-resp">${opt("", "— celui de l'équipe —", p.responsable || "")}${[
+            ...DB.personnel,
+          ]
+            .filter((x) => x.equipe !== "ext" && x.id !== p.id)
+            .sort((x, y) => persNom(x).localeCompare(persNom(y)))
+            .map((x) => opt(x.id, persNom(x), p.responsable || ""))
+            .join("")}</select></label>
           <label>Absences<input value="${p.absences.length} jour(s) — cliquer dans le calendrier pour modifier" disabled></label></div>`,
           [
             ...(id
@@ -2319,6 +2648,7 @@
                 Object.assign(p, {
                   nom,
                   prenom: $("#o-pre").value.trim(),
+                  responsable: $("#o-resp").value,
                   matricule: $("#o-mat").value.trim() || null,
                   poste: $("#o-poste").value.trim(),
                   equipe: $("#o-eq").value,
@@ -2579,7 +2909,7 @@
         );
         const eqNom = (id) => DB.equipes.find((e) => e.id === id)?.nom || id;
         $("#ad-pers").innerHTML =
-          `<table><thead><tr><th>Nom</th><th>Prénom</th><th>Matricule</th><th>Poste</th><th>Équipe</th><th>Activités</th><th>Absences</th></tr></thead><tbody>
+          `<table><thead><tr><th>Nom</th><th>Prénom</th><th>Matricule</th><th>Poste</th><th>Équipe</th><th>N+1</th><th>Activités</th><th>Absences</th></tr></thead><tbody>
           ${[...DB.personnel]
             .sort(
               (a, b) =>
@@ -2589,7 +2919,7 @@
             .map(
               (
                 p,
-              ) => `<tr data-pers="${p.id}"><td><b>${esc(p.nom)}</b></td><td>${esc(p.prenom)}</td><td>${esc(p.matricule ?? "")}</td><td>${esc(p.poste)}</td><td>${esc(eqNom(p.equipe))}</td>
+              ) => `<tr data-pers="${p.id}"><td><b>${esc(p.nom)}</b></td><td>${esc(p.prenom)}</td><td>${esc(p.matricule ?? "")}</td><td>${esc(p.poste)}</td><td>${esc(eqNom(p.equipe))}</td><td>${esc(persNom(responsableDe(p)) === "?" ? "" : persNom(responsableDe(p)))}</td>
                 <td>${DB.activites.filter((a) => a.intervenants.includes(p.id)).length}</td><td>${p.absences.length || ""}</td></tr>`,
             )
             .join("")}</tbody></table>`;
@@ -2753,6 +3083,17 @@
         dialogue(
           it ? titre + " : " + it.nom : "Nouveau(elle) " + titre.toLowerCase(),
           `<div class="form"><label class="full">Nom<input id="l-nom" value="${esc(it?.nom || "")}"></label>
+            ${
+              estSvc
+                ? ""
+                : `<label class="full">Responsable hiérarchique (N+1) de l'équipe<select id="l-resp">${opt("", "— aucun —", it?.responsable || "")}${[
+                    ...DB.personnel,
+                  ]
+                    .filter((x) => x.equipe !== "ext")
+                    .sort((x, y) => persNom(x).localeCompare(persNom(y)))
+                    .map((x) => opt(x.id, persNom(x), it?.responsable || ""))
+                    .join("")}</select></label>`
+            }
             ${it && n ? choixRemplacement(items, it.id).replace("Réaffecter les éléments liés vers", `En cas de suppression, réaffecter les ${n} ${estSvc ? "activité(s)" : "personne(s)"} vers`) : ""}</div>`,
           [
             ...(it
@@ -2806,8 +3147,14 @@
                       (a) => a.service === it.id && (a.service = nom),
                     );
                   } else DB.services.push(nom);
-                } else if (it) it.nom = nom;
-                else DB.equipes.push({ id: uid("eq"), nom });
+                } else if (it)
+                  Object.assign(it, { nom, responsable: $("#l-resp").value });
+                else
+                  DB.equipes.push({
+                    id: uid("eq"),
+                    nom,
+                    responsable: $("#l-resp").value,
+                  });
                 remplirFiltres();
                 changed();
               },
@@ -3758,15 +4105,546 @@
         if (!DB.meta.zonesPareto) return;
         const b = decoupageDetaille(DB);
         dirty = true;
-        try {
-          localStorage.setItem(STORE_KEY, JSON.stringify(DB));
-        } catch (e) {}
+        sauverLocal();
         setTimeout(
           () =>
             alert(
               `Retour au découpage détaillé des zones : ${b.reclassees} activité(s) replacées dans leur zone. Pensez à enregistrer.`,
             ),
           300,
+        );
+      }
+
+      // ---------- Analyse des risques (formulaire AQA.QSE.15) ----------
+      const AR_SECTIONS = [
+        [
+          "Circulation, déplacement autour du chantier",
+          [
+            "Chute de plain-pied",
+            "Chute de hauteur",
+            "Chute d'objets",
+            "Piétons + engins routier /rail",
+            "Coactivité",
+          ],
+          [
+            "Chaussures de sécurité",
+            "Chantier propre et rangé",
+            "Balisage",
+            "Consignation",
+            "Plan de circulation",
+            "Vigie",
+            "Signalisation",
+          ],
+        ],
+        [
+          "Réalisation de manutentions",
+          [
+            "Manutention manuelle",
+            "Manutention mécanique (pont…) palans, engins, grues, …)",
+            "Chute d'objets",
+            "Ecrasement",
+          ],
+          [
+            "Port des gants",
+            "Utilisation aide à la manutention (charrette, palan …etc)",
+            "Présence d'un chef de manœuvre",
+            "Balisage au sol, signalisation",
+            "Conformité du matériel (élingues…)",
+            "Personnel autorisé à la conduite",
+            "Gestes et postures",
+          ],
+        ],
+        [
+          "Travaux en hauteur",
+          ["Chute de hauteur", "Chute d'objets", "Coactivité"],
+          [
+            "Echafaudage / nacelle conforme",
+            "Harnais - points d'ancrage",
+            "Echelle d'accès fixée ou maintenue",
+            "Plateforme, passerelle protégées",
+            "Pose de filet / ligne de vie/ Pose de garde-corps",
+            "Balisage",
+          ],
+        ],
+        [
+          "Travaux sur équipements de travail",
+          [
+            "Pièce en mouvement",
+            "Energie électrique",
+            "Energie pneumatique",
+            "Energie hydraulique",
+            "Fluides sous pression (gaz/huile/air)",
+            "Position de travail",
+            "Utilisation d'outillage",
+            "Travail sur écran visualisation",
+          ],
+          [
+            "Dispositifs de protection (carter…)",
+            "Sectionneur condamné",
+            "Vérification d'absence d'énergie",
+            "Consignation mécanique / hydraulique",
+            "Brochage / calage / purge des circuits",
+            "Consignation électrique",
+            "Outillage adapté à l'intervention",
+            "Pause régulière (fatigue visuelle)",
+          ],
+        ],
+        [
+          "Travaux à proximité d'éléments sous tension",
+          ["Présence d'électricité"],
+          [
+            "Distance à respecter et limite de chantier",
+            "Personnel habilité / consignation",
+            "Balisage / protection adaptée",
+            "Conformité des installations",
+          ],
+        ],
+        [
+          "Présence de produits / points chauds ou froids",
+          ["Brûlure / gelure"],
+          [
+            "Coordination avec autres services",
+            "Protection collective (écran…)",
+            "Port des EPI (gants, lunettes…)",
+          ],
+        ],
+        [
+          "Utilisation de produits chimiques",
+          [
+            "Contact avec le produit chimique",
+            "Vapeurs de produits",
+            "Présence de déchets",
+          ],
+          [
+            "Connaissance Fiche produit ou FDS",
+            "Port des EPI adaptés",
+            "Etiquetage des produits utilisés",
+            "Rétention / produit absorbant à proximité",
+          ],
+        ],
+        [
+          "Travaux en enceinte fermée ou à proximité de bassins",
+          ["Confinement", "Mauvaise aération", "Présence gaz", "Noyade"],
+          [
+            "Prise de mesures d'atmosphère",
+            "Signalisation de l'entrée et de la sortie",
+            "Ventilation",
+            "Vigie, matériel de premiers secours",
+            "EPI spécifiques",
+          ],
+        ],
+        [
+          "Travaux à proximité de sources radioactives ou lasers",
+          [
+            "Exposition source radioactive",
+            "Exposition laser",
+            "Exposition autre rayonnement optique",
+          ],
+          [
+            "Protection collective",
+            "Respect instructions travail spécifiques",
+            "Respect des distances",
+          ],
+        ],
+        [
+          "Soudure, meulage, travaux par points chauds. Travaux avec bouteille de gaz, sur réseau gaz, ATEX",
+          ["Incendie", "Explosion", "Brulure", "Coupure"],
+          [
+            "Permis de feu",
+            "Ecran / bâche ignifugée / extincteur",
+            "Orientation des étincelles",
+            "Nettoyage, rangement du chantier",
+            "Surveillance de la zone après travaux",
+            "EPI spécifiques",
+            "Bouteilles fixées (chariot, cadre…)",
+            "Consignation",
+            "Ventilation",
+            "Conformité des raccords, contrôle fuite",
+            "Ventilation",
+          ],
+        ],
+        [
+          "Environnement de travail",
+          [
+            "Bruit",
+            "Vibrations",
+            "Chaleur, froid",
+            "Qualité de l'air confinés",
+            "Eclairage inadapté",
+          ],
+          [
+            "Port des protections auditives",
+            "Outils anti-vibratiles, sol en bon état",
+            "Protections adaptées, pauses régulières",
+            "Port d'un masque respiratoire adapté",
+            "Amélioration de l'éclairage",
+          ],
+        ],
+      ];
+      const estExterne = (pid) => pers(pid)?.equipe === "ext";
+      const externes = (ids) => ids.filter(estExterne);
+      // Responsable hiérarchique (N+1) : celui de la personne, sinon celui de son équipe.
+      function responsableDe(p) {
+        if (!p) return null;
+        const r =
+          p.responsable ||
+          DB.equipes.find((e) => e.id === p.equipe)?.responsable;
+        return r && r !== p.id ? pers(r) : null;
+      }
+      function responsablesActivite(a) {
+        const ids = [];
+        for (const i of a.intervenants) {
+          const r = responsableDe(pers(i));
+          if (r && !ids.includes(r.id)) ids.push(r.id);
+        }
+        return ids.map((i) => persNom(pers(i)));
+      }
+      // Pièces manquantes pour une entreprise extérieure : n° de commande et plan de prévention.
+      function manquesExterne(a) {
+        if (!externes(a.intervenants).length) return [];
+        const m = [];
+        if (!(a.commande || "").trim()) m.push("n° de commande");
+        if (!(a.pdpRef || "").trim() && !a.docs?.pdp)
+          m.push("plan de prévention");
+        return m;
+      }
+      const dateLongue = (d) =>
+        d ? d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4) : "";
+
+      // Formulaire AQA.QSE.15 pré-rempli. `modif` = cases à cocher actives (écran), sinon impression.
+      function htmlAR(a, ar, { jour = null, modif = false } = {}) {
+        ar ||= {};
+        const coche = new Set(ar.coches || []);
+        const obs = ar.obs || {};
+        const box = (k) =>
+          modif
+            ? `<input type="checkbox" data-ark="${k}" ${coche.has(k) ? "checked" : ""}>`
+            : coche.has(k)
+              ? "☒"
+              : "☐";
+        const ext = externes(a.intervenants);
+        const machine = machineNom(a);
+        const rows = AR_SECTIONS.map(([sit, risques, moyens], si) => {
+          const n = Math.max(risques.length, moyens.length);
+          let html = "";
+          for (let i = 0; i < n; i++) {
+            html += "<tr>";
+            if (!i) html += `<td class="sit" rowspan="${n}">${esc(sit)}</td>`;
+            html +=
+              risques[i] != null
+                ? `<td>${esc(risques[i])}</td><td class="ck">${box(`r${si}-${i}`)}</td>`
+                : "<td></td><td class='ck'></td>";
+            html +=
+              moyens[i] != null
+                ? `<td>${esc(moyens[i])}</td><td class="ck">${box(`m${si}-${i}`)}</td>`
+                : "<td></td><td class='ck'></td>";
+            if (!i)
+              html += `<td class="obs" rowspan="${n}">${modif ? `<textarea data-obs="${si}">${esc(obs[si] || "")}</textarea>` : esc(obs[si] || "")}</td>`;
+            html += "</tr>";
+          }
+          return `<tbody class="sec">${html}</tbody>`;
+        }).join("");
+        return `<div class="arf">
+          <table class="arf-h"><tr>
+            <td class="arf-t">ANALYSE DES RISQUES AVANT INTERVENTION</td>
+            <td class="arf-r"><b>ALPA</b><br><b>AQA.QSE.15</b><br>Indice : 1 · Page 1 sur 1</td></tr></table>
+          <div class="arf-d"><span><u>Diffusion</u> : transmettre ce document au responsable du service concerné</span><span><u>Archivage</u> : 1 an par les responsables de services</span></div>
+          <table class="arf-i">
+            <tr><td><u>Date de l'intervention</u> : <b>${dateLongue(jour || a.debut)}</b></td>
+              <td><u>Zone de l'intervention</u> : <b>${esc(zoneNom(a.zone))}${machine ? " — " + esc(machine) : ""}</b></td>
+              <td rowspan="2" class="n1"><u><b>Signature du responsable N+1</b></u> <i>avant intervention et après vérification des habilitations et autorisations diverses (Nom et signature)</i><br><b>${esc(responsablesActivite(a).join(" / "))}</b></td></tr>
+            <tr><td colspan="2"><u>Nature de l'activité/ tâche à réaliser</u> : <b>${esc(a.designation)}</b>${a.gmao ? ` <span class="arf-m">(GMAO ${esc(a.gmao)})</span>` : ""}</td></tr>
+            <tr><td colspan="2"><u>Noms des intervenants</u> : <b>${esc(a.intervenants.map((i) => persNom(pers(i))).join(", "))}</b></td>
+              <td><u>Signature des intervenants</u> :</td></tr>
+            ${ext.length ? `<tr><td colspan="3">Entreprise extérieure : <b>${esc(ext.map((i) => persNom(pers(i))).join(", "))}</b> — N° de commande : <b>${esc(a.commande || "……………")}</b> — Plan de prévention : <b>${esc(a.pdpRef || (a.docs?.pdp ? a.docs.pdp.nom : "……………"))}</b></td></tr>` : ""}
+          </table>
+          <table class="arf-g">
+            <thead><tr><th>SITUATION RENCONTRÉE</th><th>RISQUES liés à l'intervention, à la coactivité ou à l'environnement</th><th class="ck">Cochez</th><th>MOYENS DE PRÉVENTION MIS EN PLACE</th><th class="ck">Cochez</th><th>OBSERVATION</th></tr></thead>
+            ${rows}
+          </table>
+          <div class="arf-p"><u>Propositions d'améliorations</u> : ${modif ? `<textarea data-amel>${esc(ar.amelio || "")}</textarea>` : esc(ar.amelio || "")}</div>
+        </div>`;
+      }
+      // Fiche d'analyse des risques à l'écran : cases à cocher, observations, impression.
+      function ouvrirAR(a, ar, surFermeture) {
+        const d = $("#dlg-ar");
+        $("#ar-t").textContent = "Analyse des risques — " + a.designation;
+        $("#ar-b").innerHTML = htmlAR(a, ar, { modif: true });
+        const lire = () => {
+          ar.coches = [...d.querySelectorAll("[data-ark]:checked")].map(
+            (x) => x.dataset.ark,
+          );
+          ar.obs = {};
+          d.querySelectorAll("[data-obs]").forEach(
+            (t) => t.value.trim() && (ar.obs[t.dataset.obs] = t.value.trim()),
+          );
+          ar.amelio = d.querySelector("[data-amel]").value.trim();
+        };
+        $("#ar-print").onclick = () => {
+          lire();
+          imprimerAR([{ a, ar, docs: {} }]);
+        };
+        $("#ar-ok").onclick = () => {
+          lire();
+          d.close();
+          surFermeture?.();
+        };
+        d.showModal();
+      }
+
+      // ---------- Pièces jointes ----------
+      function lireDataUrl(file) {
+        return new Promise((ok, ko) => {
+          const r = new FileReader();
+          r.onload = () => ok(r.result);
+          r.onerror = () => ko(r.error);
+          r.readAsDataURL(file);
+        });
+      }
+      // Photos réduites à 1600 px (JPEG) pour garder data.json raisonnable.
+      async function lirePhoto(file) {
+        const url = await lireDataUrl(file);
+        const img = await new Promise((ok, ko) => {
+          const i = new Image();
+          i.onload = () => ok(i);
+          i.onerror = () => ko(new Error("image illisible"));
+          i.src = url;
+        });
+        const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * k);
+        c.height = Math.round(img.height * k);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        return c.toDataURL("image/jpeg", 0.75);
+      }
+      async function lirePdf(file) {
+        if (!/pdf$/i.test(file.type) && !/\.pdf$/i.test(file.name))
+          throw new Error("ce n'est pas un PDF");
+        if (file.size > 8e6) throw new Error("PDF trop lourd (8 Mo maximum)");
+        return {
+          nom: file.name,
+          data: await lireDataUrl(file),
+          date: D.today(),
+        };
+      }
+      function ouvrirPieceJointe(dataUrl) {
+        fetch(dataUrl)
+          .then((r) => r.blob())
+          .then((b) => window.open(URL.createObjectURL(b), "_blank"));
+      }
+      // Zone de dépôt : glisser-déposer ou clic pour choisir.
+      function zoneDepot(el, accept, multiple, surFichiers) {
+        const inp = document.createElement("input");
+        inp.type = "file";
+        inp.accept = accept;
+        inp.multiple = multiple;
+        inp.hidden = true;
+        el.append(inp);
+        el.onclick = (e) => !e.target.closest("[data-pj]") && inp.click();
+        inp.onchange = () => (surFichiers([...inp.files]), (inp.value = ""));
+        el.ondragover = (e) => (
+          e.preventDefault(),
+          e.stopPropagation(),
+          el.classList.add("over")
+        );
+        el.ondragleave = () => el.classList.remove("over");
+        el.ondrop = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          el.classList.remove("over");
+          surFichiers([...e.dataTransfer.files]);
+        };
+      }
+      const tailleMo = (dataUrl) =>
+        ((dataUrl.length * 0.75) / 1e6).toFixed(1).replace(".", ",") + " Mo";
+
+      // Bloc « Sécurité, documents et photos » de la fiche activité (travaille sur une copie, appliquée à l'enregistrement).
+      function blocDocuments(a, w, getInter) {
+        const el = $("#e-docs");
+        const rendre = () => {
+          const ext = externes(getInter());
+          const pj = (doc, cle) =>
+            doc
+              ? `<span class="pj">📄 <a href="#" data-pj="open-${cle}">${esc(doc.nom)}</a> <small class="muted">${tailleMo(doc.data)}</small> <button type="button" class="btn small danger" data-pj="del-${cle}">✕</button></span>`
+              : "";
+          const photos = (type) =>
+            w.photos
+              .filter((p) => p.type === type)
+              .map(
+                (p) =>
+                  `<span class="ph"><img src="${p.data}" data-pj="voir-${p.id}" title="${esc(p.nom)}"><button type="button" data-pj="delph-${p.id}" title="Supprimer">✕</button></span>`,
+              )
+              .join("");
+          el.innerHTML = `
+            <div class="doc-sec"><h4>📝 Analyse des risques (AQA.QSE.15)</h4>
+              <div class="row"><button type="button" class="btn" id="e-ar">Remplir / imprimer l'analyse pré-remplie</button>
+              <span class="muted">${(w.ar.coches || []).length} case(s) cochée(s) · N+1 : ${esc(responsablesActivite({ ...a, intervenants: getInter() }).join(", ") || "à définir (fiche opérateur)")}</span></div>
+              <div class="depot" id="e-ar-pdf">${w.docs.ar ? pj(w.docs.ar, "ar") : "Glisser ici le PDF de l'analyse de risque signée (ou cliquer)"}</div></div>
+            ${
+              ext.length
+                ? `<div class="doc-sec ext"><h4>🏢 Entreprise extérieure : ${esc(ext.map((i) => persNom(pers(i))).join(", "))}</h4>
+              <div class="form"><label>N° de commande *<input id="e-cmd" value="${esc(w.commande)}"></label>
+              <label>Plan de prévention (n° / référence) *<input id="e-pdp" value="${esc(w.pdpRef)}" placeholder="ou glisser le PDF ci-dessous"></label></div>
+              <div class="depot" id="e-pdp-pdf" style="margin-top:6px">${w.docs.pdp ? pj(w.docs.pdp, "pdp") : "Glisser ici le PDF du plan de prévention (ou cliquer)"}</div></div>`
+                : ""
+            }
+            <div class="doc-sec"><h4>📷 Photos</h4><div class="photos">
+              <div><b>Avant</b><div class="depot ph-zone" id="e-ph-avant">${photos("avant")}<span class="muted">＋ glisser ou cliquer</span></div></div>
+              <div><b>Après</b><div class="depot ph-zone" id="e-ph-apres">${photos("apres")}<span class="muted">＋ glisser ou cliquer</span></div></div>
+            </div></div>`;
+          $("#e-ar").onclick = () =>
+            ouvrirAR({ ...a, intervenants: getInter() }, w.ar, rendre);
+          const cmd = $("#e-cmd"),
+            pdp = $("#e-pdp");
+          if (cmd) cmd.oninput = () => (w.commande = cmd.value);
+          if (pdp) pdp.oninput = () => (w.pdpRef = pdp.value);
+          const pdfDans = (zone, cle) =>
+            zoneDepot($(zone), "application/pdf,.pdf", false, async ([f]) => {
+              if (!f) return;
+              try {
+                w.docs[cle] = await lirePdf(f);
+                rendre();
+              } catch (e) {
+                alert("Fichier refusé : " + e.message);
+              }
+            });
+          pdfDans("#e-ar-pdf", "ar");
+          if ($("#e-pdp-pdf")) pdfDans("#e-pdp-pdf", "pdp");
+          for (const type of ["avant", "apres"])
+            zoneDepot($("#e-ph-" + type), "image/*", true, async (files) => {
+              for (const f of files.filter((f) => /^image\//.test(f.type))) {
+                try {
+                  w.photos.push({
+                    id: uid("ph"),
+                    type,
+                    nom: f.name,
+                    data: await lirePhoto(f),
+                    date: D.today(),
+                  });
+                } catch (e) {
+                  alert(f.name + " : " + e.message);
+                }
+              }
+              rendre();
+            });
+        };
+        el.onclick = (e) => {
+          const k = e.target.closest("[data-pj]")?.dataset.pj;
+          if (!k) return;
+          e.preventDefault();
+          e.stopPropagation();
+          const [act, cle] = [
+            k.slice(0, k.indexOf("-")),
+            k.slice(k.indexOf("-") + 1),
+          ];
+          if (act === "open") ouvrirPieceJointe(w.docs[cle].data);
+          if (act === "del" && confirm("Retirer ce document ?"))
+            (delete w.docs[cle], rendre());
+          if (act === "voir")
+            ouvrirPieceJointe(w.photos.find((p) => p.id === cle).data);
+          if (act === "delph" && confirm("Supprimer cette photo ?"))
+            ((w.photos = w.photos.filter((p) => p.id !== cle)), rendre());
+        };
+        rendre();
+        return rendre;
+      }
+
+      // ---------- Impression des analyses de risque ----------
+      let pdfjsPret = null;
+      function chargerPdfJs() {
+        pdfjsPret ||= new Promise((ok, ko) => {
+          const sc = document.createElement("script");
+          sc.src =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+          sc.onload = () => {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+              "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+            ok(pdfjsLib);
+          };
+          sc.onerror = () => (
+            (pdfjsPret = null),
+            ko(new Error("pdf.js indisponible (hors ligne ?)"))
+          );
+          document.head.append(sc);
+        });
+        return pdfjsPret;
+      }
+      async function pagesPdf(dataUrl) {
+        const lib = await chargerPdfJs();
+        const bin = atob(dataUrl.split(",")[1]);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const doc = await lib.getDocument({ data: bytes }).promise;
+        const out = [];
+        for (let n = 1; n <= doc.numPages; n++) {
+          const page = await doc.getPage(n);
+          const vp = page.getViewport({ scale: 2 });
+          const c = document.createElement("canvas");
+          c.width = vp.width;
+          c.height = vp.height;
+          await page.render({ canvasContext: c.getContext("2d"), viewport: vp })
+            .promise;
+          out.push(c.toDataURL("image/jpeg", 0.85));
+        }
+        return out;
+      }
+      // items : [{a, ar?, docs?}] ; une page A4 par activité, ou les pages du PDF signé s'il est joint.
+      async function imprimerAR(items, jour = null) {
+        const zone = $("#print-zone");
+        zone.innerHTML =
+          '<p class="arf-wait">Préparation de l\'impression…</p>';
+        let html = "";
+        const echecs = [];
+        for (const { a, ar, docs } of items) {
+          const signe = (docs || a.docs || {}).ar;
+          if (signe) {
+            try {
+              (await pagesPdf(signe.data)).forEach(
+                (src) =>
+                  (html += `<div class="pg pg-img"><img src="${src}"></div>`),
+              );
+              continue;
+            } catch (e) {
+              echecs.push(`${a.designation} (${e.message})`);
+            }
+          }
+          html += `<div class="pg">${htmlAR(a, ar || a.ar, { jour })}</div>`;
+        }
+        zone.innerHTML = html;
+        if (echecs.length)
+          alert(
+            "PDF signés non imprimables, remplacés par le formulaire pré-rempli :\n" +
+              echecs.join("\n"),
+          );
+        document.body.classList.add("impression");
+        await Promise.all(
+          [...zone.querySelectorAll("img")].map((i) =>
+            i.decode().catch(() => {}),
+          ),
+        );
+        window.print();
+      }
+      window.addEventListener("afterprint", () => {
+        document.body.classList.remove("impression");
+        $("#print-zone").innerHTML = "";
+      });
+      function imprimerARFiltre() {
+        const list = filtrer().filter((a) => a.statut !== "nonnecessaire");
+        if (!list.length) return alert("Aucune activité dans le filtre.");
+        if (
+          !ui.f.jour &&
+          !confirm(
+            `Aucun jour choisi : imprimer les ${list.length} analyses de risque du filtre ?`,
+          )
+        )
+          return;
+        const zo = zoneOrder();
+        list.sort(
+          (x, y) => zo[x.zone] - zo[y.zone] || x.id.localeCompare(y.id),
+        );
+        imprimerAR(
+          list.map((a) => ({ a })),
+          ui.f.jour || null,
         );
       }
 
@@ -3813,7 +4691,7 @@
         e.preventDefault();
         drop.classList.remove("over");
         const f = e.dataTransfer.files[0];
-        if (f) lireFichier(f);
+        if (f && /\.json$/i.test(f.name)) lireFichier(f);
       });
 
       // Activités
@@ -3824,6 +4702,8 @@
         "#f-st": "st",
         "#f-pers": "pers",
         "#f-plan": "plan",
+        "#f-jour": "jour",
+        "#f-doc": "doc",
       };
       for (const [sel, k] of Object.entries(filtres))
         $(sel).addEventListener(sel === "#f-q" ? "input" : "change", (e) => {
@@ -3834,6 +4714,8 @@
         ui.f = {};
         $("#f-q").value = "";
         $("#f-plan").value = "";
+        $("#f-jour").value = "";
+        $("#f-doc").value = "";
         remplirFiltres();
         renderActivites();
       };
@@ -3846,6 +4728,7 @@
         remplirFiltres();
         renderActivites();
       };
+      $("#b-ar-print").onclick = imprimerARFiltre;
       $("#b-new").onclick = () =>
         editerActivite(null, ui.f.zone ? { zone: ui.f.zone } : {});
       $("#t-act").addEventListener("change", (e) => {
@@ -3932,7 +4815,8 @@
           localStorage.removeItem(STORE_KEY);
         } catch (e) {}
         dirty = false;
-        location.reload();
+        clearTimeout(tSauve);
+        idb("del", null, "db").then(() => location.reload());
       };
       $("#ad-zone-add").onclick = () => editerZone(null);
       $("#ad-pareto").onclick = () => {
@@ -4033,9 +4917,11 @@
       (async function init() {
         let data = null;
         fileHandle = (await idb("get")) || null;
-        try {
-          data = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
-        } catch (e) {}
+        data = await idb("get", null, "db");
+        if (!data)
+          try {
+            data = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+          } catch (e) {}
         if (!data) {
           try {
             const r = await fetch("data.json", { cache: "no-store" });

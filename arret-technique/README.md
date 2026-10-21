@@ -19,6 +19,30 @@ calculée à partir de la durée en heures et de la capacité journalière).
 Les dates de l'arrêt, les jalons, les consignes, la capacité par jour (Lun 10 h, Mar–Jeu 7 h,
 Ven 6,5 h) et le temps perdu se modifient en cliquant sur la ligne de dates sous le titre.
 
+## Sécurité, documents et photos
+
+Dans la fiche d'une activité, le bloc **Sécurité, documents et photos** regroupe :
+
+- **Analyse des risques (AQA.QSE.15)** : « Remplir / imprimer » ouvre le formulaire déjà complété
+  avec la date, la zone (et la machine), la nature de l'activité, les intervenants et leur
+  responsable hiérarchique N+1. On y coche les risques et moyens de prévention, on note les
+  observations, puis on imprime. Le PDF de l'analyse signée se glisse dans la zone prévue.
+- **Entreprise extérieure** : dès qu'un intervenant appartient à l'équipe « Entreprises / non
+  référencés », le n° de commande et le plan de prévention (référence ou PDF) sont obligatoires
+  pour enregistrer. La liste signale les activités où ils manquent (filtre « Tous documents »).
+- **Photos avant / après** : glisser les photos (réduites à 1 600 px pour alléger `data.json`).
+
+Le N+1 vient de la fiche opérateur, sinon de son équipe (Administration → Équipes). Par défaut :
+MTO → M'BAYE Idy, Entretien mécanique → MINEAU Geoffrey, Entretien électrique → CRESTE Maxime.
+
+**Imprimer les analyses d'une journée** : onglet Activités, choisir le service (ex. Mécanique) et
+le jour, puis **🖨️ Analyses de risque**. Une page par activité prévue ce jour-là : le PDF signé
+s'il est joint (affiché grâce à pdf.js, chargé depuis cdnjs, donc il faut Internet), sinon le
+formulaire pré-rempli.
+
+Photos et PDF sont enregistrés dans `data.json` : le fichier grossit avec eux (compter ~0,2 Mo
+par photo). La copie de travail du navigateur est conservée dans IndexedDB.
+
 ## Compte administrateur
 
 Le bouton **🔒 Administrateur** (en haut à droite) ouvre la connexion. Au premier clic, si
