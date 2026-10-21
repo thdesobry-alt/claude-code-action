@@ -678,6 +678,29 @@
         cursor: pointer;
         color: var(--muted);
       }
+      body:not(.admin) .adm {
+        display: none !important;
+      }
+      .admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 16px;
+      }
+      .admin-grid .card {
+        margin: 0;
+      }
+      #tab-admin tbody tr[data-zedit],
+      #tab-admin tbody tr[data-ledit],
+      #tab-admin tbody tr[data-pers] {
+        cursor: pointer;
+      }
+      #schema.edit .z {
+        cursor: move;
+      }
+      #schema.edit .z rect.box {
+        stroke-dasharray: 6 4;
+        cursor: move;
+      }
       #vide {
         max-width: 520px;
         margin: 80px auto;
@@ -724,6 +747,7 @@
         <div class="spacer"></div>
         <div class="row" style="flex-wrap: nowrap">
           <span id="etat"></span>
+          <button class="btn" id="b-admin"></button>
           <button class="btn" id="b-ouvrir" title="Ouvrir un fichier data.json">
             📂 Ouvrir
           </button>
@@ -737,6 +761,7 @@
         <button data-tab="ponts">🏗️ Ponts roulants</button>
         <button data-tab="schema">🗺️ Schéma laminoir</button>
         <button data-tab="charge">👷 Charge de travail</button>
+        <button data-tab="admin" class="adm">⚙️ Administration</button>
       </nav>
     </div>
     <main>
@@ -813,7 +838,7 @@
                 >Indisponible (maintenance)</span
               ><span><i style="background: var(--bad)"></i>Conflit</span></span
             >
-            <button class="btn" id="b-pont-add">＋ Pont</button>
+            <button class="btn adm" id="b-pont-add">＋ Pont</button>
           </div>
           <p class="muted" style="margin: 0 0 10px">
             Cliquez sur une case pour réserver un pont, sur une réservation pour
@@ -832,6 +857,8 @@
           <div class="row" style="margin-bottom: 8px">
             <h2 style="margin: 0">Schéma zone par zone</h2>
             <div class="spacer"></div>
+            <button class="btn adm" id="s-edit">✏️ Modifier le schéma</button>
+            <button class="btn adm" id="s-zone-add">＋ Zone</button>
             <select id="s-svc"></select>
           </div>
           <div class="legend" style="margin-bottom: 8px">
@@ -885,7 +912,7 @@
               sans charge</label
             >
             <div class="spacer"></div>
-            <button class="btn" id="b-pers-add">＋ Opérateur</button>
+            <button class="btn adm" id="b-pers-add">＋ Opérateur</button>
           </div>
           <div class="legend" style="margin-bottom: 10px">
             <span><i class="l1"></i>&lt; 80 % de la capacité</span>
@@ -905,6 +932,91 @@
             >
           </div>
           <div class="scroll-x tall" id="c-grid"></div>
+        </div>
+      </section>
+      <section class="tab" id="tab-admin">
+        <div class="card">
+          <div class="row">
+            <h2 style="margin: 0">⚙️ Administration</h2>
+            <span class="muted" id="ad-compte"></span>
+            <div class="spacer"></div>
+            <button class="btn" id="ad-mdp-btn">
+              Identifiant / mot de passe
+            </button>
+            <button class="btn" id="ad-logout">Se déconnecter</button>
+          </div>
+        </div>
+        <div class="admin-grid">
+          <div class="card">
+            <div class="row" style="margin-bottom: 8px">
+              <h2 style="margin: 0">Arrêt technique</h2>
+              <div class="spacer"></div>
+              <button class="btn primary" id="ad-arret-edit">Modifier</button>
+            </div>
+            <div id="ad-arret"></div>
+          </div>
+          <div class="card">
+            <div class="row" style="margin-bottom: 8px">
+              <h2 style="margin: 0">Données</h2>
+            </div>
+            <p class="muted" style="margin-top: 0">
+              Accès direct à tous les champs du fichier, sauvegarde datée, purge
+              du navigateur.
+            </p>
+            <div class="row">
+              <button class="btn" id="ad-json">🧾 Éditeur JSON</button>
+              <button class="btn" id="ad-export">⬇️ Exporter une copie</button>
+              <button class="btn danger" id="ad-purge">
+                Vider le cache du navigateur
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 16px">
+          <div class="row" style="margin-bottom: 8px">
+            <h2 style="margin: 0">Zones et machines</h2>
+            <span class="muted"
+              >Cliquer sur une zone pour la modifier (nom, type, ordre dans la
+              ligne, machines, taille, position).</span
+            >
+            <div class="spacer"></div>
+            <button class="btn primary" id="ad-zone-add">＋ Zone</button>
+          </div>
+          <div class="scroll-x tall" id="ad-zones"></div>
+        </div>
+        <div class="admin-grid">
+          <div class="card">
+            <div class="row" style="margin-bottom: 8px">
+              <h2 style="margin: 0">Services</h2>
+              <div class="spacer"></div>
+              <button class="btn" data-ladd="services">＋</button>
+            </div>
+            <div id="ad-services" data-kind="services"></div>
+          </div>
+          <div class="card">
+            <div class="row" style="margin-bottom: 8px">
+              <h2 style="margin: 0">Équipes</h2>
+              <div class="spacer"></div>
+              <button class="btn" data-ladd="equipes">＋</button>
+            </div>
+            <div id="ad-equipes" data-kind="equipes"></div>
+          </div>
+          <div class="card">
+            <div class="row" style="margin-bottom: 8px">
+              <h2 style="margin: 0">Ponts roulants</h2>
+              <div class="spacer"></div>
+              <button class="btn" id="ad-pont-add">＋</button>
+            </div>
+            <div id="ad-ponts"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 16px">
+          <div class="row" style="margin-bottom: 8px">
+            <h2 style="margin: 0">Personnel</h2>
+            <div class="spacer"></div>
+            <button class="btn primary" id="ad-pers-add">＋ Personne</button>
+          </div>
+          <div class="scroll-x tall" id="ad-pers"></div>
         </div>
       </section>
     </main>
@@ -1000,6 +1112,10 @@
       const zoneNom = (id) => DB.zones.find((z) => z.id === id)?.nom || id;
       const svcColor = (s) =>
         PALETTE[Math.max(0, DB.services.indexOf(s)) % PALETTE.length];
+      const machineNom = (a) =>
+        DB.zones
+          .find((z) => z.id === a.zone)
+          ?.machines?.find((m) => m.id === a.machine)?.nom || "";
       const stLabel = (id) => STATUTS.find((s) => s.id === id)?.label || id;
       const actif = (a) =>
         a.statut !== "nonnecessaire" && a.statut !== "reportee";
@@ -1149,6 +1265,13 @@
         DB = data;
         fileHandle = handle;
         if (handle) idb("put", handle);
+        try {
+          ui.admin =
+            !!DB.meta.admin &&
+            sessionStorage.getItem("arret-admin") === DB.meta.admin.hash;
+        } catch (e) {
+          ui.admin = false;
+        }
         dirty = false;
         try {
           localStorage.setItem(STORE_KEY, JSON.stringify(DB));
@@ -1173,7 +1296,10 @@
           "equipes",
         ])
           d[k] ??= [];
-        d.activites.forEach((a) => (a.intervenants ??= []));
+        d.activites.forEach(
+          (a) => ((a.intervenants ??= []), (a.machine ??= "")),
+        );
+        d.zones.forEach((z) => (z.machines ??= []));
         d.personnel.forEach((p) => (p.absences ??= []));
       }
 
@@ -1206,6 +1332,7 @@
         $("#jtag").textContent = jt;
         remplirFiltres();
         renderEtat();
+        majAdmin();
         render();
       }
       function render() {
@@ -1215,6 +1342,7 @@
           ponts: renderPonts,
           schema: renderSchema,
           charge: renderCharge,
+          admin: renderAdmin,
         })[ui.tab]();
       }
       const opt = (v, l, sel) =>
@@ -1264,6 +1392,7 @@
                 a.moi,
                 a.commentaire,
                 zoneNom(a.zone),
+                machineNom(a),
                 ...a.intervenants.map((i) => persNom(pers(i))),
               ]
                 .join(" ")
@@ -1317,7 +1446,7 @@
             html += `<tr class="zone-h"><td colspan="7">📍 ${esc(zoneNom(zc))} <span class="muted">(${nz})</span></td></tr>`;
           }
           html += `<tr data-id="${a.id}">
-            <td>${esc(a.designation)}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}</td>
+            <td>${esc(a.designation)}${a.machine ? ` <span class="tag">⚙️ ${esc(machineNom(a))}</span>` : ""}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}</td>
             <td><span class="svc" style="--sc:${svcColor(a.service)};padding-left:6px">${esc(a.service)}</span></td>
             <td>${a.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}</td>
             <td>${h(a.dureeH) || '<span class="muted">—</span>'}</td>
@@ -1375,6 +1504,7 @@
           `<div class="form">
             <label class="full">Désignation<textarea id="e-des" rows="2">${esc(a.designation)}</textarea></label>
             <label>Zone<select id="e-zone">${zones.map((z) => opt(z.id, z.nom, a.zone)).join("")}</select></label>
+            <label>Machine / équipement<select id="e-mach"></select></label>
             <label>Service<select id="e-svc">${DB.services.map((s) => opt(s, s, a.service)).join("")}</select></label>
             <label>Statut<select id="e-st">${STATUTS.map((s) => opt(s.id, s.label, a.statut)).join("")}</select></label>
             <label>Durée estimée (heures)<input id="e-dur" type="number" min="0" step="0.5" value="${a.dureeH ?? ""}"></label>
@@ -1391,7 +1521,7 @@
             <label class="full">Commentaire<textarea id="e-com" rows="2">${esc(a.commentaire)}</textarea></label>
           </div>`,
           [
-            ...(id
+            ...(id && ui.admin
               ? [
                   [
                     "Supprimer",
@@ -1405,6 +1535,10 @@
                       changed();
                     },
                   ],
+                ]
+              : []),
+            ...(id
+              ? [
                   [
                     "Dupliquer",
                     "",
@@ -1434,6 +1568,7 @@
                 Object.assign(a, {
                   designation: des,
                   zone: $("#e-zone").value,
+                  machine: $("#e-mach").value,
                   service: $("#e-svc").value,
                   statut: $("#e-st").value,
                   dureeH: dur,
@@ -1452,6 +1587,16 @@
             ],
           ],
         );
+        const machines = () => {
+          const z = DB.zones.find((x) => x.id === $("#e-zone").value);
+          $("#e-mach").innerHTML =
+            opt("", "— Toute la zone —", a.machine) +
+            (z?.machines || [])
+              .map((mc) => opt(mc.id, mc.nom, a.machine))
+              .join("");
+        };
+        machines();
+        $("#e-zone").onchange = machines;
         const chips = () => {
           $("#e-chips").innerHTML =
             inter
@@ -1675,7 +1820,7 @@
               width = (D.diff(a.debut, a.fin || a.debut) + 1) * W - 4;
             bar = `<div class="bar ${a.statut}" data-bar="${a.id}" style="left:${left + 2}px;width:${width}px" title="${esc(a.designation)} — ${D.fmt(a.debut)} → ${D.fmt(a.fin)} — ${stLabel(a.statut)}">${h(a.dureeH) || ""} ${esc(a.intervenants.map((i) => pers(i)?.nom).join(", "))}<span class="rz"></span></div>`;
           }
-          html += `<div class="g-row"><div class="g-lab svc" data-id="${a.id}" style="--sc:${svcColor(a.service)}">${esc(a.designation)}<small>${esc(a.service)} · ${esc(a.intervenants.map((i) => persNom(pers(i))).join(", ") || "sans intervenant")} · ${stLabel(a.statut)}</small></div>
+          html += `<div class="g-row"><div class="g-lab svc" data-id="${a.id}" style="--sc:${svcColor(a.service)}">${esc(a.designation)}<small>${a.machine ? "⚙️ " + esc(machineNom(a)) + " · " : ""}${esc(a.service)} · ${esc(a.intervenants.map((i) => persNom(pers(i))).join(", ") || "sans intervenant")} · ${stLabel(a.statut)}</small></div>
             <div class="g-track" data-track="${a.id}">${cells}${marks}${bar}</div></div>`;
         }
         if (!acts.length)
@@ -1754,7 +1899,7 @@
         let conflits = 0;
         for (const p of DB.ponts) {
           ["M", "A"].forEach((demi, k) => {
-            html += `<tr><td class="lab">${k ? "" : `🏗️ ${esc(p.nom)} <button class="btn small" data-pedit="${p.id}" title="Renommer / supprimer">✎</button><br>`}<small class="muted">${CRENEAUX[demi]}</small></td>`;
+            html += `<tr><td class="lab">${k ? "" : `🏗️ ${esc(p.nom)} <button class="btn small" data-pedit="${p.id}" class="adm" title="Renommer / supprimer">✎</button><br>`}<small class="muted">${CRENEAUX[demi]}</small></td>`;
             for (const d of js) {
               const rs = DB.reservations.filter(
                 (r) => r.pont === p.id && r.date === d && resaCouvre(r, demi),
@@ -2217,6 +2362,527 @@
         );
       }
 
+      // ---------- Compte administrateur ----------
+      // Contrôle d'accès côté navigateur : il évite les fausses manipulations,
+      // mais toute personne qui peut modifier data.json peut contourner le mot de passe.
+      async function hacher(sel, mdp) {
+        const buf = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(sel + ":" + mdp),
+        );
+        return [...new Uint8Array(buf)]
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+      }
+      function majAdmin() {
+        document.body.classList.toggle("admin", ui.admin);
+        const b = $("#b-admin");
+        b.textContent = ui.admin
+          ? "🔓 " + DB.meta.admin.login
+          : "🔒 Administrateur";
+        b.title = ui.admin
+          ? "Connecté en administrateur — cliquer pour se déconnecter"
+          : "Se connecter en administrateur";
+        if (!ui.admin && ui.tab === "admin") ouvrirOnglet("activites");
+      }
+      function connexion(ensuite) {
+        if (!window.crypto?.subtle)
+          return alert(
+            "Ce navigateur ne permet pas la connexion administrateur.",
+          );
+        const compte = DB.meta.admin;
+        const valider = async () => {
+          const login = $("#ad-login").value.trim(),
+            mdp = $("#ad-mdp").value;
+          if (!compte) {
+            if (!login || mdp.length < 6)
+              return alert(
+                "Identifiant obligatoire et mot de passe d'au moins 6 caractères.",
+              );
+            if (mdp !== $("#ad-mdp2").value)
+              return alert("Les deux mots de passe sont différents.");
+            const sel = uid("s");
+            DB.meta.admin = { login, sel, hash: await hacher(sel, mdp) };
+            changed();
+          } else if (
+            login !== compte.login ||
+            (await hacher(compte.sel, mdp)) !== compte.hash
+          )
+            return alert("Identifiant ou mot de passe incorrect.");
+          ui.admin = true;
+          try {
+            sessionStorage.setItem("arret-admin", DB.meta.admin.hash);
+          } catch (e) {}
+          $("#dlg").close();
+          majAdmin();
+          render();
+          if (ensuite) ensuite();
+        };
+        dialogue(
+          compte
+            ? "Connexion administrateur"
+            : "Créer le compte administrateur",
+          `${compte ? "" : '<p class="muted" style="margin-top:0">Aucun compte administrateur n\'existe encore pour ce fichier. Le compte créé sera enregistré dans data.json.</p>'}
+          <div class="form">
+            <label class="full">Identifiant<input id="ad-login" autocomplete="username" value="${compte ? "" : "admin"}"></label>
+            <label class="full">Mot de passe<input id="ad-mdp" type="password" autocomplete="${compte ? "current-password" : "new-password"}"></label>
+            ${compte ? "" : '<label class="full">Confirmer le mot de passe<input id="ad-mdp2" type="password" autocomplete="new-password"></label>'}
+          </div>`,
+          [
+            ["Annuler", "", () => {}],
+            [
+              compte ? "Se connecter" : "Créer le compte",
+              "primary",
+              () => (valider(), false),
+            ],
+          ],
+        );
+        $("#dlg-b").onkeydown = (e) =>
+          e.key === "Enter" && (e.preventDefault(), valider());
+        setTimeout(() => $(compte ? "#ad-login" : "#ad-mdp").focus(), 50);
+      }
+      // Exécute fn si administrateur, sinon demande la connexion d'abord.
+      function siAdmin(fn) {
+        if (ui.admin) return fn();
+        connexion(fn);
+      }
+      function changerMotDePasse() {
+        dialogue(
+          "Compte administrateur",
+          `<div class="form">
+            <label class="full">Identifiant<input id="ad-login" value="${esc(DB.meta.admin.login)}"></label>
+            <label class="full">Nouveau mot de passe (laisser vide pour ne pas changer)<input id="ad-mdp" type="password" autocomplete="new-password"></label>
+            <label class="full">Confirmer<input id="ad-mdp2" type="password" autocomplete="new-password"></label>
+          </div>`,
+          [
+            ["Annuler", "", () => {}],
+            [
+              "Enregistrer",
+              "primary",
+              () => {
+                const login = $("#ad-login").value.trim(),
+                  mdp = $("#ad-mdp").value;
+                if (!login) return (alert("Identifiant obligatoire."), false);
+                if (mdp && mdp.length < 6)
+                  return (
+                    alert("Mot de passe trop court (6 caractères minimum)."),
+                    false
+                  );
+                if (mdp !== $("#ad-mdp2").value)
+                  return (
+                    alert("Les deux mots de passe sont différents."),
+                    false
+                  );
+                (async () => {
+                  DB.meta.admin.login = login;
+                  if (mdp) {
+                    DB.meta.admin.sel = uid("s");
+                    DB.meta.admin.hash = await hacher(DB.meta.admin.sel, mdp);
+                    try {
+                      sessionStorage.setItem("arret-admin", DB.meta.admin.hash);
+                    } catch (e) {}
+                  }
+                  changed();
+                  majAdmin();
+                })();
+              },
+            ],
+          ],
+        );
+      }
+
+      // ---------- Onglet Administration ----------
+      function nbAct(champ, v) {
+        return DB.activites.filter((a) => a[champ] === v).length;
+      }
+      function renderAdmin() {
+        if (!ui.admin) return;
+        const m = DB.meta,
+          zo = zoneOrder();
+        const zones = [...DB.zones].sort((a, b) => zo[a.id] - zo[b.id]);
+        const types = {
+          process: "Ligne",
+          general: "Générale",
+          utilite: "Utilité",
+        };
+        $("#ad-arret").innerHTML = `<table><tbody>
+          <tr><td class="muted">Titre</td><td><b>${esc(m.titre)}</b></td></tr>
+          <tr><td class="muted">Arrêt</td><td>du ${D.jour(m.debut)} ${D.fmt(m.debut)} au ${D.jour(m.fin)} ${D.fmt(m.fin)} (affichage jusqu'au ${D.fmt(m.finAffichage || m.fin)})</td></tr>
+          <tr><td class="muted">Jalons</td><td>${m.jalons.map((j) => `<span class="tag">${D.fmt(j.date)} ${esc(j.libelle)}</span>`).join("") || "—"}</td></tr>
+          <tr><td class="muted">Consignes</td><td>${m.consignes.map(esc).join("<br>") || "—"}</td></tr>
+          <tr><td class="muted">Capacité</td><td>${["1", "2", "3", "4", "5", "6", "0"].map((k) => ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"][k] + " " + h(m.capacite[k])).join(" · ")} · temps perdu ${Math.round(m.tempsPerdu * 100)} %</td></tr>
+          </tbody></table>`;
+        $("#ad-zones").innerHTML =
+          `<table><thead><tr><th>Ordre ligne</th><th>Zone</th><th>Type</th><th>Machines / équipements</th><th>Activités</th></tr></thead><tbody>
+          ${zones
+            .map((z) => {
+              const i = DB.flux.indexOf(z.id);
+              return `<tr data-zedit="${z.id}"><td>${i < 0 ? '<span class="muted">—</span>' : i + 1}</td><td><b>${esc(z.nom)}</b></td><td>${types[z.type] || esc(z.type)}</td>
+                <td>${(z.machines || []).map((mc) => `<span class="tag">⚙️ ${esc(mc.nom)}</span>`).join("") || '<span class="muted">—</span>'}</td><td>${nbAct("zone", z.id)}</td></tr>`;
+            })
+            .join("")}</tbody></table>`;
+        const liste = (items, champ) =>
+          `<table><tbody>${items
+            .map(
+              (it) =>
+                `<tr data-ledit="${esc(it.id)}"><td><b>${esc(it.nom)}</b></td><td class="muted">${champ(it)}</td></tr>`,
+            )
+            .join("")}</tbody></table>`;
+        $("#ad-services").innerHTML = liste(
+          DB.services.map((s) => ({ id: s, nom: s })),
+          (s) => nbAct("service", s.id) + " activité(s)",
+        );
+        $("#ad-equipes").innerHTML = liste(
+          DB.equipes,
+          (e) =>
+            DB.personnel.filter((p) => p.equipe === e.id).length +
+            " personne(s)",
+        );
+        $("#ad-ponts").innerHTML = liste(
+          DB.ponts,
+          (p) =>
+            esc(p.zone || "") +
+            " · " +
+            DB.reservations.filter((r) => r.pont === p.id).length +
+            " réservation(s)",
+        );
+        const eqNom = (id) => DB.equipes.find((e) => e.id === id)?.nom || id;
+        $("#ad-pers").innerHTML =
+          `<table><thead><tr><th>Nom</th><th>Prénom</th><th>Matricule</th><th>Poste</th><th>Équipe</th><th>Activités</th><th>Absences</th></tr></thead><tbody>
+          ${[...DB.personnel]
+            .sort(
+              (a, b) =>
+                eqNom(a.equipe).localeCompare(eqNom(b.equipe)) ||
+                persNom(a).localeCompare(persNom(b)),
+            )
+            .map(
+              (
+                p,
+              ) => `<tr data-pers="${p.id}"><td><b>${esc(p.nom)}</b></td><td>${esc(p.prenom)}</td><td>${esc(p.matricule ?? "")}</td><td>${esc(p.poste)}</td><td>${esc(eqNom(p.equipe))}</td>
+                <td>${DB.activites.filter((a) => a.intervenants.includes(p.id)).length}</td><td>${p.absences.length || ""}</td></tr>`,
+            )
+            .join("")}</tbody></table>`;
+        $("#ad-compte").innerHTML =
+          `Connecté en tant que <b>${esc(m.admin.login)}</b>.`;
+      }
+
+      // Réaffectation avant suppression d'un élément utilisé.
+      function choixRemplacement(options, exclu) {
+        return `<label class="full">Réaffecter les éléments liés vers<select id="ad-repl">${options
+          .filter((o) => o.id !== exclu)
+          .map((o) => opt(o.id, o.nom, ""))
+          .join("")}</select></label>`;
+      }
+      function editerZone(id) {
+        const z = id
+          ? DB.zones.find((x) => x.id === id)
+          : {
+              id: uid("z"),
+              nom: "",
+              type: "process",
+              x: 20,
+              y: 20,
+              w: 130,
+              h: 70,
+              machines: [],
+            };
+        z.machines ??= [];
+        const pos = DB.flux.indexOf(z.id);
+        const n = id ? nbAct("zone", id) : 0;
+        dialogue(
+          id ? "Zone : " + z.nom : "Nouvelle zone",
+          `<div class="form">
+            <label>Nom<input id="z-nom" value="${esc(z.nom)}"></label>
+            <label>Type<select id="z-type">${opt("process", "Ligne de laminage", z.type)}${opt("general", "Zone générale", z.type)}${opt("utilite", "Utilité / fluides", z.type)}</select></label>
+            <label>Position dans le sens du produit<input id="z-pos" type="number" min="1" value="${pos < 0 ? "" : pos + 1}" placeholder="vide = hors ligne"></label>
+            <label>Astuce<input value="Position : glisser la zone sur le schéma" disabled></label>
+            <label>Largeur<input id="z-w" type="number" min="60" step="10" value="${z.w}"></label>
+            <label>Hauteur<input id="z-h" type="number" min="40" step="10" value="${z.h}"></label>
+            <label>X<input id="z-x" type="number" step="10" value="${z.x}"></label>
+            <label>Y<input id="z-y" type="number" step="10" value="${z.y}"></label>
+            <label class="full">Machines / équipements de la zone (une par ligne)<textarea id="z-mach" rows="5">${esc(z.machines.map((mc) => mc.nom).join("\n"))}</textarea></label>
+            ${id && n ? choixRemplacement(DB.zones, id).replace("Réaffecter les éléments liés vers", `En cas de suppression, réaffecter les ${n} activité(s) vers`) : ""}
+          </div>`,
+          [
+            ...(id
+              ? [
+                  [
+                    "Supprimer",
+                    "danger",
+                    () => {
+                      const cible = $("#ad-repl")?.value;
+                      if (
+                        !confirm(
+                          `Supprimer la zone « ${z.nom} » ?${n ? ` Ses ${n} activité(s) iront dans « ${zoneNom(cible)} ».` : ""}`,
+                        )
+                      )
+                        return false;
+                      DB.activites.forEach(
+                        (a) =>
+                          a.zone === id && ((a.zone = cible), (a.machine = "")),
+                      );
+                      DB.zones = DB.zones.filter((x) => x.id !== id);
+                      DB.flux = DB.flux.filter((x) => x !== id);
+                      if (ui.zone === id) ui.zone = null;
+                      remplirFiltres();
+                      changed();
+                    },
+                  ],
+                ]
+              : []),
+            ["Annuler", "", () => {}],
+            [
+              "Enregistrer",
+              "primary",
+              () => {
+                const nom = $("#z-nom").value.trim();
+                if (!nom) return (alert("Nom obligatoire."), false);
+                if (
+                  DB.zones.some(
+                    (x) =>
+                      x.id !== z.id &&
+                      x.nom.toUpperCase() === nom.toUpperCase(),
+                  )
+                )
+                  return (alert("Une zone porte déjà ce nom."), false);
+                const num = (sel, def) =>
+                  Number.isFinite(Number($(sel).value)) && $(sel).value !== ""
+                    ? Number($(sel).value)
+                    : def;
+                Object.assign(z, {
+                  nom,
+                  type: $("#z-type").value,
+                  w: Math.max(60, num("#z-w", 130)),
+                  h: Math.max(40, num("#z-h", 70)),
+                  x: num("#z-x", z.x),
+                  y: num("#z-y", z.y),
+                });
+                // Les machines gardent leur identifiant quand leur nom ne change pas.
+                const noms = $("#z-mach")
+                  .value.split("\n")
+                  .map((l) => l.trim())
+                  .filter(Boolean);
+                const avant = z.machines;
+                z.machines = noms.map(
+                  (nm) =>
+                    avant.find((mc) => mc.nom === nm) || {
+                      id: uid("m"),
+                      nom: nm,
+                    },
+                );
+                const ids = new Set(z.machines.map((mc) => mc.id));
+                DB.activites.forEach(
+                  (a) =>
+                    a.zone === z.id &&
+                    a.machine &&
+                    !ids.has(a.machine) &&
+                    (a.machine = ""),
+                );
+                DB.flux = DB.flux.filter((x) => x !== z.id);
+                const p = Number($("#z-pos").value);
+                if (p >= 1)
+                  DB.flux.splice(Math.min(p - 1, DB.flux.length), 0, z.id);
+                if (!id) {
+                  // Nouvelle zone placée sous le schéma existant.
+                  if (
+                    !$("#z-x").value ||
+                    !$("#z-y").value ||
+                    (z.x === 20 && z.y === 20)
+                  ) {
+                    z.y = DB.zones.length
+                      ? Math.max(...DB.zones.map((x) => x.y + x.h)) + 40
+                      : 40;
+                    z.x = 20;
+                  }
+                  DB.zones.push(z);
+                }
+                remplirFiltres();
+                changed();
+              },
+            ],
+          ],
+        );
+      }
+      // Services (chaînes) et équipes (objets) : renommer, ajouter, supprimer avec réaffectation.
+      function editerListe(kind, id) {
+        const estSvc = kind === "services";
+        const items = estSvc
+          ? DB.services.map((s) => ({ id: s, nom: s }))
+          : DB.equipes;
+        const it = id != null ? items.find((x) => x.id === id) : null;
+        const n = it
+          ? estSvc
+            ? nbAct("service", it.id)
+            : DB.personnel.filter((p) => p.equipe === it.id).length
+          : 0;
+        const titre = estSvc ? "Service" : "Équipe";
+        dialogue(
+          it ? titre + " : " + it.nom : "Nouveau(elle) " + titre.toLowerCase(),
+          `<div class="form"><label class="full">Nom<input id="l-nom" value="${esc(it?.nom || "")}"></label>
+            ${it && n ? choixRemplacement(items, it.id).replace("Réaffecter les éléments liés vers", `En cas de suppression, réaffecter les ${n} ${estSvc ? "activité(s)" : "personne(s)"} vers`) : ""}</div>`,
+          [
+            ...(it
+              ? [
+                  [
+                    "Supprimer",
+                    "danger",
+                    () => {
+                      if (items.length < 2)
+                        return (
+                          alert("Il faut garder au moins un élément."),
+                          false
+                        );
+                      const cible = $("#ad-repl")?.value;
+                      if (!confirm(`Supprimer « ${it.nom} » ?`)) return false;
+                      if (estSvc) {
+                        DB.activites.forEach(
+                          (a) => a.service === it.id && (a.service = cible),
+                        );
+                        DB.services = DB.services.filter((s) => s !== it.id);
+                      } else {
+                        DB.personnel.forEach(
+                          (p) => p.equipe === it.id && (p.equipe = cible),
+                        );
+                        DB.equipes = DB.equipes.filter((e) => e.id !== it.id);
+                      }
+                      remplirFiltres();
+                      changed();
+                    },
+                  ],
+                ]
+              : []),
+            ["Annuler", "", () => {}],
+            [
+              "Enregistrer",
+              "primary",
+              () => {
+                const nom = $("#l-nom").value.trim();
+                if (!nom) return false;
+                if (
+                  items.some(
+                    (x) =>
+                      x !== it && x.nom.toUpperCase() === nom.toUpperCase(),
+                  )
+                )
+                  return (alert("Ce nom existe déjà."), false);
+                if (estSvc) {
+                  if (it) {
+                    DB.services[DB.services.indexOf(it.id)] = nom;
+                    DB.activites.forEach(
+                      (a) => a.service === it.id && (a.service = nom),
+                    );
+                  } else DB.services.push(nom);
+                } else if (it) it.nom = nom;
+                else DB.equipes.push({ id: uid("eq"), nom });
+                remplirFiltres();
+                changed();
+              },
+            ],
+          ],
+        );
+      }
+      function editeurJson() {
+        const copie = structuredClone(DB);
+        dialogue(
+          "Éditeur JSON (toutes les données)",
+          `<p class="muted" style="margin-top:0">Modification directe de la base. Le texte doit rester un JSON valide ; les champs sont décrits dans le README.</p>
+           <textarea id="j-txt" spellcheck="false" style="width:100%;height:55vh;font:12px/1.4 ui-monospace,Consolas,monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--card)">${esc(JSON.stringify(copie, null, 2))}</textarea>`,
+          [
+            ["Annuler", "", () => {}],
+            [
+              "Appliquer",
+              "primary",
+              () => {
+                let d;
+                try {
+                  d = JSON.parse($("#j-txt").value);
+                } catch (e) {
+                  return (alert("JSON invalide : " + e.message), false);
+                }
+                if (
+                  !d.meta?.debut ||
+                  !d.meta?.fin ||
+                  !Array.isArray(d.activites)
+                )
+                  return (
+                    alert(
+                      "Il manque meta.debut, meta.fin ou la liste activites.",
+                    ),
+                    false
+                  );
+                normaliser(d);
+                DB = d;
+                ui.admin = !!DB.meta.admin;
+                try {
+                  if (ui.admin)
+                    sessionStorage.setItem("arret-admin", DB.meta.admin.hash);
+                } catch (e) {}
+                changed();
+                demarrer();
+              },
+            ],
+          ],
+        );
+        $("#dlg").style.width = "min(1100px, 96vw)";
+        $("#dlg").addEventListener(
+          "close",
+          () => ($("#dlg").style.width = ""),
+          { once: true },
+        );
+      }
+      function exporterJson() {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(
+          new Blob([JSON.stringify(DB, null, 1)], { type: "application/json" }),
+        );
+        a.download = "data-" + D.today() + ".json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      // Déplacement des zones sur le schéma (mode édition administrateur).
+      function brancherSchemaEdition() {
+        let drag = null;
+        const svgPt = (svg, e) => {
+          const p = svg.createSVGPoint();
+          p.x = e.clientX;
+          p.y = e.clientY;
+          return p.matrixTransform(svg.getScreenCTM().inverse());
+        };
+        $("#schema").addEventListener("pointerdown", (e) => {
+          if (!ui.editSchema || !ui.admin) return;
+          const g = e.target.closest("[data-z]");
+          if (!g) return;
+          const svg = g.ownerSVGElement;
+          drag = {
+            g,
+            svg,
+            z: DB.zones.find((z) => z.id === g.dataset.z),
+            p0: svgPt(svg, e),
+            dx: 0,
+            dy: 0,
+          };
+          g.setPointerCapture(e.pointerId);
+          e.preventDefault();
+        });
+        $("#schema").addEventListener("pointermove", (e) => {
+          if (!drag) return;
+          const p = svgPt(drag.svg, e);
+          drag.dx = Math.round((p.x - drag.p0.x) / 10) * 10;
+          drag.dy = Math.round((p.y - drag.p0.y) / 10) * 10;
+          drag.g.setAttribute("transform", `translate(${drag.dx},${drag.dy})`);
+        });
+        $("#schema").addEventListener("pointerup", () => {
+          if (!drag) return;
+          const { z, dx, dy } = drag;
+          drag = null;
+          if (!dx && !dy) return editerZone(z.id);
+          z.x = Math.max(0, z.x + dx);
+          z.y = Math.max(20, z.y + dy);
+          changed();
+        });
+      }
+
       // ---------- Évènements ----------
       function ouvrirOnglet(t) {
         ui.tab = t;
@@ -2232,7 +2898,7 @@
         e.target.dataset.tab && ouvrirOnglet(e.target.dataset.tab);
       $("#b-ouvrir").onclick = $("#b-ouvrir2").onclick = ouvrir;
       $("#b-enreg").onclick = enregistrer;
-      $("#periode").onclick = () => DB && editerCapacite();
+      $("#periode").onclick = () => DB && siAdmin(editerCapacite);
       $("#periode").style.cursor = "pointer";
       $("#periode").title = "Modifier les paramètres de l'arrêt";
       $("#file-in").onchange = (e) =>
@@ -2311,6 +2977,7 @@
 
       // Schéma
       $("#schema").onclick = (e) => {
+        if (ui.editSchema) return;
         const g = e.target.closest("[data-z]");
         if (!g) return;
         ui.zone = g.dataset.z;
@@ -2332,6 +2999,79 @@
           service: ui.schemaSvc || DB.services[0],
         });
       brancherGantt();
+      brancherSchemaEdition();
+      $("#s-edit").onclick = () => {
+        ui.editSchema = !ui.editSchema;
+        $("#s-edit").textContent = ui.editSchema
+          ? "✔ Terminer la modification"
+          : "✏️ Modifier le schéma";
+        $("#s-edit").classList.toggle("primary", ui.editSchema);
+        $("#schema").classList.toggle("edit", ui.editSchema);
+        $("#schema").title = ui.editSchema
+          ? "Glisser une zone pour la déplacer, cliquer pour la modifier"
+          : "";
+      };
+      $("#s-zone-add").onclick = () => siAdmin(() => editerZone(null));
+
+      // Administration
+      $("#b-admin").onclick = () => {
+        if (!ui.admin) return connexion(() => ouvrirOnglet("admin"));
+        if (ui.tab !== "admin") return ouvrirOnglet("admin");
+        if (confirm("Se déconnecter du compte administrateur ?")) deconnexion();
+      };
+      function deconnexion() {
+        ui.admin = false;
+        ui.editSchema = false;
+        $("#schema").classList.remove("edit");
+        try {
+          sessionStorage.removeItem("arret-admin");
+        } catch (e) {}
+        majAdmin();
+        render();
+      }
+      $("#ad-logout").onclick = deconnexion;
+      $("#ad-mdp-btn").onclick = changerMotDePasse;
+      $("#ad-arret-edit").onclick = () => siAdmin(editerCapacite);
+      $("#ad-json").onclick = () => siAdmin(editeurJson);
+      $("#ad-export").onclick = exporterJson;
+      $("#ad-purge").onclick = () => {
+        if (
+          !confirm(
+            "Effacer la copie de travail gardée dans ce navigateur ? Les modifications non enregistrées dans data.json seront perdues.",
+          )
+        )
+          return;
+        try {
+          localStorage.removeItem(STORE_KEY);
+        } catch (e) {}
+        dirty = false;
+        location.reload();
+      };
+      $("#ad-zone-add").onclick = () => editerZone(null);
+      $("#ad-zones").onclick = (e) => {
+        const tr = e.target.closest("[data-zedit]");
+        if (tr) editerZone(tr.dataset.zedit);
+      };
+      document.querySelectorAll("[data-kind]").forEach(
+        (el) =>
+          (el.onclick = (e) => {
+            const tr = e.target.closest("[data-ledit]");
+            if (tr) editerListe(el.dataset.kind, tr.dataset.ledit);
+          }),
+      );
+      document
+        .querySelectorAll("[data-ladd]")
+        .forEach((b) => (b.onclick = () => editerListe(b.dataset.ladd, null)));
+      $("#ad-ponts").onclick = (e) => {
+        const tr = e.target.closest("[data-ledit]");
+        if (tr) editerPont(tr.dataset.ledit);
+      };
+      $("#ad-pont-add").onclick = () => editerPont(null);
+      $("#ad-pers").onclick = (e) => {
+        const tr = e.target.closest("[data-pers]");
+        if (tr) editerPersonne(tr.dataset.pers);
+      };
+      $("#ad-pers-add").onclick = () => editerPersonne(null);
 
       // Ponts
       $("#pgrid").onclick = (e) => {
@@ -2375,10 +3115,16 @@
       };
       $("#b-pers-add").onclick = () => editerPersonne(null);
       $("#c-bilan").onclick = (e) =>
-        e.target.id === "b-capa" && editerCapacite();
+        e.target.id === "b-capa" && siAdmin(editerCapacite);
       $("#c-grid").onclick = (e) => {
         const n = e.target.closest("[data-pers]");
-        if (n) return editerPersonne(n.dataset.pers);
+        if (n) {
+          if (ui.admin) return editerPersonne(n.dataset.pers);
+          ui.f = { pers: n.dataset.pers };
+          $("#f-q").value = "";
+          remplirFiltres();
+          return ouvrirOnglet("activites");
+        }
         const c = e.target.closest("td[data-p]");
         if (c) detailJour(c.dataset.p, c.dataset.d);
       };
@@ -2399,6 +3145,11 @@
         if (data) {
           normaliser(data);
           DB = data;
+          try {
+            ui.admin =
+              !!DB.meta.admin &&
+              sessionStorage.getItem("arret-admin") === DB.meta.admin.hash;
+          } catch (e) {}
           demarrer();
         } else {
           $("#vide").hidden = false;

@@ -19,6 +19,36 @@ calculée à partir de la durée en heures et de la capacité journalière).
 Les dates de l'arrêt, les jalons, les consignes, la capacité par jour (Lun 10 h, Mar–Jeu 7 h,
 Ven 6,5 h) et le temps perdu se modifient en cliquant sur la ligne de dates sous le titre.
 
+## Compte administrateur
+
+Le bouton **🔒 Administrateur** (en haut à droite) ouvre la connexion. Au premier clic, si
+`data.json` ne contient pas encore de compte, il propose de le créer (identifiant + mot de
+passe d'au moins 6 caractères). Le compte est stocké dans `data.json` (`meta.admin`, mot de
+passe haché et salé) : pensez à **💾 Enregistrer** après l'avoir créé.
+
+Connecté, l'administrateur dispose de l'onglet **⚙️ Administration** :
+
+- **Arrêt technique** : titre, dates de début et de fin, fin d'affichage, jalons, consignes,
+  heures par jour et temps perdu.
+- **Zones et machines** : ajout, renommage, type (ligne, zone générale, utilité), ordre dans le
+  sens du produit, taille et position, liste des machines/équipements de la zone ; suppression
+  avec réaffectation des activités. Sur le schéma, **✏️ Modifier le schéma** permet de
+  déplacer les zones à la souris.
+- **Services**, **équipes**, **ponts roulants**, **personnel** : ajout, modification,
+  suppression (avec réaffectation des éléments liés).
+- **Données** : éditeur JSON de toute la base, export d'une copie datée, purge de la copie
+  gardée dans le navigateur. Identifiant et mot de passe se changent depuis le même onglet.
+
+Sans connexion, on peut toujours créer et modifier des activités (statut, planning, intervenants,
+machine), réserver les ponts et saisir les absences. Sont réservés à l'administrateur : les
+paramètres de l'arrêt, les zones, machines, services, équipes, ponts et personnel, la suppression
+d'activités et l'éditeur JSON.
+
+> Ce mot de passe protège contre les fausses manipulations, pas contre une personne
+> malveillante : l'application tourne entièrement dans le navigateur, et quiconque peut
+> modifier `data.json` peut retirer le compte. Pour une vraie protection, limitez les droits
+> d'écriture sur le dossier partagé.
+
 ## Utilisation
 
 1. Ouvrir `index.html` dans Chrome ou Edge.
@@ -47,11 +77,12 @@ référencés ».
 
 ## Structure de `data.json`
 
-- `meta` : titre, `debut`, `fin`, `finAffichage`, `jalons[]`, `consignes[]`, `capacite`
+- `meta` : `admin` (`login`, `sel`, `hash` SHA-256), titre, `debut`, `fin`, `finAffichage`, `jalons[]`, `consignes[]`, `capacite`
   (heures par jour de semaine, 0 = dimanche), `tempsPerdu`, `modeCharge`.
 - `zones[]` : `id`, `nom`, `type` (`process`, `general`, `utilite`) et position sur le schéma
   (`x`, `y`, `w`, `h`) ; `flux[]` : ordre des zones dans le sens du produit (flèches).
-- `activites[]` : `zone`, `service`, `designation`, `statut` (`afaire`, `encours`, `fait`,
+- `zones[].machines[]` : `id`, `nom` des machines/équipements de la zone.
+- `activites[]` : `zone`, `machine` (id de machine, facultatif), `service`, `designation`, `statut` (`afaire`, `encours`, `fait`,
   `nonnecessaire`, `reportee`), `intervenants[]` (ids du personnel), `gmao`, `moi`, `dureeH`,
   `debut`, `fin`, `debutReel`, `pont`, `commentaire`.
 - `personnel[]` : `nom`, `prenom`, `matricule`, `poste`, `equipe`, `absences[]` (dates).
