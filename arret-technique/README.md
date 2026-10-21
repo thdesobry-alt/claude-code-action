@@ -62,17 +62,17 @@ Pour partager le planning, déposer `index.html` et `data.json` dans un dossier 
 chacun ouvre le même fichier. Attention, deux personnes qui enregistrent en même temps
 écrasent mutuellement leurs modifications.
 
-## Zones du Pareto laminoir
+## Machines du Pareto laminoir
 
-Les zones et les machines viennent de l'application « Arrêts de production » (onglet Schéma
-laminoir) : Enfournement / Défournement, Soudeuse, Train, Ligne petit diamètre, Ligne gros
-diamètre, Refroidissoir jusque VR9, KNCA, Évacuation TR12 12bis, Station eau, plus une zone
-« Général / hors schéma ». Chaque zone porte ses machines avec leur code Macc (209 machines).
+Le schéma garde le découpage détaillé du planning (39 zones : Four, Soudeuse, Dégrossisseur,
+Bloc CV1, Boucleuses…). Chaque zone porte les machines de l'application « Arrêts de production »
+avec leur code Macc (209 machines), par exemple Dégrossisseur → cages 1 à 6, centrales et
+cellules FC1 à FC3.
 
-Le bouton **Reprendre les zones du Pareto laminoir** (Administration → Zones et machines)
-applique ce découpage à la base ouverte : les activités passent de l'ancienne zone à la nouvelle,
-sont rattachées à une machine quand la désignation la désigne sans ambiguïté (cage 7, KNCA2,
-CV3-1…), et gardent sinon l'ancien nom de zone en tête de désignation.
+Le bouton **Machines du Pareto (codes Macc)** (Administration → Zones et machines) range ces
+machines dans les zones et rattache les activités à leur machine quand la désignation la désigne
+sans ambiguïté (cage 7, KNCA2, CV3-1…). Un fichier qui avait été passé sur les 9 zones du
+Pareto revient automatiquement au découpage détaillé à son ouverture.
 
 ## Réimporter depuis Excel
 
@@ -81,8 +81,8 @@ pip install openpyxl
 python3 outils/import_excel.py "Planning arrêt Été 2026 v0.xlsm" data.json
 ```
 
-Après un import, ouvrir le fichier dans l'application et cliquer sur **Reprendre les zones du
-Pareto laminoir** (Administration). Le script reprend les opérations (onglet _Planning_), le personnel (_bdd personnel_), les
+Après un import, ouvrir le fichier dans l'application et cliquer sur **Machines du Pareto (codes
+Macc)** (Administration). Le script reprend les opérations (onglet _Planning_), le personnel (_bdd personnel_), les
 services (_Liste_) et les dates de l'arrêt. Les intervenants sont rapprochés du personnel par
 nom ou prénom (« JEROME/OUSMAN » → BOUTIN Jérome, MARNA Ousmane) ; les noms inconnus
 (entreprises extérieures : MSEM, ALPA, SIE…) sont créés dans l'équipe « Entreprises / non
