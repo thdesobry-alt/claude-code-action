@@ -980,6 +980,9 @@
               ligne, machines, taille, position).</span
             >
             <div class="spacer"></div>
+            <button class="btn" id="ad-pareto">
+              Reprendre les zones du Pareto laminoir
+            </button>
             <button class="btn primary" id="ad-zone-add">＋ Zone</button>
           </div>
           <div class="scroll-x tall" id="ad-zones"></div>
@@ -1286,6 +1289,7 @@
         d.meta.tempsPerdu ??= 0.15;
         d.meta.modeCharge ??= "parIntervenant";
         for (const k of [
+          "liens",
           "zones",
           "flux",
           "personnel",
@@ -1592,7 +1596,13 @@
           $("#e-mach").innerHTML =
             opt("", "— Toute la zone —", a.machine) +
             (z?.machines || [])
-              .map((mc) => opt(mc.id, mc.nom, a.machine))
+              .map((mc) =>
+                opt(
+                  mc.id,
+                  (mc.code ? mc.code + " · " : "") + mc.nom,
+                  a.machine,
+                ),
+              )
               .join("");
         };
         machines();
@@ -1681,23 +1691,36 @@
           H = Math.max(...Z.map((z) => z.y + z.h)) + 20;
         const byId = Object.fromEntries(Z.map((z) => [z.id, z]));
         let fl = "";
-        for (let i = 0; i < DB.flux.length - 1; i++) {
-          const a = byId[DB.flux[i]],
-            b = byId[DB.flux[i + 1]];
+        const paires = [
+          ...DB.flux.slice(1).map((id, i) => [DB.flux[i], id]),
+          ...(DB.liens || []),
+        ];
+        for (const [ia, ib] of paires) {
+          const a = byId[ia],
+            b = byId[ib];
           if (!a || !b) continue;
-          const ay = a.y + a.h / 2,
-            by = b.y + b.h / 2;
-          if (Math.abs(ay - by) < 5) {
+          // Zones côte à côte (hauteurs qui se recouvrent) : flèche horizontale ; sinon verticale.
+          const haut = Math.max(a.y, b.y),
+            bas = Math.min(a.y + a.h, b.y + b.h);
+          const separees = b.x >= a.x + a.w || b.x + b.w <= a.x;
+          if (separees && bas - haut > 6) {
+            const y = (haut + bas) / 2;
             const [x1, x2] = a.x < b.x ? [a.x + a.w, b.x] : [a.x, b.x + b.w];
-            fl += `<line class="flux" x1="${x1}" y1="${ay}" x2="${x2}" y2="${by}" marker-end="url(#fl)"/>`;
+            fl += `<line class="flux" x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" marker-end="url(#fl)"/>`;
           } else {
             const ax = a.x + a.w / 2,
               bx = b.x + b.w / 2;
-            fl += `<path class="flux" d="M${ax},${a.y + a.h} C${ax},${a.y + a.h + 40} ${bx},${b.y - 40} ${bx},${b.y}" marker-end="url(#fl)"/>`;
+            const [y1, y2, s] =
+              b.y >= a.y + a.h ? [a.y + a.h, b.y, 1] : [a.y, b.y + b.h, -1];
+            const k = Math.min(40, Math.abs(y2 - y1) / 2);
+            fl += `<path class="flux" d="M${ax},${y1} C${ax},${y1 + s * k} ${bx},${y2 - s * k} ${bx},${y2}" marker-end="url(#fl)"/>`;
           }
         }
-        const minY = (t) =>
-          Math.min(...Z.filter((z) => z.type === t).map((z) => z.y));
+        // Titre de groupe au-dessus de la zone la plus à gauche du type.
+        const ancre = (t) =>
+          Z.filter((z) => z.type === t).sort(
+            (a, b) => a.x - b.x || a.y - b.y,
+          )[0];
         const titres = [
           ["process", "LIGNE DE LAMINAGE — sens du produit"],
           ["general", "ZONES GÉNÉRALES"],
@@ -1706,7 +1729,7 @@
           .filter(([t]) => Z.some((z) => z.type === t))
           .map(
             ([t, l]) =>
-              `<text x="20" y="${minY(t) - 10}" style="font-size:12px;font-weight:700;fill:var(--muted);letter-spacing:.06em">${l}</text>`,
+              `<text x="${ancre(t).x + 2}" y="${Math.max(10, ancre(t).y - 8)}" style="font-size:12px;font-weight:700;fill:var(--muted);letter-spacing:.06em">${l}</text>`,
           )
           .join("");
         const boxes = Z.map((z) => {
@@ -1723,7 +1746,10 @@
                 : s.reportee && !reste
                   ? "var(--reportee)"
                   : "var(--afaire)";
-          const lignes = lignesTexte(z.nom);
+          const lignes = lignesTexte(
+            z.nom,
+            Math.max(10, Math.floor((z.w - 24) / 8)),
+          );
           const ty = z.y + z.h / 2 - (lignes.length - 1) * 7 - 4;
           const bw = z.w - 16;
           return `<g class="z ${ui.zone === z.id ? "sel" : ""} ${s.total ? "" : "empty"}" data-z="${z.id}">
@@ -2518,7 +2544,7 @@
             .map((z) => {
               const i = DB.flux.indexOf(z.id);
               return `<tr data-zedit="${z.id}"><td>${i < 0 ? '<span class="muted">—</span>' : i + 1}</td><td><b>${esc(z.nom)}</b></td><td>${types[z.type] || esc(z.type)}</td>
-                <td>${(z.machines || []).map((mc) => `<span class="tag">⚙️ ${esc(mc.nom)}</span>`).join("") || '<span class="muted">—</span>'}</td><td>${nbAct("zone", z.id)}</td></tr>`;
+                <td>${z.machines?.length ? `<details><summary>${z.machines.length} machine(s)</summary>${z.machines.map((mc) => `<span class="tag">⚙️ ${mc.code ? esc(mc.code) + " " : ""}${esc(mc.nom)}</span>`).join("")}</details>` : '<span class="muted">—</span>'}</td><td>${nbAct("zone", z.id)}</td></tr>`;
             })
             .join("")}</tbody></table>`;
         const liste = (items, champ) =>
@@ -2600,7 +2626,7 @@
             <label>Hauteur<input id="z-h" type="number" min="40" step="10" value="${z.h}"></label>
             <label>X<input id="z-x" type="number" step="10" value="${z.x}"></label>
             <label>Y<input id="z-y" type="number" step="10" value="${z.y}"></label>
-            <label class="full">Machines / équipements de la zone (une par ligne)<textarea id="z-mach" rows="5">${esc(z.machines.map((mc) => mc.nom).join("\n"))}</textarea></label>
+            <label class="full">Machines / équipements de la zone (une par ligne : code Macc puis nom, le code est facultatif)<textarea id="z-mach" rows="8">${esc(z.machines.map((mc) => (mc.code ? mc.code + " " : "") + mc.nom).join("\n"))}</textarea></label>
             ${id && n ? choixRemplacement(DB.zones, id).replace("Réaffecter les éléments liés vers", `En cas de suppression, réaffecter les ${n} activité(s) vers`) : ""}
           </div>`,
           [
@@ -2623,6 +2649,7 @@
                       );
                       DB.zones = DB.zones.filter((x) => x.id !== id);
                       DB.flux = DB.flux.filter((x) => x !== id);
+                      DB.liens = DB.liens.filter((l) => !l.includes(id));
                       if (ui.zone === id) ui.zone = null;
                       remplirFiltres();
                       changed();
@@ -2663,13 +2690,15 @@
                   .map((l) => l.trim())
                   .filter(Boolean);
                 const avant = z.machines;
-                z.machines = noms.map(
-                  (nm) =>
-                    avant.find((mc) => mc.nom === nm) || {
-                      id: uid("m"),
-                      nom: nm,
-                    },
-                );
+                z.machines = noms.map((ligne) => {
+                  const [, code = "", nm] = ligne.match(/^(?:(\d+)\s+)?(.+)$/);
+                  const ex = avant.find((mc) =>
+                    code ? mc.code === code : !mc.code && mc.nom === nm,
+                  );
+                  return ex
+                    ? { ...ex, nom: nm }
+                    : { id: code ? "m" + code : uid("m"), code, nom: nm };
+                });
                 const ids = new Set(z.machines.map((mc) => mc.id));
                 DB.activites.forEach(
                   (a) =>
@@ -2883,6 +2912,549 @@
         });
       }
 
+      // ---------- Zones et machines de l'application « Arrêts de production » (Pareto) ----------
+      // Schéma, zones et codes Macc repris de l'onglet « Schéma laminoir » de cette application.
+      const PARETO_ZONES = [
+        {
+          id: "enf",
+          nom: "Enfournement / Défournement",
+          type: "process",
+          x: 18,
+          y: 50,
+          w: 134,
+          h: 326,
+        },
+        {
+          id: "soud",
+          nom: "Soudeuse",
+          type: "process",
+          x: 168,
+          y: 292,
+          w: 168,
+          h: 84,
+        },
+        {
+          id: "train",
+          nom: "Train",
+          type: "process",
+          x: 346,
+          y: 292,
+          w: 256,
+          h: 84,
+        },
+        {
+          id: "petit",
+          nom: "Ligne petit diamètre",
+          type: "process",
+          x: 628,
+          y: 264,
+          w: 240,
+          h: 54,
+        },
+        {
+          id: "gros",
+          nom: "Ligne gros diamètre",
+          type: "process",
+          x: 628,
+          y: 324,
+          w: 240,
+          h: 54,
+        },
+        {
+          id: "refr",
+          nom: "Refroidissoir jusque VR9",
+          type: "process",
+          x: 884,
+          y: 172,
+          w: 168,
+          h: 204,
+        },
+        {
+          id: "knca",
+          nom: "KNCA",
+          type: "process",
+          x: 884,
+          y: 108,
+          w: 168,
+          h: 56,
+        },
+        {
+          id: "evac",
+          nom: "Évacuation TR12 12bis",
+          type: "process",
+          x: 884,
+          y: 28,
+          w: 168,
+          h: 72,
+        },
+        {
+          id: "eau",
+          nom: "Station eau",
+          type: "utilite",
+          x: 346,
+          y: 50,
+          w: 256,
+          h: 84,
+        },
+        {
+          id: "general",
+          nom: "Général / hors schéma",
+          type: "general",
+          x: 628,
+          y: 50,
+          w: 240,
+          h: 84,
+        },
+      ];
+      const PARETO_FLUX = [
+        "enf",
+        "soud",
+        "train",
+        "petit",
+        "refr",
+        "knca",
+        "evac",
+      ];
+      const PARETO_LIENS = [
+        ["train", "gros"],
+        ["gros", "refr"],
+      ];
+      const PARETO_MACHINES = {
+        eau: [
+          [300, "STATION EAU 1"],
+          [301, "POMPES P8"],
+          [302, "POMPES P8A"],
+          [303, "VENTILATEURS"],
+          [320, "STATION EAU 2 TEMPCORE"],
+          [321, "POMPES P5"],
+          [322, "POMPES P6"],
+          [323, "POMPES P7"],
+          [324, "VENTILATEURS"],
+          [330, "STATION EAU 2 LAMINOIR"],
+          [331, "POMPES P1"],
+          [332, "POMPES P2"],
+          [333, "POMPES P3"],
+          [334, "POMPES BOOSTER"],
+          [335, "POMPES P9"],
+          [336, "POMPES P10"],
+          [337, "POMPES P11"],
+          [338, "VENTILATEURS"],
+          [340, "POMPES P4"],
+          [341, "SURPRESSEUR"],
+          [342, "FILTRE FVT1"],
+          [343, "FILTRE FVT2"],
+          [344, "FILTRE FVT3"],
+          [345, "FILTRE FVT4"],
+          [346, "FILTRE FVT5"],
+          [347, "FILTRE FVL1"],
+          [348, "FILTRE FVL2"],
+          [349, "FILTRE FVL3"],
+          [350, "FILTRE FVL4"],
+          [351, "FILTRE FVL5"],
+          [353, "TRAITEMENTS D'EAU"],
+          [354, "ADDOUCISSEURS"],
+          [355, "POMPES A SAUMURE"],
+          [357, "EPAICISSEUR IS1"],
+          [358, "EPAICISSEUR IS2"],
+          [359, "PONT RACLEUR"],
+          [360, "BENNE HYDROCICLONE"],
+          [370, "COMPRESSEURS"],
+        ],
+        enf: [
+          [400, "PONT GH PARC A BILLETES"],
+          [401, "PONT ADC PARC A BILLETES"],
+          [405, "TABLE D'ENFOURNEMENT"],
+          [406, "RIPEURS"],
+          [407, "CENTALE HYDRAULIQUE ENFOURNEMENT"],
+          [408, "TRANSFERT"],
+          [409, "TATEUR D'URGENCE"],
+          [410, "VRL CHARGEMENT"],
+          [411, "VRL ENFOURNEMENT"],
+          [412, "BUTEE ENFOURNEMENT"],
+          [415, "ENFOURNEUSE"],
+          [420, "POUSSEUSE DX"],
+          [421, "POUSSEUSE SX"],
+          [422, "PORTE ENFOURNEMENT"],
+          [423, "PORTE SECURITE FOUR"],
+          [425, "FOUR"],
+          [426, "TATEUR 1"],
+          [427, "TATEUR 2"],
+          [428, "PORTE DEF. COTE DEFORNEUSE"],
+          [429, "PORTE DEF. SORTIE FOUR"],
+          [430, "DEFOURNEUSE"],
+          [431, "CELLULE SORTIE FOUR (PHx)"],
+          [435, "TRO 0"],
+        ],
+        soud: [
+          [440, "DECALAMINEUSE"],
+          [441, "CELLULE SORTIE DECALAMINEUSE (PHb)"],
+          [445, "VOIES RLX AV SOUDEUSE VUF1"],
+          [446, "VOIES RLX AV SOUDEUSE VUF2"],
+          [449, "CELLULE ENTREE SOUDEUSE (PHc)"],
+          [450, "SOUDEUSE"],
+          [451, "CENTRALE HYDRAULIQUE SOUDEUSE"],
+          [452, "TABLE EJECTION BILLETTES"],
+          [455, "VOIES RLX AP SOUDEUSE (VAR1)"],
+          [458, "EBAVUREUSE"],
+          [460, "TRO 1"],
+          [465, "CV ARRACHEMENT"],
+        ],
+        train: [
+          [466, "CENTRALE HYDRAULIQUE DEGRO"],
+          [467, "CENTRALE LUBRIFICATION DEGRO"],
+          [469, "CELLULE ENTREE CAGE 1 (FC1)"],
+          [470, "CAGE 1"],
+          [471, "CELLULE SORTIE CAGE 1 (FC2)"],
+          [472, "CAGE 2"],
+          [473, "CAGE 3"],
+          [475, "CAGE 4"],
+          [476, "CAGE 5"],
+          [477, "CAGE 6"],
+          [478, "CELLULE SORTIE CAGE 6 (FC3)"],
+          [479, "BOUCLEUSE 6-7"],
+          [480, "CV 1"],
+          [481, "CENTRALE LUB 7-10"],
+          [482, "CENTRALE NORTEK LAO1"],
+          [483, "CENTRALE NORTEK LAO2 (4-10)"],
+          [484, "CELLULE ENTREE CAGE 7 (FC4)"],
+          [485, "CAGE 7"],
+          [486, "BOUCLEUSE 7-8"],
+          [487, "CAGE 8"],
+          [490, "BOUCLEUSE 8-9"],
+          [495, "CAGE 9"],
+          [496, "BOUCLEUSE 9-10"],
+          [497, "CAGE 10"],
+          [500, "BOUCLEUESE 10-11"],
+          [501, "CENTRALE LUB 11-12"],
+          [502, "CENTRALE NORTEK LAO3 (11-14)"],
+          [505, "CAGE 11"],
+          [506, "CAGE 12"],
+          [510, "BOUCLEUSE 12-13"],
+          [511, "CENTRALE LUB 13-14"],
+          [515, "CAGE 13"],
+          [516, "BOUCLEUSE 13-14"],
+          [517, "CAGE 14"],
+          [520, "BOUCLEUSE H 14-15 VEINE 1"],
+          [521, "CELLULE SORTIE BOUCLEUSE H VEINE 1 (FC5.1)"],
+          [523, "BOUCLEUSE H 14-15 VEINE 2"],
+          [524, "CELLULE SORTIE BOUCLEUSE H VEINE 1 (FC5.2)"],
+          [525, "TRO 3.1"],
+          [526, "CV 3.1"],
+          [527, "TRO 3.2"],
+          [528, "CV 3.2"],
+          [529, "CENTRALE LUBRIFICATION 15-16"],
+          [530, "CAGE 15"],
+          [531, "BOUCLEUSE 15-16 VEINE 1"],
+          [532, "CAGE 16"],
+          [533, "BOUCLEUSE 15-16 VEINE 2"],
+          [535, "BOUCLEUSE 16-17"],
+          [536, "CENTRALE LUBRIFICATION 17-18"],
+          [540, "CAGES 17 18"],
+          [541, "CELLULE SORTIE FINISSEUR VEINE 1 (FC6.1)"],
+          [542, "CELLULE SORTIE FINISSEUR VEINE 2 (FC6.2)"],
+        ],
+        petit: [
+          [545, "TRO 4.1"],
+          [546, "TRO 4.2"],
+          [550, "TEMPCORE 1 (diam 12)"],
+          [551, "TEMPCORE 2 (diam 14-16)"],
+          [552, "CELLULE AVANT TRO5.1 (FC7.1)"],
+          [553, "LASER VEINE 1"],
+          [554, "TRO 5.1"],
+          [555, "CV 4.1"],
+          [556, "CELLULE AVANT TRO5.2 (FC7.2)"],
+          [557, "LASER VEINE 2"],
+          [558, "TRO 5.2"],
+          [559, "CV 4.2"],
+          [560, "MORCELEUSE VEINE 1"],
+          [561, "MORCELEUSE VEINE 2"],
+          [562, "CENTRALE LUBRIFICATION CV4+FQ"],
+          [565, "FREIN QUEUE 1.1"],
+          [566, "FREIN QUEUE 1.2"],
+          [567, "FREIN QUEUE 2.1"],
+          [568, "FREIN QUEUE 2.2"],
+          [570, "CANALETTE FILE 1-2"],
+          [572, "CANALETTE FILE 3-4"],
+        ],
+        gros: [
+          [574, "CELLULES ENTREE TEMPCORE GROS DIAM (FC8)"],
+          [575, "TEMPCORE 3 (diam 20-28)"],
+          [576, "TEMPCORE 4 (diam 32-40)"],
+          [577, "CELLULE AVANT TRO7 (FC9)"],
+          [580, "TRO 7"],
+          [585, "CV 5"],
+          [586, "LASER CV5"],
+          [587, "CLAPET CONTR?LE QUEUE CV5"],
+          [590, "VR1"],
+          [591, "VR2"],
+          [592, "VR3"],
+          [595, "CURSEUR"],
+          [596, "DEVIATEUR"],
+          [597, "SEPARATEUR"],
+          [598, "CENTRALE HYDRAULIQUE CURSEUR"],
+        ],
+        refr: [
+          [600, "REFROIDISSOIR"],
+          [601, "GRADINS REFROIDISSOIR"],
+          [602, "VRL ALIGNEMENT"],
+          [605, "TRANSFERT"],
+          [606, "CENTRALE HYDRAULIQUE TRANSFERT"],
+          [610, "VOIES RLX MAGNETIQUE CM 500 (VR1)"],
+          [611, "VOIES RLX AVANT CM 500 (VR2)"],
+          [614, "CENTRALE HYDRAULIQUE BOTTELAGE"],
+          [615, "CM 500"],
+          [616, "BUTEE LAGUNA"],
+          [617, "RACLEUR"],
+          [618, "TAPIS A CHUTES"],
+          [620, "VOIES RLX APRES CM 500 (VR3)"],
+          [625, "TRANSPORTEUR 4.1"],
+          [626, "TRANSPORTEUR 4.2"],
+          [627, "TRANSPORTEUR 6"],
+          [630, "COMPTEURS BARRES"],
+          [631, "ROUES DEMELEUSES"],
+          [635, "SUPPORT DE FARDES"],
+          [636, "VRL 6"],
+          [637, "VRL 9"],
+        ],
+        knca: [
+          [638, "KNCA 1"],
+          [639, "MOULEUR 1"],
+          [640, "MOULEUR 2"],
+          [641, "KNCA 2"],
+          [642, "MOULEUR 3"],
+          [643, "MOULEUR 4"],
+          [644, "KNCA 3"],
+          [645, "MOULEUR 5"],
+          [646, "BUTEE 6 M"],
+          [647, "BUTEE 12 M"],
+        ],
+        evac: [
+          [648, "VRL 11"],
+          [650, "TRANSPORTEUR 12"],
+          [651, "TRANSPORTEUR 12 BIS"],
+          [655, "BASCULE"],
+          [656, "POSTE A SOUDER"],
+          [657, "ETIQUETTEUSE"],
+          [660, "PONT ANSELMI"],
+          [661, "PONT SAMETO 1"],
+          [662, "PONT SAMETO 2"],
+          [663, "PONT ADC"],
+        ],
+        general: [
+          [700, "DEFAUTS METAL"],
+          [701, "BILLETTES CINTREES"],
+          [702, "DELESTAGE GAZ"],
+          [703, "FOSSES INNONDEES"],
+          [710, "ESSAIS"],
+          [720, "SECURITE"],
+          [900, "SERVICES GENERAUX"],
+        ],
+      };
+      // Ancienne zone (planning Excel) → zone du Pareto.
+      const ANCIENNES_ZONES = {
+        "PARC A BILLETTES": "enf",
+        ENFOURNEMENT: "enf",
+        DEFOURNEMENT: "enf",
+        FOUR: "enf",
+        "ENFOURNEMENT - DEFOURNEMENT": "enf",
+        "TRO-0": "enf",
+        DECALAMINEUSE: "soud",
+        SOUDEUSE: "soud",
+        "TRO-1": "soud",
+        "VR ESCAMOTABLE": "soud",
+        EBAVUREUSE: "soud",
+        DEGROSSISSEUR: "train",
+        "BLOC CV1": "train",
+        INTERMEDIAIRE: "train",
+        BOUCLEUSES: "train",
+        "BLOC CV3": "train",
+        "LIGNE PETIT Ø": "petit",
+        "BLOC CV4": "petit",
+        VR1: "gros",
+        VR2: "gros",
+        VR3: "gros",
+        "VR1 / VR2": "gros",
+        CURSEUR: "gros",
+        "BLOC CV5": "gros",
+        TEMPCORE: "gros",
+        "TABLE REFROIDISSOIRE": "refr",
+        TRANSFERT: "refr",
+        BOTTELAGE: "refr",
+        "STATIONS EAU LAMINOIR": "eau",
+        "STATION EAU N°1": "eau",
+        "STATION EAU N°2": "eau",
+        "REJET EAU INDUSTRIELLE": "eau",
+        "LOCAL ADOUCISSEURS": "eau",
+        "CIRCUIT MOTEURS": "eau",
+        "CIRCUIT TEMPCORE": "eau",
+        "CIRCUIT DIRECT LAMINOIR": "eau",
+        LAMINOIR: "general",
+        "SOUS-STATION PRINCIPALE": "general",
+        ATELIER: "general",
+      };
+      // [anciennes zones, motif sur la désignation (majuscules sans accents), code Macc]. La première règle qui
+      // correspond gagne ; « null » comme motif = machine par défaut de l'ancienne zone. Seules les correspondances
+      // sans ambiguïté sont retenues.
+      const CAGES = {
+        1: 470,
+        2: 472,
+        3: 473,
+        4: 475,
+        5: 476,
+        6: 477,
+        7: 485,
+        8: 487,
+        9: 495,
+        10: 497,
+        11: 505,
+        12: 506,
+        13: 515,
+        14: 517,
+        15: 530,
+        16: 532,
+      };
+      const REGLES_MACHINES = [
+        [["PARC A BILLETTES"], /PONT GH/, 400],
+        [["PARC A BILLETTES"], /PONT ADC/, 401],
+        [["ENFOURNEMENT"], /ENFOURNEUSE/, 415],
+        [["ENFOURNEMENT"], /TABLE/, 405],
+        [["ENFOURNEMENT"], /PORTE ENFOURNEMENT/, 422],
+        [["ENFOURNEMENT"], /CHARGEMENT ET ENFOURNEMENT/, 410],
+        [["DEFOURNEMENT"], null, 430],
+        [["FOUR"], /TATEUR N°1/, 426],
+        [["FOUR"], /TATEUR N°2/, 427],
+        [["FOUR"], /PORTE ENFOURNEMENT/, 422],
+        [["FOUR"], /POUSSEUSE SX/, 421],
+        [["FOUR"], null, 425],
+        [["TRO-0"], null, 435],
+        [["DECALAMINEUSE"], null, 440],
+        [["SOUDEUSE"], /CISAILLE D'ARRACHEMENT/, 465],
+        [["SOUDEUSE"], null, 450],
+        [["TRO-1"], null, 460],
+        [["EBAVUREUSE"], null, 458],
+        [["DEGROSSISSEUR"], /SORTIE CAGE 6|FC3/, 478],
+        [["DEGROSSISSEUR"], /CELLULE ENTREE CAGE 1/, 469],
+        [["DEGROSSISSEUR"], /CELLULE SORTIE CAGE 1/, 471],
+        [["DEGROSSISSEUR"], /TUYAUTERIES HUILE/, 467],
+        [
+          ["DEGROSSISSEUR", "INTERMEDIAIRE"],
+          /^(?!.*CELLULES? ENTRE).*\bCAGE (\d+)\b(?!\s*(A|ET|&)\s*\d)/,
+          "cage",
+        ],
+        [["BLOC CV1"], null, 480],
+        [["BOUCLEUSES"], /BOUCLEUSE 8-9/, 490],
+        [["BOUCLEUSES"], /BOUCLEUSE 10-11/, 500],
+        [["BOUCLEUSES"], /BOUCLEUSE 12-13/, 510],
+        [["BOUCLEUSES"], /FC8/, 574],
+        [["BLOC CV3"], /CV3-1/, 526],
+        [["BLOC CV3"], /CV3-2/, 528],
+        [["BLOC CV3"], /TR0?3-1/, 525],
+        [["BLOC CV3"], /TR0?3-2/, 527],
+        [["LIGNE PETIT Ø"], /TRO4-1/, 545],
+        [["LIGNE PETIT Ø"], /TRO4-2/, 546],
+        [["BLOC CV4"], /CV4[-.]1/, 555],
+        [["BLOC CV4"], /CV4[-.]2/, 559],
+        [["BLOC CV4"], /TRO5-1/, 554],
+        [["BLOC CV4"], /TRO5-2/, 558],
+        [["BLOC CV5"], /CV5/, 585],
+        [["BLOC CV5"], /TRO 7/, 580],
+        [["VR1"], null, 590],
+        [["VR2"], null, 591],
+        [["VR3"], null, 592],
+        [["CURSEUR"], null, 595],
+        [["TRANSFERT"], null, 605],
+        [["TABLE REFROIDISSOIRE"], null, 600],
+        [["BOTTELAGE"], /KNCA ?1/, 638],
+        [["BOTTELAGE"], /KNCA ?2/, 641],
+        [["BOTTELAGE"], /KNCA? ?3/, 644],
+        [["BOTTELAGE"], /MOULEURS/, "knca"],
+        [["BOTTELAGE"], /CM 500/, 615],
+        [["BOTTELAGE"], /LAGUNA/, 616],
+        [["BOTTELAGE"], /TR ?12 ?BIS|12 ?BIS/, 651],
+        [["BOTTELAGE"], /TR ?12\b|TRANSPORTEUR 12\b/, 650],
+        [["BOTTELAGE"], /TRANSPORTEUR 4-1/, 625],
+        [["BOTTELAGE"], /TRANSPORTEUR 6\b/, 627],
+        [["BOTTELAGE"], /VR11/, 648],
+        [["BOTTELAGE"], /VR6/, 636],
+        [["BOTTELAGE"], /VR9/, 637],
+        [["BOTTELAGE"], /BASCULE/, 655],
+        [["BOTTELAGE"], /ETIQUET/, 657],
+        [["BOTTELAGE"], /ROULEAUX D'ALIGNEMENT/, 602],
+        [["STATION EAU N°1"], null, 300],
+        [["STATION EAU N°2"], /SURPRESSEUR/, 341],
+        [["LOCAL ADOUCISSEURS"], null, 354],
+      ];
+      const sansAccents = (s) =>
+        String(s || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toUpperCase()
+          .replace(/\s+/g, " ")
+          .trim();
+      const titreZone = (s) =>
+        s
+          .toLowerCase()
+          .replace(/(^|[\s-])(\S)/g, (m, a, c) => a + c.toUpperCase())
+          .replace(/\b(\w*\d\w*|vr|cv|tro|knca)\b/gi, (w) => w.toUpperCase());
+
+      // Remplace les zones par celles du Pareto, ajoute les machines et rattache les activités.
+      function migrerZonesPareto(db) {
+        const zones = PARETO_ZONES.map((z) => ({
+          ...z,
+          machines: (PARETO_MACHINES[z.id] || []).map(([code, nom]) => ({
+            id: "m" + code,
+            code: String(code),
+            nom,
+          })),
+        }));
+        const zoneDe = {};
+        zones.forEach((z) =>
+          z.machines.forEach((m) => (zoneDe[m.code] = z.id)),
+        );
+        const anciennes = Object.fromEntries(db.zones.map((z) => [z.id, z]));
+        const bilan = { activites: 0, machines: 0, inconnues: [] };
+        for (const a of db.activites) {
+          const old = anciennes[a.zone];
+          if (!old || zones.some((z) => z.id === a.zone)) continue;
+          const nomOld = sansAccents(old.nom);
+          let cible = ANCIENNES_ZONES[nomOld];
+          if (!cible) {
+            cible = "general";
+            if (!bilan.inconnues.includes(old.nom))
+              bilan.inconnues.push(old.nom);
+          }
+          const des = sansAccents(a.designation);
+          let code = null;
+          for (const [oz, re, c] of REGLES_MACHINES) {
+            if (!oz.includes(nomOld)) continue;
+            const m = re ? des.match(re) : [];
+            if (!m) continue;
+            if (c === "cage") code = CAGES[m[1]] || null;
+            else if (c === "knca") cible = "knca";
+            else code = c;
+            if (code || c === "knca") break;
+          }
+          if (code && zoneDe[code]) cible = zoneDe[code];
+          a.machine = code ? "m" + code : "";
+          // Sans machine, l'ancien nom de zone reste lisible dans la désignation.
+          const nouv = zones.find((z) => z.id === cible);
+          if (
+            !code &&
+            !des.includes(nomOld) &&
+            sansAccents(nouv.nom) !== nomOld
+          )
+            a.designation = titreZone(old.nom) + " — " + a.designation;
+          a.zone = cible;
+          bilan.activites++;
+          if (code) bilan.machines++;
+        }
+        db.zones = zones;
+        db.flux = [...PARETO_FLUX];
+        db.liens = PARETO_LIENS.map((l) => [...l]);
+        db.meta.zonesPareto = true;
+        return bilan;
+      }
+
       // ---------- Évènements ----------
       function ouvrirOnglet(t) {
         ui.tab = t;
@@ -3048,7 +3620,29 @@
         location.reload();
       };
       $("#ad-zone-add").onclick = () => editerZone(null);
+      $("#ad-pareto").onclick = () => {
+        if (
+          !confirm(
+            "Remplacer toutes les zones par celles de l'application « Arrêts de production » (Pareto), avec leurs machines (codes Macc), et rattacher les activités à ces zones ?" +
+              (DB.meta.zonesPareto
+                ? "\n\nLes zones du Pareto sont déjà en place : les machines ajoutées ou modifiées à la main seront remplacées."
+                : ""),
+          )
+        )
+          return;
+        const b = migrerZonesPareto(DB);
+        ui.zone = null;
+        remplirFiltres();
+        changed();
+        alert(
+          `${b.activites} activité(s) reclassées, dont ${b.machines} rattachées à une machine.` +
+            (b.inconnues.length
+              ? `\nZones inconnues placées en « Général / hors schéma » : ${b.inconnues.join(", ")}`
+              : ""),
+        );
+      };
       $("#ad-zones").onclick = (e) => {
+        if (e.target.closest("details")) return;
         const tr = e.target.closest("[data-zedit]");
         if (tr) editerZone(tr.dataset.zedit);
       };
