@@ -1,12 +1,19 @@
 # Rapport de non-conformité ALPA (AQA.QUAL.03)
 
-Application web autonome (`index.html`) qui remplit le formulaire PDF
-`AQA.QUAL.03.pdf` (indice 5) et génère le rapport à télécharger.
+Application web autonome (`index.html`) qui affiche directement le formulaire
+`AQA.QUAL.03.pdf` (indice 5) : on saisit sur la page elle-même et l'écran montre
+le rendu final du PDF.
 
 ## Utilisation
 
 Ouvrir `index.html` dans un navigateur (Chrome, Edge, Firefox). Une connexion
 internet est nécessaire au premier chargement (bibliothèque `pdf-lib`).
+
+Les zones à compléter sont surlignées en jaune. `Tab` / `Maj+Tab` passe d'une zone à
+l'autre, `Espace` coche une case, une lettre choisit dans une liste (ex. `D` pour l'équipe D).
+Les dates se tapent en chiffres (jj, mm, aaaa) et passent seules à la zone suivante.
+Les textes longs (défaut constaté, 1ère analyse) s'écrivent dans une zone de saisie qui
+apparaît sous la partie 2 ; le texte se répartit en direct sur les lignes pointillées.
 
 1. Cocher **Aciérie / Laminoir / Expédition**.
    - Aciérie → la partie 1.2 (Ronds) est barrée.
@@ -18,6 +25,7 @@ internet est nécessaire au premier chargement (bibliothèque `pdf-lib`).
    - Chef de poste = DESOBRY → signature personnelle.
    - Autre chef de poste → signature « PO » (la même signature avec « PO » au-dessus à gauche).
 5. **Enregistrer le PDF** (dans le dossier configuré, sinon dans les téléchargements). Les parties 3 à 7 restent vides. Nom du fichier :
+
    - Aciérie : `AAAA.MM.JJ AQA.QUAL.03 Coulée <qualité> N° <n° de coulée>.pdf`
    - Laminoir / Expédition : `AAAA.MM.JJ AQA.QUAL.03 Fdx <n° fardeau> Coulée <n° de coulée>.pdf`
 
@@ -40,8 +48,8 @@ Les paramètres sont enregistrés dans le navigateur du poste (localStorage, et 
 
 ## Modifier l'application
 
-`index.html` est généré à partir de `template.html` et du PDF :
+`index.html` est généré à partir de `template.html`, du PDF et de son image de fond `fond.png` :
 
 ```bash
-python3 build.py template.html AQA.QUAL.03.pdf index.html
+python3 build.py template.html AQA.QUAL.03.pdf fond.png index.html
 ```

@@ -7,8 +7,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <style>
   :root {
-    --bg: #f4f5f7; --card: #ffffff; --text: #1d2330; --muted: #5f6b7a;
+    --bg: #e9ebef; --card: #ffffff; --text: #1d2330; --muted: #5f6b7a;
     --border: #d5dae1; --accent: #1f5fae; --accent-text: #ffffff; --strike: #b42318;
+    --ink: rgb(10, 41, 107);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -19,31 +20,64 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
          font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  header { padding: 16px; max-width: 900px; margin: 0 auto; display: flex;
-           align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  header h1 { font-size: 20px; margin: 0; }
-  header small { color: var(--muted); }
-  main { max-width: 900px; margin: 0 auto; padding: 0 16px 48px; }
-  section.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-                 padding: 16px; margin-bottom: 16px; }
-  section.card h2 { font-size: 16px; margin: 0 0 12px; }
-  section.card.barre { opacity: .45; }
-  section.card.barre h2::after { content: " — barrée"; color: var(--strike); font-weight: 600; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
-  input, select, textarea { font: inherit; color: var(--text); background: var(--bg);
-         border: 1px solid var(--border); border-radius: 6px; padding: 8px; width: 100%; }
-  textarea { min-height: 70px; resize: vertical; }
-  .choices { display: flex; flex-wrap: wrap; gap: 8px; }
-  .choices label { flex-direction: row; align-items: center; gap: 6px; font-size: 15px; color: var(--text);
-                   border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
-  .choices input { width: auto; }
-  .choices label:has(input:checked) { border-color: var(--accent); outline: 2px solid var(--accent); }
+  .toolbar { position: sticky; top: 0; z-index: 10; background: var(--card); border-bottom: 1px solid var(--border);
+             padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .toolbar strong { margin-right: auto; }
+  .msgs { max-width: 1000px; margin: 8px auto 0; padding: 0 16px; min-height: 22px; font-size: 14px; }
+  #err { color: var(--strike); }
+  #status { color: var(--muted); }
   button { font: inherit; border: 1px solid var(--border); background: var(--card); color: var(--text);
-           border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+           border-radius: 6px; padding: 6px 12px; cursor: pointer; }
   button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
+  /* ---------- Page PDF éditable ---------- */
+  #viewport { margin: 8px auto 32px; position: relative; box-shadow: 0 2px 12px rgba(0,0,0,.18); background: #fff; }
+  #page { position: absolute; left: 0; top: 0; width: 595.2px; height: 841.68px; transform-origin: 0 0; }
+  #page > img.bg { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; pointer-events: none; }
+  #page svg.overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .f { position: absolute; border: 0; margin: 0; padding: 0; border-radius: 1px; outline: none;
+       font-family: Helvetica, Arial, sans-serif; color: var(--ink); background: rgba(255, 214, 0, .22); }
+  .f::placeholder { color: rgba(10, 41, 107, .3); }
+  .f:focus { background: rgba(31, 95, 174, .14); box-shadow: 0 0 0 .6px var(--accent); }
+  .f.bold { font-weight: bold; }
+  .f:disabled, .box:disabled { visibility: hidden; }
+  select.f { appearance: none; -webkit-appearance: none; cursor: pointer; text-indent: 0; }
+  select.f option { font-size: 14px; color: #000; background: #fff; }
+  .box { position: absolute; width: 9px; height: 9px; padding: 0; border: 0; border-radius: 1px;
+         background: rgba(255, 214, 0, .3); cursor: pointer; }
+  .box:focus { outline: none; box-shadow: 0 0 0 .8px var(--accent); background: rgba(31, 95, 174, .18); }
+  .box svg { display: none; width: 100%; height: 100%; }
+  .box[aria-pressed="true"] svg { display: block; }
+  .box[aria-pressed="true"] { background: transparent; }
+  .para-hit { position: absolute; background: rgba(255, 214, 0, .16); cursor: text; }
+  .para-hit.active { background: rgba(31, 95, 174, .10); }
+  .para-line { position: absolute; white-space: pre; color: var(--ink); font-family: Helvetica, Arial, sans-serif;
+               pointer-events: none; }
+  textarea.para-editor { position: absolute; left: 92px; top: 343px; width: 414px; height: 36px; z-index: 5;
+       font: 8px/1.3 Helvetica, Arial, sans-serif; color: #000; background: #fff; border: .6px solid var(--accent);
+       border-radius: 2px; padding: 2px 3px; resize: none; opacity: 0; pointer-events: none; outline: none; }
+  textarea.para-editor:focus { opacity: 1; pointer-events: auto; box-shadow: 0 1px 6px rgba(0,0,0,.25); }
+  .sig { position: absolute; pointer-events: none; }
+  .sig span { position: absolute; font: bold 8px Helvetica, Arial, sans-serif; color: var(--ink); }
+  .sig img { position: absolute; }
+  .legend { max-width: 1000px; margin: 0 auto; padding: 0 16px; font-size: 13px; color: var(--muted); }
+  .legend i { display: inline-block; width: 12px; height: 10px; vertical-align: -1px; background: rgba(255, 214, 0, .45); }
+
+  /* ---------- Dialogues ---------- */
+  dialog { max-width: 720px; width: calc(100% - 32px); border: 1px solid var(--border); border-radius: 10px;
+           background: var(--card); color: var(--text); padding: 16px; }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog#previewDialog { max-width: 1000px; height: calc(100% - 32px); }
+  #preview { width: 100%; height: calc(100% - 52px); border: 1px solid var(--border); background: #fff; }
+  section.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+                 padding: 16px; margin-bottom: 16px; }
+  section.card h2 { font-size: 16px; margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  dialog input, dialog select { font: inherit; color: var(--text); background: var(--bg);
+         border: 1px solid var(--border); border-radius: 6px; padding: 8px; width: 100%; }
   .sigbox { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
   .sigbox canvas { background: #fff; border: 1px dashed var(--border); border-radius: 6px; touch-action: none;
                    width: 100%; max-width: 420px; height: 160px; }
@@ -56,126 +90,26 @@
   .list-editor .row { display: flex; gap: 8px; }
   .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px;
            border: 1px solid var(--border); color: var(--muted); }
-  #preview { width: 100%; height: 80vh; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
-  dialog { max-width: 720px; width: calc(100% - 32px); border: 1px solid var(--border); border-radius: 10px;
-           background: var(--card); color: var(--text); padding: 16px; }
-  dialog::backdrop { background: rgba(0,0,0,.4); }
-  #err { color: var(--strike); }
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>Rapport de non-conformité</h1>
-    <small>AQA.QUAL.03 — indice 5</small>
-  </div>
+<div class="toolbar">
+  <strong>Non-conformité AQA.QUAL.03</strong>
+  <button type="button" class="primary" id="btnDownload">Enregistrer le PDF</button>
+  <button type="button" id="btnShare">✉ Partager</button>
+  <button type="button" id="btnPreview">Aperçu PDF</button>
+  <button type="button" id="btnFolder">📂 Ouvrir le dossier d'enregistrement</button>
+  <button type="button" id="btnReset">Nouveau rapport</button>
   <button type="button" id="openSettings">⚙ Paramètres</button>
-</header>
+</div>
+<div class="msgs"><span id="err" role="alert"></span> <span id="status" role="status"></span></div>
+<p class="legend"><i></i> zones à compléter — <kbd>Tab</kbd> / <kbd>Maj+Tab</kbd> pour passer d'une zone à l'autre,
+  <kbd>Espace</kbd> pour cocher une case. Les parties 3 à 7 restent vides (service QSE).</p>
 
-<main>
-<form id="form" autocomplete="off">
-  <section class="card">
-    <h2>En-tête</h2>
-    <div class="choices" role="radiogroup" aria-label="Origine">
-      <label><input type="radio" name="origine" value="acierie" required> Aciérie</label>
-      <label><input type="radio" name="origine" value="laminoir"> Laminoir</label>
-      <label><input type="radio" name="origine" value="expedition"> Expédition</label>
-    </div>
-    <div class="grid" style="margin-top:12px">
-      <label>Équipe
-        <select name="equipe" required>
-          <option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option>
-        </select>
-      </label>
-      <label>Nom du rédacteur du présent rapport
-        <select name="redacteur" id="redacteur" required></select>
-      </label>
-      <label>Date
-        <input type="date" name="date" required>
-      </label>
-    </div>
-  </section>
-
-  <section class="card" id="sec11">
-    <h2>1.1. Billettes</h2>
-    <div class="grid">
-      <label>Long.
-        <input name="b_long" value="10.5 m">
-      </label>
-      <label>Qual.
-        <select name="b_qual">
-          <option value="">—</option><option>200S</option><option>200SG</option><option>240S</option><option>160S</option>
-        </select>
-      </label>
-      <label>N° de coulée <input name="b_coulee"></label>
-      <label>Nombre de billettes <input name="b_nombre" inputmode="numeric"></label>
-      <label>Poids <input name="b_poids"></label>
-      <label>Lieu de stockage <input name="b_lieu"></label>
-      <label>Date de fabrication <input type="date" name="b_datefab"></label>
-      <label>Le produit est-il identifié ?
-        <select name="b_identifie"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select>
-      </label>
-    </div>
-  </section>
-
-  <section class="card" id="sec12">
-    <h2>1.2. Ronds</h2>
-    <div class="grid">
-      <label>Diam. <input name="r_diam"></label>
-      <label>Long. <input name="r_long"></label>
-      <label>Qual. <input name="r_qual"></label>
-      <label>N° de coulée <input name="r_coulee"></label>
-      <label>N° du fardeau <input name="r_fardeau"></label>
-      <label>Quantité en cause <input name="r_quantite"></label>
-      <label>Nb fardeaux <input name="r_nbfardeaux" inputmode="numeric"></label>
-      <label>Lieu de stockage <input name="r_lieu"></label>
-      <label>Date de fabrication <input type="date" name="r_datefab"></label>
-      <label>Le produit est-il étiqueté en rose ?
-        <select name="r_rose"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select>
-      </label>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>2. Défaut constaté</h2>
-    <div class="grid" style="grid-template-columns:1fr">
-      <label>Défaut constaté <textarea name="defaut" required></textarea></label>
-      <label>1ère analyse par le chef de poste <textarea name="analyse"></textarea></label>
-    </div>
-    <div class="grid" style="margin-top:12px">
-      <label>Nom du chef de poste
-        <select name="chef" id="chef" required></select>
-      </label>
-      <div>
-        <span style="font-size:13px;color:var(--muted)">Visa chef de poste</span>
-        <div class="sigpreview" id="visaPreview" style="margin-top:4px"></div>
-        <p class="hint" id="visaHint"></p>
-      </div>
-    </div>
-  </section>
-
-  <p id="err" role="alert"></p>
-  <div class="actions">
-    <button type="button" class="primary" id="btnDownload">Enregistrer le PDF</button>
-    <button type="button" id="btnShare">✉ Partager</button>
-    <button type="button" id="btnPreview">Aperçu</button>
-    <button type="button" id="btnFolder">📂 Ouvrir le dossier d'enregistrement</button>
-    <button type="button" id="btnReset">Nouveau rapport</button>
-  </div>
-  <p class="hint" id="status" role="status"></p>
-  <p class="hint">Les parties 3 à 7 restent vides (service QSE).</p>
-</form>
-
-<dialog id="folderDialog">
-  <h2 style="margin-top:0">📂 <span id="folderTitle"></span></h2>
-  <div class="list-editor"><ul id="folderFiles"></ul></div>
-  <div class="actions" style="justify-content:flex-end">
-    <button type="button" id="closeFolder" class="primary">Fermer</button>
-  </div>
-</dialog>
-
-<iframe id="preview" title="Aperçu du PDF" hidden></iframe>
-</main>
+<div id="viewport"><div id="page">
+  <img class="bg" alt="Formulaire AQA.QUAL.03" src="data:image/png;base64,__BG_BASE64__">
+  <svg class="overlay" id="strikes" viewBox="0 0 595.2 841.68"></svg>
+</div></div>
 
 <dialog id="settings">
   <h2 style="margin-top:0">Paramètres</h2>
@@ -241,6 +175,21 @@
   </div>
 </dialog>
 
+<dialog id="folderDialog">
+  <h2 style="margin-top:0">📂 <span id="folderTitle"></span></h2>
+  <div class="list-editor"><ul id="folderFiles"></ul></div>
+  <div class="actions" style="justify-content:flex-end">
+    <button type="button" id="closeFolder" class="primary">Fermer</button>
+  </div>
+</dialog>
+
+<dialog id="previewDialog">
+  <iframe id="preview" title="Aperçu du PDF"></iframe>
+  <div class="actions" style="justify-content:flex-end;margin-top:8px">
+    <button type="button" id="closePreview" class="primary">Fermer</button>
+  </div>
+</dialog>
+
 <script id="pdf-template" type="text/plain">__PDF_BASE64__</script>
 <script>
 "use strict";
@@ -266,23 +215,258 @@ function saveSettings() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
 }
 let settings = loadSettings();
-
 const $ = (s) => document.querySelector(s);
-const form = $("#form");
 
-// ---------- Listes configurables ----------
-function fillSelect(sel, items) {
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">—</option>' +
-    items.map((n) => `<option>${escapeHtml(n)}</option>`).join("");
-  if (items.includes(cur)) sel.value = cur;
+// ---------- Description des zones du formulaire ----------
+// Coordonnées en points PDF, origine en haut à gauche ; y = ligne de base du texte.
+// L'ordre du tableau est l'ordre de la touche Tab.
+const PAGE_W = 595.2, PAGE_H = 841.68;
+const INK = [0.04, 0.16, 0.42];
+const FIELDS = [
+  { k: "origine", t: "radio", opts: [["acierie", 116.9, 68.6], ["laminoir", 116.9, 80.5], ["expedition", 116.9, 92.4]] },
+  { k: "equipe", t: "select", list: () => ["A", "B", "C", "D"], x: 300, y: 71, w: 70, s: 10, b: true },
+  { k: "date", t: "date", xs: [458, 477, 498.5], y: 71 },
+  { k: "redacteur", t: "select", list: () => settings.redacteurs, x: 426, y: 95, w: 94 },
+  // 1.1 Billettes
+  { k: "b_long", sec: "11", t: "text", x: 111, y: 148, w: 82, def: "10.5 m" },
+  { k: "b_qual", sec: "11", t: "select", list: () => ["200S", "200SG", "240S", "160S"], x: 224, y: 148, w: 60 },
+  { k: "b_coulee", sec: "11", t: "text", x: 146, y: 168, w: 130 },
+  { k: "b_nombre", sec: "11", t: "text", x: 160, y: 198.5, w: 52 },
+  { k: "b_poids", sec: "11", t: "text", x: 240, y: 198.5, w: 44 },
+  { k: "b_lieu", sec: "11", t: "text", x: 160, y: 215, w: 124 },
+  { k: "b_datefab", sec: "11", t: "date", xs: [166, 197, 226], y: 231 },
+  { k: "b_identifie", sec: "11", t: "radio", opts: [["oui", 184.8, 244.4], ["non", 224.2, 244.4]] },
+  // 1.2 Ronds
+  { k: "r_diam", sec: "12", t: "text", x: 323, y: 148, w: 35 },
+  { k: "r_long", sec: "12", t: "text", x: 388, y: 148, w: 50 },
+  { k: "r_qual", sec: "12", t: "text", x: 469, y: 148, w: 50 },
+  { k: "r_coulee", sec: "12", t: "text", x: 381, y: 168, w: 95 },
+  { k: "r_fardeau", sec: "12", t: "text", x: 381, y: 182.5, w: 95 },
+  { k: "r_quantite", sec: "12", t: "text", x: 398, y: 198.5, w: 42 },
+  { k: "r_nbfardeaux", sec: "12", t: "text", x: 496, y: 198.5, w: 24 },
+  { k: "r_lieu", sec: "12", t: "text", x: 398, y: 215, w: 108 },
+  { k: "r_datefab", sec: "12", t: "date", xs: [384, 414, 441], y: 231 },
+  { k: "r_rose", sec: "12", t: "radio", opts: [["oui", 432.2, 244.4], ["non", 466.0, 244.4]] },
+  // 2. Défaut constaté
+  { k: "defaut", t: "para", lines: [{ x: 236, y: 272, w: 270 }, { x: 94, y: 283.5, w: 412 }] },
+  { k: "analyse", t: "para", lines: [{ x: 284, y: 295.5, w: 222 }, { x: 94, y: 307, w: 412 }, { x: 94, y: 318, w: 412 }] },
+  { k: "chef", t: "select", list: () => settings.chefs, x: 178, y: 329, w: 105, b: true },
+];
+const DATE_W = [14, 14, 22];
+const SIG_BOX = { x: 362, top: 320, w: 140, h: 22 }; // à droite de « Visa chef de poste : »
+const STRIKE = { "11": [73, 118, 289, 253], "12": [292, 118, 521, 253] };
+
+// ---------- Mise en page commune écran / PDF ----------
+// Les largeurs de texte viennent des métriques Helvetica de pdf-lib : l'écran et le PDF
+// coupent et réduisent le texte exactement de la même façon.
+let FONT = null, BOLD = null;
+async function initMetrics() {
+  const { PDFDocument, StandardFonts } = PDFLib;
+  const d = await PDFDocument.create();
+  FONT = await d.embedFont(StandardFonts.Helvetica);
+  BOLD = await d.embedFont(StandardFonts.HelveticaBold);
+}
+// Remplace les caractères absents de l'encodage WinAnsi des polices standard
+function safe(s) {
+  return (s || "").replace(/[’‘]/g, "'").replace(/[“”«»]/g, '"').replace(/[–—]/g, "-")
+    .replace(/ /g, " ").replace(/[^\x20-\x7e -ÿŒœ€]/g, "?");
+}
+function fitSize(str, maxW, size = 9, bold = false) {
+  const f = bold ? BOLD : FONT;
+  str = safe(str).trim();
+  while (size > 5 && f.widthOfTextAtSize(str, size) > maxW) size -= 0.25;
+  return size;
+}
+function wrap(str, lines, size, force) {
+  const out = lines.map(() => "");
+  let li = 0;
+  for (const w of str.split(" ")) {
+    const cand = out[li] ? out[li] + " " + w : w;
+    if (FONT.widthOfTextAtSize(cand, size) <= lines[li].w) { out[li] = cand; continue; }
+    if (li + 1 >= lines.length) { if (!force) return null; out[li] = cand; continue; }
+    li++; out[li] = w;
+  }
+  return out;
+}
+function layoutPara(str, lines) {
+  str = safe(str).replace(/\s+/g, " ").trim();
+  if (!str) return { size: 9, out: lines.map(() => "") };
+  for (let size = 9; size >= 5; size -= 0.25) {
+    const out = wrap(str, lines, size, false);
+    if (out) return { size, out };
+  }
+  return { size: 5, out: wrap(str, lines, 5, true) };
+}
+// Position d'une ligne de texte HTML pour que sa ligne de base tombe sur y
+function placeText(el, x, y, w, size) {
+  Object.assign(el.style, {
+    left: x + "px", top: (y - 0.946 * size) + "px", width: w + "px",
+    height: (1.2 * size) + "px", fontSize: size + "px", lineHeight: (1.2 * size) + "px",
+  });
+}
+const svgNS = "http://www.w3.org/2000/svg";
+function crossSvg() {
+  const s = document.createElementNS(svgNS, "svg");
+  s.setAttribute("viewBox", "0 0 9 9");
+  s.innerHTML = '<path d="M1.3 1.3 L7.7 7.7 M1.3 7.7 L7.7 1.3" stroke="rgb(10,41,107)" stroke-width="1.3"/>';
+  return s;
+}
+
+// ---------- Construction de la page éditable ----------
+const page = $("#page");
+const ui = {}; // k -> { get(), set(v), els[] }
+
+function buildPage() {
+  for (const f of FIELDS) {
+    if (f.t === "text" || f.t === "select") {
+      const el = document.createElement(f.t === "text" ? "input" : "select");
+      el.className = "f" + (f.b ? " bold" : "");
+      el.name = f.k; el.autocomplete = "off";
+      el.setAttribute("aria-label", f.k);
+      const refit = () => placeText(el, f.x, f.y, f.w, fitSize(el.value, f.w, f.s || 9, f.b));
+      el.addEventListener("input", refit);
+      el.addEventListener("change", refit);
+      page.appendChild(el);
+      ui[f.k] = { els: [el], get: () => el.value, set: (v) => { el.value = v || ""; refit(); }, refit };
+      if (f.t === "select") fillOptions(f);
+      refit();
+    } else if (f.t === "date") {
+      const ph = ["jj", "mm", "aaaa"];
+      const els = f.xs.map((x, i) => {
+        const el = document.createElement("input");
+        el.className = "f"; el.name = f.k + "_" + ph[i]; el.inputMode = "numeric";
+        el.maxLength = i === 2 ? 4 : 2; el.placeholder = ph[i]; el.autocomplete = "off";
+        el.setAttribute("aria-label", f.k + " " + ph[i]);
+        placeText(el, x - 1, f.y, DATE_W[i], 9);
+        el.addEventListener("focus", () => el.select()); // la frappe remplace la valeur
+        el.addEventListener("input", () => {
+          el.value = el.value.replace(/\D/g, "");
+          if (el.value.length === el.maxLength) focusNext(el);
+        });
+        page.appendChild(el);
+        return el;
+      });
+      ui[f.k] = {
+        els,
+        get: () => {
+          const [d, m, y] = els.map((e) => e.value);
+          if (!d || !m || !y) return "";
+          const yy = y.length === 2 ? "20" + y : y;
+          return `${yy}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+        },
+        set: (iso) => {
+          const [y, m, d] = (iso || "--").split("-");
+          els[0].value = d || ""; els[1].value = m || ""; els[2].value = y || "";
+        },
+      };
+    } else if (f.t === "radio") {
+      let value = "";
+      const els = f.opts.map(([val, cx, cy]) => {
+        const el = document.createElement("button");
+        el.type = "button"; el.className = "box";
+        el.style.left = (cx - 4.5) + "px"; el.style.top = (cy - 4.5) + "px";
+        el.setAttribute("aria-pressed", "false");
+        el.setAttribute("aria-label", f.k + " " + val);
+        el.appendChild(crossSvg());
+        el.addEventListener("click", () => { set(value === val ? "" : val); onChange(f.k); });
+        page.appendChild(el);
+        return el;
+      });
+      const set = (v) => {
+        value = v || "";
+        f.opts.forEach(([val], i) => els[i].setAttribute("aria-pressed", String(val === value)));
+      };
+      ui[f.k] = { els, get: () => value, set };
+    } else if (f.t === "para") {
+      const xs = f.lines.map((l) => l.x), ys = f.lines.map((l) => l.y);
+      const hit = document.createElement("div");
+      hit.className = "para-hit";
+      Object.assign(hit.style, {
+        left: Math.min(...xs) + "px", top: (Math.min(...ys) - 9) + "px",
+        width: (Math.max(...f.lines.map((l) => l.x + l.w)) - Math.min(...xs)) + "px",
+        height: (Math.max(...ys) - Math.min(...ys) + 11) + "px",
+        clipPath: paraClip(f.lines),
+      });
+      const lineEls = f.lines.map(() => {
+        const s = document.createElement("div");
+        s.className = "para-line";
+        page.appendChild(s);
+        return s;
+      });
+      const ta = document.createElement("textarea");
+      ta.className = "para-editor"; ta.name = f.k;
+      ta.setAttribute("aria-label", f.k);
+      ta.placeholder = f.k === "defaut" ? "Défaut constaté…" : "1ère analyse par le chef de poste…";
+      hit.addEventListener("mousedown", (e) => { e.preventDefault(); ta.focus(); });
+      ta.addEventListener("focus", () => hit.classList.add("active"));
+      ta.addEventListener("blur", () => hit.classList.remove("active"));
+      const render = () => {
+        const { size, out } = layoutPara(ta.value, f.lines);
+        f.lines.forEach((l, i) => { placeText(lineEls[i], l.x, l.y, l.w, size); lineEls[i].textContent = out[i]; });
+      };
+      ta.addEventListener("input", render);
+      page.insertBefore(hit, lineEls[0]);
+      page.appendChild(ta);
+      ui[f.k] = { els: [ta], get: () => ta.value, set: (v) => { ta.value = v || ""; render(); } };
+      render();
+    }
+  }
+  // Visa chef de poste (calculé, non saisi)
+  const sig = document.createElement("div");
+  sig.className = "sig"; sig.id = "sig";
+  page.appendChild(sig);
+  page.addEventListener("change", (e) => onChange(e.target.name));
+  page.addEventListener("input", (e) => onChange(e.target.name));
+}
+// Zone cliquable d'un paragraphe : uniquement les lignes pointillées
+function paraClip(lines) {
+  const x0 = Math.min(...lines.map((l) => l.x)), y0 = Math.min(...lines.map((l) => l.y)) - 9;
+  const rects = lines.map((l) => `M${l.x - x0} ${l.y - 9 - y0} h${l.w} v11 h${-l.w} Z`).join(" ");
+  return `path('${rects}')`;
+}
+function fillOptions(f) {
+  const el = ui[f.k].els[0];
+  const cur = el.value;
+  el.innerHTML = '<option value=""></option>' + f.list().map((n) => `<option>${escapeHtml(n)}</option>`).join("");
+  el.value = f.list().includes(cur) ? cur : "";
+  ui[f.k].refit();
 }
 function escapeHtml(s) {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
+function focusables() {
+  return [...page.querySelectorAll("input, select, textarea, button")].filter((e) => !e.disabled);
+}
+function focusNext(el) {
+  const list = focusables();
+  const i = list.indexOf(el);
+  if (i >= 0 && list[i + 1]) list[i + 1].focus();
+}
+
+// Partie barrée : 1.2 si Aciérie, 1.1 si Laminoir ou Expédition
+function barredSection() {
+  const o = ui.origine.get();
+  return o === "acierie" ? "12" : (o === "laminoir" || o === "expedition") ? "11" : null;
+}
+function onChange(name) {
+  if (name === "origine") updateSections();
+  if (name === "chef") updateSig();
+  $("#err").textContent = "";
+}
+function updateSections() {
+  const barred = barredSection();
+  for (const f of FIELDS) if (f.sec) ui[f.k].els.forEach((e) => { e.disabled = f.sec === barred; });
+  const svg = $("#strikes");
+  svg.innerHTML = "";
+  if (barred) {
+    const [x0, y0, x1, y1] = STRIKE[barred];
+    svg.innerHTML = `<path d="M${x0} ${y0} L${x1} ${y1} M${x0} ${y1} L${x1} ${y0}" stroke="#000" stroke-width="1.5"/>`;
+  }
+}
+
+// ---------- Listes configurables ----------
 function renderLists() {
-  fillSelect($("#redacteur"), settings.redacteurs);
-  fillSelect($("#chef"), settings.chefs);
+  for (const f of FIELDS) if (f.k === "redacteur" || f.k === "chef") fillOptions(f);
   for (const [key, ul] of [["redacteurs", $("#listRedacteurs")], ["chefs", $("#listChefs")]]) {
     ul.innerHTML = "";
     settings[key].forEach((name, i) => {
@@ -295,7 +479,7 @@ function renderLists() {
       ul.appendChild(li);
     });
   }
-  updateVisa();
+  updateSig();
 }
 document.querySelectorAll("[data-add]").forEach((btn) => {
   btn.onclick = () => {
@@ -374,19 +558,40 @@ function htmlSignature(withPO) {
 function renderSignaturePreviews() {
   $("#sigPreview").innerHTML = htmlSignature(false);
   $("#sigPreviewPO").innerHTML = htmlSignature(true);
-  updateVisa();
+  updateSig();
 }
 function isOwner(chef) {
   return chef.trim().toUpperCase() === settings.ownerName.trim().toUpperCase();
 }
-function updateVisa() {
-  const chef = form.chef.value;
-  if (!chef) { $("#visaPreview").innerHTML = ""; $("#visaHint").textContent = "Choisissez un chef de poste."; return; }
-  const po = !isOwner(chef);
-  $("#visaPreview").innerHTML = htmlSignature(po);
-  $("#visaHint").textContent = po ? "Signature « PO » (chef de poste ≠ " + settings.ownerName + ")" : "Signature personnelle";
+// Placement de la signature, partagé entre l'écran et le PDF
+function sigLayout(imgW, imgH, po) {
+  let sx = SIG_BOX.x, top = SIG_BOX.top;
+  if (po) { sx += 9; top += 3; }
+  const scale = Math.min((SIG_BOX.w - (sx - SIG_BOX.x)) / imgW, (SIG_BOX.top + SIG_BOX.h - top) / imgH);
+  return { x: sx, top, w: imgW * scale, h: imgH * scale };
 }
-$("#ownerName").oninput = (e) => { settings.ownerName = e.target.value; saveSettings(); updateVisa(); };
+function updateSig() {
+  const box = $("#sig");
+  if (!box) return;
+  box.innerHTML = "";
+  const chef = ui.chef ? ui.chef.get() : "";
+  if (!chef || !settings.signature) return;
+  const po = !isOwner(chef);
+  const img = new Image();
+  img.onload = () => {
+    const l = sigLayout(img.naturalWidth, img.naturalHeight, po);
+    Object.assign(img.style, { left: l.x + "px", top: l.top + "px", width: l.w + "px", height: l.h + "px" });
+    if (po) {
+      const t = document.createElement("span");
+      t.textContent = "PO";
+      Object.assign(t.style, { left: SIG_BOX.x + "px", top: (SIG_BOX.top + 6.5 - 8 * 0.946) + "px", lineHeight: "9.6px" });
+      box.appendChild(t);
+    }
+    box.appendChild(img);
+  };
+  img.src = settings.signature;
+}
+$("#ownerName").oninput = (e) => { settings.ownerName = e.target.value; saveSettings(); updateSig(); };
 
 // ---------- Dialogue paramètres ----------
 $("#openSettings").onclick = () => {
@@ -480,159 +685,73 @@ $("#btnFolder").onclick = async () => {
 };
 $("#closeFolder").onclick = () => $("#folderDialog").close();
 
-// ---------- Barrer 1.1 / 1.2 dans le formulaire ----------
-function updateSections() {
-  const o = form.origine.value;
-  $("#sec11").classList.toggle("barre", o === "laminoir" || o === "expedition");
-  $("#sec12").classList.toggle("barre", o === "acierie");
-}
-form.addEventListener("change", (e) => {
-  if (e.target.name === "origine") updateSections();
-  if (e.target.name === "chef") updateVisa();
-});
-
 // ---------- Génération du PDF ----------
-// Coordonnées en points, origine en haut à gauche (converties pour pdf-lib).
-const PAGE_H = 841.68;
-const INK = [0.04, 0.16, 0.42];
-
 function frDate(iso) {
   if (!iso) return null;
   const [y, m, d] = iso.split("-");
   return { d, m, y };
 }
-// Remplace les caractères absents de l'encodage WinAnsi des polices standard
-function safe(s) {
-  return (s || "").replace(/[’‘]/g, "'").replace(/[“”«»]/g, '"').replace(/[–—]/g, "-")
-    .replace(/ /g, " ").replace(/[^\x20-\x7e -ÿŒœ€]/g, "?");
-}
-
 async function buildPdf(v) {
   const { PDFDocument, StandardFonts, rgb } = PDFLib;
   const b64 = document.getElementById("pdf-template").textContent.trim();
   const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
   const doc = await PDFDocument.load(bytes);
-  const page = doc.getPage(0);
+  const pg = doc.getPage(0);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const ink = rgb(...INK);
 
-  // Texte sur une ligne, réduit si trop long pour la zone
-  function text(str, x, baseline, maxW, size = 9, f = font) {
+  function text(str, x, baseline, maxW, size = 9, isBold = false) {
     str = safe(str).trim();
     if (!str) return;
-    while (size > 5 && f.widthOfTextAtSize(str, size) > maxW) size -= 0.25;
-    page.drawText(str, { x, y: PAGE_H - baseline, size, font: f, color: ink });
-  }
-  // Texte réparti sur plusieurs lignes pointillées
-  function paragraph(str, lines, size = 9) {
-    str = safe(str).replace(/\s+/g, " ").trim();
-    if (!str) return;
-    for (; size >= 5; size -= 0.25) {
-      const out = wrap(str, lines, size);
-      if (out) { out.forEach((t, i) => t && text(t, lines[i].x, lines[i].y, lines[i].w, size)); return; }
-    }
-    const out = wrap(str, lines, 5, true);
-    out.forEach((t, i) => t && text(t, lines[i].x, lines[i].y, lines[i].w, 5));
-  }
-  function wrap(str, lines, size, force = false) {
-    const words = str.split(" ");
-    const out = lines.map(() => "");
-    let li = 0;
-    for (const w of words) {
-      const cand = out[li] ? out[li] + " " + w : w;
-      if (font.widthOfTextAtSize(cand, size) <= lines[li].w) { out[li] = cand; continue; }
-      if (li + 1 >= lines.length) { if (!force) return null; out[li] = cand; continue; }
-      li++; out[li] = w;
-    }
-    return out;
+    size = fitSize(str, maxW, size, isBold);
+    pg.drawText(str, { x, y: PAGE_H - baseline, size, font: isBold ? bold : font, color: ink });
   }
   function cross(cx, cy, s = 3.2) {
     const o = { thickness: 1.3, color: ink };
-    page.drawLine({ start: { x: cx - s, y: PAGE_H - cy - s }, end: { x: cx + s, y: PAGE_H - cy + s }, ...o });
-    page.drawLine({ start: { x: cx - s, y: PAGE_H - cy + s }, end: { x: cx + s, y: PAGE_H - cy - s }, ...o });
+    pg.drawLine({ start: { x: cx - s, y: PAGE_H - cy - s }, end: { x: cx + s, y: PAGE_H - cy + s }, ...o });
+    pg.drawLine({ start: { x: cx - s, y: PAGE_H - cy + s }, end: { x: cx + s, y: PAGE_H - cy - s }, ...o });
   }
-  function strike(x0, y0, x1, y1) {
+
+  const barred = barredSection();
+  for (const f of FIELDS) {
+    if (f.sec && f.sec === barred) continue;
+    const val = v[f.k];
+    if (f.t === "text" || f.t === "select") text(val, f.x, f.y, f.w, f.s || 9, f.b);
+    else if (f.t === "date") {
+      const d = frDate(val);
+      if (d) [d.d, d.m, d.y].forEach((p, i) => text(p, f.xs[i], f.y, DATE_W[i]));
+    } else if (f.t === "radio") {
+      const opt = f.opts.find(([o]) => o === val);
+      if (opt) cross(opt[1], opt[2]);
+    } else if (f.t === "para") {
+      const { size, out } = layoutPara(val, f.lines);
+      out.forEach((t, i) => t && text(t, f.lines[i].x, f.lines[i].y, f.lines[i].w, size));
+    }
+  }
+  if (barred) {
+    const [x0, y0, x1, y1] = STRIKE[barred];
     const o = { thickness: 1.5, color: rgb(0, 0, 0) };
-    page.drawLine({ start: { x: x0, y: PAGE_H - y0 }, end: { x: x1, y: PAGE_H - y1 }, ...o });
-    page.drawLine({ start: { x: x0, y: PAGE_H - y1 }, end: { x: x1, y: PAGE_H - y0 }, ...o });
+    pg.drawLine({ start: { x: x0, y: PAGE_H - y0 }, end: { x: x1, y: PAGE_H - y1 }, ...o });
+    pg.drawLine({ start: { x: x0, y: PAGE_H - y1 }, end: { x: x1, y: PAGE_H - y0 }, ...o });
   }
-  function date(iso, xd, xm, xy, baseline) {
-    const d = frDate(iso);
-    if (!d) return;
-    text(d.d, xd, baseline, 14);
-    text(d.m, xm, baseline, 14);
-    text(d.y, xy, baseline, 22);
-  }
-
-  // En-tête
-  const boxes = { acierie: 68.6, laminoir: 80.5, expedition: 92.4 };
-  cross(116.9, boxes[v.origine]);
-  text(v.equipe, 300, 71, 70, 10, bold);
-  date(v.date, 458, 477, 498.5, 71);
-  text(v.redacteur, 426, 95, 94);
-
-  // 1.1 Billettes / 1.2 Ronds — on barre la partie non concernée
-  const billettes = v.origine === "acierie";
-  if (billettes) {
-    text(v.b_long, 111, 148, 82);
-    text(v.b_qual, 224, 148, 60);
-    text(v.b_coulee, 146, 168, 130);
-    text(v.b_nombre, 160, 198.5, 52);
-    text(v.b_poids, 240, 198.5, 44);
-    text(v.b_lieu, 160, 215, 124);
-    date(v.b_datefab, 166, 197, 226, 231);
-    if (v.b_identifie === "oui") cross(184.8, 244.4);
-    if (v.b_identifie === "non") cross(224.2, 244.4);
-    strike(292, 118, 521, 253);
-  } else {
-    text(v.r_diam, 323, 148, 35);
-    text(v.r_long, 388, 148, 50);
-    text(v.r_qual, 469, 148, 50);
-    text(v.r_coulee, 381, 168, 95);
-    text(v.r_fardeau, 381, 182.5, 95);
-    text(v.r_quantite, 398, 198.5, 42);
-    text(v.r_nbfardeaux, 496, 198.5, 24);
-    text(v.r_lieu, 398, 215, 108);
-    date(v.r_datefab, 384, 414, 441, 231);
-    if (v.r_rose === "oui") cross(432.2, 244.4);
-    if (v.r_rose === "non") cross(466.0, 244.4);
-    strike(73, 118, 289, 253);
-  }
-
-  // 2. Défaut constaté
-  paragraph(v.defaut, [
-    { x: 236, y: 272, w: 270 },
-    { x: 94, y: 283.5, w: 412 },
-  ]);
-  paragraph(v.analyse, [
-    { x: 284, y: 295.5, w: 222 },
-    { x: 94, y: 307, w: 412 },
-    { x: 94, y: 318, w: 412 },
-  ]);
-  text(v.chef, 178, 329, 105, 9, bold);
 
   // Visa chef de poste
-  if (settings.signature) {
+  if (settings.signature && v.chef) {
     const png = await doc.embedPng(settings.signature);
     const po = !isOwner(v.chef);
-    const box = { x: 362, top: 320, w: 140, h: 22 }; // zone disponible à droite de « Visa chef de poste : »
-    let sx = box.x, top = box.top;
-    if (po) {
-      page.drawText("PO", { x: box.x, y: PAGE_H - (box.top + 6.5), size: 8, font: bold, color: ink });
-      sx += 9; top += 3;
-    }
-    const scale = Math.min((box.w - (sx - box.x)) / png.width, (box.top + box.h - top) / png.height);
-    page.drawImage(png, { x: sx, y: PAGE_H - top - png.height * scale, width: png.width * scale, height: png.height * scale });
+    if (po) pg.drawText("PO", { x: SIG_BOX.x, y: PAGE_H - (SIG_BOX.top + 6.5), size: 8, font: bold, color: ink });
+    const l = sigLayout(png.width, png.height, po);
+    pg.drawImage(png, { x: l.x, y: PAGE_H - l.top - l.h, width: l.w, height: l.h });
   }
 
   doc.setTitle("Rapport de non-conformite AQA.QUAL.03");
   return doc.save();
 }
 
-function readForm() {
-  const v = Object.fromEntries(new FormData(form).entries());
-  v.origine = form.origine.value;
+function readValues() {
+  const v = {};
+  for (const f of FIELDS) v[f.k] = ui[f.k].get();
   return v;
 }
 function validate(v) {
@@ -655,7 +774,7 @@ function fileName(v) {
   return name.replace(/[\\/:*?"<>|]+/g, "-") + ".pdf";
 }
 async function generate() {
-  const v = readForm();
+  const v = readValues();
   const miss = validate(v);
   $("#err").textContent = miss.length ? "À compléter : " + miss.join(", ") : "";
   if (miss.length) return null;
@@ -689,6 +808,13 @@ $("#btnDownload").onclick = async () => {
   const r = await generate();
   if (r) await save(r);
 };
+$("#btnPreview").onclick = async () => {
+  const r = await generate();
+  if (!r) return;
+  $("#preview").src = r.url;
+  $("#previewDialog").showModal();
+};
+$("#closePreview").onclick = () => $("#previewDialog").close();
 
 // ---------- Partage par mail ----------
 function mailSubject(v) {
@@ -744,26 +870,37 @@ $("#btnShare").onclick = async () => {
   download(url, subject.replace(/\//g, "-") + ".eml");
   $("#status").textContent = "Brouillon de mail téléchargé : ouvrez-le pour l'envoyer depuis Outlook.";
 };
-$("#btnPreview").onclick = async () => {
-  const r = await generate();
-  if (!r) return;
-  const f = $("#preview");
-  f.src = r.url; f.hidden = false; f.scrollIntoView({ behavior: "smooth" });
-};
-$("#btnReset").onclick = () => {
-  form.reset(); form.b_long.value = "10.5 m"; setToday();
-  $("#preview").hidden = true; $("#err").textContent = ""; $("#status").textContent = ""; updateSections(); updateVisa();
-};
-function setToday() {
-  const d = new Date();
-  form.date.value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
-}
 
-setToday();
-loadFolder();
-renderLists();
-renderSignaturePreviews();
-updateSections();
+// ---------- Nouveau rapport / mise à l'échelle ----------
+function today() {
+  const d = new Date();
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+}
+function resetForm() {
+  for (const f of FIELDS) ui[f.k].set(f.def || "");
+  ui.date.set(today());
+  $("#err").textContent = ""; $("#status").textContent = "";
+  updateSections(); updateSig();
+}
+$("#btnReset").onclick = () => { resetForm(); ui.origine.els[0].focus(); };
+function fit() {
+  const w = Math.min(document.documentElement.clientWidth - 16, 1000);
+  const k = w / PAGE_W;
+  $("#page").style.transform = `scale(${k})`;
+  Object.assign($("#viewport").style, { width: w + "px", height: PAGE_H * k + "px" });
+}
+window.addEventListener("resize", fit);
+
+(async () => {
+  fit();
+  await initMetrics();
+  buildPage();
+  resetForm();
+  loadFolder();
+  renderLists();
+  renderSignaturePreviews();
+  ui.origine.els[0].focus();
+})();
 </script>
 </body>
 </html>
