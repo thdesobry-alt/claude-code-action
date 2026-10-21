@@ -1078,6 +1078,38 @@
     max-width: 220px;
     font-size: 12px;
   }
+  .att {
+    margin: 4px 0;
+    font-size: 12px;
+  }
+  .att-link {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: var(--accent-soft);
+    color: var(--fg);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .att-link:hover {
+    text-decoration: underline;
+  }
+  .att-drop {
+    margin: 4px 0;
+    padding: 4px 10px;
+    border: 1px dashed var(--line);
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-block;
+  }
+  .att-drop:hover,
+  .att-drop.over {
+    border-color: var(--bar);
+    color: var(--bar);
+    background: var(--surface-2);
+  }
   .gclose {
     margin-left: 6px;
     padding: 1px 8px;
@@ -1932,13 +1964,16 @@
     }
 
     // ---------- Storage adapter ----------
+    var attQuotaWarned = false;
     function saveLocal() {
+      var base = { days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones };
       try {
-        localStorage.setItem(
-          LOCAL_KEY,
-          JSON.stringify({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones }),
-        );
-      } catch (e) {}
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(Object.assign({ attach: attach }, base)));
+      } catch (e) {
+        // stockage du navigateur plein (PDF) : on garde au moins les données
+        try { localStorage.setItem(LOCAL_KEY, JSON.stringify(base)); } catch (e2) {}
+        if (!fileHandle && !attQuotaWarned) { attQuotaWarned = true; toast("Stockage du navigateur plein : les PDF ne seront conservés qu'avec la base commune (fichier JSON)."); }
+      }
       if (fileHandle) scheduleFileSave();
     }
 
@@ -1975,16 +2010,16 @@
       return clone(o); // conflit sur une même valeur : la modification de ce poste l'emporte
     }
     function snapshot() {
-      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
+      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, attach: attach, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
     }
     function applyState(s) {
-      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {}; zones = s.zones || {};
+      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {}; zones = s.zones || {}; attach = s.attach || {};
       if (s.codes && (s.codes.fer || s.codes.macc)) { codes = { fer: s.codes.fer || DEFAULT_CODES.fer, macc: s.codes.macc || DEFAULT_CODES.macc }; codesCustom = true; }
       else { codes = DEFAULT_CODES; codesCustom = false; }
     }
     // fichier exporté (version 2, liste « arrets ») -> structure de la base
     function fromExport(data) {
-      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, codes: null }, groups = {}, order = [];
+      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, attach: {}, codes: null }, groups = {}, order = [];
       if (data.zones && typeof data.zones === "object") Object.keys(data.zones).forEach(function (c) { st.zones[c] = String(data.zones[c] || ""); });
       (data.securite || []).forEach(function (x, i) {
         var k = pdKeyFromFr(x.jour);
@@ -2028,15 +2063,15 @@
     async function readFileState() {
       var f = await fileHandle.getFile(), text = await f.text();
       fileLastMod = f.lastModified;
-      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, codes: null };
+      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, attach: {}, codes: null };
       var d = JSON.parse(text);
-      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, zones: d.zones || {}, codes: d.codes || null };
+      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, zones: d.zones || {}, attach: d.attach || {}, codes: d.codes || null };
       if (d && Array.isArray(d.arrets)) return fromExport(d);
       throw new Error("format");
     }
     async function writeFileState(s) {
       var w = await fileHandle.createWritable();
-      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, zones: s.zones || {}, codes: s.codes }));
+      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, zones: s.zones || {}, attach: s.attach || {}, codes: s.codes }));
       await w.close();
       fileLastMod = (await fileHandle.getFile()).lastModified;
     }
@@ -2191,6 +2226,7 @@
           production = d.production || {};
           safety = d.safety || {};
           zones = d.zones || {};
+          attach = d.attach || {};
         }
       } catch (e) {}
     }
@@ -2385,9 +2421,114 @@
       return t;
     }
     // écrit une partie de items[stopId] (actions ou REX) ; update fusionne les objets imbriqués
+    // ---------- Autorisation de travail (PDF) par arrêt ----------
+    // attach/{jour} = {items: {idArrêt: {name, asset (base en ligne) | data (fichier JSON), by, at, removed}}}
+    var attach = {}, assetsNs;
+    function attachOf(s) {
+      var a = attach[s.day] && attach[s.day].items && attach[s.day].items[s.id];
+      return a && !a.removed && (a.asset || a.data) ? a : null;
+    }
+    function attHTML(s) {
+      var a = attachOf(s), can = canClose();
+      if (a) return '<div class="att"><a href="#" class="att-link" data-att-open="' + esc(s.id) + '" title="' + esc(a.name || "PDF") + '">📄 Autorisation de travail</a>' +
+        (can ? ' <button class="btn sm" data-att-del="' + esc(s.id) + '">Retirer</button>' : "") + "</div>";
+      return can ? '<div class="att-drop" data-att-sid="' + esc(s.id) + '" tabindex="0" role="button">Glisser ici le PDF de l\'autorisation de travail (ou cliquer)</div>' : "";
+    }
+    async function getAssets() {
+      if (assetsNs === undefined) {
+        try { assetsNs = window.claude && window.claude.use ? await window.claude.use("assets") : null; } catch (e) { assetsNs = null; }
+      }
+      return assetsNs;
+    }
+    function readDataURL(file) {
+      return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = rej; r.readAsDataURL(file); });
+    }
+    async function attachPdf(sid, file) {
+      var s = stops.find(function (x) { return x.id === sid; });
+      if (!s || !canClose() || !file) return;
+      if (!(file.type === "application/pdf" || /\.pdf$/i.test(file.name))) { toast("Seuls les fichiers PDF sont acceptés."); return; }
+      var part = { name: file.name, by: myId, at: Date.now(), removed: false };
+      try {
+        if (mode === "db") {
+          if (file.size > 20 * 1024 * 1024) { toast("PDF trop volumineux (20 Mo maximum)."); return; }
+          var as = await getAssets();
+          if (!as) { toast("Dépôt impossible : votre accès à l'application ne permet pas d'enregistrer des fichiers."); return; }
+          toast("Envoi du PDF…");
+          var up = await as.upload(file, { type: "application/pdf" });
+          part.asset = up.id; part.data = null;
+        } else {
+          if (file.size > 8 * 1024 * 1024) { toast("PDF trop volumineux (8 Mo maximum avec le fichier JSON)."); return; }
+          part.data = await readDataURL(file); part.asset = null;
+        }
+        await writeItem(s.day, s.id, part, "attach");
+        if (mode === "local") refresh();
+        toast("Autorisation de travail déposée");
+      } catch (e) {
+        toast(e && e.code === "too_large" ? "PDF trop volumineux." : e && e.code === "quota_exceeded" ? "Espace de stockage plein." : "Dépôt impossible" + (e && e.message ? " : " + e.message : "."));
+      }
+    }
+    async function detachPdf(sid) {
+      var s = stops.find(function (x) { return x.id === sid; }), a = s && attachOf(s);
+      if (!a || !canClose()) return;
+      await writeItem(s.day, s.id, { removed: true, asset: null, data: null, by: myId, at: Date.now() }, "attach");
+      if (a.asset) { var as = await getAssets(); if (as) as.delete(a.asset).catch(function () {}); }
+      if (mode === "local") refresh();
+      toast("Autorisation de travail retirée");
+    }
+    function openPdf(sid) {
+      var s = stops.find(function (x) { return x.id === sid; }), a = s && attachOf(s);
+      if (!a) return;
+      if (a.asset) { window.open("/_blob/" + a.asset, "_blank", "noopener"); return; }
+      try {
+        var parts = a.data.split(","), bin = atob(parts[1]), buf = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        var url = URL.createObjectURL(new Blob([buf], { type: "application/pdf" }));
+        var w = window.open(url, "_blank");
+        if (!w) { var l = document.createElement("a"); l.href = url; l.download = a.name || "autorisation.pdf"; document.body.appendChild(l); l.click(); l.remove(); }
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      } catch (e) { toast("Ouverture du PDF impossible."); }
+    }
+    var attPicker = document.createElement("input");
+    attPicker.type = "file"; attPicker.accept = "application/pdf,.pdf"; attPicker.hidden = true;
+    document.body.appendChild(attPicker);
+    attPicker.addEventListener("change", function () {
+      var f = this.files && this.files[0], sid = this.dataset.sid;
+      this.value = "";
+      if (f) attachPdf(sid, f);
+    });
+    document.addEventListener("click", function (e) {
+      var o = e.target.closest("[data-att-open]");
+      if (o) { e.preventDefault(); openPdf(o.dataset.attOpen); return; }
+      var d = e.target.closest("[data-att-del]");
+      if (d) { detachPdf(d.dataset.attDel); return; }
+      var z = e.target.closest("[data-att-sid]");
+      if (z) { attPicker.dataset.sid = z.dataset.attSid; attPicker.click(); }
+    });
+    document.addEventListener("keydown", function (e) {
+      var z = e.target.closest && e.target.closest("[data-att-sid]");
+      if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); attPicker.dataset.sid = z.dataset.attSid; attPicker.click(); }
+    });
+    document.addEventListener("dragover", function (e) {
+      var z = e.target.closest && e.target.closest("[data-att-sid]");
+      if (!z) return;
+      e.preventDefault();
+      z.classList.add("over");
+    });
+    document.addEventListener("dragleave", function (e) {
+      var z = e.target.closest && e.target.closest("[data-att-sid]");
+      if (z) z.classList.remove("over");
+    });
+    document.addEventListener("drop", function (e) {
+      var z = e.target.closest && e.target.closest("[data-att-sid]");
+      if (!z) return;
+      e.preventDefault();
+      z.classList.remove("over");
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) attachPdf(z.dataset.attSid, f);
+    });
     function writeItem(day, stopId, part, coll) {
       coll = coll || "actions";
-      var store = coll === "closures" ? closes : coll === "plan" ? plan : coll === "safety" ? safety : acts;
+      var store = coll === "closures" ? closes : coll === "plan" ? plan : coll === "safety" ? safety : coll === "attach" ? attach : acts;
       if (mode === "local") {
         store[day] = store[day] || { items: {} };
         store[day].items[stopId] = deepMerge(store[day].items[stopId] || {}, part);
@@ -4270,6 +4411,7 @@
               (adm ? '<td class="pf-btns" data-sid="' + esc(x.s.id) + '"><button class="btn sm" data-pf-open="action">+ Action</button><button class="btn sm" data-pf-open="rex">' + (x.s.rex ? "Modifier le REX" : "+ REX") + "</button></td>" : "") +
               '</tr><tr class="det-line"><td colspan="' + (adm ? 4 : 3) + '">' +
               (x.s.detail ? esc(x.s.detail) : '<span class="muted">Pas de détail</span>') +
+              attHTML(x.s) +
               detActionsHTML(x.s) +
               (x.s.rex ? '<div class="det-rex"><strong>REX</strong> · ' + esc([x.s.rex.constat, x.s.rex.cause, x.s.rex.enseignement].filter(Boolean).join(" · ")) + "</div>" : "") +
               (adm && ui.parForm && ui.parForm.sid === x.s.id ? parFormHTML(x.s, ui.parForm.type) : "") +
@@ -5360,6 +5502,14 @@
             d[doc.id] = doc.data();
           });
           closes = d;
+          refresh();
+        }, onErr);
+      db.collection("attach")
+        .limit(1000)
+        .onSnapshot(function (snap) {
+          var d = {};
+          snap.docs.forEach(function (doc) { d[doc.id] = doc.data(); });
+          attach = d;
           refresh();
         }, onErr);
       db.collection("safety")
