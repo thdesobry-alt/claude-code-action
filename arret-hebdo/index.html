@@ -1246,6 +1246,12 @@
         max-width: calc(100% - 32px);
         box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
       }
+      .form label.pchk {
+        flex-direction: row;
+        align-items: flex-start;
+        color: var(--ink);
+        font-size: 13px;
+      }
       .pchk {
         display: flex;
         gap: 8px;
@@ -1386,6 +1392,7 @@
         <button data-tab="activites">📋 Activités</button>
         <button data-tab="schema">🗺️ Schéma laminoir</button>
         <button data-tab="charge">👷 Charge et effectifs</button>
+        <button data-tab="taches">🧰 Programmes et tâches</button>
         <button data-tab="semaines">🗂️ Semaines</button>
         <button data-tab="admin" class="adm">⚙️ Administration</button>
       </nav>
@@ -1500,6 +1507,58 @@
               <tbody></tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      <!-- PROGRAMMES TYPES ET TÂCHES -->
+      <section class="tab" id="tab-taches">
+        <div class="card">
+          <div class="row" style="margin-bottom: 6px">
+            <h2 style="margin: 0">Programmes types</h2>
+            <div class="spacer"></div>
+            <button class="btn primary" id="pt-new">
+              ＋ Enregistrer la semaine affichée comme programme type
+            </button>
+          </div>
+          <p class="muted" style="margin-top: 0">
+            Un programme type est un modèle de semaine (activités, créneaux,
+            agents). Appliquez-le à une semaine, ou choisissez-le dans « ＋
+            Semaine », puis ajoutez les tâches supplémentaires.
+          </p>
+          <div class="scroll-x" id="pt-table"></div>
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom: 6px">
+            <h2 style="margin: 0">Tâches à planifier</h2>
+            <div class="spacer"></div>
+            <button class="btn primary" id="ta-new">＋ Nouvelle tâche</button>
+          </div>
+          <p class="muted" style="margin-top: 0">
+            Réserve de tâches sans limite de nombre : recherchez-les, cochez-les
+            et planifiez-les sur la semaine affichée en haut de page.
+          </p>
+          <div class="row filters" style="margin-bottom: 10px">
+            <input
+              id="ta-q"
+              type="search"
+              placeholder="🔎 Rechercher une tâche…"
+              style="min-width: 240px"
+            />
+            <select id="ta-zone"></select>
+            <select id="ta-svc"></select>
+            <select id="ta-etat">
+              <option value="">Toutes</option>
+              <option value="jamais">Jamais planifiées</option>
+              <option value="hors">Pas dans la semaine affichée</option>
+            </select>
+            <div class="spacer"></div>
+            <span class="muted" id="ta-count"></span>
+            <select id="ta-jour"></select>
+            <button class="btn primary" id="ta-plan">
+              Planifier la sélection
+            </button>
+          </div>
+          <div class="scroll-x tall" id="ta-table"></div>
         </div>
       </section>
 
@@ -1779,6 +1838,8 @@
         cJour: 0,
         f: {},
         g: {},
+        t: {},
+        tSel: new Set(),
         lib: true,
         schemaSvc: "",
       };
@@ -2117,6 +2178,8 @@
           personnel: [],
           activites: [],
           arrets: [],
+          programmes: [],
+          taches: [],
         };
         normaliser(d);
         return d;
@@ -2173,6 +2236,8 @@
           "services",
           "equipes",
           "arrets",
+          "programmes",
+          "taches",
         ])
           d[k] ??= [];
         d.zones.forEach((z) => (z.machines ??= []));
@@ -2272,6 +2337,7 @@
           activites: renderActivites,
           schema: renderSchema,
           charge: renderCharge,
+          taches: renderTaches,
           semaines: renderSemaines,
           admin: renderAdmin,
         })[ui.tab]();
@@ -2302,6 +2368,13 @@
         const ps = [...DB.personnel].sort((a, b) =>
           persNom(a).localeCompare(persNom(b)),
         );
+        $("#ta-zone").innerHTML = zOpts(ui.t.zone);
+        $("#ta-svc").innerHTML = sOpts(ui.t.svc);
+        $("#ta-jour").innerHTML =
+          opt("", "Jour habituel de chaque tâche", "") +
+          DB.meta.jours
+            .map((j, i) => opt(String(i), "Le " + j.nom.toLowerCase(), ""))
+            .join("");
         $("#f-pers").innerHTML =
           opt("", "Tous les intervenants") +
           ps.map((p) => opt(p.id, persNom(p), ui.f.pers)).join("");
@@ -2851,6 +2924,7 @@
                       changed();
                     },
                   ],
+                  ["Copier dans les tâches", "", () => copierDansTaches(a)],
                   [
                     "Dupliquer",
                     "",
@@ -3072,7 +3146,392 @@
           ar: {},
           commande: o.commande || "",
           pdpRef: o.pdpRef || "",
+          ...(o.tache ? { tache: o.tache } : {}),
         };
+      }
+
+      // ---------- Programmes types et tâches à planifier ----------
+      // Modèle d'activité, sans semaine ni suivi (statut, signature, documents).
+      const gabarit = (a) => ({
+        zone: a.zone,
+        machine: a.machine || "",
+        service: a.service,
+        designation: a.designation,
+        frequence: a.frequence || "",
+        jour: a.jour,
+        creneaux: structuredClone(a.creneaux || []),
+        nb: a.nb || 1,
+        intervenants: [...(a.intervenants || [])],
+        pont: a.pont || "",
+        gmao: a.gmao || "",
+        moi: a.moi || "",
+        ordre: a.ordre,
+        commande: a.commande || "",
+        pdpRef: a.pdpRef || "",
+      });
+      const memeActivite = (a, b) =>
+        a.zone === b.zone &&
+        a.jour === b.jour &&
+        sansAccents(a.designation).replace(/[ØO]\s?\d+/g, "Ø") ===
+          sansAccents(b.designation).replace(/[ØO]\s?\d+/g, "Ø");
+      // Ajoute des modèles à la semaine ; ceux déjà présents (même zone, jour et description) sont ignorés.
+      function ajouterALaSemaine(modeles, ar) {
+        let n = 0,
+          deja = 0;
+        for (const m of modeles) {
+          if (actsArret(ar).some((a) => memeActivite(a, m))) {
+            deja++;
+            continue;
+          }
+          DB.activites.push(copierActivite(m, ar));
+          n++;
+        }
+        return { n, deja };
+      }
+      function renderTaches() {
+        const ar = arret();
+        $("#pt-new").disabled = !ar;
+        $("#pt-table").innerHTML = DB.programmes.length
+          ? `<table><thead><tr><th>Programme type</th><th>Activités</th><th>Heures de maintenance</th><th>Mis à jour</th><th></th></tr></thead><tbody>${DB.programmes
+              .map(
+                (p) =>
+                  `<tr data-pid="${p.id}"><td><b>${esc(p.nom)}</b>${p.note ? `<br><small class="muted">${esc(p.note)}</small>` : ""}</td><td>${p.activites.length}<br><small class="muted">${DB.meta.jours.map((j, i) => j.nom + " " + p.activites.filter((a) => a.jour === i).length).join(" · ")}</small></td>
+                  <td>${h(p.activites.reduce((s, a) => s + hMaint(a), 0))}</td><td>${p.maj ? D.fmt(p.maj) + "/" + p.maj.slice(2, 4) : ""}</td>
+                  <td style="white-space:nowrap"><button class="btn small primary" data-pact="appliquer" ${ar ? "" : "disabled"}>Appliquer à la ${ar ? "S" + D.sem(ar.lundi).n : "semaine"}</button> <button class="btn small" data-pact="voir">Voir / modifier</button> <button class="btn small" data-pact="maj" ${ar ? "" : "disabled"} title="Remplace le contenu du programme par les activités de la semaine affichée">Remplacer par la semaine</button></td></tr>`,
+              )
+              .join("")}</tbody></table>`
+          : '<p class="muted">Aucun programme type. Préparez une semaine représentative, puis cliquez sur « Enregistrer la semaine affichée comme programme type ».</p>';
+
+        const f = ui.t,
+          q = (f.q || "").toLowerCase();
+        const derniere = (t) =>
+          DB.activites
+            .filter((a) => a.tache === t.id)
+            .map((a) => arretDe(a)?.lundi)
+            .filter(Boolean)
+            .sort()
+            .at(-1);
+        const dans = (t) => ar && actsArret(ar).some((a) => a.tache === t.id);
+        const zo = zoneOrder();
+        const list = DB.taches
+          .filter(
+            (t) =>
+              (!f.zone || t.zone === f.zone) &&
+              (!f.svc || t.service === f.svc) &&
+              (f.etat !== "jamais" || !derniere(t)) &&
+              (f.etat !== "hors" || !dans(t)) &&
+              (!q ||
+                [
+                  t.designation,
+                  t.gmao,
+                  t.note,
+                  zoneNom(t.zone),
+                  machineNom(t),
+                  t.service,
+                  ...t.intervenants.map((i) => persNom(pers(i))),
+                ]
+                  .join(" ")
+                  .toLowerCase()
+                  .includes(q)),
+          )
+          .sort(
+            (a, b) =>
+              zo[a.zone] - zo[b.zone] ||
+              a.designation.localeCompare(b.designation),
+          );
+        for (const id of [...ui.tSel])
+          if (!DB.taches.some((t) => t.id === id)) ui.tSel.delete(id);
+        $("#ta-count").textContent =
+          `${list.length} / ${DB.taches.length} tâche(s) · ${ui.tSel.size} cochée(s)`;
+        $("#ta-plan").disabled = !ar || !ui.tSel.size;
+        $("#ta-plan").textContent = ar
+          ? `Planifier la sélection sur la S${D.sem(ar.lundi).n}`
+          : "Planifier la sélection";
+        let html = "",
+          zc = null;
+        for (const t of list) {
+          if (t.zone !== zc) {
+            zc = t.zone;
+            html += `<tr class="zone-h"><td colspan="8">📍 ${esc(zoneNom(zc))}</td></tr>`;
+          }
+          const d = derniere(t);
+          html += `<tr data-tid="${t.id}"><td><input type="checkbox" data-tsel="${t.id}" ${ui.tSel.has(t.id) ? "checked" : ""}></td>
+            <td>${esc(t.designation)}${t.machine ? ` <span class="tag">⚙️ ${esc(machineNom(t))}</span>` : ""}${t.note ? `<br><small class="muted">💬 ${esc(t.note)}</small>` : ""}</td>
+            <td><span class="svc" style="--sc:${svcColor(t.service)};padding-left:6px">${esc(t.service)}</span></td>
+            <td><small>${esc(t.frequence || "")}</small></td>
+            <td>${esc(jourDef(t.jour).nom)}<br><small>${creneauxTxt(t) || '<span class="muted">sans créneau</span>'}</small></td>
+            <td>${t.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}</td>
+            <td>${d ? "S" + D.sem(d).n + " <small class='muted'>(" + D.fmt(d) + ")</small>" : '<span class="muted">jamais</span>'}</td>
+            <td>${dans(t) ? '<span class="tag" style="background:var(--ok);color:var(--fait)">✓ dans la semaine</span>' : ""}</td></tr>`;
+        }
+        $("#ta-table").innerHTML = DB.taches.length
+          ? `<table><thead><tr><th><input type="checkbox" id="ta-all" title="Cocher les tâches affichées"></th><th>Tâche</th><th>Équipe</th><th>Fréq.</th><th>Jour / créneau</th><th>Agents</th><th>Dernière planif.</th><th></th></tr></thead><tbody>${html || '<tr><td colspan="8" class="muted">Aucune tâche pour cette recherche.</td></tr>'}</tbody></table>`
+          : '<p class="muted">Aucune tâche. Créez-en avec « ＋ Nouvelle tâche », ou depuis la fiche d\'une activité (« Copier dans les tâches »).</p>';
+      }
+      function enregistrerProgramme() {
+        const ar = arret();
+        const l = trierPourImpression(actsArret(ar));
+        if (!l.length) return alert("La semaine affichée n'a aucune activité.");
+        dialogue(
+          "Nouveau programme type",
+          `<div class="form"><label class="full">Nom<input id="pg-nom" value="${esc("Programme type" + (ar.diametre ? " " + ar.diametre : ""))}"></label>
+            <label class="full">Note (facultative)<input id="pg-note" placeholder="ex. semaine avec changement de cylindres"></label>
+            <p class="full muted" style="margin:0">${l.length} activité(s) de la ${esc(semLabel(ar))}, avec leurs créneaux et leurs agents. Statuts, signatures, photos et documents ne sont pas repris.</p></div>`,
+          [
+            ["Annuler", "", () => {}],
+            [
+              "Enregistrer",
+              "primary",
+              () => {
+                const nom = $("#pg-nom").value.trim();
+                if (!nom) return alert("Nom obligatoire."), false;
+                DB.programmes.push({
+                  id: uid("pt"),
+                  nom,
+                  note: $("#pg-note").value.trim(),
+                  maj: D.today(),
+                  activites: l.map(gabarit),
+                });
+                changed();
+                toast(
+                  `Programme type « ${nom} » enregistré (${l.length} activités)`,
+                );
+              },
+            ],
+          ],
+        );
+      }
+      function appliquerProgramme(p) {
+        const ar = arret();
+        if (!ar) return;
+        if (
+          !confirm(
+            `Ajouter les ${p.activites.length} activité(s) du programme « ${p.nom} » à la ${semLabel(ar)} ?\nCelles déjà présentes dans la semaine ne sont pas ajoutées en double.`,
+          )
+        )
+          return;
+        const r = ajouterALaSemaine(p.activites, ar);
+        changed();
+        toast(
+          `${r.n} activité(s) ajoutée(s)${r.deja ? `, ${r.deja} déjà présente(s)` : ""}`,
+        );
+      }
+      function voirProgramme(id) {
+        const p = DB.programmes.find((x) => x.id === id);
+        const garder = new Set(p.activites.map((_, i) => i));
+        const zo = zoneOrder();
+        const ordre = p.activites
+          .map((a, i) => ({ a, i }))
+          .sort(
+            (x, y) =>
+              x.a.jour - y.a.jour ||
+              zo[x.a.zone] - zo[y.a.zone] ||
+              (x.a.ordre ?? 1e9) - (y.a.ordre ?? 1e9),
+          );
+        dialogue(
+          "Programme type : " + p.nom,
+          `<div class="form"><label>Nom<input id="pg-nom" value="${esc(p.nom)}"></label><label>Note<input id="pg-note" value="${esc(p.note || "")}"></label></div>
+          <p class="muted">Décochez les activités à retirer du programme. Pour en ajouter ou en modifier, appliquez le programme à une semaine, ajustez-la, puis « Remplacer par la semaine ».</p>
+          <div style="max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${ordre
+            .map(
+              ({ a, i }) =>
+                `<label class="pchk"><input type="checkbox" data-pgi="${i}" checked><span>${esc(a.designation)} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small></span></label>`,
+            )
+            .join("")}</div>`,
+          [
+            [
+              "Supprimer le programme",
+              "danger",
+              () => {
+                if (!confirm(`Supprimer le programme type « ${p.nom} » ?`))
+                  return false;
+                DB.programmes = DB.programmes.filter((x) => x !== p);
+                changed();
+              },
+            ],
+            ["Annuler", "", () => {}],
+            [
+              "Enregistrer",
+              "primary",
+              () => {
+                const nom = $("#pg-nom").value.trim();
+                if (!nom) return alert("Nom obligatoire."), false;
+                document
+                  .querySelectorAll("[data-pgi]")
+                  .forEach(
+                    (c) => !c.checked && garder.delete(Number(c.dataset.pgi)),
+                  );
+                p.nom = nom;
+                p.note = $("#pg-note").value.trim();
+                p.activites = p.activites.filter((_, i) => garder.has(i));
+                p.maj = D.today();
+                changed();
+              },
+            ],
+          ],
+        );
+      }
+      function remplacerProgramme(p) {
+        const ar = arret();
+        const l = trierPourImpression(actsArret(ar));
+        if (!l.length) return alert("La semaine affichée n'a aucune activité.");
+        if (
+          !confirm(
+            `Remplacer le contenu du programme « ${p.nom} » (${p.activites.length} activités) par les ${l.length} activités de la ${semLabel(ar)} ?`,
+          )
+        )
+          return;
+        p.activites = l.map(gabarit);
+        p.maj = D.today();
+        changed();
+      }
+      function copierDansTaches(a) {
+        const ex = DB.taches.find((t) => memeActivite(t, a));
+        if (
+          ex &&
+          !confirm("Une tâche identique existe déjà. En créer une autre ?")
+        )
+          return;
+        const t = {
+          id: uid("t"),
+          ...gabarit(a),
+          note: a.commentaire || "",
+          cree: D.today(),
+        };
+        DB.taches.push(t);
+        if (!a.tache) a.tache = t.id;
+        changed();
+        toast("Copiée dans les tâches à planifier");
+      }
+      function planifierTaches(ids, jour) {
+        const ar = arret();
+        if (!ar) return;
+        let n = 0;
+        for (const id of ids) {
+          const t = DB.taches.find((x) => x.id === id);
+          if (!t) continue;
+          const a = copierActivite(
+            { ...t, tache: t.id, jour: jour === "" ? t.jour : Number(jour) },
+            ar,
+          );
+          if (jour !== "" && Number(jour) !== t.jour) a.creneaux = [];
+          DB.activites.push(a);
+          n++;
+        }
+        ui.tSel.clear();
+        changed();
+        toast(`${n} tâche(s) planifiée(s) sur la ${semLabel(ar)}`);
+      }
+      function editerTache(id) {
+        const t = id
+          ? DB.taches.find((x) => x.id === id)
+          : {
+              id: uid("t"),
+              zone: ui.t.zone || DB.zones[0]?.id,
+              machine: "",
+              service: ui.t.svc || DB.services[0] || "",
+              designation: "",
+              frequence: "",
+              jour: 0,
+              creneaux: [],
+              nb: 1,
+              intervenants: [],
+              pont: "",
+              gmao: "",
+              moi: "",
+              note: "",
+              cree: D.today(),
+            };
+        const inter = [...t.intervenants];
+        const segs = structuredClone(t.creneaux);
+        const zo = zoneOrder();
+        const zones = [...DB.zones].sort((x, y) => zo[x.id] - zo[y.id]);
+        const ar = arret();
+        const lire = () => {
+          const des = $("#e-des").value.trim();
+          if (!des) return alert("La description est obligatoire."), false;
+          Object.assign(t, {
+            designation: des,
+            zone: $("#e-zone").value,
+            machine: $("#e-mach").value,
+            service: $("#e-svc").value,
+            frequence: $("#e-freq").value,
+            jour: Number($("#e-jour").value),
+            nb: Math.max(1, Number($("#e-nb").value) || 1),
+            creneaux: segs
+              .filter((s) => s.debut && s.fin && s.fin > s.debut)
+              .sort((p, q) => p.debut.localeCompare(q.debut)),
+            intervenants: inter,
+            pont: $("#e-pont").value,
+            gmao: $("#e-gmao").value.trim(),
+            note: $("#e-com").value.trim(),
+          });
+          if (!id) DB.taches.push(t);
+          return true;
+        };
+        dialogue(
+          id ? "Tâche à planifier" : "Nouvelle tâche à planifier",
+          `<div class="form">
+            <label class="full">Description<textarea id="e-des" rows="2">${esc(t.designation)}</textarea></label>
+            <label>Section (zone)<select id="e-zone">${zones.map((z) => opt(z.id, z.nom, t.zone)).join("")}</select></label>
+            <label>Machine / équipement<select id="e-mach"></select></label>
+            <label>Équipe<select id="e-svc">${DB.services.map((s) => opt(s, s, t.service)).join("")}</select></label>
+            <label>Fréquence<select id="e-freq">${optsFreq(t.frequence)}</select></label>
+            <label>Jour habituel<select id="e-jour">${DB.meta.jours.map((j, i) => opt(String(i), j.nom, String(t.jour))).join("")}</select></label>
+            <label>Agents mobilisés<input id="e-nb" type="number" min="1" value="${t.nb}"></label>
+            <div class="full"><label>Créneaux habituels (facultatifs)</label><div id="e-segs"></div></div>
+            ${champIntervenants()}
+            <label>Pont roulant<select id="e-pont">${opt("", "Aucun", t.pont)}${DB.ponts.map((p) => opt(p.id, p.nom, t.pont)).join("")}</select></label>
+            <label>N° GMAO<input id="e-gmao" value="${esc(t.gmao)}"></label>
+            <label class="full">Note<textarea id="e-com" rows="2">${esc(t.note || "")}</textarea></label>
+          </div>`,
+          [
+            ...(id
+              ? [
+                  [
+                    "Supprimer",
+                    "danger",
+                    () => {
+                      if (
+                        !confirm(
+                          "Supprimer cette tâche ? Les activités déjà planifiées sont conservées.",
+                        )
+                      )
+                        return false;
+                      DB.taches = DB.taches.filter((x) => x.id !== id);
+                      changed();
+                    },
+                  ],
+                ]
+              : []),
+            ["Annuler", "", () => {}],
+            ...(ar
+              ? [
+                  [
+                    "Enregistrer et planifier sur la S" + D.sem(ar.lundi).n,
+                    "",
+                    () => {
+                      if (!lire()) return false;
+                      planifierTaches([t.id], "");
+                    },
+                  ],
+                ]
+              : []),
+            [
+              "Enregistrer",
+              "primary",
+              () => {
+                if (!lire()) return false;
+                changed();
+              },
+            ],
+          ],
+        );
+        selectMachines("#e-zone", "#e-mach", t.machine);
+        editeurCreneaux($("#e-segs"), segs, () => Number($("#e-jour").value));
+        $("#e-jour").onchange = () =>
+          editeurCreneaux($("#e-segs"), segs, () => Number($("#e-jour").value));
+        choixIntervenants(inter);
       }
 
       // ---------- Préparation et clôture d'une semaine ----------
@@ -3081,30 +3540,58 @@
           .filter((r) => r.lundi < lundi)
           .sort((a, b) => b.lundi.localeCompare(a.lundi))[0];
       }
-      // Nouvelle semaine : reprend les activités de la semaine précédente (créneaux, agents, équipe…).
+      // Nouvelle semaine : part d'un programme type ou de la semaine précédente (créneaux, agents, équipe…).
       function preparerSemaine() {
         const dern = [...DB.arrets].sort((a, b) =>
           b.lundi.localeCompare(a.lundi),
         )[0];
         const lundi0 = dern ? D.add(dern.lundi, 7) : D.lundi(D.today());
-        const corps = (lundi, dia) => {
+        const corps = (lundi, dia, src) => {
           const prec = semainePrecedente(lundi);
-          const l = prec ? trierPourImpression(actsArret(prec)) : [];
+          const prog = DB.programmes.find((x) => x.id === src);
+          const l = prec
+            ? trierPourImpression(actsArret(prec)).filter(
+                (a) => !prog || a.statut !== "fait",
+              )
+            : [];
+          const zo = zoneOrder();
+          const lp = prog
+            ? prog.activites
+                .map((a, i) => ({ a, i }))
+                .sort(
+                  (x, y) =>
+                    x.a.jour - y.a.jour ||
+                    zo[x.a.zone] - zo[y.a.zone] ||
+                    (x.a.ordre ?? 1e9) - (y.a.ordre ?? 1e9),
+                )
+            : [];
+          const blocProg = prog
+            ? `<h3 style="margin:10px 0 4px;font-size:14px">📋 Programme type « ${esc(prog.nom)} » : ${prog.activites.length} activité(s)</h3>
+            <div style="max-height:34vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${lp
+              .map(
+                ({ a, i }) =>
+                  `<label class="pchk"><input type="checkbox" data-pp="${i}" checked><span>${esc(avecDiametre(a.designation, dia))} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small></span></label>`,
+              )
+              .join("")}</div>`
+            : "";
+          if (src === "vide")
+            return `<p class="muted">La semaine sera créée vide.</p>`;
           return `<p class="muted" style="margin-top:0">Semaine ${D.sem(lundi).n} : ${joursArret(
             { lundi },
           )
             .map((j) => j.nom + " " + D.fmt(j.date))
-            .join(", ")}${dia ? " · " + esc(dia) : ""}</p>
-            <h3 style="margin:10px 0 4px;font-size:14px">↪ Activités de la ${prec ? semLabel(prec) : "semaine précédente"} : ${l.length}</h3>
+            .join(", ")}${dia ? " · " + esc(dia) : ""}</p>${blocProg}
+            <h3 style="margin:10px 0 4px;font-size:14px">↪ ${prog ? "Activités non faites" : "Activités"} de la ${prec ? semLabel(prec) : "semaine précédente"} : ${l.length}</h3>
             <div class="row" style="margin-bottom:4px"><button type="button" class="btn small" data-tout="1">Tout cocher</button><button type="button" class="btn small" data-tout="0">Tout décocher</button><button type="button" class="btn small" data-tout="r">Seulement les non faites</button></div>
             <div style="max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${
               l
-                .map(
-                  (a) =>
-                    `<label class="pchk"><input type="checkbox" data-pr="${a.id}" data-nf="${a.statut === "fait" ? 0 : 1}" checked><span>${esc(avecDiametre(a.designation, dia))} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)}${a.frequence ? " · " + esc(a.frequence) : ""} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small>${a.statut !== "fait" ? ` <span class="late">${esc(stLabel(a.statut))}</span>` : ""}</span></label>`,
-                )
-                .join("") ||
-              '<p class="muted">Aucune activité à reprendre : la semaine sera vide.</p>'
+                .map((a) => {
+                  const dansProg = prog?.activites.some((m) =>
+                    memeActivite(m, a),
+                  );
+                  return `<label class="pchk"><input type="checkbox" data-pr="${a.id}" data-nf="${a.statut === "fait" || dansProg ? 0 : 1}" ${dansProg ? "" : "checked"}><span>${esc(avecDiametre(a.designation, dia))} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)}${a.frequence ? " · " + esc(a.frequence) : ""} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small>${a.statut !== "fait" ? ` <span class="late">${esc(stLabel(a.statut))}</span>` : ""}${dansProg ? ' <span class="muted">— déjà dans le programme</span>' : ""}</span></label>`;
+                })
+                .join("") || '<p class="muted">Aucune activité à reprendre.</p>'
             }</div>`;
         };
         dialogue(
@@ -3112,6 +3599,7 @@
           `<div class="form">
             <label>Lundi de la semaine<input type="date" id="ns-lundi" value="${lundi0}"></label>
             <label>Diamètre laminé<select id="ns-dia">${opt("", "—", dern?.diametre || "")}${DB.meta.diametres.map((x) => opt(x, x, dern?.diametre || "")).join("")}</select></label>
+            <label class="full">Partir de<select id="ns-src">${DB.programmes.map((p) => opt(p.id, "Programme type : " + p.nom, DB.programmes[0]?.id)).join("")}${opt("prec", "La semaine précédente", DB.programmes.length ? "" : "prec")}${opt("vide", "Une semaine vide", "")}</select></label>
             <div class="full" id="ns-corps"></div></div>`,
           [
             ["Annuler", "", () => {}],
@@ -3129,8 +3617,19 @@
                 const prec = semainePrecedente(lundi);
                 if (prec) ar.effectifs = structuredClone(prec.effectifs);
                 DB.arrets.push(ar);
+                const prog = DB.programmes.find(
+                  (x) => x.id === $("#ns-src").value,
+                );
+                if (prog)
+                  ajouterALaSemaine(
+                    [...document.querySelectorAll("[data-pp]:checked")].map(
+                      (c) => prog.activites[Number(c.dataset.pp)],
+                    ),
+                    ar,
+                  );
                 document.querySelectorAll("[data-pr]:checked").forEach((c) => {
                   const o = DB.activites.find((x) => x.id === c.dataset.pr);
+                  if (actsArret(ar).some((a) => memeActivite(a, o))) return;
                   const n = copierActivite(o, ar);
                   // Activité non faite : reportée sur la nouvelle semaine.
                   if (o.statut !== "fait") {
@@ -3153,8 +3652,12 @@
           ($("#ns-corps").innerHTML = corps(
             D.lundi($("#ns-lundi").value || lundi0),
             $("#ns-dia").value,
+            $("#ns-src").value,
           ));
-        $("#ns-lundi").onchange = $("#ns-dia").onchange = maj;
+        $("#ns-lundi").onchange =
+          $("#ns-dia").onchange =
+          $("#ns-src").onchange =
+            maj;
         $("#dlg-b").onclick = (e) => {
           const t = e.target.dataset.tout;
           if (!t) return;
@@ -6170,6 +6673,52 @@
         const c = e.target.closest("[data-acts]");
         if (c) editerActivite(c.dataset.acts.split(",")[0]);
       };
+
+      // Programmes types et tâches
+      $("#pt-new").onclick = enregistrerProgramme;
+      $("#pt-table").onclick = (e) => {
+        const tr = e.target.closest("tr[data-pid]");
+        if (!tr) return;
+        const p = DB.programmes.find((x) => x.id === tr.dataset.pid);
+        const act = e.target.closest("[data-pact]")?.dataset.pact || "voir";
+        if (act === "appliquer") appliquerProgramme(p);
+        if (act === "voir") voirProgramme(p.id);
+        if (act === "maj") remplacerProgramme(p);
+      };
+      $("#ta-new").onclick = () => editerTache(null);
+      for (const [sel, k] of Object.entries({
+        "#ta-q": "q",
+        "#ta-zone": "zone",
+        "#ta-svc": "svc",
+        "#ta-etat": "etat",
+      }))
+        $(sel).addEventListener(sel === "#ta-q" ? "input" : "change", (e) => {
+          ui.t[k] = e.target.value;
+          renderTaches();
+        });
+      $("#ta-table").onclick = (e) => {
+        if (e.target.id === "ta-all") {
+          document
+            .querySelectorAll("[data-tsel]")
+            .forEach((c) =>
+              e.target.checked
+                ? ui.tSel.add(c.dataset.tsel)
+                : ui.tSel.delete(c.dataset.tsel),
+            );
+          return renderTaches();
+        }
+        const c = e.target.closest("[data-tsel]");
+        if (c) {
+          c.checked
+            ? ui.tSel.add(c.dataset.tsel)
+            : ui.tSel.delete(c.dataset.tsel);
+          return renderTaches();
+        }
+        const tr = e.target.closest("tr[data-tid]");
+        if (tr) editerTache(tr.dataset.tid);
+      };
+      $("#ta-plan").onclick = () =>
+        planifierTaches([...ui.tSel], $("#ta-jour").value);
 
       // Semaines
       $("#se-new").onclick = preparerSemaine;
