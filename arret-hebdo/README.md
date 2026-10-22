@@ -9,7 +9,8 @@ modèle de l'application « Arrêt technique ». Elle remplace le classeur
 - Un **arrêt par semaine** (lundi 07h–18h et mardi par défaut, avec le diamètre laminé), choisi
   en haut de page (◀ Semaine 41 · ø25 ▶).
 - Un **Gantt au quart d'heure**, comme la feuille Excel : une ligne par activité, groupée par
-  section (zone), avec l'équipe, la fréquence, le pont, les agents et la signature.
+  section (zone), avec l'équipe, la fréquence, le pont et les agents (la feuille imprimée garde une colonne
+  « Signature agent » à remplir à la main).
 - Trois statuts : **Planifié**, **Fait**, **Reporté**.
 - **＋ Semaine** prépare la semaine suivante à partir d'un **programme type** (ou de la semaine
   précédente) ; les activités non faites de la semaine précédente y sont reportées. On complète
@@ -22,10 +23,10 @@ modèle de l'application « Arrêt technique ». Elle remplace le classeur
 | 📅 Gantt                | Un jour à la fois (Lundi / Mardi). Glisser une barre pour la déplacer, ses bords pour changer l'horaire, cliquer sur une ligne vide pour placer un créneau d'1 h (Maj + clic : créneau supplémentaire). Ligne « agents mobilisés » par quart d'heure, conflits d'agent ou de pont signalés en rouge. 🖨️ imprime le Gantt du jour au format de la feuille Excel (A3 paysage, colonne signature).                                                                                            |
 | 📋 Activités            | Compteurs Planifié / Fait / Reporté, avancement par équipe, liste filtrable avec statut modifiable. Impressions : analyses de risque, compte rendu de l'arrêt.                                                                                                                                                                                                                                                                                                                             |
 | 🗺️ Schéma laminoir      | Avancement de la semaine zone par zone ; un clic ouvre le Gantt filtré sur la zone.                                                                                                                                                                                                                                                                                                                                                                                                        |
-| 👷 Charge et effectifs  | Agents présents de la semaine (nombre × heures), heures de maintenance par équipe et par jour, taux d'occupation (feuille « Total heures » de l'Excel). Occupation de chaque intervenant au quart d'heure, avec les doublons.                                                                                                                                                                                                                                                              |
+| 👷 Charge et effectifs  | **Personnel** : ajout rapide d'un agent (matricule, nom, prénom obligatoires, équipe), modification directe dans le tableau, suppression ✕ ; les agents incomplets sont signalés en rouge. Agents présents de la semaine (nombre × heures), heures de maintenance par équipe et par jour, taux d'occupation (feuille « Total heures » de l'Excel). Occupation de chaque intervenant au quart d'heure, avec les doublons.                                                                   |
 | 🧰 Programmes et tâches | **Programmes types** : enregistrer la semaine affichée comme modèle, l'appliquer à une semaine (sans doublons), le revoir (retirer des activités) ou le remplacer par la semaine affichée. **Tâches à planifier** : réserve sans limite de tâches (création, ou « Copier dans les tâches » depuis la fiche d'une activité), recherche par texte, zone, équipe, « jamais planifiées » ; cocher puis « Planifier la sélection » sur la semaine affichée, le jour habituel ou un jour choisi. |
 | 🗂️ Semaines             | Historique des arrêts (activités, faites, heures, occupation), préparation, clôture, import Excel.                                                                                                                                                                                                                                                                                                                                                                                         |
-| ⚙️ Administration       | Jours et horaires, pas du Gantt, diamètres, fréquences, consignes, zones et machines, équipes, ponts, personnel, éditeur JSON.                                                                                                                                                                                                                                                                                                                                                             |
+| ⚙️ Administration       | Jours et horaires, pas du Gantt, diamètres, fréquences, consignes, zones et machines, équipes, ponts, éditeur JSON.                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Programmes types par diamètre
 
@@ -60,7 +61,7 @@ L'import lit le classeur avec SheetJS (cdnjs) : il faut une connexion Internet.
 
 Administration → **👷 Reprendre l'arrêt technique (data.json)** : choisir le `data.json` de
 l'application « Arrêt technique ». Le personnel (avec le N+1), les équipes, les zones et
-machines, les ponts et le compte administrateur sont repris. Les agents créés par l'import Excel
+machines et les ponts sont repris. Les agents créés par l'import Excel
 sont alors fusionnés avec la bonne personne quand le nom correspond.
 
 ## Utilisation
@@ -71,17 +72,18 @@ sont alors fusionnés avec la bonne personne quand le nom correspond.
 3. Les modifications sont conservées dans le navigateur ; **💾 Enregistrer** (Ctrl+S) les écrit
    dans `data.json`.
 4. Chaque semaine : **＋ Semaine** → cocher les activités à reprendre → ajuster le Gantt → imprimer
-   le Gantt → saisir statuts et signatures → **Clôturer** (onglet Semaines) : les activités encore
+   le Gantt → saisir les statuts → **Clôturer** (onglet Semaines) : les activités encore
    planifiées passent en « Reporté » et seront proposées la semaine suivante.
 
-Le compte administrateur, l'analyse de risque AQA.QSE.15, les photos avant/après et les
+L'application n'a pas de compte ni de mot de passe : tout le monde peut tout modifier.
+L'analyse de risque AQA.QSE.15, les photos avant/après et les
 obligations pour les entreprises extérieures (n° de commande, plan de prévention) fonctionnent
 comme dans l'arrêt technique. Les fichiers joints sont enregistrés dans `data.json` : le fichier
 grossit avec eux.
 
 ## Structure de `data.json`
 
-- `meta` : `titre`, `admin`, `jours[]` (`dow` 0 = dimanche, `nom`, `debut`, `fin`, `pauses[]`),
+- `meta` : `titre`, `jours[]` (`dow` 0 = dimanche, `nom`, `debut`, `fin`, `pauses[]`),
   `pas` (minutes), `diametres[]`, `frequences[]`, `consignes[]`, `effectifs[]` par défaut
   (`lib`, `service`, `nb`, `h`).
 - `arrets[]` : `id`, `lundi`, `diametre`, `diametre2` (2ᵉ diamètre facultatif), `statut` (`prepa`, `encours`, `cloture`),
@@ -96,4 +98,4 @@ grossit avec eux.
 - `taches[]` : mêmes champs que les modèles, plus `note` et `cree` ; les activités planifiées
   depuis une tâche portent son identifiant dans `tache`.
 - `zones[]`, `flux[]`, `personnel[]`, `equipes[]`, `services[]`, `ponts[]` : comme l'arrêt
-  technique.
+  technique ; chaque agent du personnel a `matricule`, `nom`, `prenom`, `equipe`.

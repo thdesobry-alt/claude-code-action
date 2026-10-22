@@ -664,9 +664,6 @@
         cursor: pointer;
         color: var(--muted);
       }
-      body:not(.admin) .adm {
-        display: none !important;
-      }
       .admin-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -1378,7 +1375,6 @@
         <div class="spacer"></div>
         <div class="row" style="flex-wrap: nowrap">
           <span id="etat"></span>
-          <button class="btn" id="b-admin"></button>
           <button class="btn" id="b-ouvrir" title="Ouvrir un fichier data.json">
             📂 Ouvrir
           </button>
@@ -1394,7 +1390,7 @@
         <button data-tab="charge">👷 Charge et effectifs</button>
         <button data-tab="taches">🧰 Programmes et tâches</button>
         <button data-tab="semaines">🗂️ Semaines</button>
-        <button data-tab="admin" class="adm">⚙️ Administration</button>
+        <button data-tab="admin">⚙️ Administration</button>
       </nav>
     </div>
     <main>
@@ -1568,8 +1564,8 @@
           <div class="row" style="margin-bottom: 8px">
             <h2 style="margin: 0">Schéma de la semaine, zone par zone</h2>
             <div class="spacer"></div>
-            <button class="btn adm" id="s-edit">✏️ Modifier le schéma</button>
-            <button class="btn adm" id="s-zone-add">＋ Zone</button>
+            <button class="btn" id="s-edit">✏️ Modifier le schéma</button>
+            <button class="btn" id="s-zone-add">＋ Zone</button>
             <select id="s-svc"></select>
           </div>
           <div class="legend" style="margin-bottom: 8px">
@@ -1592,7 +1588,7 @@
               ＋ Ligne d'effectif
             </button>
             <button
-              class="btn small adm"
+              class="btn small"
               id="c-eff-def"
               title="Ces effectifs serviront pour les prochaines semaines"
             >
@@ -1605,6 +1601,34 @@
             (comme la feuille « Total heures » du Gantt Excel).
           </p>
           <div class="scroll-x" id="c-bilan"></div>
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom: 8px">
+            <h2 style="margin: 0">👥 Personnel</h2>
+            <div class="spacer"></div>
+            <span class="muted" id="pe-count"></span>
+          </div>
+          <form
+            class="row filters"
+            id="pe-form"
+            autocomplete="off"
+            style="margin-bottom: 10px"
+          >
+            <input id="pe-mat" placeholder="Matricule *" style="width: 110px" />
+            <input id="pe-nom" placeholder="Nom *" style="width: 170px" />
+            <input id="pe-pre" placeholder="Prénom *" style="width: 150px" />
+            <select id="pe-eq"></select>
+            <button class="btn primary" type="submit">
+              ＋ Ajouter l'agent
+            </button>
+            <div class="spacer"></div>
+            <input
+              id="pe-q"
+              type="search"
+              placeholder="🔎 Rechercher un agent…"
+            />
+          </form>
+          <div class="scroll-x tall" id="pe-table"></div>
         </div>
         <div class="card">
           <div class="row filters" style="margin-bottom: 10px">
@@ -1649,17 +1673,6 @@
 
       <!-- ADMINISTRATION -->
       <section class="tab" id="tab-admin">
-        <div class="card">
-          <div class="row">
-            <h2 style="margin: 0">⚙️ Administration</h2>
-            <span class="muted" id="ad-compte"></span>
-            <div class="spacer"></div>
-            <button class="btn" id="ad-mdp-btn">
-              Identifiant / mot de passe
-            </button>
-            <button class="btn" id="ad-logout">Se déconnecter</button>
-          </div>
-        </div>
         <div class="admin-grid">
           <div class="card">
             <div class="row" style="margin-bottom: 8px">
@@ -1724,14 +1737,6 @@
             </div>
             <div id="ad-ponts"></div>
           </div>
-        </div>
-        <div class="card" style="margin-top: 16px">
-          <div class="row" style="margin-bottom: 8px">
-            <h2 style="margin: 0">Personnel</h2>
-            <div class="spacer"></div>
-            <button class="btn primary" id="ad-pers-add">＋ Personne</button>
-          </div>
-          <div class="scroll-x tall" id="ad-pers"></div>
         </div>
       </section>
     </main>
@@ -2130,13 +2135,6 @@
         DB = data;
         fileHandle = handle;
         if (handle) idb("put", handle);
-        try {
-          ui.admin =
-            !!DB.meta.admin &&
-            sessionStorage.getItem("hebdo-admin") === DB.meta.admin.hash;
-        } catch (e) {
-          ui.admin = false;
-        }
         ui.arret = null;
         dirty = false;
         sauverLocal();
@@ -2202,6 +2200,8 @@
       function normaliser(d) {
         const m = (d.meta ??= {});
         m.titre ??= "Arrêt technique hebdo";
+        // Compte administrateur des premières versions : retiré.
+        delete m.admin;
         m.jours ??= [
           {
             dow: 1,
@@ -2267,6 +2267,8 @@
           delete a.modes;
           delete a.gamme;
           a.statut ??= "planifie";
+          delete a.signePar;
+          delete a.signeLe;
           // Statuts d'avant : À faire / En cours -> Planifié, Non nécessaire -> Reporté.
           if (a.statut === "afaire" || a.statut === "encours")
             a.statut = "planifie";
@@ -2305,7 +2307,6 @@
           .forEach((s) => s.classList.toggle("on", s.id === "tab-" + ui.tab));
         remplirFiltres();
         renderEtat();
-        majAdmin();
         renderEntete();
         render();
       }
@@ -2711,7 +2712,7 @@
           }
           const manque = manquesExterne(a);
           html += `<tr data-id="${a.id}">
-            <td>${esc(a.designation)}${a.machine ? ` <span class="tag">⚙️ ${esc(machineNom(a))}</span>` : ""}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${a.docs?.ar ? ' <span class="tag" title="Analyse de risque signée jointe">📄 AR</span>' : ""}${a.photos?.length ? ` <span class="tag">📷 ${a.photos.length}</span>` : ""}${manque.length ? ` <span class="tag manque">⚠️ ${manque.join(" et ")} manquant</span>` : ""}${a.origine ? ' <span class="tag" title="Reprise d\'une semaine précédente">↪ reprise</span>' : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}${a.signePar ? `<br><small class="muted">✍️ ${esc(persNom(pers(a.signePar)))}${a.signeLe ? " le " + D.fmt(a.signeLe) : ""}</small>` : ""}</td>
+            <td>${esc(a.designation)}${a.machine ? ` <span class="tag">⚙️ ${esc(machineNom(a))}</span>` : ""}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${a.docs?.ar ? ' <span class="tag" title="Analyse de risque signée jointe">📄 AR</span>' : ""}${a.photos?.length ? ` <span class="tag">📷 ${a.photos.length}</span>` : ""}${manque.length ? ` <span class="tag manque">⚠️ ${manque.join(" et ")} manquant</span>` : ""}${a.origine ? ' <span class="tag" title="Reprise d\'une semaine précédente">↪ reprise</span>' : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}</td>
             <td><span class="svc" style="--sc:${svcColor(a.service)};padding-left:6px">${esc(a.service)}</span></td>
             <td><small>${esc(a.frequence || "")}</small></td>
             <td>${a.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}${a.nb > 1 ? `<br><small class="muted">${a.nb} agents mobilisés</small>` : ""}</td>
@@ -2722,9 +2723,8 @@
           html ||
           `<tr><td colspan="6" class="muted">${arret() ? "Aucune activité." : "Aucun arrêt : cliquez sur « ＋ Semaine »."}</td></tr>`;
       }
-      // Passage d'une activité à un statut (date de signature à « Fait »).
+      // Passage d'une activité à un statut.
       function changerStatut(a, st) {
-        if (st === "fait") a.signeLe ||= D.today();
         a.statut = st;
         return true;
       }
@@ -2808,19 +2808,29 @@
             (x) => persNom(x).toUpperCase() === v.toUpperCase(),
           );
           if (!p) {
-            if (
-              !confirm(
-                `« ${v} » n'existe pas dans la liste du personnel. L'ajouter comme intervenant non référencé ?`,
-              )
-            )
-              return;
+            // Nouvel agent : matricule, nom et prénom obligatoires.
+            const mat = prompt(
+              `« ${v} » n'est pas dans le personnel. Pour le créer, indiquez son matricule :`,
+            )?.trim();
+            if (!mat) return;
+            const dbl = matriculeDouble(mat);
+            if (dbl)
+              return alert(
+                `Le matricule ${mat} est déjà celui de ${persNom(dbl)}.`,
+              );
+            const [nom0, ...reste] = v.split(/\s+/);
+            const prenom = prompt(
+              `Prénom de ${nom0.toUpperCase()} :`,
+              reste.join(" "),
+            )?.trim();
+            if (!prenom) return;
             p = {
-              id: uid("x"),
-              matricule: null,
-              nom: v.toUpperCase(),
-              prenom: "",
+              id: uid("p"),
+              matricule: mat,
+              nom: nom0.toUpperCase(),
+              prenom,
               poste: "",
-              equipe: "ext",
+              equipe: equipePourService($("#e-svc")?.value, nom0),
               absences: [],
             };
             DB.personnel.push(p);
@@ -2912,7 +2922,6 @@
             <div class="full"><label>Créneaux horaires</label><div id="e-segs"></div></div>
             ${champIntervenants()}
             <label>Statut<select id="e-st">${STATUTS.map((s) => opt(s.id, s.label, a.statut)).join("")}</select></label>
-            <label>Signature agent<select id="e-sig"></select></label>
             <label>Pont roulant<select id="e-pont">${opt("", "Aucun", a.pont)}${DB.ponts.map((p) => opt(p.id, p.nom, a.pont)).join("")}</select></label>
             <label>N° GMAO<input id="e-gmao" value="${esc(a.gmao)}"></label>
             <label class="full">IN / MOI (analyse de risques)<input id="e-moi" value="${esc(a.moi)}"></label>
@@ -2942,8 +2951,6 @@
                       c.statut = "planifie";
                       c.photos = [];
                       delete c.docs?.ar;
-                      delete c.signePar;
-                      delete c.signeLe;
                       DB.activites.push(c);
                       changed();
                     },
@@ -2991,7 +2998,6 @@
                   moi: $("#e-moi").value.trim(),
                   pont: $("#e-pont").value,
                   commentaire: $("#e-com").value.trim(),
-                  signePar: $("#e-sig").value,
                   ar: w.ar,
                   docs: w.docs,
                   photos: w.photos,
@@ -2999,7 +3005,6 @@
                   pdpRef: w.pdpRef.trim(),
                 });
                 if (st !== avant && !changerStatut(a, st)) return false;
-                if (a.signePar && !a.signeLe) a.signeLe = D.today();
                 if (!id) DB.activites.push(a);
                 changed();
               },
@@ -3015,14 +3020,7 @@
             Number($("#e-jour").value),
           );
         const majDocs = blocDocuments(a, w, () => inter);
-        const majSig = () => {
-          $("#e-sig").innerHTML =
-            opt("", "— non signée —", a.signePar || "") +
-            [...new Set([...inter, ...(a.signePar ? [a.signePar] : [])])]
-              .map((i) => opt(i, persNom(pers(i)), a.signePar || ""))
-              .join("");
-        };
-        choixIntervenants(inter, () => (majDocs(), majSig()));
+        choixIntervenants(inter, majDocs);
       }
 
       // Bloc « Sécurité, documents et photos » (repris de l'arrêt technique ; travaille sur une copie).
@@ -3838,36 +3836,31 @@
             <label class="full">Consignes de la semaine (une par ligne)<textarea id="w-cons" rows="3">${esc(ar.consignes.join("\n"))}</textarea></label>
             <label class="full">Notes<textarea id="w-notes" rows="3">${esc(ar.notes || "")}</textarea></label></div>`,
           [
-            ...(ui.admin
-              ? [
-                  [
-                    "Supprimer",
-                    "danger",
-                    () => {
-                      const n = actsArret(ar).length;
-                      if (
-                        !confirm(
-                          `Supprimer la ${semLabel(ar)} et ses ${n} activité(s) ? Les check-lists remplies et photos seront perdues.`,
-                        )
-                      )
-                        return false;
-                      DB.activites = DB.activites.filter(
-                        (a) => a.arret !== ar.id,
-                      );
-                      DB.activites.forEach(
-                        (a) =>
-                          a.reprise &&
-                          !DB.activites.some((b) => b.id === a.reprise) &&
-                          delete a.reprise,
-                      );
-                      DB.arrets = DB.arrets.filter((r) => r.id !== ar.id);
-                      if (ui.arret === ar.id) ui.arret = null;
-                      changed();
-                      demarrer();
-                    },
-                  ],
-                ]
-              : []),
+            [
+              "Supprimer",
+              "danger",
+              () => {
+                const n = actsArret(ar).length;
+                if (
+                  !confirm(
+                    `Supprimer la ${semLabel(ar)} et ses ${n} activité(s) ? Les check-lists remplies et photos seront perdues.`,
+                  )
+                )
+                  return false;
+                DB.activites = DB.activites.filter((a) => a.arret !== ar.id);
+                DB.activites.forEach(
+                  (a) =>
+                    a.reprise &&
+                    !DB.activites.some((b) => b.id === a.reprise) &&
+                    delete a.reprise,
+                );
+                DB.arrets = DB.arrets.filter((r) => r.id !== ar.id);
+                if (ui.arret === ar.id) ui.arret = null;
+                changed();
+                demarrer();
+              },
+            ],
+
             ["Annuler", "", () => {}],
             [
               "Enregistrer",
@@ -4078,139 +4071,11 @@
           ${titres}${fl}${boxes}</svg>`;
       }
 
-      // ---------- Compte administrateur ----------
-      // Contrôle d'accès côté navigateur : il évite les fausses manipulations,
-      // mais toute personne qui peut modifier data.json peut contourner le mot de passe.
-      async function hacher(sel, mdp) {
-        const buf = await crypto.subtle.digest(
-          "SHA-256",
-          new TextEncoder().encode(sel + ":" + mdp),
-        );
-        return [...new Uint8Array(buf)]
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-      }
-      function majAdmin() {
-        document.body.classList.toggle("admin", ui.admin);
-        const b = $("#b-admin");
-        b.textContent = ui.admin
-          ? "🔓 " + DB.meta.admin.login
-          : "🔒 Administrateur";
-        b.title = ui.admin
-          ? "Connecté en administrateur — cliquer pour se déconnecter"
-          : "Se connecter en administrateur";
-        if (!ui.admin && ui.tab === "admin") ouvrirOnglet("gantt");
-      }
-      function connexion(ensuite) {
-        if (!window.crypto?.subtle)
-          return alert(
-            "Ce navigateur ne permet pas la connexion administrateur.",
-          );
-        const compte = DB.meta.admin;
-        const valider = async () => {
-          const login = $("#ad-login").value.trim(),
-            mdp = $("#ad-mdp").value;
-          if (!compte) {
-            if (!login || mdp.length < 6)
-              return alert(
-                "Identifiant obligatoire et mot de passe d'au moins 6 caractères.",
-              );
-            if (mdp !== $("#ad-mdp2").value)
-              return alert("Les deux mots de passe sont différents.");
-            const sel = uid("s");
-            DB.meta.admin = { login, sel, hash: await hacher(sel, mdp) };
-            changed();
-          } else if (
-            login !== compte.login ||
-            (await hacher(compte.sel, mdp)) !== compte.hash
-          )
-            return alert("Identifiant ou mot de passe incorrect.");
-          ui.admin = true;
-          try {
-            sessionStorage.setItem("hebdo-admin", DB.meta.admin.hash);
-          } catch (e) {}
-          $("#dlg").close();
-          majAdmin();
-          render();
-          if (ensuite) ensuite();
-        };
-        dialogue(
-          compte
-            ? "Connexion administrateur"
-            : "Créer le compte administrateur",
-          `${compte ? "" : '<p class="muted" style="margin-top:0">Aucun compte administrateur n\'existe encore pour ce fichier. Le compte créé sera enregistré dans data.json.</p>'}
-          <div class="form">
-            <label class="full">Identifiant<input id="ad-login" autocomplete="username" value="${compte ? "" : "admin"}"></label>
-            <label class="full">Mot de passe<input id="ad-mdp" type="password" autocomplete="${compte ? "current-password" : "new-password"}"></label>
-            ${compte ? "" : '<label class="full">Confirmer le mot de passe<input id="ad-mdp2" type="password" autocomplete="new-password"></label>'}
-          </div>`,
-          [
-            ["Annuler", "", () => {}],
-            [
-              compte ? "Se connecter" : "Créer le compte",
-              "primary",
-              () => (valider(), false),
-            ],
-          ],
-        );
-        $("#dlg-b").onkeydown = (e) =>
-          e.key === "Enter" && (e.preventDefault(), valider());
-        setTimeout(() => $(compte ? "#ad-login" : "#ad-mdp").focus(), 50);
-      }
-      // Exécute fn si administrateur, sinon demande la connexion d'abord.
-      function siAdmin(fn) {
-        if (ui.admin) return fn();
-        connexion(fn);
-      }
-      function changerMotDePasse() {
-        dialogue(
-          "Compte administrateur",
-          `<div class="form">
-            <label class="full">Identifiant<input id="ad-login" value="${esc(DB.meta.admin.login)}"></label>
-            <label class="full">Nouveau mot de passe (laisser vide pour ne pas changer)<input id="ad-mdp" type="password" autocomplete="new-password"></label>
-            <label class="full">Confirmer<input id="ad-mdp2" type="password" autocomplete="new-password"></label>
-          </div>`,
-          [
-            ["Annuler", "", () => {}],
-            [
-              "Enregistrer",
-              "primary",
-              () => {
-                const login = $("#ad-login").value.trim(),
-                  mdp = $("#ad-mdp").value;
-                if (!login) return alert("Identifiant obligatoire."), false;
-                if (mdp && mdp.length < 6)
-                  return (
-                    alert("Mot de passe trop court (6 caractères minimum)."),
-                    false
-                  );
-                if (mdp !== $("#ad-mdp2").value)
-                  return (
-                    alert("Les deux mots de passe sont différents."), false
-                  );
-                (async () => {
-                  DB.meta.admin.login = login;
-                  if (mdp) {
-                    DB.meta.admin.sel = uid("s");
-                    DB.meta.admin.hash = await hacher(DB.meta.admin.sel, mdp);
-                    try {
-                      sessionStorage.setItem("hebdo-admin", DB.meta.admin.hash);
-                    } catch (e) {}
-                  }
-                  changed();
-                  majAdmin();
-                })();
-              },
-            ],
-          ],
-        );
-      }
       // ---------- Onglet Administration ----------
       function nbAct(champ, v) {
         return DB.activites.filter((a) => a[champ] === v).length;
       }
       function renderAdmin() {
-        if (!ui.admin) return;
         const m = DB.meta,
           zo = zoneOrder();
         const zones = [...DB.zones].sort((a, b) => zo[a.id] - zo[b.id]);
@@ -4259,27 +4124,9 @@
           (p) =>
             esc(p.zone || "") +
             " · " +
-            DB.reservations.filter((r) => r.pont === p.id).length +
-            " réservation(s)",
+            DB.activites.filter((a) => a.pont === p.id).length +
+            " activité(s)",
         );
-        const eqNom = (id) => DB.equipes.find((e) => e.id === id)?.nom || id;
-        $("#ad-pers").innerHTML =
-          `<table><thead><tr><th>Nom</th><th>Prénom</th><th>Matricule</th><th>Poste</th><th>Équipe</th><th>N+1</th><th>Activités</th><th>Absences</th></tr></thead><tbody>
-          ${[...DB.personnel]
-            .sort(
-              (a, b) =>
-                eqNom(a.equipe).localeCompare(eqNom(b.equipe)) ||
-                persNom(a).localeCompare(persNom(b)),
-            )
-            .map(
-              (
-                p,
-              ) => `<tr data-pers="${p.id}"><td><b>${esc(p.nom)}</b></td><td>${esc(p.prenom)}</td><td>${esc(p.matricule ?? "")}</td><td>${esc(p.poste)}</td><td>${esc(eqNom(p.equipe))}</td><td>${esc(persNom(responsableDe(p)) === "?" ? "" : persNom(responsableDe(p)))}</td>
-                <td>${DB.activites.filter((a) => a.intervenants.includes(p.id)).length}</td><td>${p.absences.length || ""}</td></tr>`,
-            )
-            .join("")}</tbody></table>`;
-        $("#ad-compte").innerHTML =
-          `Connecté en tant que <b>${esc(m.admin.login)}</b>.`;
       }
 
       // Réaffectation avant suppression d'un élément utilisé.
@@ -4550,11 +4397,6 @@
                   );
                 normaliser(d);
                 DB = d;
-                ui.admin = !!DB.meta.admin;
-                try {
-                  if (ui.admin)
-                    sessionStorage.setItem("hebdo-admin", DB.meta.admin.hash);
-                } catch (e) {}
                 changed();
                 demarrer();
               },
@@ -4578,7 +4420,7 @@
         URL.revokeObjectURL(a.href);
       }
 
-      // Déplacement des zones sur le schéma (mode édition administrateur).
+      // Déplacement des zones sur le schéma (mode édition).
       function brancherSchemaEdition() {
         let drag = null;
         const svgPt = (svg, e) => {
@@ -4588,7 +4430,7 @@
           return p.matrixTransform(svg.getScreenCTM().inverse());
         };
         $("#schema").addEventListener("pointerdown", (e) => {
-          if (!ui.editSchema || !ui.admin) return;
+          if (!ui.editSchema) return;
           const g = e.target.closest("[data-z]");
           if (!g) return;
           const svg = g.ownerSVGElement;
@@ -4659,94 +4501,6 @@
                 p.nom = nom;
                 p.zone = $("#pt-zone").value.trim();
                 if (!id) DB.ponts.push(p);
-                remplirFiltres();
-                changed();
-              },
-            ],
-          ],
-        );
-      }
-      function editerPersonne(id) {
-        const p = id
-          ? pers(id)
-          : {
-              id: uid("p"),
-              matricule: null,
-              nom: "",
-              prenom: "",
-              poste: "",
-              equipe: DB.equipes[0]?.id,
-              absences: [],
-            };
-        dialogue(
-          id ? "Opérateur" : "Nouvel opérateur",
-          `<div class="form">
-          <label>Nom<input id="o-nom" value="${esc(p.nom)}"></label><label>Prénom<input id="o-pre" value="${esc(p.prenom)}"></label>
-          <label>Matricule<input id="o-mat" value="${esc(p.matricule ?? "")}"></label><label>Poste<input id="o-poste" value="${esc(p.poste)}"></label>
-          <label>Équipe<select id="o-eq">${DB.equipes.map((e) => opt(e.id, e.nom, p.equipe)).join("")}</select></label>
-          <label>Responsable hiérarchique (N+1)<select id="o-resp">${opt("", "— celui de l'équipe —", p.responsable || "")}${[
-            ...DB.personnel,
-          ]
-            .filter((x) => x.equipe !== "ext" && x.id !== p.id)
-            .sort((x, y) => persNom(x).localeCompare(persNom(y)))
-            .map((x) => opt(x.id, persNom(x), p.responsable || ""))
-            .join("")}</select></label>
-          <label>Absences<input value="${p.absences.length} jour(s) — onglet Charge pour modifier" disabled></label></div>`,
-          [
-            ...(id
-              ? [
-                  [
-                    "Supprimer",
-                    "danger",
-                    () => {
-                      const n = DB.activites.filter((a) =>
-                        a.intervenants.includes(id),
-                      ).length;
-                      if (
-                        !confirm(
-                          `Supprimer ${persNom(p)} ?${n ? ` Il/elle sera retiré(e) de ${n} activité(s).` : ""}`,
-                        )
-                      )
-                        return false;
-                      DB.personnel = DB.personnel.filter((x) => x.id !== id);
-                      DB.activites.forEach(
-                        (a) =>
-                          (a.intervenants = a.intervenants.filter(
-                            (i) => i !== id,
-                          )),
-                      );
-                      remplirFiltres();
-                      changed();
-                    },
-                  ],
-                  [
-                    "Voir ses activités",
-                    "",
-                    () => {
-                      ui.f = { pers: id };
-                      $("#f-q").value = "";
-                      remplirFiltres();
-                      ouvrirOnglet("activites");
-                    },
-                  ],
-                ]
-              : []),
-            ["Annuler", "", () => {}],
-            [
-              "Enregistrer",
-              "primary",
-              () => {
-                const nom = $("#o-nom").value.trim().toUpperCase();
-                if (!nom) return false;
-                Object.assign(p, {
-                  nom,
-                  prenom: $("#o-pre").value.trim(),
-                  responsable: $("#o-resp").value,
-                  matricule: $("#o-mat").value.trim() || null,
-                  poste: $("#o-poste").value.trim(),
-                  equipe: $("#o-eq").value,
-                });
-                if (!id) DB.personnel.push(p);
                 remplirFiltres();
                 changed();
               },
@@ -5776,6 +5530,100 @@
         return out;
       }
 
+      // ---------- Personnel (onglet Charge et effectifs) ----------
+      const matriculeDouble = (mat, id) =>
+        DB.personnel.find(
+          (p) => p.id !== id && mat && String(p.matricule ?? "").trim() === mat,
+        );
+      function renderPersonnel() {
+        $("#pe-eq").innerHTML = DB.equipes
+          .map((e) => opt(e.id, e.nom, ui.peEq || DB.equipes[0]?.id))
+          .join("");
+        const q = sansAccents($("#pe-q").value);
+        const ar = arret();
+        const l = DB.personnel
+          .filter(
+            (p) =>
+              !q ||
+              sansAccents([p.matricule, p.nom, p.prenom].join(" ")).includes(q),
+          )
+          .sort(
+            (a, b) =>
+              (a.equipe || "").localeCompare(b.equipe || "") ||
+              persNom(a).localeCompare(persNom(b)),
+          );
+        const incomplets = DB.personnel.filter(
+          (p) => !p.matricule || !p.prenom,
+        ).length;
+        $("#pe-count").textContent =
+          `${DB.personnel.length} agent(s)${incomplets ? ` · ${incomplets} à compléter (matricule ou prénom)` : ""}`;
+        const inp = (p, k, w) =>
+          `<input data-pe="${p.id}" data-k="${k}" value="${esc(p[k] ?? "")}" style="width:${w}px;border:1px solid ${(k === "matricule" || k === "prenom") && !p[k] ? "#e5484d" : "var(--line)"};border-radius:6px;padding:3px 6px;background:var(--card)">`;
+        $("#pe-table").innerHTML = l.length
+          ? `<table><thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th>Activités</th><th></th></tr></thead><tbody>${l
+              .map((p) => {
+                const nSem = ar
+                  ? actsArret(ar).filter((a) => a.intervenants.includes(p.id))
+                      .length
+                  : 0;
+                const nTot = DB.activites.filter((a) =>
+                  a.intervenants.includes(p.id),
+                ).length;
+                return `<tr><td>${inp(p, "matricule", 100)}</td><td>${inp(p, "nom", 170)}</td><td>${inp(p, "prenom", 150)}</td>
+                  <td><select data-pe="${p.id}" data-k="equipe" style="border:1px solid var(--line);border-radius:6px;padding:3px;background:var(--card)">${DB.equipes.map((e) => opt(e.id, e.nom, p.equipe)).join("")}</select></td>
+                  <td>${nSem} cette semaine <small class="muted">· ${nTot} au total</small></td>
+                  <td><button class="btn small danger" data-perm="${p.id}" title="Supprimer l'agent">✕</button></td></tr>`;
+              })
+              .join("")}</tbody></table>`
+          : `<p class="muted">${DB.personnel.length ? "Aucun agent trouvé." : "Aucun agent : ajoutez-les avec le formulaire ci-dessus."}</p>`;
+      }
+      function ajouterAgent() {
+        const mat = $("#pe-mat").value.trim(),
+          nom = $("#pe-nom").value.trim().toUpperCase(),
+          prenom = $("#pe-pre").value.trim();
+        if (!mat || !nom || !prenom)
+          return alert("Matricule, nom et prénom sont obligatoires.");
+        const d = matriculeDouble(mat);
+        if (d)
+          return alert(`Le matricule ${mat} est déjà celui de ${persNom(d)}.`);
+        ui.peEq = $("#pe-eq").value;
+        DB.personnel.push({
+          id: uid("p"),
+          matricule: mat,
+          nom,
+          prenom,
+          poste: "",
+          equipe: ui.peEq,
+          absences: [],
+        });
+        $("#pe-mat").value = $("#pe-nom").value = $("#pe-pre").value = "";
+        remplirFiltres();
+        changed();
+        $("#pe-mat").focus();
+        toast(`${nom} ${prenom} ajouté(e)`);
+      }
+      function supprimerAgent(id) {
+        const p = pers(id);
+        const n = DB.activites.filter((a) =>
+          a.intervenants.includes(id),
+        ).length;
+        if (
+          !confirm(
+            `Supprimer ${persNom(p)} ?${n ? `\nIl/elle sera retiré(e) de ${n} activité(s).` : ""}`,
+          )
+        )
+          return;
+        DB.personnel = DB.personnel.filter((x) => x.id !== id);
+        for (const a of [
+          ...DB.activites,
+          ...DB.taches,
+          ...DB.programmes.flatMap((g) => g.activites),
+        ])
+          a.intervenants = a.intervenants.filter((i) => i !== id);
+        remplirFiltres();
+        changed();
+      }
+
       // ---------- Charge et effectifs ----------
       function effectifTotal(ar, svc) {
         const l = (ar?.effectifs || []).filter(
@@ -5843,6 +5691,7 @@
           <table><thead><tr><th>Équipe</th>${js.map((j) => `<th>${esc(j.nom)}</th>`).join("")}<th>Total</th><th>Agents</th><th>Heures agents</th><th>Occupation</th></tr></thead><tbody>
           ${svcs.map((s) => ligne(s, `<span class="svc" style="--sc:${svcColor(s)};padding-left:6px">${esc(s || "Sans équipe")}</span>`)).join("")}${ligne(null, "Total")}</tbody></table></div></div>`;
 
+        renderPersonnel();
         // Occupation des intervenants, quart d'heure par quart d'heure.
         if (ui.cJour >= DB.meta.jours.length) ui.cJour = 0;
         renderJoursTabs("#c-days", ui.cJour);
@@ -6391,7 +6240,7 @@
         );
         if (
           !confirm(
-            `Reprendre de l'arrêt technique :\n• ${at.personnel.length} personnes (${nouv.length} nouvelles, les autres mises à jour, absences non reprises)\n• ${at.equipes?.length || 0} équipes et leur N+1\n• ${at.zones.length} zones avec leurs machines et la disposition du schéma\n• les ponts roulants${at.meta?.admin && !DB.meta.admin ? "\n• le compte administrateur" : ""}\n\nLes activités, la gamme et la bibliothèque de l'arrêt hebdo ne sont pas modifiées.`,
+            `Reprendre de l'arrêt technique :\n• ${at.personnel.length} personnes (${nouv.length} nouvelles, les autres mises à jour, absences non reprises)\n• ${at.equipes?.length || 0} équipes et leur N+1\n• ${at.zones.length} zones avec leurs machines et la disposition du schéma\n• les ponts roulants\n\nLes semaines, activités, programmes types et tâches de l'arrêt hebdo ne sont pas modifiés.`,
           )
         )
           return;
@@ -6461,8 +6310,6 @@
         for (const p of at.ponts || [])
           if (!DB.ponts.some((x) => x.id === p.id))
             DB.ponts.push({ id: p.id, nom: p.nom, zone: p.zone || "" });
-        if (at.meta?.admin && !DB.meta.admin)
-          DB.meta.admin = structuredClone(at.meta.admin);
         remplirFiltres();
         changed();
         toast("Personnel, équipes, zones et ponts repris de l'arrêt technique");
@@ -6564,8 +6411,7 @@
             if (on && actif(a)) (sous[i] += a.nb), (tot += (a.nb * pas) / 60);
             cells += `<td class="q ${on ? (a.nb > 1 ? "on2" : "on") : ""}" style="${enPause(a0) ? "background:#ddd" : ""}">${on && a.nb > 1 ? a.nb : ""}</td>`;
           }
-          const sig = a.signePar ? esc(persNom(pers(a.signePar))) : "";
-          body += `<tr><td></td><td>${esc(a.designation)}${a.statut !== "planifie" ? ` <i>(${esc(stLabel(a.statut))})</i>` : ""}</td><td>${esc(a.service)}</td><td>${esc(a.frequence || "")}</td><td>${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || "")}</td><td>${esc(a.intervenants.map((i) => pers(i)?.nom).join(" / "))}</td><td>${sig}</td>${cells}</tr>`;
+          body += `<tr><td></td><td>${esc(a.designation)}${a.statut !== "planifie" ? ` <i>(${esc(stLabel(a.statut))})</i>` : ""}</td><td>${esc(a.service)}</td><td>${esc(a.frequence || "")}</td><td>${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || "")}</td><td>${esc(a.intervenants.map((i) => pers(i)?.nom).join(" / "))}</td><td></td>${cells}</tr>`;
         }
         body += `<tr><td colspan="7" style="text-align:right"><b>Agents mobilisés</b></td>${sous.map((v) => `<td class="q" style="text-align:center">${v || ""}</td>`).join("")}</tr>`;
         imprimerPages(
@@ -6592,7 +6438,7 @@
             zc = a.zone;
             rows += `<tr><th colspan="6" style="text-align:left">${esc(zoneNom(zc))}</th></tr>`;
           }
-          rows += `<tr><td>${esc(a.designation)}</td><td>${esc(a.service)}</td><td>${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</td><td>${esc(a.intervenants.map((i) => pers(i)?.nom).join(", "))}</td><td><b>${esc(stLabel(a.statut))}</b>${a.signePar ? "<br>✍ " + esc(persNom(pers(a.signePar))) : ""}</td><td>${esc(a.commentaire || "")}</td></tr>`;
+          rows += `<tr><td>${esc(a.designation)}</td><td>${esc(a.service)}</td><td>${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</td><td>${esc(a.intervenants.map((i) => pers(i)?.nom).join(", "))}</td><td><b>${esc(stLabel(a.statut))}</b></td><td>${esc(a.commentaire || "")}</td></tr>`;
         }
         imprimerPages([
           `<div class="pg-c"><h1>Compte rendu — ${esc(DB.meta.titre)} — ${esc(semLabel(ar))}</h1>
@@ -6778,7 +6624,7 @@
         $("#s-edit").classList.toggle("primary", ui.editSchema);
         $("#schema").classList.toggle("edit", ui.editSchema);
       };
-      $("#s-zone-add").onclick = () => siAdmin(() => editerZone(null));
+      $("#s-zone-add").onclick = () => editerZone(null);
 
       // Charge
       $("#c-bilan").addEventListener("change", (e) => {
@@ -6805,12 +6651,50 @@
         });
         changed();
       };
-      $("#c-eff-def").onclick = () =>
-        siAdmin(() => {
-          DB.meta.effectifs = structuredClone(arret()?.effectifs || []);
-          changed();
-          toast("Effectifs par défaut enregistrés");
-        });
+      $("#c-eff-def").onclick = () => {
+        DB.meta.effectifs = structuredClone(arret()?.effectifs || []);
+        changed();
+        toast("Effectifs par défaut enregistrés");
+      };
+      $("#pe-form").onsubmit = (e) => {
+        e.preventDefault();
+        ajouterAgent();
+      };
+      $("#pe-q").oninput = renderPersonnel;
+      $("#pe-table").addEventListener("change", (e) => {
+        const t = e.target;
+        if (!t.dataset.pe) return;
+        const p = pers(t.dataset.pe);
+        let v = t.value.trim();
+        if (t.dataset.k === "nom") v = v.toUpperCase();
+        if (
+          (t.dataset.k === "nom" ||
+            t.dataset.k === "matricule" ||
+            t.dataset.k === "prenom") &&
+          !v
+        ) {
+          alert("Matricule, nom et prénom sont obligatoires.");
+          return renderPersonnel();
+        }
+        if (t.dataset.k === "matricule" && matriculeDouble(v, p.id)) {
+          alert(
+            `Le matricule ${v} est déjà celui de ${persNom(matriculeDouble(v, p.id))}.`,
+          );
+          return renderPersonnel();
+        }
+        p[t.dataset.k] = v;
+        t.value = v;
+        t.style.borderColor = "";
+        // Pas de nouveau rendu : la saisie peut continuer avec Tab.
+        dirty = true;
+        sauverLocal();
+        renderEtat();
+        remplirFiltres();
+      });
+      $("#pe-table").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-perm]");
+        if (b) supprimerAgent(b.dataset.perm);
+      });
       $("#c-days").onclick = (e) => {
         const j = e.target.closest("[data-j]");
         if (j) (ui.cJour = Number(j.dataset.j)), renderCharge();
@@ -6906,27 +6790,9 @@
       };
 
       // Administration
-      $("#b-admin").onclick = () => {
-        if (!DB) return;
-        if (!ui.admin) return connexion(() => ouvrirOnglet("admin"));
-        if (ui.tab !== "admin") return ouvrirOnglet("admin");
-        if (confirm("Se déconnecter du compte administrateur ?")) deconnexion();
-      };
-      function deconnexion() {
-        ui.admin = false;
-        ui.editSchema = false;
-        $("#schema").classList.remove("edit");
-        try {
-          sessionStorage.removeItem("hebdo-admin");
-        } catch (e) {}
-        majAdmin();
-        render();
-      }
-      $("#ad-logout").onclick = deconnexion;
-      $("#ad-mdp-btn").onclick = changerMotDePasse;
-      $("#ad-arret-edit").onclick = () => siAdmin(editerParametres);
+      $("#ad-arret-edit").onclick = editerParametres;
       $("#ad-at").onclick = () => $("#at-in").click();
-      $("#ad-json").onclick = () => siAdmin(editeurJson);
+      $("#ad-json").onclick = editeurJson;
       $("#ad-export").onclick = exporterJson;
       $("#ad-purge").onclick = () => {
         if (
@@ -6960,11 +6826,6 @@
         if (tr) editerPont(tr.dataset.ledit);
       };
       $("#ad-pont-add").onclick = () => editerPont(null);
-      $("#ad-pers").onclick = (e) => {
-        const tr = e.target.closest("[data-pers]");
-        if (tr) editerPersonne(tr.dataset.pers);
-      };
-      $("#ad-pers-add").onclick = () => editerPersonne(null);
 
       // ---------- Démarrage ----------
       (async function init() {
@@ -6979,11 +6840,6 @@
         if (data) {
           normaliser(data);
           DB = data;
-          try {
-            ui.admin =
-              !!DB.meta.admin &&
-              sessionStorage.getItem("hebdo-admin") === DB.meta.admin.hash;
-          } catch (e) {}
           demarrer();
         } else {
           $("#vide").hidden = false;
