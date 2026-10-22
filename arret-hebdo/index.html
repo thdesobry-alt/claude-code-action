@@ -1341,6 +1341,13 @@
           size: A3 landscape;
           margin: 6mm;
         }
+        body.impression.perso #print-zone .pg {
+          page: perso;
+        }
+        @page perso {
+          size: A4 landscape;
+          margin: 7mm;
+        }
         .pg-g tr {
           break-inside: avoid;
         }
@@ -1417,7 +1424,12 @@
       <section class="tab on" id="tab-gantt">
         <div class="card">
           <div class="row filters" style="margin-bottom: 10px">
+            <div class="daytabs" id="g-vue">
+              <button data-vue="act" class="on">Par activité</button>
+              <button data-vue="pers">Par personne</button>
+            </div>
             <div class="daytabs" id="g-days"></div>
+            <select id="g-pers" hidden></select>
             <input
               id="g-q"
               type="search"
@@ -2446,6 +2458,18 @@
       }
       function renderGantt() {
         const ar = arret();
+        const parPers = ui.vue === "pers";
+        document
+          .querySelectorAll("#g-vue [data-vue]")
+          .forEach((b) =>
+            b.classList.toggle("on", b.dataset.vue === (ui.vue || "act")),
+          );
+        $("#g-days").hidden = parPers;
+        $("#g-pers").hidden = !parPers;
+        $("#g-print").title = parPers
+          ? "Imprime la feuille de route de chaque personne affichée (une page par personne)"
+          : "Imprime le Gantt du jour, au format de la feuille Excel avec la colonne signature";
+        if (parPers) return renderGanttPers();
         if (ui.jour >= DB.meta.jours.length) ui.jour = 0;
         renderJoursTabs("#g-days", ui.jour);
         const pas = DB.meta.pas;
@@ -2551,6 +2575,208 @@
         $("#g-info").textContent = conf.size
           ? `⚠️ ${conf.size} activité(s) en conflit (intervenant ou pont)`
           : "";
+      }
+      // ---------- Gantt par personne : ses tâches dans l'ordre chronologique ----------
+      function fenetreSemaine() {
+        return {
+          t0: Math.min(...DB.meta.jours.map((j) => T.min(j.debut))),
+          t1: Math.max(...DB.meta.jours.map((j) => T.min(j.fin))),
+        };
+      }
+      // Lignes d'une personne : un créneau par ligne, triées par jour puis heure ; les activités sans créneau à la fin du jour.
+      function lignesPersonne(pid, acts) {
+        const l = [];
+        for (const a of acts) {
+          if (!a.intervenants.includes(pid)) continue;
+          if (!a.creneaux.length) l.push({ a, k: -1, d0: 1e9, d1: 1e9 });
+          a.creneaux.forEach((c, k) =>
+            l.push({ a, k, d0: T.min(c.debut), d1: T.min(c.fin) }),
+          );
+        }
+        l.sort(
+          (x, y) =>
+            x.a.jour - y.a.jour ||
+            x.d0 - y.d0 ||
+            x.a.designation.localeCompare(y.a.designation),
+        );
+        // Deux créneaux qui se chevauchent le même jour : conflit.
+        l.forEach((x, i) => {
+          x.conf = l.some(
+            (y, j) =>
+              j !== i &&
+              x.k >= 0 &&
+              y.k >= 0 &&
+              actif(x.a) &&
+              actif(y.a) &&
+              y.a.jour === x.a.jour &&
+              y.d0 < x.d1 &&
+              x.d0 < y.d1,
+          );
+        });
+        return l;
+      }
+      function personnesGantt() {
+        const ar = arret();
+        const g = ui.g,
+          q = (g.q || "").toLowerCase();
+        const acts = actsArret(ar).filter(
+          (a) =>
+            (!g.zone || a.zone === g.zone) &&
+            (!g.svc || a.service === g.svc) &&
+            (!g.st || a.statut === g.st) &&
+            recherche(a, q),
+        );
+        const ids = [...new Set(acts.flatMap((a) => a.intervenants))]
+          .map(pers)
+          .filter(Boolean)
+          .sort(
+            (a, b) =>
+              (a.equipe || "").localeCompare(b.equipe || "") ||
+              persNom(a).localeCompare(persNom(b)),
+          );
+        return {
+          acts,
+          ps: ui.gPers ? ids.filter((p) => p.id === ui.gPers) : ids,
+          tous: ids,
+        };
+      }
+      function renderGanttPers() {
+        const ar = arret();
+        const pas = DB.meta.pas;
+        $("#g-pas").textContent = pas;
+        if (!ar)
+          return ($("#hgantt").innerHTML =
+            '<p class="muted">Aucun arrêt. Cliquez sur « ＋ Semaine » en haut de page.</p>');
+        const { acts, ps, tous } = personnesGantt();
+        if (ui.gPers && !tous.some((p) => p.id === ui.gPers) && pers(ui.gPers))
+          ps.push(pers(ui.gPers));
+        $("#g-pers").innerHTML =
+          opt("", `Toutes les personnes (${tous.length})`, ui.gPers || "") +
+          [...DB.personnel]
+            .sort((a, b) => persNom(a).localeCompare(persNom(b)))
+            .map((p) => {
+              const n = acts.filter((a) =>
+                a.intervenants.includes(p.id),
+              ).length;
+              return opt(
+                p.id,
+                `${persNom(p)}${n ? " — " + n + " tâche(s)" : ""}`,
+                ui.gPers || "",
+              );
+            })
+            .join("");
+        const { t0, t1 } = fenetreSemaine();
+        const n = Math.ceil((t1 - t0) / pas),
+          W = 20,
+          sph = 60 / pas;
+        const x = (min) => ((min - t0) / pas) * W;
+        const track = `width:${n * W}px;--sw:${W}px;--sph:${sph}`;
+        const js = joursArret(ar);
+        let html = `<div class="hg" style="--sw:${W}px"><div class="hg-row hg-head"><div class="hg-lab"><b>Personne / tâches dans l'ordre</b><small>${ps.length} personne(s) · ${esc(semLabel(ar))}</small></div><div class="hg-track" style="${track}">`;
+        for (let t = t0; t < t1; t += 60) {
+          const w = Math.min(60, t1 - t) / pas;
+          const hh = (k) => String(Math.floor(k / 60)).padStart(2, "0") + "h";
+          html += `<div class="hh" style="width:${w * W}px"><b>${hh(t)}–${hh(t + 60)}</b></div>`;
+        }
+        html += `</div></div>`;
+        let nConf = 0;
+        for (const p of ps) {
+          const l = lignesPersonne(p.id, acts);
+          const hTot = l.reduce(
+            (s, y) => s + (y.k >= 0 && actif(y.a) ? (y.d1 - y.d0) / 60 : 0),
+            0,
+          );
+          const nc = l.filter((y) => y.conf).length;
+          nConf += nc;
+          html += `<div class="hg-row hg-zone"><div class="hg-lab">👷 ${esc(persNom(p))} <span class="muted">· ${esc(DB.equipes.find((e) => e.id === p.equipe)?.nom || "")} · ${l.length} créneau(x) · ${h(hTot)}${nc ? ` · <span class="late">⚠️ ${nc} en conflit</span>` : ""}</span></div><div class="hg-track" style="${track};cursor:default"></div></div>`;
+          let jc = null;
+          for (const y of l) {
+            const a = y.a,
+              j = js[a.jour];
+            const def = jourDef(a.jour);
+            if (a.jour !== jc) {
+              jc = a.jour;
+              html += `<div class="hg-row" style="min-height:22px"><div class="hg-lab" style="display:block;background:var(--card)"><small style="font-weight:700;color:var(--ink)">${esc(def.nom)} ${D.fmt(j.date)}</small></div><div class="hg-track" style="${track};cursor:default"></div></div>`;
+            }
+            const pauses = def.pauses
+              .map(
+                (pa) =>
+                  `<div class="pause" style="left:${x(T.min(pa.debut))}px;width:${x(T.min(pa.fin)) - x(T.min(pa.debut))}px"></div>`,
+              )
+              .join("");
+            const avec = a.intervenants
+              .filter((i) => i !== p.id)
+              .map((i) => pers(i)?.nom)
+              .filter(Boolean);
+            const seg =
+              y.k >= 0
+                ? `<div class="seg ${a.statut} ${y.conf ? "conf" : ""}" data-seg="${a.id}|${y.k}" style="left:${Math.max(0, x(y.d0)) + 1}px;width:${Math.max(6, x(y.d1) - x(y.d0) - 2)}px;--sc:${svcColor(a.service)}" title="${esc(a.designation)} — ${T.str(y.d0)} → ${T.str(y.d1)}${y.conf ? " — ⚠️ autre tâche au même moment" : ""}"><span class="rzl"></span>${esc(a.designation)}<span class="rz"></span></div>`
+                : `<span class="hint" style="position:absolute;left:8px;top:9px;font-size:12px;color:var(--muted);font-style:italic">Sans horaire</span>`;
+            html += `<div class="hg-row"><div class="hg-lab svc" data-id="${a.id}" style="--sc:${svcColor(a.service)}"><span class="des"><b>${y.k >= 0 ? T.str(y.d0) + "–" + T.str(y.d1) : "—"}</b> ${esc(a.designation)}</span><span><i class="stp" style="background:var(--${a.statut})" title="${stLabel(a.statut)}"></i></span>
+              <small>${esc(zoneNom(a.zone))} · ${esc(a.service)}${avec.length ? " · avec " + esc(avec.join(", ")) : ""}${a.pont ? " · 🏗️ " + esc(DB.ponts.find((pt) => pt.id === a.pont)?.nom || "") : ""}</small></div>
+              <div class="hg-track" style="${track};cursor:default">${pauses}${seg}</div></div>`;
+          }
+        }
+        if (!ps.length)
+          html += `<div class="hg-row"><div class="hg-lab muted" style="display:block">Aucune tâche affectée${ui.gPers ? " à cette personne" : ""} cette semaine.</div></div>`;
+        $("#hgantt").innerHTML = html + "</div>";
+        $("#g-info").textContent = nConf
+          ? `⚠️ ${nConf} créneau(x) où une personne a deux tâches en même temps`
+          : "";
+      }
+      // Feuille de route : une page par personne, ses tâches dans l'ordre chronologique.
+      function imprimerGanttPers() {
+        const ar = arret();
+        if (!ar) return;
+        const { acts, ps } = personnesGantt();
+        if (ui.gPers && !ps.length && pers(ui.gPers)) ps.push(pers(ui.gPers));
+        if (!ps.length) return alert("Aucune personne à imprimer.");
+        if (
+          ps.length > 10 &&
+          !confirm(`Imprimer ${ps.length} feuilles de route ?`)
+        )
+          return;
+        const { t0, t1 } = fenetreSemaine();
+        const pas = DB.meta.pas,
+          n = Math.ceil((t1 - t0) / pas);
+        let head = "";
+        for (let t = t0; t < t1; t += 60)
+          head += `<th colspan="${Math.min(60, t1 - t) / pas}">${T.str(t).slice(0, 2)}h</th>`;
+        const pages = ps.map((p) => {
+          const l = lignesPersonne(p.id, acts);
+          let body = "",
+            jc = null;
+          for (const y of l) {
+            const a = y.a,
+              def = jourDef(a.jour);
+            if (a.jour !== jc) {
+              jc = a.jour;
+              body += `<tr class="zh"><td colspan="${6 + n}">${esc(def.nom)} ${D.fmt(joursArret(ar)[a.jour].date)}</td></tr>`;
+            }
+            let cells = "";
+            for (let i = 0; i < n; i++) {
+              const m0 = t0 + i * pas;
+              const on = y.k >= 0 && y.d0 <= m0 && y.d1 > m0;
+              const pause = def.pauses.some(
+                (pa) => m0 >= T.min(pa.debut) && m0 < T.min(pa.fin),
+              );
+              cells += `<td class="q ${on ? "on" : ""}" style="${pause && !on ? "background:#ddd" : ""}"></td>`;
+            }
+            const avec = a.intervenants
+              .filter((i) => i !== p.id)
+              .map((i) => pers(i)?.nom)
+              .filter(Boolean);
+            body += `<tr><td><b>${y.k >= 0 ? T.str(y.d0) + "–" + T.str(y.d1) : "—"}</b>${y.conf ? " ⚠️" : ""}</td><td>${esc(a.designation)}</td><td>${esc(zoneNom(a.zone))}</td><td>${esc(avec.join(", "))}</td><td>${esc(DB.ponts.find((pt) => pt.id === a.pont)?.nom || "")}</td><td style="text-align:center">☐</td>${cells}</tr>`;
+          }
+          const hTot = l.reduce(
+            (s, y) => s + (y.k >= 0 && actif(y.a) ? (y.d1 - y.d0) / 60 : 0),
+            0,
+          );
+          return `<div class="pg-g"><h1>Feuille de route — ${esc(persNom(p))}${p.matricule ? " (" + esc(p.matricule) + ")" : ""} — ${esc(semLabel(ar))} · ${h(hTot)}</h1>
+            <table><colgroup><col style="width:7%"><col style="width:27%"><col style="width:10%"><col style="width:9%"><col style="width:5%"><col style="width:3%">${"<col>".repeat(n)}</colgroup>
+            <thead><tr><th>Horaire</th><th>Tâche</th><th>Section</th><th>Avec</th><th>Pont</th><th>Fait</th>${head}</tr></thead><tbody>${body || `<tr><td colspan="${6 + n}">Aucune tâche.</td></tr>`}</tbody></table></div>`;
+        });
+        imprimerPages(pages, { perso: true });
       }
       function brancherGantt() {
         const g = $("#hgantt"),
@@ -6316,13 +6542,17 @@
       }
 
       // ---------- Impressions ----------
-      async function imprimerPages(pages, { paysage = false } = {}) {
+      async function imprimerPages(
+        pages,
+        { paysage = false, perso = false } = {},
+      ) {
         const zone = $("#print-zone");
         zone.innerHTML = pages
           .map((p) => `<div class="pg">${p}</div>`)
           .join("");
         document.body.classList.add("impression");
         document.body.classList.toggle("paysage", paysage);
+        document.body.classList.toggle("perso", perso);
         await Promise.all(
           [...zone.querySelectorAll("img")].map((i) =>
             i.decode().catch(() => {}),
@@ -6331,7 +6561,7 @@
         window.print();
       }
       window.addEventListener("afterprint", () => {
-        document.body.classList.remove("impression", "paysage");
+        document.body.classList.remove("impression", "paysage", "perso");
         $("#print-zone").innerHTML = "";
       });
       const box = (on) => `<span class="box">${on ? "✕" : ""}</span>`;
@@ -6546,7 +6776,16 @@
           renderGantt();
         });
       $("#g-new").onclick = () => editerActivite(null);
-      $("#g-print").onclick = imprimerGantt;
+      $("#g-print").onclick = () =>
+        ui.vue === "pers" ? imprimerGanttPers() : imprimerGantt();
+      $("#g-vue").onclick = (e) => {
+        const b = e.target.closest("[data-vue]");
+        if (b) (ui.vue = b.dataset.vue), renderGantt();
+      };
+      $("#g-pers").onchange = (e) => {
+        ui.gPers = e.target.value;
+        renderGantt();
+      };
       brancherGantt();
 
       // Activités
