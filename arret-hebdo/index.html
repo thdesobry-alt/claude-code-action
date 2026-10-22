@@ -13,10 +13,8 @@
         --line: #e3e7ed;
         --accent: #1f6feb;
         --weekend: #eef1f5;
-        --afaire: #8a94a6;
-        --encours: #1f6feb;
+        --planifie: #8a94a6;
         --fait: #1f9d55;
-        --nonnecessaire: #b9a6d9;
         --reportee: #e08a00;
         --ok: #d8f3e3;
         --ok2: #9fdfb8;
@@ -283,17 +281,11 @@
         font-size: 12px;
         cursor: pointer;
       }
-      .st-afaire {
-        background: var(--afaire);
-      }
-      .st-encours {
-        background: var(--encours);
+      .st-planifie {
+        background: var(--planifie);
       }
       .st-fait {
         background: var(--fait);
-      }
-      .st-nonnecessaire {
-        background: var(--nonnecessaire);
       }
       .st-reportee {
         background: var(--reportee);
@@ -412,17 +404,11 @@
         width: 8px;
         cursor: ew-resize;
       }
-      .bar.afaire {
-        background: var(--afaire);
-      }
-      .bar.encours {
-        background: var(--encours);
+      .bar.planifie {
+        background: var(--planifie);
       }
       .bar.fait {
         background: var(--fait);
-      }
-      .bar.nonnecessaire {
-        background: var(--nonnecessaire);
       }
       .bar.reportee {
         background: var(--reportee);
@@ -1000,106 +986,7 @@
         background: var(--accent);
         color: #fff;
       }
-      /* Page avec bibliothèque latérale (glisser-déposer) */
-      .with-lib {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 290px;
-        gap: 16px;
-        align-items: start;
-      }
-      .with-lib.nolib {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .with-lib.nolib .lib-side {
-        display: none;
-      }
-      .lib-side {
-        position: sticky;
-        top: 110px;
-        max-height: calc(100vh - 130px);
-        display: flex;
-        flex-direction: column;
-        padding: 12px;
-      }
-      .lib-side h2 {
-        margin-bottom: 4px;
-      }
-      .lib-side .lib-list {
-        overflow: auto;
-        flex: 1;
-        margin-top: 8px;
-      }
-      .lib-side input,
-      .lib-side select {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 5px 8px;
-        background: var(--card);
-        width: 100%;
-        margin-top: 4px;
-      }
-      @media (max-width: 1100px) {
-        .with-lib {
-          grid-template-columns: minmax(0, 1fr);
-        }
-        .lib-side {
-          position: static;
-          max-height: 340px;
-        }
-      }
-      .doc-card {
-        border: 1px solid var(--line);
-        border-left: 4px solid var(--dc, var(--accent));
-        border-radius: 8px;
-        padding: 6px 8px;
-        margin-bottom: 6px;
-        background: var(--card);
-        cursor: grab;
-        font-size: 13px;
-      }
-      .doc-card:active {
-        cursor: grabbing;
-      }
-      .doc-card small {
-        display: block;
-        color: var(--muted);
-      }
-      .doc-card.mop {
-        --dc: #8e4ec6;
-      }
-      .doc-card.checklist {
-        --dc: #0d9488;
-      }
-      .doc-card.dragging {
-        opacity: 0.5;
-      }
-      .tag.mop {
-        background: #efe4fb;
-        color: #6e2ea8;
-      }
-      .tag.checklist {
-        background: #d5f5f0;
-        color: #0b6b62;
-      }
-      .tag.nok {
-        background: #fde2dd;
-        color: #b42318;
-        font-weight: 600;
-      }
-      .tag.okall {
-        background: var(--ok);
-        color: var(--fait);
-      }
       @media (prefers-color-scheme: dark) {
-        .tag.mop {
-          background: #3a2552;
-          color: #d9b8ff;
-        }
-        .tag.checklist {
-          background: #12403b;
-          color: #8ff0e2;
-        }
-        .tag.nok,
         .tag.manque {
           background: #5a1f19;
           color: #ffb4a8;
@@ -1108,20 +995,6 @@
           background: #1d2f55;
           color: #a8c5ff;
         }
-      }
-      /* Cibles de dépôt */
-      .drop-ok {
-        outline: 2px dashed var(--accent) !important;
-        outline-offset: -2px;
-        background: color-mix(
-          in srgb,
-          var(--accent) 12%,
-          transparent
-        ) !important;
-      }
-      body.drag-doc [data-drop] {
-        outline: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
-        outline-offset: -1px;
       }
       /* Gantt horaire */
       .hg {
@@ -1272,20 +1145,12 @@
       .seg.fait::before {
         content: "✓ ";
       }
-      .seg.nonnecessaire {
-        opacity: 0.4;
-        text-decoration: line-through;
-      }
       .seg.reportee {
         background: repeating-linear-gradient(
           135deg,
           var(--reportee) 0 6px,
           #c27600 6px 12px
         );
-      }
-      .seg.encours {
-        outline: 2px solid var(--encours);
-        outline-offset: 1px;
       }
       .seg.conf {
         box-shadow: 0 0 0 2px #e5484d;
@@ -1340,62 +1205,6 @@
         font-size: 10px;
         color: var(--muted);
       }
-      /* Check-list à remplir */
-      .ck-table td {
-        vertical-align: middle;
-      }
-      .ck-table tr.sect td {
-        background: var(--weekend);
-        font-weight: 700;
-      }
-      .ck-btns {
-        display: inline-flex;
-        gap: 2px;
-      }
-      .ck-btns button {
-        border: 1px solid var(--line);
-        background: var(--card);
-        border-radius: 6px;
-        padding: 2px 8px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--muted);
-      }
-      .ck-btns button.on[data-v="ok"] {
-        background: var(--fait);
-        color: #fff;
-        border-color: var(--fait);
-      }
-      .ck-btns button.on[data-v="nok"] {
-        background: #e5484d;
-        color: #fff;
-        border-color: #e5484d;
-      }
-      .ck-btns button.on[data-v="na"] {
-        background: var(--afaire);
-        color: #fff;
-        border-color: var(--afaire);
-      }
-      .ck-table input {
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        padding: 3px 6px;
-        background: var(--card);
-        width: 100%;
-      }
-      .modes-list .mode {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 0;
-        border-bottom: 1px dashed var(--line);
-      }
-      .modes-list .mode b {
-        flex: 1;
-        min-width: 160px;
-      }
       .seg-ed {
         display: flex;
         flex-wrap: wrap;
@@ -1419,25 +1228,9 @@
       .bilan-tab input.lib {
         width: 170px;
       }
-      .due {
-        color: var(--encours);
-        font-weight: 600;
-      }
       .late {
         color: #c4320a;
         font-weight: 600;
-      }
-      .big-drop {
-        border: 2px dashed var(--line);
-        border-radius: 12px;
-        padding: 18px;
-        text-align: center;
-        color: var(--muted);
-        cursor: pointer;
-      }
-      .big-drop.over {
-        border-color: var(--accent);
-        background: var(--weekend);
       }
       .toast {
         position: fixed;
@@ -1591,8 +1384,6 @@
       <nav id="tabs">
         <button data-tab="gantt" class="on">📅 Gantt</button>
         <button data-tab="activites">📋 Activités</button>
-        <button data-tab="biblio">📚 Modes opératoires / check-lists</button>
-        <button data-tab="gamme">🔁 Gamme préventive</button>
         <button data-tab="schema">🗺️ Schéma laminoir</button>
         <button data-tab="charge">👷 Charge et effectifs</button>
         <button data-tab="semaines">🗂️ Semaines</button>
@@ -1621,46 +1412,38 @@
 
       <!-- GANTT HORAIRE -->
       <section class="tab on" id="tab-gantt">
-        <div class="with-lib" data-lib>
-          <div class="card" style="margin: 0">
-            <div class="row filters" style="margin-bottom: 10px">
-              <div class="daytabs" id="g-days"></div>
-              <input
-                id="g-q"
-                type="search"
-                placeholder="🔎 Rechercher…"
-                style="min-width: 180px"
-              />
-              <select id="g-zone"></select>
-              <select id="g-svc"></select>
-              <select id="g-st"></select>
-              <div class="spacer"></div>
-              <span class="muted" id="g-info"></span>
-              <button
-                class="btn"
-                id="g-print"
-                title="Imprime le Gantt du jour, au format de la feuille Excel avec la colonne signature"
-              >
-                🖨️ Gantt
-              </button>
-              <button class="btn" data-libtoggle>📚 Bibliothèque</button>
-              <button class="btn primary" id="g-new">＋ Activité</button>
-            </div>
-            <div class="legend" style="margin-bottom: 8px">
-              <span
-                >1 case = <b id="g-pas">15</b> min. Glisser une barre pour la
-                déplacer, ses bords pour changer l'horaire ; cliquer sur une
-                ligne vide pour placer un créneau d'1 h (Maj + clic : créneau
-                supplémentaire).</span
-              >
-              <span
-                >Glisser un mode opératoire ou une check-list de la bibliothèque
-                sur une ligne pour l'y rattacher.</span
-              >
-            </div>
-            <div class="scroll-x tall" id="hgantt"></div>
+        <div class="card">
+          <div class="row filters" style="margin-bottom: 10px">
+            <div class="daytabs" id="g-days"></div>
+            <input
+              id="g-q"
+              type="search"
+              placeholder="🔎 Rechercher…"
+              style="min-width: 180px"
+            />
+            <select id="g-zone"></select>
+            <select id="g-svc"></select>
+            <select id="g-st"></select>
+            <div class="spacer"></div>
+            <span class="muted" id="g-info"></span>
+            <button
+              class="btn"
+              id="g-print"
+              title="Imprime le Gantt du jour, au format de la feuille Excel avec la colonne signature"
+            >
+              🖨️ Gantt
+            </button>
+            <button class="btn primary" id="g-new">＋ Activité</button>
           </div>
-          <aside class="card lib-side" data-libside></aside>
+          <div class="legend" style="margin-bottom: 8px">
+            <span
+              >1 case = <b id="g-pas">15</b> min. Glisser une barre pour la
+              déplacer, ses bords pour changer l'horaire ; cliquer sur une ligne
+              vide pour placer un créneau d'1 h (Maj + clic : créneau
+              supplémentaire).</span
+            >
+          </div>
+          <div class="scroll-x tall" id="hgantt"></div>
         </div>
       </section>
 
@@ -1671,164 +1454,52 @@
           <h2>Avancement par équipe</h2>
           <div class="svc-grid" id="svc-av"></div>
         </div>
-        <div class="with-lib" data-lib>
-          <div class="card" style="margin: 0">
-            <div class="row filters" style="margin-bottom: 12px">
-              <input
-                id="f-q"
-                type="search"
-                placeholder="🔎 Rechercher…"
-                style="min-width: 200px"
-              />
-              <select id="f-jour"></select>
-              <select id="f-zone"></select>
-              <select id="f-svc"></select>
-              <select id="f-st"></select>
-              <select id="f-pers"></select>
-              <select id="f-doc">
-                <option value="">Tous documents</option>
-                <option value="sans-mode">
-                  Sans mode opératoire ni check-list
-                </option>
-                <option value="ck-incomplet">Check-list incomplète</option>
-                <option value="nok">Point de check-list non conforme</option>
-                <option value="manque-ext">
-                  Entreprise ext. : commande / PdP manquant
-                </option>
-                <option value="sans-ar">Sans analyse de risque signée</option>
-                <option value="photos">Avec photos</option>
-              </select>
-              <button class="btn small" id="f-reset">Réinitialiser</button>
-              <div class="spacer"></div>
-              <span class="muted" id="f-count"></span>
-            </div>
-            <div class="row" style="margin-bottom: 10px">
-              <button
-                class="btn"
-                id="b-dossier"
-                title="Analyse de risque, check-lists et modes opératoires de chaque activité du filtre"
-              >
-                🖨️ Dossiers d'intervention
-              </button>
-              <button class="btn" id="b-ar-print">🖨️ Analyses de risque</button>
-              <button class="btn" id="b-cr">🖨️ Compte rendu de l'arrêt</button>
-              <div class="spacer"></div>
-              <button class="btn" data-libtoggle>📚 Bibliothèque</button>
-              <button class="btn primary" id="b-new">
-                ＋ Nouvelle activité
-              </button>
-            </div>
-            <div class="scroll-x tall">
-              <table id="t-act">
-                <thead>
-                  <tr>
-                    <th>Désignation</th>
-                    <th>Équipe</th>
-                    <th>Fréq.</th>
-                    <th>Agents</th>
-                    <th>Horaire</th>
-                    <th>Modes op. / check-lists</th>
-                    <th>Statut</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </div>
-          <aside class="card lib-side" data-libside></aside>
-        </div>
-      </section>
-
-      <!-- BIBLIOTHÈQUE -->
-      <section class="tab" id="tab-biblio">
         <div class="card">
-          <div class="row" style="margin-bottom: 10px">
-            <h2 style="margin: 0">Modes opératoires et check-lists</h2>
-            <div class="spacer"></div>
-            <button class="btn" id="bi-ck-new">＋ Nouvelle check-list</button>
-            <button class="btn primary" id="bi-mop-new">
-              ＋ Mode opératoire (fichier)
-            </button>
-          </div>
-          <div class="big-drop" id="bi-drop">
-            Glisser ici des fichiers : <b>PDF, Word, Excel, images</b> → modes
-            opératoires · <b>.txt / .csv</b> (un point par ligne) → check-lists.
-            <br /><small
-              >Ensuite, glissez-les sur les activités (onglets Gantt, Activités
-              ou Gamme).</small
-            >
-          </div>
-          <div class="row filters" style="margin: 12px 0">
+          <div class="row filters" style="margin-bottom: 12px">
             <input
-              id="bi-q"
+              id="f-q"
               type="search"
               placeholder="🔎 Rechercher…"
-              style="min-width: 220px"
+              style="min-width: 200px"
             />
-            <select id="bi-type">
-              <option value="">Tous les types</option>
-              <option value="mop">Modes opératoires</option>
-              <option value="checklist">Check-lists</option>
+            <select id="f-jour"></select>
+            <select id="f-zone"></select>
+            <select id="f-svc"></select>
+            <select id="f-st"></select>
+            <select id="f-pers"></select>
+            <select id="f-doc">
+              <option value="">Tous documents</option>
+              <option value="manque-ext">
+                Entreprise ext. : commande / PdP manquant
+              </option>
+              <option value="sans-ar">Sans analyse de risque signée</option>
+              <option value="photos">Avec photos</option>
             </select>
-            <select id="bi-svc"></select>
+            <button class="btn small" id="f-reset">Réinitialiser</button>
             <div class="spacer"></div>
-            <span class="muted" id="bi-count"></span>
+            <span class="muted" id="f-count"></span>
           </div>
-          <div class="scroll-x tall" id="bi-table"></div>
-        </div>
-      </section>
-
-      <!-- GAMME -->
-      <section class="tab" id="tab-gamme">
-        <div class="with-lib" data-lib>
-          <div class="card" style="margin: 0">
-            <div class="row" style="margin-bottom: 6px">
-              <h2 style="margin: 0">
-                Gamme préventive (activités récurrentes)
-              </h2>
-              <div class="spacer"></div>
-              <button class="btn" data-libtoggle>📚 Bibliothèque</button>
-              <button
-                class="btn"
-                id="ga-from-week"
-                title="Ajoute à la gamme les activités de la semaine affichée qui n'y sont pas encore"
-              >
-                ⤴ Depuis la semaine
-              </button>
-              <button class="btn primary" id="ga-new">
-                ＋ Activité de gamme
-              </button>
-            </div>
-            <p class="muted" style="margin-top: 0">
-              Chaque semaine, les activités dont la fréquence est échue sont
-              proposées avec leur créneau, leurs agents, leurs modes opératoires
-              et leurs check-lists. La dernière réalisation est mise à jour
-              quand l'activité passe à « Fait ».
-            </p>
-            <div class="row filters" style="margin-bottom: 10px">
-              <input
-                id="ga-q"
-                type="search"
-                placeholder="🔎 Rechercher…"
-                style="min-width: 200px"
-              />
-              <select id="ga-svc"></select>
-              <select id="ga-freq"></select>
-              <select id="ga-etat">
-                <option value="">Toutes</option>
-                <option value="due">Échues pour la semaine affichée</option>
-                <option value="late">En retard</option>
-                <option value="sans-mode">
-                  Sans mode opératoire ni check-list
-                </option>
-                <option value="inactive">Désactivées</option>
-              </select>
-              <div class="spacer"></div>
-              <span class="muted" id="ga-count"></span>
-            </div>
-            <div class="scroll-x tall" id="ga-table"></div>
+          <div class="row" style="margin-bottom: 10px">
+            <button class="btn" id="b-ar-print">🖨️ Analyses de risque</button>
+            <button class="btn" id="b-cr">🖨️ Compte rendu de l'arrêt</button>
+            <div class="spacer"></div>
+            <button class="btn primary" id="b-new">＋ Nouvelle activité</button>
           </div>
-          <aside class="card lib-side" data-libside></aside>
+          <div class="scroll-x tall">
+            <table id="t-act">
+              <thead>
+                <tr>
+                  <th>Désignation</th>
+                  <th>Équipe</th>
+                  <th>Fréq.</th>
+                  <th>Agents</th>
+                  <th>Horaire</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -1845,8 +1516,7 @@
           <div class="legend" style="margin-bottom: 8px">
             <span>Cliquez sur une zone pour ouvrir son Gantt.</span>
             <span><i style="background: var(--fait)"></i>Terminé</span>
-            <span><i style="background: var(--encours)"></i>En cours</span>
-            <span><i style="background: var(--afaire)"></i>À faire</span>
+            <span><i style="background: var(--planifie)"></i>Planifié</span>
             <span><i style="background: var(--reportee)"></i>Reporté</span>
           </div>
           <div id="schema"></div>
@@ -2060,11 +1730,9 @@
       "use strict";
       const STORE_KEY = "arret-hebdo-db";
       const STATUTS = [
-        { id: "afaire", label: "À faire" },
-        { id: "encours", label: "En cours" },
+        { id: "planifie", label: "Planifié" },
         { id: "fait", label: "Fait" },
-        { id: "nonnecessaire", label: "Non nécessaire" },
-        { id: "reportee", label: "Reportée" },
+        { id: "reportee", label: "Reporté" },
       ];
       const PALETTE = [
         "#1f6feb",
@@ -2111,8 +1779,6 @@
         cJour: 0,
         f: {},
         g: {},
-        bi: {},
-        ga: {},
         lib: true,
         schemaSvc: "",
       };
@@ -2194,8 +1860,7 @@
           .find((z) => z.id === a.zone)
           ?.machines?.find((m) => m.id === a.machine)?.nom || "";
       const stLabel = (id) => STATUTS.find((s) => s.id === id)?.label || id;
-      const actif = (a) =>
-        a.statut !== "nonnecessaire" && a.statut !== "reportee";
+      const actif = (a) => a.statut !== "reportee";
       const zoneOrder = () => {
         const o = {};
         [...DB.flux, ...DB.zones.map((z) => z.id)].forEach(
@@ -2258,91 +1923,6 @@
         const s = D.sem(ar.lundi);
         return `Semaine ${s.n}${ar.diametre ? " · " + ar.diametre : ""} · lun. ${D.fmt(ar.lundi)}`;
       };
-      const freqJours = (f) => {
-        const k = FREQUENCES.find(([l]) => l === f);
-        if (k) return k[1];
-        const m = String(f || "")
-          .toLowerCase()
-          .match(/(\d+)\s*(j|s|m|a)/);
-        if (!m) return 0;
-        return Number(m[1]) * { j: 1, s: 7, m: 30, a: 365 }[m[2]];
-      };
-
-      // Dernière réalisation d'une activité de gamme (avant une date) : activités « Fait », sinon date saisie.
-      function derniereFois(g, avant = "9999") {
-        let d = g.derniere && g.derniere < avant ? g.derniere : "";
-        for (const a of DB.activites) {
-          if (a.gamme !== g.id || a.statut !== "fait") continue;
-          const da = dateAct(a);
-          if (da && da < avant && da > d) d = da;
-        }
-        return d || null;
-      }
-      // Échéance pour l'arrêt de la semaine qui commence le lundi donné.
-      function echeance(g, lundi) {
-        const n = freqJours(g.frequence);
-        const jour = D.add(lundi, (jourDef(g.jour || 0).dow + 6) % 7);
-        const der = derniereFois(g, lundi);
-        if (!n) return { due: false, der, prochaine: null, retard: false };
-        if (!der) return { due: true, der, prochaine: null, retard: false };
-        const ecart = D.diff(der, jour);
-        return {
-          due: ecart >= n - 3,
-          der,
-          prochaine: D.add(der, n),
-          retard: ecart >= n + 7,
-        };
-      }
-
-      // ---------- Check-lists ----------
-      const docDe = (id) => DB.bibliotheque.find((d) => d.id === id);
-      const pointsCk = (doc) => (doc?.points || []).filter((p) => !p.section);
-      // Avancement d'une check-list remplie : {n, faits, nok}.
-      function etatCk(m) {
-        const doc = docDe(m.doc);
-        const pts = pointsCk(doc);
-        let faits = 0,
-          nok = 0;
-        for (const p of pts) {
-          const r = m.rep?.[p.id];
-          if (r?.v) faits++;
-          if (r?.v === "nok") nok++;
-        }
-        return { n: pts.length, faits, nok };
-      }
-      function etatModes(a) {
-        const r = { mop: 0, ck: 0, ckIncomplet: 0, nok: 0 };
-        for (const m of a.modes || []) {
-          const doc = docDe(m.doc);
-          if (!doc) continue;
-          if (doc.type === "checklist") {
-            const e = etatCk(m);
-            r.ck++;
-            if (e.faits < e.n) r.ckIncomplet++;
-            r.nok += e.nok;
-          } else r.mop++;
-        }
-        return r;
-      }
-      // Pastilles des modes opératoires et check-lists d'une activité.
-      function tagsModes(a, cliquable = true) {
-        return (a.modes || [])
-          .map((m) => {
-            const doc = docDe(m.doc);
-            if (!doc) return "";
-            const att = cliquable ? `data-mode="${a.id}|${m.doc}"` : "";
-            if (doc.type !== "checklist")
-              return `<span class="tag mop" ${att} title="Mode opératoire${doc.ref ? " " + esc(doc.ref) : ""}">📘 ${esc(doc.titre)}</span>`;
-            const e = etatCk(m);
-            const cls = e.nok
-              ? "nok"
-              : e.n && e.faits === e.n
-                ? "okall"
-                : "checklist";
-            return `<span class="tag ${cls}" ${att} title="Check-list : ${e.faits}/${e.n} point(s) renseigné(s)${e.nok ? ", " + e.nok + " non conforme(s)" : ""}">☑ ${esc(doc.titre)} ${e.faits}/${e.n}${e.nok ? " ⚠️" + e.nok : ""}</span>`;
-          })
-          .join("");
-      }
 
       // ---------- Persistance ----------
       // Copie de travail dans IndexedDB (les fichiers joints dépassent vite les ~5 Mo de localStorage).
@@ -2537,8 +2117,6 @@
           personnel: [],
           activites: [],
           arrets: [],
-          gamme: [],
-          bibliotheque: [],
         };
         normaliser(d);
         return d;
@@ -2595,8 +2173,6 @@
           "services",
           "equipes",
           "arrets",
-          "gamme",
-          "bibliotheque",
         ])
           d[k] ??= [];
         d.zones.forEach((z) => (z.machines ??= []));
@@ -2615,22 +2191,17 @@
           a.photos ??= [];
           a.docs ??= {};
           a.ar ??= {};
-          a.modes ??= [];
-          a.statut ??= "afaire";
+          delete a.modes;
+          delete a.gamme;
+          a.statut ??= "planifie";
+          // Statuts d'avant : À faire / En cours -> Planifié, Non nécessaire -> Reporté.
+          if (a.statut === "afaire" || a.statut === "encours")
+            a.statut = "planifie";
+          if (a.statut === "nonnecessaire") a.statut = "reportee";
         });
-        d.gamme.forEach((g) => {
-          g.intervenants ??= [];
-          g.creneaux ??= [];
-          g.modes ??= [];
-          g.nb ??= 1;
-          g.jour ??= 0;
-          g.machine ??= "";
-          g.actif ??= true;
-        });
-        d.bibliotheque.forEach((b) => {
-          b.points ??= [];
-          b.diametres ??= [];
-        });
+        // Gamme préventive et bibliothèque des premières versions : retirées.
+        delete d.gamme;
+        delete d.bibliotheque;
         const n1 = { mto: "p1274", meca: "p1302", elec: "p1382" };
         d.equipes.forEach((e) => {
           if (e.responsable === undefined)
@@ -2699,14 +2270,11 @@
         ({
           gantt: renderGantt,
           activites: renderActivites,
-          biblio: renderBiblio,
-          gamme: renderGamme,
           schema: renderSchema,
           charge: renderCharge,
           semaines: renderSemaines,
           admin: renderAdmin,
         })[ui.tab]();
-        renderLib();
       }
       function remplirFiltres() {
         const zo = zoneOrder();
@@ -2724,8 +2292,6 @@
         $("#f-svc").innerHTML = sOpts(ui.f.svc);
         $("#g-svc").innerHTML = sOpts(ui.g.svc);
         $("#s-svc").innerHTML = sOpts(ui.schemaSvc);
-        $("#ga-svc").innerHTML = sOpts(ui.ga.svc);
-        $("#bi-svc").innerHTML = sOpts(ui.bi.svc);
         $("#f-st").innerHTML = stOpts(ui.f.st);
         $("#g-st").innerHTML = stOpts(ui.g.st);
         $("#f-jour").innerHTML =
@@ -2733,9 +2299,6 @@
           DB.meta.jours
             .map((j, i) => opt(String(i), j.nom, ui.f.jour))
             .join("");
-        $("#ga-freq").innerHTML =
-          opt("", "Toutes les fréquences") +
-          DB.meta.frequences.map((f) => opt(f, f, ui.ga.freq)).join("");
         const ps = [...DB.personnel].sort((a, b) =>
           persNom(a).localeCompare(persNom(b)),
         );
@@ -2757,7 +2320,6 @@
           zoneNom(a.zone),
           machineNom(a),
           ...a.intervenants.map((i) => persNom(pers(i))),
-          ...(a.modes || []).map((m) => docDe(m.doc)?.titre),
         ]
           .join(" ")
           .toLowerCase()
@@ -2858,7 +2420,7 @@
         for (const a of list) {
           if (a.zone !== zc) {
             zc = a.zone;
-            html += `<div class="hg-row hg-zone" data-drop="zone:${esc(zc)}"><div class="hg-lab">📍 ${esc(zoneNom(zc))} <span class="muted">(${list.filter((y) => y.zone === zc).length})</span></div><div class="hg-track" style="${track};cursor:default">${pauses}</div></div>`;
+            html += `<div class="hg-row hg-zone"><div class="hg-lab">📍 ${esc(zoneNom(zc))} <span class="muted">(${list.filter((y) => y.zone === zc).length})</span></div><div class="hg-track" style="${track};cursor:default">${pauses}</div></div>`;
           }
           const segs = a.creneaux
             .map((s, k) => {
@@ -2867,17 +2429,12 @@
               return `<div class="seg ${a.statut} ${conf.has(a.id) ? "conf" : ""}" data-seg="${a.id}|${k}" style="left:${l + 1}px;width:${Math.max(6, r - l - 2)}px;--sc:${svcColor(a.service)}" title="${esc(a.designation)} — ${s.debut} → ${s.fin} — ${a.nb} agent(s) — ${stLabel(a.statut)}${conf.has(a.id) ? " — ⚠️ intervenant ou pont déjà occupé" : ""}"><span class="rzl"></span>${a.nb > 1 ? a.nb + "× " : ""}${esc(a.intervenants.map((i) => pers(i)?.nom).join(", "))}<span class="rz"></span></div>`;
             })
             .join("");
-          const em = etatModes(a);
           const tags = [
-            em.mop ? `<span class="tag mop">📘 ${em.mop}</span>` : "",
-            em.ck
-              ? `<span class="tag ${em.nok ? "nok" : em.ckIncomplet ? "checklist" : "okall"}">☑ ${em.ck}${em.nok ? " ⚠️" : ""}</span>`
-              : "",
             a.pont
               ? `<span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>`
               : "",
           ].join("");
-          html += `<div class="hg-row" data-drop="act:${a.id}"><div class="hg-lab svc" data-id="${a.id}" style="--sc:${svcColor(a.service)}"><span class="des">${esc(a.designation)}</span><span><i class="stp" style="background:var(--${a.statut})" title="${stLabel(a.statut)}"></i></span>
+          html += `<div class="hg-row"><div class="hg-lab svc" data-id="${a.id}" style="--sc:${svcColor(a.service)}"><span class="des">${esc(a.designation)}</span><span><i class="stp" style="background:var(--${a.statut})" title="${stLabel(a.statut)}"></i></span>
             <small>${esc(a.service)}${a.frequence ? " · " + esc(a.frequence) : ""} · ${esc(a.intervenants.map((i) => persNom(pers(i))).join(", ") || "sans agent")} ${tags}</small></div>
             <div class="hg-track" data-track="${a.id}" style="${track}">${pauses}${segs}${now}</div></div>`;
         }
@@ -3009,7 +2566,6 @@
         const f = ui.f,
           q = (f.q || "").toLowerCase();
         return actsArret().filter((a) => {
-          const em = etatModes(a);
           return (
             (f.jour === undefined ||
               f.jour === "" ||
@@ -3019,9 +2575,6 @@
             (!f.st || a.statut === f.st) &&
             (!f.pers || a.intervenants.includes(f.pers)) &&
             (!f.doc ||
-              (f.doc === "sans-mode" && !em.mop && !em.ck) ||
-              (f.doc === "ck-incomplet" && em.ckIncomplet > 0) ||
-              (f.doc === "nok" && em.nok > 0) ||
               (f.doc === "manque-ext" && manquesExterne(a).length > 0) ||
               (f.doc === "sans-ar" && !a.docs?.ar) ||
               (f.doc === "photos" && a.photos?.length > 0)) &&
@@ -3037,26 +2590,14 @@
           n = all.length || 1;
         const cnt = (st, list = all) =>
           list.filter((a) => a.statut === st).length;
-        const termine = cnt("fait") + cnt("nonnecessaire");
-        const ck = all.reduce(
-          (s, a) => {
-            const e = etatModes(a);
-            s.ck += e.ck;
-            s.inc += e.ckIncomplet;
-            s.nok += e.nok;
-            return s;
-          },
-          { ck: 0, inc: 0, nok: 0 },
-        );
+        const termine = cnt("fait");
         $("#kpis").innerHTML =
           `<div class="kpi" data-k="" style="--c:var(--ink)"><b>${all.length}</b><span>Activités · ${Math.round((termine / n) * 100)} % soldées · ${h(all.filter(actif).reduce((s, a) => s + hMaint(a), 0))}</span>
           <div class="prog" style="margin-top:6px">${STATUTS.map((s) => `<i style="width:${(cnt(s.id) / n) * 100}%;background:var(--${s.id})"></i>`).join("")}</div></div>` +
           STATUTS.map(
             (s) =>
               `<div class="kpi ${ui.f.st === s.id ? "sel" : ""}" data-k="${s.id}" style="--c:var(--${s.id})"><b>${cnt(s.id)}</b><span>${s.label} · ${Math.round((cnt(s.id) / n) * 100)} %</span></div>`,
-          ).join("") +
-          `<div class="kpi" data-k="ck" style="--c:#0d9488"><b>${ck.inc}</b><span>Check-list(s) à compléter sur ${ck.ck}</span></div>` +
-          `<div class="kpi" data-k="nok" style="--c:#e5484d"><b>${ck.nok}</b><span>Point(s) non conforme(s)</span></div>`;
+          ).join("");
         $("#svc-av").innerHTML = DB.services
           .map((s) => {
             const l = all.filter((a) => a.service === s);
@@ -3085,35 +2626,24 @@
           if (a.zone !== zc) {
             zc = a.zone;
             const nz = list.filter((x) => x.zone === zc).length;
-            html += `<tr class="zone-h" data-drop="zone:${esc(zc)}"><td colspan="7">📍 ${esc(zoneNom(zc))} <span class="muted">(${nz})</span></td></tr>`;
+            html += `<tr class="zone-h"><td colspan="6">📍 ${esc(zoneNom(zc))} <span class="muted">(${nz})</span></td></tr>`;
           }
           const manque = manquesExterne(a);
-          html += `<tr data-id="${a.id}" data-drop="act:${a.id}">
+          html += `<tr data-id="${a.id}">
             <td>${esc(a.designation)}${a.machine ? ` <span class="tag">⚙️ ${esc(machineNom(a))}</span>` : ""}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${a.docs?.ar ? ' <span class="tag" title="Analyse de risque signée jointe">📄 AR</span>' : ""}${a.photos?.length ? ` <span class="tag">📷 ${a.photos.length}</span>` : ""}${manque.length ? ` <span class="tag manque">⚠️ ${manque.join(" et ")} manquant</span>` : ""}${a.origine ? ' <span class="tag" title="Reprise d\'une semaine précédente">↪ reprise</span>' : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}${a.signePar ? `<br><small class="muted">✍️ ${esc(persNom(pers(a.signePar)))}${a.signeLe ? " le " + D.fmt(a.signeLe) : ""}</small>` : ""}</td>
             <td><span class="svc" style="--sc:${svcColor(a.service)};padding-left:6px">${esc(a.service)}</span></td>
             <td><small>${esc(a.frequence || "")}</small></td>
             <td>${a.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}${a.nb > 1 ? `<br><small class="muted">${a.nb} agents mobilisés</small>` : ""}</td>
             <td>${esc(jourDef(a.jour).nom)}<br><small>${creneauxTxt(a) || '<span class="muted">Non placé</span>'}</small></td>
-            <td>${tagsModes(a) || '<span class="muted" style="font-size:12px">Glisser ici</span>'}</td>
             <td>${stSelect(a)}</td></tr>`;
         }
         $("#t-act tbody").innerHTML =
           html ||
-          `<tr><td colspan="7" class="muted">${arret() ? "Aucune activité." : "Aucun arrêt : cliquez sur « ＋ Semaine »."}</td></tr>`;
+          `<tr><td colspan="6" class="muted">${arret() ? "Aucune activité." : "Aucun arrêt : cliquez sur « ＋ Semaine »."}</td></tr>`;
       }
-      // Passage d'une activité à un statut, avec contrôle des check-lists.
+      // Passage d'une activité à un statut (date de signature à « Fait »).
       function changerStatut(a, st) {
-        if (st === "fait") {
-          const e = etatModes(a);
-          if (
-            e.ckIncomplet &&
-            !confirm(
-              `${e.ckIncomplet} check-list(s) ne sont pas entièrement renseignées. Passer l'activité à « Fait » quand même ?`,
-            )
-          )
-            return false;
-          a.signeLe ||= D.today();
-        }
+        if (st === "fait") a.signeLe ||= D.today();
         a.statut = st;
         return true;
       }
@@ -3138,7 +2668,7 @@
         $("#dlg").showModal();
       }
 
-      // Éditeur de créneaux (liste début / fin) partagé par la fiche activité et la gamme.
+      // Éditeur de créneaux (liste début / fin) de la fiche activité.
       function editeurCreneaux(el, segs, getJour) {
         const rendre = () => {
           const { def } = fenetreJour(getJour());
@@ -3173,7 +2703,7 @@
         rendre();
         return rendre;
       }
-      // Sélection d'intervenants (puces + saisie), partagée par la fiche activité et la gamme.
+      // Sélection d'intervenants (puces + saisie), de la fiche activité.
       function choixIntervenants(inter, surChange) {
         const chips = () => {
           $("#e-chips").innerHTML =
@@ -3257,13 +2787,12 @@
           : {
               id: uid("a"),
               arret: ar.id,
-              gamme: "",
               zone: ui.g.zone || ui.f.zone || DB.zones[0]?.id,
               machine: "",
               service: ui.g.svc || DB.services[0] || "",
               designation: "",
               frequence: "",
-              statut: "afaire",
+              statut: "planifie",
               jour: ui.tab === "gantt" ? ui.jour : 0,
               creneaux: [],
               nb: 1,
@@ -3275,7 +2804,6 @@
               photos: [],
               docs: {},
               ar: {},
-              modes: [],
               ...defauts,
             };
         const inter = [...a.intervenants];
@@ -3284,15 +2812,12 @@
           ar: structuredClone(a.ar || {}),
           docs: structuredClone(a.docs || {}),
           photos: structuredClone(a.photos || []),
-          modes: structuredClone(a.modes || []),
           creneaux: structuredClone(a.creneaux || []),
           commande: a.commande || "",
           pdpRef: a.pdpRef || "",
         };
         const zo = zoneOrder();
         const zones = [...DB.zones].sort((x, y) => zo[x.id] - zo[y.id]);
-        const g = DB.gamme.find((x) => x.id === a.gamme);
-        const avantModes = a.modes.map((m) => m.doc);
         dialogue(
           id ? "Modifier l'activité" : "Nouvelle activité",
           `<div class="form">
@@ -3311,8 +2836,6 @@
             <label>N° GMAO<input id="e-gmao" value="${esc(a.gmao)}"></label>
             <label class="full">IN / MOI (analyse de risques)<input id="e-moi" value="${esc(a.moi)}"></label>
             <label class="full">Commentaire / compte rendu<textarea id="e-com" rows="2">${esc(a.commentaire)}</textarea></label>
-            ${g ? `<label class="full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="e-g"> Reporter créneaux, agents, pont et modes opératoires dans la gamme « ${esc(g.designation)} » (${esc(g.frequence || "ponctuelle")})</label>` : ""}
-            <div class="full" id="e-modes"></div>
             <div class="full" id="e-docs"></div>
           </div>`,
           [
@@ -3334,9 +2857,8 @@
                     () => {
                       const c = structuredClone(a);
                       c.id = uid("a");
-                      c.statut = "afaire";
+                      c.statut = "planifie";
                       c.photos = [];
-                      c.modes = c.modes.map((m) => ({ doc: m.doc, rep: {} }));
                       delete c.docs?.ar;
                       delete c.signePar;
                       delete c.signeLe;
@@ -3391,32 +2913,11 @@
                   ar: w.ar,
                   docs: w.docs,
                   photos: w.photos,
-                  modes: w.modes,
                   commande: w.commande.trim(),
                   pdpRef: w.pdpRef.trim(),
                 });
                 if (st !== avant && !changerStatut(a, st)) return false;
                 if (a.signePar && !a.signeLe) a.signeLe = D.today();
-                if (g && $("#e-g")?.checked)
-                  Object.assign(g, {
-                    creneaux: structuredClone(segs),
-                    jour: a.jour,
-                    nb: a.nb,
-                    intervenants: [...inter],
-                    pont: a.pont,
-                    modes: a.modes.map((m) => m.doc),
-                    zone: a.zone,
-                    machine: a.machine,
-                    service: a.service,
-                    frequence: a.frequence,
-                  });
-                if (!(g && $("#e-g")?.checked))
-                  ajouterAGamme(
-                    a,
-                    a.modes
-                      .map((m) => m.doc)
-                      .filter((d) => !avantModes.includes(d)),
-                  );
                 if (!id) DB.activites.push(a);
                 changed();
               },
@@ -3440,134 +2941,6 @@
               .join("");
         };
         choixIntervenants(inter, () => (majDocs(), majSig()));
-        blocModes(a, w);
-      }
-
-      // Modes opératoires et check-lists d'une activité (ou d'une activité de gamme) : liste, ajout, remplissage.
-      function blocModes(a, w, { gamme = false } = {}) {
-        const el = $("#e-modes");
-        const rendre = () => {
-          const ids = new Set(w.modes.map((m) => (gamme ? m : m.doc)));
-          const dispo = DB.bibliotheque
-            .filter((d) => !ids.has(d.id))
-            .sort(
-              (x, y) =>
-                (y.service === a.service) - (x.service === a.service) ||
-                (y.zone === a.zone) - (x.zone === a.zone) ||
-                x.titre.localeCompare(y.titre),
-            );
-          el.innerHTML = `<div class="doc-sec"><h4>📚 Modes opératoires et check-lists</h4>
-            <div class="modes-list">${
-              w.modes
-                .map((m, k) => {
-                  const doc = docDe(gamme ? m : m.doc);
-                  if (!doc) return "";
-                  const e =
-                    !gamme && doc.type === "checklist" ? etatCk(m) : null;
-                  return `<div class="mode"><span class="tag ${doc.type}">${doc.type === "checklist" ? "☑ Check-list" : "📘 Mode op."}</span><b>${esc(doc.titre)}${doc.ref ? ` <small class="muted">${esc(doc.ref)}${doc.version ? " v" + esc(doc.version) : ""}</small>` : ""}</b>
-                    ${e ? `<span class="${e.nok ? "late" : "muted"}">${e.faits}/${e.n} point(s)${e.nok ? " · " + e.nok + " NOK" : ""}${m.par ? " · " + esc(persNom(pers(m.par))) : ""}</span><button type="button" class="btn small primary" data-mk="fill-${k}">Remplir</button><button type="button" class="btn small" data-mk="print-${k}">🖨️</button>` : ""}
-                    ${doc.fichier ? `<button type="button" class="btn small" data-mk="open-${k}">Ouvrir</button>` : ""}
-                    <button type="button" class="btn small danger" data-mk="del-${k}" title="Retirer de l'activité">✕</button></div>`;
-                })
-                .join("") ||
-              '<p class="muted" style="margin:4px 0">Aucun document rattaché.</p>'
-            }</div>
-            <div class="row" style="margin-top:6px"><select id="e-mode-sel" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--card)">${opt("", "Choisir dans la bibliothèque…", "")}${dispo.map((d) => opt(d.id, (d.type === "checklist" ? "☑ " : "📘 ") + d.titre + (d.ref ? " · " + d.ref : ""), "")).join("")}</select>
-            <button type="button" class="btn small" id="e-mode-add">Ajouter</button></div>
-            <div class="depot" id="e-mode-pdf">Glisser ici un mode opératoire (PDF, Word, image…) ou une check-list (.txt / .csv), ou cliquer : le fichier rejoint aussi la bibliothèque.</div>
-            ${!gamme && a.gamme ? '<small class="muted">Les documents ajoutés ici sont aussi rattachés à l\'activité de gamme : ils reviendront les semaines suivantes.</small>' : ""}</div>`;
-          $("#e-mode-add").onclick = () => {
-            const v = $("#e-mode-sel").value;
-            if (v) w.modes.push(gamme ? v : { doc: v, rep: {} }), rendre();
-          };
-          zoneDepot($("#e-mode-pdf"), "", true, async (files) => {
-            for (const doc of await docsDepuisFichiers(files))
-              w.modes.push(gamme ? doc.id : { doc: doc.id, rep: {} });
-            rendre();
-          });
-        };
-        el.onclick = (e) => {
-          const k = e.target.closest("[data-mk]")?.dataset.mk;
-          if (!k) return;
-          const [act, i] = k.split("-");
-          const m = w.modes[Number(i)];
-          const doc = docDe(gamme ? m : m.doc);
-          if (act === "del") w.modes.splice(Number(i), 1), rendre();
-          if (act === "open") ouvrirPieceJointe(doc.fichier.data);
-          if (act === "fill") ouvrirCk(a, m, rendre);
-          if (act === "print") imprimerPages([pageCk(doc, m, a)]);
-        };
-        rendre();
-      }
-
-      // ---------- Remplissage d'une check-list ----------
-      function ouvrirCk(a, m, surFermeture) {
-        const doc = docDe(m.doc);
-        const d = $("#dlg-ck");
-        const rep = structuredClone(m.rep || {});
-        $("#ck-t").textContent = "☑ " + doc.titre + " — " + a.designation;
-        const ligne = (p) => {
-          const r = rep[p.id] || {};
-          if (p.section)
-            return `<tr class="sect"><td colspan="4">${esc(p.t)}</td></tr>`;
-          return `<tr data-p="${p.id}"><td>${esc(p.t)}${p.attendu ? `<br><small class="muted">Attendu : ${esc(p.attendu)}${p.unite ? " " + esc(p.unite) : ""}</small>` : ""}</td>
-            <td><span class="ck-btns">${["ok", "nok", "na"].map((v) => `<button type="button" data-v="${v}" class="${r.v === v ? "on" : ""}">${{ ok: "OK", nok: "NOK", na: "N/A" }[v]}</button>`).join("")}</span></td>
-            <td style="width:110px">${p.unite || p.attendu ? `<input data-m value="${esc(r.m || "")}" placeholder="${esc(p.unite || "valeur")}">` : ""}</td>
-            <td style="width:30%"><input data-c value="${esc(r.c || "")}" placeholder="Commentaire"></td></tr>`;
-        };
-        const inter = a.intervenants;
-        $("#ck-b").innerHTML = `<div class="row" style="margin-bottom:10px">
-            <label class="muted">Rempli par <select id="ck-par" style="border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--card)">${opt("", "—", m.par || "")}${[...new Set([...inter, ...(m.par ? [m.par] : [])])].map((i) => opt(i, persNom(pers(i)), m.par || "")).join("")}</select></label>
-            <span class="muted">${doc.ref ? esc(doc.ref) + " · " : ""}${pointsCk(doc).length} point(s)</span>
-            <div class="spacer"></div><button type="button" class="btn small" id="ck-allok">Tout conforme</button></div>
-          ${doc.consigne ? `<p class="muted" style="margin-top:0">${esc(doc.consigne)}</p>` : ""}
-          <table class="ck-table"><thead><tr><th>Point de contrôle</th><th>État</th><th>Mesure</th><th>Commentaire</th></tr></thead><tbody>${doc.points.map(ligne).join("")}</tbody></table>`;
-        const lire = () => {
-          d.querySelectorAll("tr[data-p]").forEach((tr) => {
-            const r = (rep[tr.dataset.p] ||= {});
-            const mi = tr.querySelector("[data-m]"),
-              ci = tr.querySelector("[data-c]");
-            if (mi) r.m = mi.value.trim();
-            r.c = ci.value.trim();
-          });
-        };
-        $("#ck-b").onclick = (e) => {
-          const b = e.target.closest("[data-v]");
-          if (b) {
-            const tr = b.closest("tr[data-p]");
-            const r = (rep[tr.dataset.p] ||= {});
-            r.v = r.v === b.dataset.v ? "" : b.dataset.v;
-            tr.querySelectorAll("[data-v]").forEach((x) =>
-              x.classList.toggle("on", x.dataset.v === r.v),
-            );
-          }
-          if (e.target.id === "ck-allok")
-            d.querySelectorAll("tr[data-p]").forEach((tr) => {
-              const r = (rep[tr.dataset.p] ||= {});
-              if (!r.v) r.v = "ok";
-              tr.querySelectorAll("[data-v]").forEach((x) =>
-                x.classList.toggle("on", x.dataset.v === r.v),
-              );
-            });
-        };
-        const appliquer = () => {
-          lire();
-          m.rep = rep;
-          m.par = $("#ck-par").value;
-          m.date = D.today();
-        };
-        $("#ck-print").onclick = () => {
-          lire();
-          imprimerPages([
-            pageCk(doc, { ...m, rep, par: $("#ck-par").value }, a),
-          ]);
-        };
-        $("#ck-ok").onclick = () => {
-          appliquer();
-          d.close();
-          surFermeture?.();
-        };
-        d.showModal();
       }
 
       // Bloc « Sécurité, documents et photos » (repris de l'arrêt technique ; travaille sur une copie).
@@ -3666,645 +3039,6 @@
         return rendre;
       }
 
-      // ---------- Bibliothèque : modes opératoires et check-lists ----------
-      function marquer() {
-        dirty = true;
-        sauverLocal();
-        renderEtat();
-      }
-      // Check-list depuis du texte : une ligne par point, « # » = titre de section,
-      // colonnes facultatives séparées par | ; ou tabulation : point, unité, valeur attendue.
-      function pointsDepuisTexte(txt, avant = []) {
-        const pts = [];
-        for (const brut of String(txt).split(/\r?\n/)) {
-          const l = brut.trim();
-          if (!l) continue;
-          if (l.startsWith("#")) {
-            const t = l.replace(/^#+\s*/, "");
-            if (t) pts.push({ id: uid("q"), section: true, t });
-            continue;
-          }
-          const [t, unite = "", attendu = ""] = l
-            .split(/\s*[|;\t]\s*/)
-            .map((x) => x.trim());
-          if (!t) continue;
-          const ex = avant.find((p) => !p.section && p.t === t);
-          pts.push({ id: ex?.id || uid("q"), t, unite, attendu });
-        }
-        // Les sections gardent aussi leur identifiant.
-        pts.forEach((p) => {
-          if (!p.section) return;
-          const ex = avant.find((q) => q.section && q.t === p.t);
-          if (ex) p.id = ex.id;
-        });
-        return pts;
-      }
-      const texteDepuisPoints = (pts) =>
-        pts
-          .map((p) =>
-            p.section
-              ? "# " + p.t
-              : [p.t, p.unite, p.attendu].join(" | ").replace(/( \| )+$/, ""),
-          )
-          .join("\n");
-      const titreFichier = (nom) =>
-        nom
-          .replace(/\.[^.]+$/, "")
-          .replace(/[_]+/g, " ")
-          .trim();
-      // Fichiers déposés -> documents de la bibliothèque (.txt/.csv = check-list, le reste = mode opératoire).
-      async function docsDepuisFichiers(files) {
-        const out = [];
-        for (const f of files) {
-          try {
-            let doc;
-            if (/\.(txt|csv)$/i.test(f.name)) {
-              const pts = pointsDepuisTexte(await f.text());
-              if (!pts.length) throw new Error("aucun point trouvé");
-              doc = {
-                id: uid("d"),
-                type: "checklist",
-                titre: titreFichier(f.name),
-                points: pts,
-              };
-            } else {
-              if (f.size > 15e6)
-                throw new Error("fichier trop lourd (15 Mo maximum)");
-              doc = {
-                id: uid("d"),
-                type: "mop",
-                titre: titreFichier(f.name),
-                fichier: {
-                  nom: f.name,
-                  type: f.type || "",
-                  data: await lireDataUrl(f),
-                  date: D.today(),
-                },
-              };
-            }
-            Object.assign(doc, {
-              ref: "",
-              version: "",
-              service: "",
-              zone: "",
-              diametres: [],
-              maj: D.today(),
-            });
-            doc.points ??= [];
-            DB.bibliotheque.push(doc);
-            out.push(doc);
-          } catch (e) {
-            alert(f.name + " : " + e.message);
-          }
-        }
-        if (out.length) marquer();
-        return out;
-      }
-      // Rattache des documents à une cible : act:<id>, zone:<id> (activités de la zone affichée) ou gamme:<id>.
-      function attacher(cible, docIds) {
-        const [type, id] = [
-          cible.slice(0, cible.indexOf(":")),
-          cible.slice(cible.indexOf(":") + 1),
-        ];
-        let acts = [],
-          n = 0;
-        if (type === "gamme") {
-          const g = DB.gamme.find((x) => x.id === id);
-          for (const d of docIds)
-            if (!g.modes.includes(d)) g.modes.push(d), n++;
-          toast(`${n} document(s) ajouté(s) à la gamme « ${g.designation} »`);
-          return changed();
-        }
-        if (type === "act") acts = DB.activites.filter((a) => a.id === id);
-        if (type === "zone") {
-          acts = (ui.tab === "gantt" ? null : filtrer()) || [];
-          if (ui.tab === "gantt")
-            acts = actsArret().filter((a) => a.jour === ui.jour);
-          acts = acts.filter((a) => a.zone === id);
-          if (
-            acts.length > 1 &&
-            !confirm(
-              `Rattacher ${docIds.length > 1 ? "ces documents" : "« " + docDe(docIds[0])?.titre + " »"} aux ${acts.length} activités de la zone « ${zoneNom(id)} » ?`,
-            )
-          )
-            return;
-        }
-        let nG = 0;
-        for (const a of acts) {
-          for (const d of docIds)
-            if (!a.modes.some((m) => m.doc === d))
-              a.modes.push({ doc: d, rep: {} }), n++;
-          nG += ajouterAGamme(a, docIds);
-        }
-        toast(
-          n
-            ? `${docIds.map((d) => "« " + docDe(d)?.titre + " »").join(", ")} rattaché(s) à ${acts.length > 1 ? acts.length + " activités" : "« " + acts[0]?.designation + " »"}${nG ? " et à la gamme (semaines suivantes)" : ""}`
-            : "Déjà rattaché.",
-        );
-        changed();
-      }
-      // Un document ajouté à une activité de la semaine suit aussi son activité de gamme.
-      function ajouterAGamme(a, docIds) {
-        const g = DB.gamme.find((x) => x.id === a.gamme);
-        if (!g) return 0;
-        let n = 0;
-        for (const d of docIds) if (!g.modes.includes(d)) g.modes.push(d), n++;
-        return n;
-      }
-      // Glisser-déposer : cartes de la bibliothèque et fichiers vers les lignes [data-drop].
-      const TYPE_DOC = "application/x-hebdo-doc";
-      function brancherGlisser() {
-        document.addEventListener("dragstart", (e) => {
-          const c = e.target.closest?.("[data-doc]");
-          if (!c) return;
-          e.dataTransfer.setData(TYPE_DOC, c.dataset.doc);
-          e.dataTransfer.setData(
-            "text/plain",
-            docDe(c.dataset.doc)?.titre || "",
-          );
-          e.dataTransfer.effectAllowed = "copy";
-          c.classList.add("dragging");
-          document.body.classList.add("drag-doc");
-        });
-        document.addEventListener("dragend", (e) => {
-          e.target.closest?.("[data-doc]")?.classList.remove("dragging");
-          document.body.classList.remove("drag-doc");
-          document
-            .querySelectorAll(".drop-ok")
-            .forEach((x) => x.classList.remove("drop-ok"));
-        });
-        let survol = null;
-        document.addEventListener("dragover", (e) => {
-          const t = e.target.closest?.("[data-drop]");
-          const types = [...e.dataTransfer.types];
-          e.preventDefault();
-          if (t !== survol) {
-            survol?.classList.remove("drop-ok");
-            survol = t;
-          }
-          if (t && (types.includes(TYPE_DOC) || types.includes("Files"))) {
-            e.dataTransfer.dropEffect = "copy";
-            t.classList.add("drop-ok");
-          } else if (!$("#vide").hidden || types.includes("Files"))
-            $("#drop").classList.add("over");
-        });
-        document.addEventListener("dragleave", (e) => {
-          if (!e.relatedTarget) {
-            survol?.classList.remove("drop-ok");
-            survol = null;
-            $("#drop").classList.remove("over");
-          }
-        });
-        document.addEventListener("drop", async (e) => {
-          e.preventDefault();
-          survol?.classList.remove("drop-ok");
-          survol = null;
-          $("#drop").classList.remove("over");
-          document.body.classList.remove("drag-doc");
-          const t = e.target.closest?.("[data-drop]");
-          const id = e.dataTransfer.getData(TYPE_DOC);
-          const files = [...e.dataTransfer.files];
-          if (t && DB) {
-            if (id) return attacher(t.dataset.drop, [id]);
-            if (files.length) {
-              const docs = await docsDepuisFichiers(files);
-              if (docs.length)
-                attacher(
-                  t.dataset.drop,
-                  docs.map((d) => d.id),
-                );
-            }
-            return;
-          }
-          const f = files[0];
-          if (!f) return;
-          if (/\.json$/i.test(f.name)) lireFichier(f);
-          else if (/\.xls[xm]?$/i.test(f.name)) importerGantt(f);
-        });
-      }
-      const filtreDocs = (q, type, svc) =>
-        DB.bibliotheque
-          .filter(
-            (d) =>
-              (!type || d.type === type) &&
-              (!svc || !d.service || d.service === svc) &&
-              (!q ||
-                [d.titre, d.ref, d.service, zoneNom(d.zone), ...d.diametres]
-                  .join(" ")
-                  .toLowerCase()
-                  .includes(q.toLowerCase())),
-          )
-          .sort(
-            (a, b) =>
-              a.type.localeCompare(b.type) || a.titre.localeCompare(b.titre),
-          );
-      const carteDoc = (d) =>
-        `<div class="doc-card ${d.type}" draggable="true" data-doc="${d.id}" title="Glisser sur une activité">${d.type === "checklist" ? "☑" : "📘"} ${esc(d.titre)}<small>${[d.ref, d.service, d.zone ? zoneNom(d.zone) : "", d.diametres.join(" "), d.type === "checklist" ? pointsCk(d).length + " point(s)" : d.fichier?.nom.split(".").pop().toUpperCase()].filter(Boolean).map(esc).join(" · ")}</small></div>`;
-      // Panneau latéral « Bibliothèque » des onglets Gantt, Activités et Gamme.
-      function renderLib() {
-        document
-          .querySelectorAll("[data-lib]")
-          .forEach((w) => w.classList.toggle("nolib", !ui.lib));
-        const side = $(`#tab-${ui.tab} [data-libside]`);
-        if (!side || !ui.lib) return;
-        if (!side.firstChild) {
-          side.innerHTML = `<h2>📚 Bibliothèque</h2><small class="muted">Glissez un document sur une activité, ou sur l'en-tête d'une zone pour toutes ses activités. Vous pouvez aussi y déposer un fichier.</small>
-            <input type="search" data-libq placeholder="🔎 Rechercher…"><select data-libt>${opt("", "Modes opératoires et check-lists", "")}${opt("mop", "Modes opératoires", "")}${opt("checklist", "Check-lists", "")}</select><div class="lib-list"></div>
-            <button class="btn small" style="margin-top:8px" data-libnew>＋ Ajouter à la bibliothèque</button>`;
-          side.oninput = side.onchange = (e) => {
-            if (e.target.matches("[data-libq]")) ui.libq = e.target.value;
-            if (e.target.matches("[data-libt]")) ui.libt = e.target.value;
-            renderLib();
-          };
-          side.onclick = (e) => {
-            if (e.target.matches("[data-libnew]")) ouvrirOnglet("biblio");
-            const c = e.target.closest("[data-doc]");
-            if (c) apercuDoc(c.dataset.doc);
-          };
-        }
-        side.querySelector("[data-libq]").value = ui.libq || "";
-        side.querySelector("[data-libt]").value = ui.libt || "";
-        const l = filtreDocs(ui.libq, ui.libt, "");
-        side.querySelector(".lib-list").innerHTML =
-          l.map(carteDoc).join("") ||
-          `<p class="muted">${DB.bibliotheque.length ? "Aucun document trouvé." : "La bibliothèque est vide : ajoutez vos modes opératoires et check-lists dans l'onglet 📚."}</p>`;
-      }
-      function utilisations(d) {
-        const ar = arret();
-        return {
-          sem: actsArret(ar).filter((a) => a.modes.some((m) => m.doc === d.id))
-            .length,
-          tot: DB.activites.filter((a) => a.modes.some((m) => m.doc === d.id))
-            .length,
-          gamme: DB.gamme.filter((g) => g.modes.includes(d.id)).length,
-        };
-      }
-      function renderBiblio() {
-        const l = filtreDocs(ui.bi.q, ui.bi.type, ui.bi.svc);
-        $("#bi-count").textContent = l.length + " document(s)";
-        $("#bi-table").innerHTML = l.length
-          ? `<table><thead><tr><th>Document</th><th>Équipe / zone</th><th>Diamètres</th><th>Contenu</th><th>Utilisé</th><th></th></tr></thead><tbody>${l
-              .map((d) => {
-                const u = utilisations(d);
-                return `<tr data-bid="${d.id}"><td><div class="doc-card ${d.type}" draggable="true" data-doc="${d.id}" style="margin:0">${d.type === "checklist" ? "☑ Check-list" : "📘 Mode opératoire"} · <b>${esc(d.titre)}</b><small>${[d.ref, d.version ? "v" + d.version : "", d.maj ? "maj " + D.fmt(d.maj) : ""].filter(Boolean).map(esc).join(" · ")}</small></div></td>
-                <td>${esc(d.service || "Toutes")}<br><small class="muted">${esc(d.zone ? zoneNom(d.zone) : "Toutes zones")}</small></td>
-                <td>${d.diametres.map((x) => `<span class="tag">${esc(x)}</span>`).join("") || '<span class="muted">Tous</span>'}</td>
-                <td>${d.type === "checklist" ? pointsCk(d).length + " point(s)" : esc(d.fichier?.nom || "—") + (d.fichier ? `<br><small class="muted">${tailleMo(d.fichier.data)}</small>` : "")}</td>
-                <td>${u.sem} activité(s) cette semaine<br><small class="muted">${u.tot} au total · ${u.gamme} en gamme</small></td>
-                <td style="white-space:nowrap"><button class="btn small" data-bact="voir">${d.type === "checklist" ? "Aperçu" : "Ouvrir"}</button> <button class="btn small" data-bact="edit">Modifier</button></td></tr>`;
-              })
-              .join("")}</tbody></table>`
-          : `<p class="muted">${DB.bibliotheque.length ? "Aucun document pour ces filtres." : "Aucun document. Glissez vos modes opératoires (PDF…) et vos check-lists (.txt / .csv) dans la zone ci-dessus, ou créez une check-list."}</p>`;
-      }
-      function apercuDoc(id) {
-        const d = docDe(id);
-        if (d.type === "checklist")
-          return imprimerPages([pageCk(d, { rep: {} }, null)]);
-        if (d.fichier) ouvrirPieceJointe(d.fichier.data);
-      }
-      function editerDoc(id, type = "checklist") {
-        const d = id
-          ? docDe(id)
-          : {
-              id: uid("d"),
-              type,
-              titre: "",
-              ref: "",
-              version: "",
-              service: "",
-              zone: "",
-              diametres: [],
-              consigne: "",
-              points: [],
-            };
-        let fichier = d.fichier || null;
-        const u = id ? utilisations(d) : null;
-        const zo = zoneOrder();
-        dialogue(
-          id
-            ? (d.type === "checklist" ? "Check-list" : "Mode opératoire") +
-                " : " +
-                d.titre
-            : d.type === "checklist"
-              ? "Nouvelle check-list"
-              : "Nouveau mode opératoire",
-          `<div class="form">
-            <label class="full">Titre<input id="b-titre" value="${esc(d.titre)}"></label>
-            <label>Référence (ex. MO-MECA-012)<input id="b-ref" value="${esc(d.ref)}"></label>
-            <label>Version / indice<input id="b-ver" value="${esc(d.version)}"></label>
-            <label>Équipe<select id="b-svc">${opt("", "Toutes", d.service)}${DB.services.map((s) => opt(s, s, d.service)).join("")}</select></label>
-            <label>Zone<select id="b-zone">${opt("", "Toutes", d.zone)}${[
-              ...DB.zones,
-            ]
-              .sort((x, y) => zo[x.id] - zo[y.id])
-              .map((z) => opt(z.id, z.nom, d.zone))
-              .join("")}</select></label>
-            <div class="full"><label>Diamètres concernés (aucun = tous ; sert au choix automatique de la bonne check-list chaque semaine)</label>
-              <div class="row">${DB.meta.diametres.map((x) => `<label class="muted"><input type="checkbox" data-dia="${esc(x)}" ${d.diametres.includes(x) ? "checked" : ""}> ${esc(x)}</label>`).join(" ")}</div></div>
-            ${
-              d.type === "checklist"
-                ? `<label class="full">Consigne (facultative)<input id="b-cons" value="${esc(d.consigne || "")}"></label>
-                   <label class="full">Points de contrôle — une ligne par point ; « # Titre » pour une section ; « Point | unité | valeur attendue » pour une mesure<textarea id="b-pts" rows="12" style="font-family:ui-monospace,Consolas,monospace;font-size:12px">${esc(texteDepuisPoints(d.points))}</textarea></label>`
-                : `<div class="full"><label>Fichier</label><div class="depot" id="b-file"></div></div>`
-            }
-            ${u ? `<p class="full muted" style="margin:0">Utilisé par ${u.tot} activité(s) et ${u.gamme} activité(s) de gamme.</p>` : ""}
-          </div>`,
-          [
-            ...(id
-              ? [
-                  [
-                    "Supprimer",
-                    "danger",
-                    () => {
-                      if (
-                        !confirm(
-                          `Supprimer « ${d.titre} » de la bibliothèque ?${u.tot + u.gamme ? ` Il sera retiré de ${u.tot} activité(s) et ${u.gamme} activité(s) de gamme (les check-lists remplies seront perdues).` : ""}`,
-                        )
-                      )
-                        return false;
-                      DB.bibliotheque = DB.bibliotheque.filter(
-                        (x) => x.id !== id,
-                      );
-                      DB.activites.forEach(
-                        (a) => (a.modes = a.modes.filter((m) => m.doc !== id)),
-                      );
-                      DB.gamme.forEach(
-                        (g) => (g.modes = g.modes.filter((m) => m !== id)),
-                      );
-                      changed();
-                    },
-                  ],
-                  [
-                    "Dupliquer",
-                    "",
-                    () => {
-                      const c = structuredClone(d);
-                      c.id = uid("d");
-                      c.titre += " (copie)";
-                      DB.bibliotheque.push(c);
-                      changed();
-                      setTimeout(() => editerDoc(c.id), 50);
-                    },
-                  ],
-                ]
-              : []),
-            ["Annuler", "", () => {}],
-            [
-              "Enregistrer",
-              "primary",
-              () => {
-                const titre = $("#b-titre").value.trim();
-                if (!titre) return alert("Titre obligatoire."), false;
-                const v = {
-                  titre,
-                  ref: $("#b-ref").value.trim(),
-                  version: $("#b-ver").value.trim(),
-                  service: $("#b-svc").value,
-                  zone: $("#b-zone").value,
-                  diametres: [
-                    ...document.querySelectorAll("[data-dia]:checked"),
-                  ].map((x) => x.dataset.dia),
-                  maj: D.today(),
-                };
-                if (d.type === "checklist") {
-                  v.points = pointsDepuisTexte($("#b-pts").value, d.points);
-                  v.consigne = $("#b-cons").value.trim();
-                  if (!v.points.length)
-                    return (
-                      alert("Ajoutez au moins un point de contrôle."), false
-                    );
-                } else {
-                  if (!fichier)
-                    return (
-                      alert("Déposez le fichier du mode opératoire."), false
-                    );
-                  v.fichier = fichier;
-                }
-                Object.assign(d, v);
-                if (!id) DB.bibliotheque.push(d);
-                changed();
-              },
-            ],
-          ],
-        );
-        const f = $("#b-file");
-        if (f) {
-          f.innerHTML = '<span id="b-file-t"></span>';
-          const aff = () =>
-            ($("#b-file-t").innerHTML = fichier
-              ? `📄 <b>${esc(fichier.nom)}</b> <small class="muted">${tailleMo(fichier.data)} · ${D.fmt(fichier.date)}</small> — glisser un autre fichier pour le remplacer (nouvelle version)`
-              : "Glisser ici le fichier (PDF, Word, Excel, image…) ou cliquer");
-          zoneDepot(f, "", false, async ([file]) => {
-            if (!file) return;
-            if (file.size > 15e6)
-              return alert("Fichier trop lourd (15 Mo maximum).");
-            fichier = {
-              nom: file.name,
-              type: file.type || "",
-              data: await lireDataUrl(file),
-              date: D.today(),
-            };
-            if (!$("#b-titre").value.trim())
-              $("#b-titre").value = titreFichier(file.name);
-            aff();
-          });
-          aff();
-        }
-      }
-
-      // ---------- Gamme préventive ----------
-      function renderGamme() {
-        const ar = arret();
-        const f = ui.ga,
-          q = (f.q || "").toLowerCase();
-        const zo = rangZones(DB.gamme);
-        const list = DB.gamme
-          .filter((g) => {
-            const e = ar ? echeance(g, ar.lundi) : {};
-            return (
-              (!f.svc || g.service === f.svc) &&
-              (!f.freq || g.frequence === f.freq) &&
-              (f.etat === "inactive" ? !g.actif : f.etat ? g.actif : true) &&
-              (f.etat !== "due" || e.due) &&
-              (f.etat !== "late" || e.retard) &&
-              (f.etat !== "sans-mode" || !g.modes.length) &&
-              (!q ||
-                [
-                  g.designation,
-                  g.gmao,
-                  zoneNom(g.zone),
-                  g.service,
-                  ...g.modes.map((m) => docDe(m)?.titre),
-                ]
-                  .join(" ")
-                  .toLowerCase()
-                  .includes(q))
-            );
-          })
-          .sort(
-            (a, b) =>
-              zo[a.zone] - zo[b.zone] ||
-              (a.ordre ?? 1e9) - (b.ordre ?? 1e9) ||
-              a.designation.localeCompare(b.designation),
-          );
-        $("#ga-count").textContent =
-          `${list.length} / ${DB.gamme.length} activité(s)`;
-        let html = "",
-          zc = null;
-        for (const g of list) {
-          if (g.zone !== zc) {
-            zc = g.zone;
-            html += `<tr class="zone-h"><td colspan="7">📍 ${esc(zoneNom(zc))}</td></tr>`;
-          }
-          const e = ar ? echeance(g, ar.lundi) : {};
-          const dans = ar && actsArret(ar).some((a) => a.gamme === g.id);
-          html += `<tr data-gid="${g.id}" data-drop="gamme:${g.id}" style="${g.actif ? "" : "opacity:.5"}">
-            <td>${esc(g.designation)}${g.machine ? ` <span class="tag">⚙️ ${esc(machineNom(g))}</span>` : ""}${g.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === g.pont)?.nom || g.pont)}</span>` : ""}<br>${
-              g.modes
-                .map((m) => docDe(m))
-                .filter(Boolean)
-                .map(
-                  (d) =>
-                    `<span class="tag ${d.type}">${d.type === "checklist" ? "☑" : "📘"} ${esc(d.titre)}${d.diametres.length ? " · " + esc(d.diametres.join(" ")) : ""}</span>`,
-                )
-                .join("") ||
-              '<small class="muted">Glisser ici un mode opératoire / une check-list</small>'
-            }</td>
-            <td><span class="svc" style="--sc:${svcColor(g.service)};padding-left:6px">${esc(g.service)}</span></td>
-            <td>${esc(g.frequence || "Ponctuelle")}</td>
-            <td>${esc(jourDef(g.jour).nom)}<br><small>${creneauxTxt(g) || "—"}</small></td>
-            <td>${g.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}${g.nb > 1 ? `<br><small class="muted">${g.nb} agents</small>` : ""}</td>
-            <td>${e.der ? D.fmt(e.der) + "/" + e.der.slice(2, 4) : '<span class="muted">jamais</span>'}${e.prochaine ? `<br><small class="muted">prochaine ${D.fmt(e.prochaine)}</small>` : ""}</td>
-            <td>${!g.actif ? '<span class="muted">Désactivée</span>' : dans ? '<span class="due">✓ Dans la semaine</span>' : e.retard ? '<span class="late">En retard</span>' : e.due ? '<span class="due">Échue</span>' : '<span class="muted">À jour</span>'}</td></tr>`;
-        }
-        $("#ga-table").innerHTML = DB.gamme.length
-          ? `<table><thead><tr><th>Activité / documents</th><th>Équipe</th><th>Fréquence</th><th>Jour / créneau</th><th>Agents</th><th>Dernière</th><th>${ar ? "S" + D.sem(ar.lundi).n : "État"}</th></tr></thead><tbody>${html}</tbody></table>`
-          : '<p class="muted">La gamme est vide. Importez un Gantt Excel (onglet 🗂️ Semaines) : ses activités avec fréquence alimentent la gamme. Vous pouvez aussi ajouter les activités une par une.</p>';
-      }
-      function editerGamme(id, defauts = {}) {
-        const g = id
-          ? DB.gamme.find((x) => x.id === id)
-          : {
-              id: uid("g"),
-              zone: DB.zones[0]?.id,
-              machine: "",
-              service: DB.services[0] || "",
-              designation: "",
-              frequence: "7 jours",
-              jour: 0,
-              creneaux: [],
-              nb: 1,
-              intervenants: [],
-              pont: "",
-              gmao: "",
-              modes: [],
-              actif: true,
-              derniere: "",
-              ...defauts,
-            };
-        const inter = [...g.intervenants];
-        const w = {
-          modes: [...g.modes],
-          creneaux: structuredClone(g.creneaux),
-        };
-        const zo = zoneOrder();
-        const zones = [...DB.zones].sort((x, y) => zo[x.id] - zo[y.id]);
-        const nAct = DB.activites.filter((a) => a.gamme === g.id).length;
-        dialogue(
-          id ? "Activité de gamme" : "Nouvelle activité de gamme",
-          `<div class="form">
-            <label class="full">Description<textarea id="e-des" rows="2">${esc(g.designation)}</textarea></label>
-            <label>Section (zone)<select id="e-zone">${zones.map((z) => opt(z.id, z.nom, g.zone)).join("")}</select></label>
-            <label>Machine / équipement<select id="e-mach"></select></label>
-            <label>Équipe<select id="e-svc">${DB.services.map((s) => opt(s, s, g.service)).join("")}</select></label>
-            <label>Fréquence<select id="e-freq">${optsFreq(g.frequence)}</select></label>
-            <label>Jour habituel<select id="e-jour">${DB.meta.jours.map((j, i) => opt(String(i), j.nom, String(g.jour))).join("")}</select></label>
-            <label>Agents mobilisés<input id="e-nb" type="number" min="1" value="${g.nb}"></label>
-            <div class="full"><label>Créneaux habituels</label><div id="e-segs"></div></div>
-            ${champIntervenants()}
-            <label>Pont roulant<select id="e-pont">${opt("", "Aucun", g.pont)}${DB.ponts.map((p) => opt(p.id, p.nom, g.pont)).join("")}</select></label>
-            <label>N° GMAO<input id="e-gmao" value="${esc(g.gmao)}"></label>
-            <label>Dernière réalisation (hors application)<input id="e-der" type="date" value="${g.derniere || ""}"></label>
-            <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="e-actif" ${g.actif ? "checked" : ""}> Active (proposée chaque semaine échue)</label>
-            <p class="full muted" style="margin:0">Astuce : « Ø25 » dans la description est remplacé par le diamètre de la semaine. Les check-lists marquées pour certains diamètres ne sont jointes que les semaines de ces diamètres.${nAct ? ` ${nAct} activité(s) planifiée(s) depuis cette gamme.` : ""}</p>
-            <div class="full" id="e-modes"></div>
-          </div>`,
-          [
-            ...(id
-              ? [
-                  [
-                    "Supprimer",
-                    "danger",
-                    () => {
-                      if (
-                        !confirm(
-                          `Supprimer « ${g.designation} » de la gamme ? Les activités déjà planifiées sont conservées.`,
-                        )
-                      )
-                        return false;
-                      DB.gamme = DB.gamme.filter((x) => x.id !== id);
-                      DB.activites.forEach(
-                        (a) => a.gamme === id && (a.gamme = ""),
-                      );
-                      changed();
-                    },
-                  ],
-                  [
-                    "Ajouter à la semaine",
-                    "",
-                    () => {
-                      const ar = arret();
-                      if (!ar) return alert("Aucun arrêt affiché."), false;
-                      DB.activites.push(instancier(g, ar));
-                      changed();
-                      toast("Activité ajoutée à la " + semLabel(ar));
-                    },
-                  ],
-                ]
-              : []),
-            ["Annuler", "", () => {}],
-            [
-              "Enregistrer",
-              "primary",
-              () => {
-                const des = $("#e-des").value.trim();
-                if (!des)
-                  return alert("La description est obligatoire."), false;
-                Object.assign(g, {
-                  designation: des,
-                  zone: $("#e-zone").value,
-                  machine: $("#e-mach").value,
-                  service: $("#e-svc").value,
-                  frequence: $("#e-freq").value,
-                  jour: Number($("#e-jour").value),
-                  nb: Math.max(1, Number($("#e-nb").value) || 1),
-                  creneaux: w.creneaux
-                    .filter((s) => s.debut && s.fin && s.fin > s.debut)
-                    .sort((p, q) => p.debut.localeCompare(q.debut)),
-                  intervenants: inter,
-                  pont: $("#e-pont").value,
-                  gmao: $("#e-gmao").value.trim(),
-                  derniere: $("#e-der").value || "",
-                  actif: $("#e-actif").checked,
-                  modes: w.modes,
-                });
-                if (!id) DB.gamme.push(g);
-                changed();
-              },
-            ],
-          ],
-        );
-        selectMachines("#e-zone", "#e-mach", g.machine);
-        editeurCreneaux($("#e-segs"), w.creneaux, () =>
-          Number($("#e-jour").value),
-        );
-        $("#e-jour").onchange = () =>
-          editeurCreneaux($("#e-segs"), w.creneaux, () =>
-            Number($("#e-jour").value),
-          );
-        choixIntervenants(inter);
-        blocModes(g, w, { gamme: true });
-      }
       // Diamètre de la semaine dans la description (« Ø25 » -> « Ø16 »).
       const avecDiametre = (txt, dia) =>
         dia
@@ -4313,80 +3047,32 @@
               (m, c) => c + dia.replace(/^[øØ]\s?/, ""),
             )
           : txt;
-      const docPourDiametre = (id, dia) => {
-        const d = docDe(id);
-        return d && (!dia || !d.diametres.length || d.diametres.includes(dia));
-      };
-      // Activité de la semaine créée depuis une activité de gamme.
-      function instancier(g, ar) {
+      // Copie d'une activité dans l'arrêt d'une semaine (reprise ou import).
+      function copierActivite(o, ar) {
         return {
           id: uid("a"),
           arret: ar.id,
-          gamme: g.id,
-          zone: g.zone,
-          machine: g.machine,
-          service: g.service,
-          designation: avecDiametre(g.designation, ar.diametre),
-          frequence: g.frequence,
-          statut: "afaire",
-          jour: g.jour,
-          creneaux: structuredClone(g.creneaux),
-          nb: g.nb,
-          intervenants: [...g.intervenants],
-          gmao: g.gmao || "",
-          moi: "",
-          pont: g.pont || "",
+          zone: o.zone,
+          machine: o.machine || "",
+          service: o.service,
+          designation: avecDiametre(o.designation, ar.diametre),
+          frequence: o.frequence || "",
+          statut: "planifie",
+          jour: o.jour,
+          creneaux: structuredClone(o.creneaux),
+          nb: o.nb,
+          intervenants: [...o.intervenants],
+          gmao: o.gmao || "",
+          moi: o.moi || "",
+          pont: o.pont || "",
           commentaire: "",
-          ordre: g.ordre,
+          ordre: o.ordre,
           photos: [],
           docs: {},
           ar: {},
-          modes: g.modes
-            .filter((m) => docPourDiametre(m, ar.diametre))
-            .map((m) => ({ doc: m, rep: {} })),
+          commande: o.commande || "",
+          pdpRef: o.pdpRef || "",
         };
-      }
-      function gammeDepuisSemaine() {
-        const ar = arret();
-        const l = actsArret(ar).filter((a) => !a.gamme);
-        const avecF = l.filter((a) => a.frequence);
-        if (!l.length)
-          return alert(
-            "Toutes les activités de la semaine sont déjà dans la gamme.",
-          );
-        const tout = !avecF.length
-          ? confirm(
-              `Aucune activité hors gamme n'a de fréquence. Ajouter quand même les ${l.length} activité(s) à la gamme (fréquence 7 jours) ?`,
-            )
-          : !confirm(
-              `Ajouter à la gamme les ${avecF.length} activité(s) avec fréquence ?\n(Annuler pour ajouter les ${l.length} activités hors gamme.)`,
-            );
-        const choix = tout ? l : avecF;
-        if (!choix.length) return;
-        for (const a of choix) {
-          const g = {
-            id: uid("g"),
-            zone: a.zone,
-            machine: a.machine,
-            service: a.service,
-            designation: a.designation,
-            frequence: a.frequence || "7 jours",
-            jour: a.jour,
-            creneaux: structuredClone(a.creneaux),
-            nb: a.nb,
-            intervenants: [...a.intervenants],
-            pont: a.pont,
-            gmao: a.gmao,
-            modes: a.modes.map((m) => m.doc),
-            actif: true,
-            derniere: "",
-          };
-          DB.gamme.push(g);
-          a.gamme = g.id;
-          a.frequence = g.frequence;
-        }
-        changed();
-        toast(choix.length + " activité(s) ajoutée(s) à la gamme");
       }
 
       // ---------- Préparation et clôture d'une semaine ----------
@@ -4395,6 +3081,7 @@
           .filter((r) => r.lundi < lundi)
           .sort((a, b) => b.lundi.localeCompare(a.lundi))[0];
       }
+      // Nouvelle semaine : reprend les activités de la semaine précédente (créneaux, agents, équipe…).
       function preparerSemaine() {
         const dern = [...DB.arrets].sort((a, b) =>
           b.lundi.localeCompare(a.lundi),
@@ -4402,47 +3089,22 @@
         const lundi0 = dern ? D.add(dern.lundi, 7) : D.lundi(D.today());
         const corps = (lundi, dia) => {
           const prec = semainePrecedente(lundi);
-          const zo = rangZones(DB.gamme);
-          const gs = DB.gamme
-            .filter((g) => g.actif)
-            .map((g) => ({ g, e: echeance(g, lundi) }))
-            .sort(
-              (a, b) =>
-                b.e.due - a.e.due ||
-                zo[a.g.zone] - zo[b.g.zone] ||
-                a.g.designation.localeCompare(b.g.designation),
-            );
-          const nDue = gs.filter((x) => x.e.due).length;
-          const rep = prec
-            ? actsArret(prec).filter(
-                (a) =>
-                  ["afaire", "encours", "reportee"].includes(a.statut) &&
-                  !a.reprise,
-              )
-            : [];
+          const l = prec ? trierPourImpression(actsArret(prec)) : [];
           return `<p class="muted" style="margin-top:0">Semaine ${D.sem(lundi).n} : ${joursArret(
             { lundi },
           )
             .map((j) => j.nom + " " + D.fmt(j.date))
             .join(", ")}${dia ? " · " + esc(dia) : ""}</p>
-            <h3 style="margin:10px 0 4px;font-size:14px">🔁 Gamme : ${nDue} activité(s) échue(s) sur ${gs.length}</h3>
-            <div class="row" style="margin-bottom:4px"><button type="button" class="btn small" data-tout="g1">Tout cocher</button><button type="button" class="btn small" data-tout="g0">Tout décocher</button><button type="button" class="btn small" data-tout="gd">Seulement les échues</button></div>
-            <div style="max-height:34vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${
-              gs
-                .map(
-                  ({ g, e }) =>
-                    `<label class="pchk"><input type="checkbox" data-pg="${g.id}" data-due="${e.due ? 1 : 0}" ${e.due ? "checked" : ""}><span>${esc(avecDiametre(g.designation, dia))} <small class="muted">· ${esc(zoneNom(g.zone))} · ${esc(g.service)} · ${esc(g.frequence || "ponctuelle")} · dernière ${e.der ? D.fmt(e.der) : "jamais"}</small>${e.retard ? ' <span class="late">en retard</span>' : ""}${g.modes.length ? ` <span class="tag mop">📚 ${g.modes.filter((m) => docPourDiametre(m, dia)).length}</span>` : ""}</span></label>`,
-                )
-                .join("") || '<p class="muted">Gamme vide.</p>'
-            }</div>
-            <h3 style="margin:12px 0 4px;font-size:14px">↪ Reprises de la ${prec ? semLabel(prec) : "semaine précédente"} : ${rep.length} activité(s) non soldée(s)</h3>
-            <div style="max-height:24vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${
-              rep
+            <h3 style="margin:10px 0 4px;font-size:14px">↪ Activités de la ${prec ? semLabel(prec) : "semaine précédente"} : ${l.length}</h3>
+            <div class="row" style="margin-bottom:4px"><button type="button" class="btn small" data-tout="1">Tout cocher</button><button type="button" class="btn small" data-tout="0">Tout décocher</button><button type="button" class="btn small" data-tout="r">Seulement les non faites</button></div>
+            <div style="max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${
+              l
                 .map(
                   (a) =>
-                    `<label class="pchk"><input type="checkbox" data-pr="${a.id}" ${a.gamme && gs.some((x) => x.g.id === a.gamme && x.e.due) ? "" : "checked"}><span>${esc(a.designation)} <small class="muted">· ${esc(zoneNom(a.zone))} · ${stLabel(a.statut)}${a.gamme ? " · déjà en gamme" : ""}</small></span></label>`,
+                    `<label class="pchk"><input type="checkbox" data-pr="${a.id}" data-nf="${a.statut === "fait" ? 0 : 1}" checked><span>${esc(avecDiametre(a.designation, dia))} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)}${a.frequence ? " · " + esc(a.frequence) : ""} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small>${a.statut !== "fait" ? ` <span class="late">${esc(stLabel(a.statut))}</span>` : ""}</span></label>`,
                 )
-                .join("") || '<p class="muted">Rien à reprendre.</p>'
+                .join("") ||
+              '<p class="muted">Aucune activité à reprendre : la semaine sera vide.</p>'
             }</div>`;
         };
         dialogue(
@@ -4467,28 +3129,15 @@
                 const prec = semainePrecedente(lundi);
                 if (prec) ar.effectifs = structuredClone(prec.effectifs);
                 DB.arrets.push(ar);
-                document.querySelectorAll("[data-pg]:checked").forEach((c) => {
-                  const g = DB.gamme.find((x) => x.id === c.dataset.pg);
-                  DB.activites.push(instancier(g, ar));
-                });
                 document.querySelectorAll("[data-pr]:checked").forEach((c) => {
                   const o = DB.activites.find((x) => x.id === c.dataset.pr);
-                  const n = structuredClone(o);
-                  Object.assign(n, {
-                    id: uid("a"),
-                    arret: ar.id,
-                    statut: "afaire",
-                    origine: o.id,
-                    photos: [],
-                    modes: o.modes.map((m) => ({ doc: m.doc, rep: {} })),
-                    designation: avecDiametre(o.designation, dia),
-                  });
-                  delete n.signePar;
-                  delete n.signeLe;
-                  delete n.reprise;
-                  if (n.docs) delete n.docs.ar;
-                  o.reprise = n.id;
-                  if (o.statut !== "reportee") o.statut = "reportee";
+                  const n = copierActivite(o, ar);
+                  // Activité non faite : reportée sur la nouvelle semaine.
+                  if (o.statut !== "fait") {
+                    n.origine = o.id;
+                    o.reprise = n.id;
+                    o.statut = "reportee";
+                  }
                   DB.activites.push(n);
                 });
                 ui.arret = ar.id;
@@ -4510,15 +3159,11 @@
           const t = e.target.dataset.tout;
           if (!t) return;
           document
-            .querySelectorAll("[data-pg]")
+            .querySelectorAll("[data-pr]")
             .forEach(
               (c) =>
                 (c.checked =
-                  t === "g1"
-                    ? true
-                    : t === "g0"
-                      ? false
-                      : c.dataset.due === "1"),
+                  t === "1" ? true : t === "0" ? false : c.dataset.nf === "1"),
             );
         };
         maj();
@@ -4529,7 +3174,7 @@
           return changed();
         }
         const rest = actsArret(ar).filter(
-          (a) => a.statut === "afaire" || a.statut === "encours",
+          (a) => a.statut === "planifie" || a.statut === "encours",
         );
         if (
           !confirm(
@@ -4618,33 +3263,20 @@
           b.lundi.localeCompare(a.lundi),
         );
         $("#se-table").innerHTML = tri.length
-          ? `<table><thead><tr><th>Semaine</th><th>Jours</th><th>Diamètre</th><th>Activités</th><th>Soldées</th><th>Heures maint.</th><th>Occupation</th><th>Check-lists</th><th>Statut</th><th></th></tr></thead><tbody>${tri
+          ? `<table><thead><tr><th>Semaine</th><th>Jours</th><th>Diamètre</th><th>Activités</th><th>Soldées</th><th>Heures maint.</th><th>Occupation</th><th>Statut</th><th></th></tr></thead><tbody>${tri
               .map((ar) => {
                 const l = actsArret(ar),
                   n = l.length || 1;
-                const sol = l.filter(
-                  (a) => a.statut === "fait" || a.statut === "nonnecessaire",
-                ).length;
+                const sol = l.filter((a) => a.statut === "fait").length;
                 const hm = l.filter(actif).reduce((s, a) => s + hMaint(a), 0);
                 const eff = effectifTotal(ar);
-                const ck = l.reduce(
-                  (s, a) => {
-                    const e = etatModes(a);
-                    return {
-                      ck: s.ck + e.ck,
-                      inc: s.inc + e.ckIncomplet,
-                      nok: s.nok + e.nok,
-                    };
-                  },
-                  { ck: 0, inc: 0, nok: 0 },
-                );
                 return `<tr data-sid="${ar.id}" style="${ar.id === ui.arret ? "background:var(--weekend)" : ""}"><td><b>S${D.sem(ar.lundi).n}</b> <small class="muted">${D.sem(ar.lundi).an}</small></td><td>${joursArret(
                   ar,
                 )
                   .map((j) => D.jour(j.date) + " " + D.fmt(j.date))
                   .join(", ")}</td><td>${esc(ar.diametre || "—")}</td>
                   <td>${l.length}</td><td><div class="prog" style="width:90px">${STATUTS.map((s) => `<i style="width:${(l.filter((a) => a.statut === s.id).length / n) * 100}%;background:var(--${s.id})"></i>`).join("")}</div><small class="muted">${Math.round((sol / n) * 100)} %</small></td>
-                  <td>${h(hm)}</td><td>${eff.h ? pct(hm / eff.h) : "—"}</td><td>${ck.ck ? `${ck.ck - ck.inc}/${ck.ck} complètes${ck.nok ? ` · <span class="late">${ck.nok} NOK</span>` : ""}` : '<span class="muted">—</span>'}</td>
+                  <td>${h(hm)}</td><td>${eff.h ? pct(hm / eff.h) : "—"}</td>
                   <td><span class="st-arret ${ar.statut}">${{ prepa: "En préparation", encours: "En cours", cloture: "Clôturé" }[ar.statut]}</span></td>
                   <td style="white-space:nowrap"><button class="btn small" data-sact="open">Ouvrir</button> <button class="btn small" data-sact="edit">Modifier</button> <button class="btn small" data-sact="clot">${ar.statut === "cloture" ? "Rouvrir" : "Clôturer"}</button></td></tr>`;
               })
@@ -4722,18 +3354,16 @@
           .join("");
         const boxes = Z.map((z) => {
           const s = statsZone(z.id, ui.schemaSvc);
-          const reste = s.afaire + s.encours;
-          const solde = s.fait + s.nonnecessaire;
+          const reste = s.planifie;
+          const solde = s.fait;
           const pct = s.total ? solde / s.total : 0;
           const bord = !s.total
             ? "var(--line)"
-            : s.encours
-              ? "var(--encours)"
-              : reste === 0 && !s.reportee
-                ? "var(--fait)"
-                : s.reportee && !reste
-                  ? "var(--reportee)"
-                  : "var(--afaire)";
+            : reste === 0 && !s.reportee
+              ? "var(--fait)"
+              : s.reportee && !reste
+                ? "var(--reportee)"
+                : "var(--planifie)";
           const lignes = lignesTexte(
             z.nom,
             Math.max(15, Math.floor((z.w - 24) / 8)),
@@ -4752,7 +3382,7 @@
               s.total
                 ? `<rect x="${z.x + 8}" y="${z.y + z.h - 14}" width="${bw}" height="6" rx="3" style="fill:var(--line)"/>
             ${
-              ["fait", "nonnecessaire", "encours", "reportee"].reduce(
+              ["fait", "reportee"].reduce(
                 (acc, st) => {
                   const w = (s[st] / s.total) * bw;
                   acc.html += w
@@ -4906,10 +3536,7 @@
       }
       // ---------- Onglet Administration ----------
       function nbAct(champ, v) {
-        return (
-          DB.activites.filter((a) => a[champ] === v).length +
-          DB.gamme.filter((g) => g[champ] === v).length
-        );
+        return DB.activites.filter((a) => a[champ] === v).length;
       }
       function renderAdmin() {
         if (!ui.admin) return;
@@ -5035,12 +3662,9 @@
                         )
                       )
                         return false;
-                      [...DB.activites, ...DB.gamme].forEach(
+                      DB.activites.forEach(
                         (a) =>
                           a.zone === id && ((a.zone = cible), (a.machine = "")),
-                      );
-                      DB.bibliotheque.forEach(
-                        (d) => d.zone === id && (d.zone = ""),
                       );
                       DB.zones = DB.zones.filter((x) => x.id !== id);
                       DB.flux = DB.flux.filter((x) => x !== id);
@@ -5095,7 +3719,7 @@
                     : { id: code ? "m" + code : uid("m"), code, nom: nm };
                 });
                 const ids = new Set(z.machines.map((mc) => mc.id));
-                [...DB.activites, ...DB.gamme].forEach(
+                DB.activites.forEach(
                   (a) =>
                     a.zone === z.id &&
                     a.machine &&
@@ -5169,11 +3793,8 @@
                       const cible = $("#ad-repl")?.value;
                       if (!confirm(`Supprimer « ${it.nom} » ?`)) return false;
                       if (estSvc) {
-                        [...DB.activites, ...DB.gamme].forEach(
+                        DB.activites.forEach(
                           (a) => a.service === it.id && (a.service = cible),
-                        );
-                        DB.bibliotheque.forEach(
-                          (d) => d.service === it.id && (d.service = ""),
                         );
                         DB.services = DB.services.filter((s) => s !== it.id);
                       } else {
@@ -5205,7 +3826,7 @@
                 if (estSvc) {
                   if (it) {
                     DB.services[DB.services.indexOf(it.id)] = nom;
-                    [...DB.activites, ...DB.gamme, ...DB.bibliotheque].forEach(
+                    DB.activites.forEach(
                       (a) => a.service === it.id && (a.service = nom),
                     );
                     DB.meta.effectifs
@@ -5349,7 +3970,7 @@
                       )
                         return false;
                       DB.ponts = DB.ponts.filter((x) => x.id !== id);
-                      [...DB.activites, ...DB.gamme].forEach(
+                      DB.activites.forEach(
                         (a) => a.pont === id && (a.pont = ""),
                       );
                       changed();
@@ -5417,7 +4038,7 @@
                       )
                         return false;
                       DB.personnel = DB.personnel.filter((x) => x.id !== id);
-                      [...DB.activites, ...DB.gamme].forEach(
+                      DB.activites.forEach(
                         (a) =>
                           (a.intervenants = a.intervenants.filter(
                             (i) => i !== id,
@@ -6659,7 +5280,7 @@
                   )
                 )
                   return false;
-                [...DB.activites, ...DB.gamme].forEach(
+                DB.activites.forEach(
                   (a) => a.jour >= jours.length && (a.jour = 0),
                 );
                 const liste = (s) =>
@@ -6940,8 +5561,6 @@
         }
         return ids;
       }
-      const cleGamme = (zone, des) =>
-        zone + "|" + sansAccents(des).replace(/[ØO]\s?\d+/g, "Ø");
       async function importerGantt(file) {
         if (!DB) {
           DB = baseNeuve();
@@ -6966,7 +5585,6 @@
               `${j.nom} : ${r.lignes.filter((l) => l.dow === j.dow).length} ligne(s), ${j.debut}–${j.fin}`,
           )
           .join(" · ");
-        const nFreq = r.lignes.filter((l) => l.freq).length;
         const existe = (l) => DB.arrets.find((x) => x.lundi === l);
         dialogue(
           "Importer le Gantt Excel : " + file.name,
@@ -6974,8 +5592,6 @@
           <div class="form">
             <label>Semaine (lundi)<input type="date" id="im-lundi" value="${lundi}"></label>
             <label>Diamètre<select id="im-dia">${opt("", "—", r.diametre)}${[...new Set([...DB.meta.diametres, ...(r.diametre ? [r.diametre] : [])])].map((x) => opt(x, x, r.diametre)).join("")}</select></label>
-            <label class="full" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="im-gamme" checked> Alimenter la gamme préventive avec les ${nFreq} activité(s) qui ont une fréquence (mise à jour de celles qui existent déjà)</label>
-            <label class="full" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="im-sem" checked> Créer les activités de l'arrêt de cette semaine (créneaux, agents, fréquences)</label>
             <label class="full" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="im-rempl"> Si la semaine existe déjà, remplacer ses activités</label>
             <label class="full" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="im-jours" checked> Reprendre les jours et horaires des feuilles (${esc(r.jours.map((j) => j.nom).join(", "))})</label>
             <p class="full muted" id="im-info" style="margin:0"></p>
@@ -7012,26 +5628,16 @@
                 };
                 const zc = [],
                   pc = [];
-                const cles = Object.fromEntries(
-                  DB.gamme.map((g) => [cleGamme(g.zone, g.designation), g]),
-                );
-                let ar = null,
-                  nG = 0,
-                  nGm = 0,
+                let ar = DB.arrets.find((x) => x.lundi === l0),
                   nA = 0;
-                if ($("#im-sem").checked) {
-                  ar = DB.arrets.find((x) => x.lundi === l0);
-                  if (!ar) {
-                    ar = nouvelArret(DB, l0, dia);
-                    const prec = semainePrecedente(l0);
-                    if (prec) ar.effectifs = structuredClone(prec.effectifs);
-                    DB.arrets.push(ar);
-                  } else if ($("#im-rempl").checked)
-                    DB.activites = DB.activites.filter(
-                      (a) => a.arret !== ar.id,
-                    );
-                  ar.diametre = dia || ar.diametre;
-                }
+                if (!ar) {
+                  ar = nouvelArret(DB, l0, dia);
+                  const prec = semainePrecedente(l0);
+                  if (prec) ar.effectifs = structuredClone(prec.effectifs);
+                  DB.arrets.push(ar);
+                } else if ($("#im-rempl").checked)
+                  DB.activites = DB.activites.filter((a) => a.arret !== ar.id);
+                ar.diametre = dia || ar.diametre;
                 for (const l of r.lignes) {
                   const svc = l.equipe;
                   if (svc && !DB.services.includes(svc)) DB.services.push(svc);
@@ -7060,61 +5666,19 @@
                     DB.ponts.push(p);
                     v.pont = p.id;
                   }
-                  let g = cles[cleGamme(zone, l.des)];
-                  if ($("#im-gamme").checked && l.freq) {
-                    if (g) {
-                      Object.assign(g, structuredClone(v));
-                      nGm++;
-                    } else {
-                      g = {
-                        id: uid("g"),
-                        machine: "",
-                        gmao: "",
-                        modes: [],
-                        actif: true,
-                        derniere: "",
-                        ...structuredClone(v),
-                      };
-                      DB.gamme.push(g);
-                      cles[cleGamme(zone, l.des)] = g;
-                      nG++;
-                    }
-                  }
-                  if (ar) {
-                    const a = g
-                      ? {
-                          ...instancier(g, ar),
-                          ...structuredClone(v),
-                          designation: avecDiametre(l.des, ar.diametre),
-                        }
-                      : {
-                          ...instancier(
-                            { ...v, id: "", machine: "", modes: [], gmao: "" },
-                            ar,
-                          ),
-                          gamme: "",
-                        };
-                    DB.activites.push(a);
-                    nA++;
-                  }
+                  DB.activites.push(copierActivite(v, ar));
+                  nA++;
                 }
-                if (ar) {
-                  ui.arret = ar.id;
-                  DB.arrets = DB.arrets.filter(
-                    (x) => x === ar || !vides.includes(x),
-                  );
-                }
+                ui.arret = ar.id;
+                DB.arrets = DB.arrets.filter(
+                  (x) => x === ar || !vides.includes(x),
+                );
                 remplirFiltres();
                 changed();
                 demarrer();
                 alert(
                   [
-                    ar
-                      ? `${nA} activité(s) importée(s) dans la ${semLabel(ar)}.`
-                      : "",
-                    $("#im-gamme").checked
-                      ? `Gamme : ${nG} activité(s) créée(s), ${nGm} mise(s) à jour.`
-                      : "",
+                    `${nA} activité(s) importée(s) dans la ${semLabel(ar)}.`,
                     zc.length ? `Zones créées : ${zc.join(", ")}.` : "",
                     pc.length
                       ? `${pc.length} agent(s) absent(s) du personnel créés (à vérifier dans Administration → Personnel) : ${pc.join(", ")}.`
@@ -7195,7 +5759,7 @@
               sansAccents(p.nom) === sansAccents(x.nom),
           );
           if (l.length !== 1) continue;
-          [...DB.activites, ...DB.gamme].forEach(
+          DB.activites.forEach(
             (a) =>
               (a.intervenants = [
                 ...new Set(
@@ -7253,24 +5817,6 @@
         $("#print-zone").innerHTML = "";
       });
       const box = (on) => `<span class="box">${on ? "✕" : ""}</span>`;
-      // Check-list au format A4 (vierge si m.rep est vide).
-      function pageCk(doc, m, a) {
-        const ar = a ? arretDe(a) : null;
-        const rows = doc.points
-          .map((p) => {
-            if (p.section)
-              return `<tr><th colspan="6" style="text-align:left">${esc(p.t)}</th></tr>`;
-            const r = m.rep?.[p.id] || {};
-            return `<tr><td>${esc(p.t)}${p.attendu ? `<br><i>Attendu : ${esc(p.attendu)}${p.unite ? " " + esc(p.unite) : ""}</i>` : ""}</td><td style="text-align:center">${box(r.v === "ok")}</td><td style="text-align:center">${box(r.v === "nok")}</td><td style="text-align:center">${box(r.v === "na")}</td><td>${esc(r.m || "")}${p.unite && !r.m ? `<span style="color:#777">…… ${esc(p.unite)}</span>` : ""}</td><td>${esc(r.c || "")}</td></tr>`;
-          })
-          .join("");
-        return `<div class="pg-c"><h1>☑ ${esc(doc.titre)}</h1>
-          <table style="margin-bottom:6px"><tr><td><b>Référence</b> : ${esc(doc.ref || "—")}${doc.version ? " · v" + esc(doc.version) : ""}</td><td><b>Semaine</b> : ${ar ? esc(semLabel(ar)) : "……"}</td><td><b>Date</b> : ${a ? dateLongue(dateAct(a)) : "……/……/……"}</td></tr>
-          <tr><td colspan="2"><b>Activité</b> : ${a ? esc(a.designation) + " — " + esc(zoneNom(a.zone)) : "……………………………………"}</td><td><b>Intervenants</b> : ${a ? esc(a.intervenants.map((i) => persNom(pers(i))).join(", ")) : ""}</td></tr></table>
-          ${doc.consigne ? `<p><i>${esc(doc.consigne)}</i></p>` : ""}
-          <table><thead><tr><th>Point de contrôle</th><th style="width:34px">OK</th><th style="width:34px">NOK</th><th style="width:34px">N/A</th><th style="width:16%">Mesure</th><th style="width:26%">Commentaire</th></tr></thead><tbody>${rows}</tbody></table>
-          <table style="margin-top:8px"><tr><td style="height:46px;width:50%"><b>Rempli par</b> : ${esc(m.par ? persNom(pers(m.par)) : "")}${m.date ? " le " + dateLongue(m.date) : ""}<br>Signature :</td><td><b>Visa du responsable</b> :</td></tr></table></div>`;
-      }
       async function pagesAR(a) {
         if (a.docs?.ar)
           try {
@@ -7292,23 +5838,6 @@
           );
         imprimerPages(pages);
       }
-      async function pagesMop(doc, a) {
-        const f = doc.fichier;
-        if (!f) return [];
-        if (/pdf/i.test(f.type) || /\.pdf$/i.test(f.nom))
-          try {
-            return (await pagesPdf(f.data)).map(
-              (src) => `<div class="pg-img"><img src="${src}"></div>`,
-            );
-          } catch (e) {
-            console.warn(e);
-          }
-        if (/^image\//.test(f.type))
-          return [`<div class="pg-img"><img src="${f.data}"></div>`];
-        return [
-          `<div class="pg-c"><h1>📘 ${esc(doc.titre)}</h1><p>Mode opératoire à consulter : <b>${esc(f.nom)}</b> (format non imprimable depuis l'application).</p><p>Activité : ${esc(a.designation)}</p></div>`,
-        ];
-      }
       function trierPourImpression(list) {
         const zo = rangZones(list);
         return [...list].sort(
@@ -7319,51 +5848,6 @@
             (x.creneaux[0]?.debut || "99").localeCompare(
               y.creneaux[0]?.debut || "99",
             ),
-        );
-      }
-      function imprimerDossiers() {
-        const list = trierPourImpression(
-          filtrer().filter((a) => a.statut !== "nonnecessaire"),
-        );
-        if (!list.length) return alert("Aucune activité dans le filtre.");
-        dialogue(
-          "Dossiers d'intervention",
-          `<p style="margin-top:0">${list.length} activité(s) du filtre (ex. une équipe et un jour). Pour chacune :</p>
-          <label class="pchk"><input type="checkbox" id="pd-ar" checked> Analyse des risques (PDF signé s'il est joint, sinon formulaire pré-rempli)</label>
-          <label class="pchk"><input type="checkbox" id="pd-ck" checked> Check-lists (remplies ou vierges)</label>
-          <label class="pchk"><input type="checkbox" id="pd-mop" checked> Modes opératoires (pages des PDF et images)</label>
-          <p class="muted">Les PDF sont mis en page avec pdf.js (connexion Internet nécessaire).</p>`,
-          [
-            ["Annuler", "", () => {}],
-            [
-              "Imprimer",
-              "primary",
-              () => {
-                const o = {
-                  ar: $("#pd-ar").checked,
-                  ck: $("#pd-ck").checked,
-                  mop: $("#pd-mop").checked,
-                };
-                (async () => {
-                  toast("Préparation de l'impression…");
-                  const pages = [];
-                  for (const a of list) {
-                    if (o.ar) pages.push(...(await pagesAR(a)));
-                    for (const m of a.modes) {
-                      const doc = docDe(m.doc);
-                      if (!doc) continue;
-                      if (doc.type === "checklist" && o.ck)
-                        pages.push(pageCk(doc, m, a));
-                      if (doc.type === "mop" && o.mop)
-                        pages.push(...(await pagesMop(doc, a)));
-                    }
-                  }
-                  if (!pages.length) return alert("Rien à imprimer.");
-                  imprimerPages(pages);
-                })();
-              },
-            ],
-          ],
         );
       }
       // Gantt du jour au format de la feuille Excel (A3 paysage), avec la colonne « Signature agent ».
@@ -7410,7 +5894,7 @@
             cells += `<td class="q ${on ? (a.nb > 1 ? "on2" : "on") : ""}" style="${enPause(a0) ? "background:#ddd" : ""}">${on && a.nb > 1 ? a.nb : ""}</td>`;
           }
           const sig = a.signePar ? esc(persNom(pers(a.signePar))) : "";
-          body += `<tr><td></td><td>${esc(a.designation)}${a.statut !== "afaire" ? ` <i>(${esc(stLabel(a.statut))})</i>` : ""}</td><td>${esc(a.service)}</td><td>${esc(a.frequence || "")}</td><td>${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || "")}</td><td>${esc(a.intervenants.map((i) => pers(i)?.nom).join(" / "))}</td><td>${sig}</td>${cells}</tr>`;
+          body += `<tr><td></td><td>${esc(a.designation)}${a.statut !== "planifie" ? ` <i>(${esc(stLabel(a.statut))})</i>` : ""}</td><td>${esc(a.service)}</td><td>${esc(a.frequence || "")}</td><td>${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || "")}</td><td>${esc(a.intervenants.map((i) => pers(i)?.nom).join(" / "))}</td><td>${sig}</td>${cells}</tr>`;
         }
         body += `<tr><td colspan="7" style="text-align:right"><b>Agents mobilisés</b></td>${sous.map((v) => `<td class="q" style="text-align:center">${v || ""}</td>`).join("")}</tr>`;
         imprimerPages(
@@ -7430,15 +5914,6 @@
         const cnt = (st) => l.filter((a) => a.statut === st).length;
         const hm = l.filter(actif).reduce((s, a) => s + hMaint(a), 0);
         const eff = effectifTotal(ar);
-        const nok = [];
-        for (const a of l)
-          for (const m of a.modes) {
-            const doc = docDe(m.doc);
-            if (doc?.type !== "checklist") continue;
-            for (const p of pointsCk(doc))
-              if (m.rep?.[p.id]?.v === "nok")
-                nok.push({ a, doc, p, r: m.rep[p.id] });
-          }
         let zc = null,
           rows = "";
         for (const a of l) {
@@ -7446,23 +5921,13 @@
             zc = a.zone;
             rows += `<tr><th colspan="6" style="text-align:left">${esc(zoneNom(zc))}</th></tr>`;
           }
-          const ck = (a.modes || [])
-            .map((m) => {
-              const doc = docDe(m.doc);
-              if (doc?.type !== "checklist") return "";
-              const e = etatCk(m);
-              return `${esc(doc.titre)} ${e.faits}/${e.n}${e.nok ? " · " + e.nok + " NOK" : ""}`;
-            })
-            .filter(Boolean)
-            .join("<br>");
-          rows += `<tr><td>${esc(a.designation)}</td><td>${esc(a.service)}</td><td>${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</td><td>${esc(a.intervenants.map((i) => pers(i)?.nom).join(", "))}</td><td><b>${esc(stLabel(a.statut))}</b>${a.signePar ? "<br>✍ " + esc(persNom(pers(a.signePar))) : ""}</td><td>${ck}${a.commentaire ? (ck ? "<br>" : "") + "💬 " + esc(a.commentaire) : ""}</td></tr>`;
+          rows += `<tr><td>${esc(a.designation)}</td><td>${esc(a.service)}</td><td>${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</td><td>${esc(a.intervenants.map((i) => pers(i)?.nom).join(", "))}</td><td><b>${esc(stLabel(a.statut))}</b>${a.signePar ? "<br>✍ " + esc(persNom(pers(a.signePar))) : ""}</td><td>${esc(a.commentaire || "")}</td></tr>`;
         }
         imprimerPages([
           `<div class="pg-c"><h1>Compte rendu — ${esc(DB.meta.titre)} — ${esc(semLabel(ar))}</h1>
-          <table style="margin-bottom:8px"><tr><td><b>${l.length}</b> activités</td><td>Fait : <b>${cnt("fait")}</b> (${Math.round((cnt("fait") / n) * 100)} %)</td><td>Non nécessaire : ${cnt("nonnecessaire")}</td><td>Reportées : <b>${cnt("reportee")}</b></td><td>Non soldées : ${cnt("afaire") + cnt("encours")}</td><td>Heures de maintenance : <b>${h(hm)}</b>${eff.h ? ` · occupation ${pct(hm / eff.h)}` : ""}</td></tr></table>
+          <table style="margin-bottom:8px"><tr><td><b>${l.length}</b> activités</td><td>Fait : <b>${cnt("fait")}</b> (${Math.round((cnt("fait") / n) * 100)} %)</td><td>Reportées : <b>${cnt("reportee")}</b></td><td>Planifiées non faites : ${cnt("planifie")}</td><td>Heures de maintenance : <b>${h(hm)}</b>${eff.h ? ` · occupation ${pct(hm / eff.h)}` : ""}</td></tr></table>
           ${ar.notes ? `<p><b>Notes</b> : ${esc(ar.notes)}</p>` : ""}
-          ${nok.length ? `<h3>⚠️ Points de check-list non conformes (${nok.length})</h3><table><thead><tr><th>Activité</th><th>Check-list</th><th>Point</th><th>Mesure / commentaire</th></tr></thead><tbody>${nok.map((x) => `<tr><td>${esc(x.a.designation)}</td><td>${esc(x.doc.titre)}</td><td>${esc(x.p.t)}</td><td>${esc([x.r.m, x.r.c].filter(Boolean).join(" — "))}</td></tr>`).join("")}</tbody></table><br>` : ""}
-          <table><thead><tr><th>Activité</th><th>Équipe</th><th>Horaire</th><th>Agents</th><th>Statut</th><th>Check-lists / commentaire</th></tr></thead><tbody>${rows}</tbody></table></div>`,
+          <table><thead><tr><th>Activité</th><th>Équipe</th><th>Horaire</th><th>Agents</th><th>Statut</th><th>Commentaire</th></tr></thead><tbody>${rows}</tbody></table></div>`,
         ]);
       }
 
@@ -7512,7 +5977,23 @@
       window.addEventListener("beforeunload", (e) => {
         if (dirty) e.preventDefault();
       });
-      brancherGlisser();
+      // Glisser un data.json ou un Gantt Excel sur la page.
+      const drop = $("#drop");
+      document.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        drop.classList.add("over");
+      });
+      document.addEventListener("dragleave", (e) => {
+        if (!e.relatedTarget) drop.classList.remove("over");
+      });
+      document.addEventListener("drop", (e) => {
+        e.preventDefault();
+        drop.classList.remove("over");
+        const f = e.dataTransfer.files[0];
+        if (!f) return;
+        if (/\.json$/i.test(f.name)) lireFichier(f);
+        else if (/\.xls[xm]?$/i.test(f.name)) importerGantt(f);
+      });
 
       // En-tête : choix de la semaine
       const semaines = () =>
@@ -7531,19 +6012,6 @@
       $("#periode").onclick = () => arret() && editerSemaine(ui.arret);
       $("#periode").style.cursor = "pointer";
       $("#periode").title = "Modifier la semaine (diamètre, consignes, notes)";
-      document.querySelectorAll("[data-libtoggle]").forEach(
-        (b) =>
-          (b.onclick = () => {
-            ui.lib = !ui.lib;
-            try {
-              localStorage.setItem("hebdo-lib", ui.lib ? "1" : "0");
-            } catch (e) {}
-            render();
-          }),
-      );
-      try {
-        ui.lib = localStorage.getItem("hebdo-lib") !== "0";
-      } catch (e) {}
 
       // Gantt
       $("#g-days").onclick = (e) => {
@@ -7588,20 +6056,14 @@
       $("#kpis").onclick = (e) => {
         const k = e.target.closest(".kpi")?.dataset.k;
         if (k == null) return;
-        if (k === "ck" || k === "nok") {
-          ui.f.doc = k === "ck" ? "ck-incomplet" : "nok";
-          $("#f-doc").value = ui.f.doc;
-        } else ui.f.st = ui.f.st === k ? "" : k;
+        ui.f.st = ui.f.st === k ? "" : k;
         remplirFiltres();
         renderActivites();
       };
       $("#b-new").onclick = () => editerActivite(null);
-      $("#b-dossier").onclick = imprimerDossiers;
       $("#b-cr").onclick = imprimerCR;
       $("#b-ar-print").onclick = () => {
-        const list = trierPourImpression(
-          filtrer().filter((a) => a.statut !== "nonnecessaire"),
-        );
+        const list = trierPourImpression(filtrer());
         if (!list.length) return alert("Aucune activité dans le filtre.");
         if (
           list.length > 15 &&
@@ -7617,68 +6079,11 @@
         if (!changerStatut(a, e.target.value)) return renderActivites();
         changed();
       });
-      // Pastille d'un document : ouvre la check-list à remplir ou le mode opératoire.
-      function ouvrirMode(cle) {
-        const [aid, did] = cle.split("|");
-        const a = DB.activites.find((x) => x.id === aid);
-        const m = a?.modes.find((x) => x.doc === did);
-        const doc = docDe(did);
-        if (!m || !doc) return;
-        if (doc.type === "checklist") ouvrirCk(a, m, changed);
-        else if (doc.fichier) ouvrirPieceJointe(doc.fichier.data);
-      }
       $("#t-act").addEventListener("click", (e) => {
         if (e.target.closest("select")) return;
-        const mo = e.target.closest("[data-mode]");
-        if (mo) return ouvrirMode(mo.dataset.mode);
         const tr = e.target.closest("tr[data-id]");
         if (tr) editerActivite(tr.dataset.id);
       });
-
-      // Bibliothèque
-      zoneDepot($("#bi-drop"), "", true, async (files) => {
-        const docs = await docsDepuisFichiers(files);
-        if (docs.length) {
-          changed();
-          toast(docs.length + " document(s) ajouté(s) à la bibliothèque");
-        }
-      });
-      $("#bi-ck-new").onclick = () => editerDoc(null, "checklist");
-      $("#bi-mop-new").onclick = () => editerDoc(null, "mop");
-      for (const [sel, k] of Object.entries({
-        "#bi-q": "q",
-        "#bi-type": "type",
-        "#bi-svc": "svc",
-      }))
-        $(sel).addEventListener(sel === "#bi-q" ? "input" : "change", (e) => {
-          ui.bi[k] = e.target.value;
-          renderBiblio();
-        });
-      $("#bi-table").onclick = (e) => {
-        const tr = e.target.closest("tr[data-bid]");
-        if (!tr) return;
-        const act = e.target.closest("[data-bact]")?.dataset.bact;
-        if (act === "voir") apercuDoc(tr.dataset.bid);
-        else editerDoc(tr.dataset.bid);
-      };
-
-      // Gamme
-      for (const [sel, k] of Object.entries({
-        "#ga-q": "q",
-        "#ga-svc": "svc",
-        "#ga-freq": "freq",
-        "#ga-etat": "etat",
-      }))
-        $(sel).addEventListener(sel === "#ga-q" ? "input" : "change", (e) => {
-          ui.ga[k] = e.target.value;
-          renderGamme();
-        });
-      $("#ga-new").onclick = () => editerGamme(null);
-      $("#ga-from-week").onclick = gammeDepuisSemaine;
-      $("#ga-table").onclick = (e) => {
-        const tr = e.target.closest("tr[data-gid]");
-        if (tr) editerGamme(tr.dataset.gid);
-      };
 
       // Schéma
       $("#schema").onclick = (e) => {

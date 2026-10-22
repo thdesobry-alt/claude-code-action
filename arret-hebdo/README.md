@@ -10,47 +10,20 @@ modèle de l'application « Arrêt technique ». Elle remplace le classeur
   en haut de page (◀ Semaine 41 · ø25 ▶).
 - Un **Gantt au quart d'heure**, comme la feuille Excel : une ligne par activité, groupée par
   section (zone), avec l'équipe, la fréquence, le pont, les agents et la signature.
-- Une **gamme préventive** (activités récurrentes avec fréquence 7 jours, 14 jours, 1 mois…).
-  Chaque semaine, « ＋ Semaine » propose les activités échues avec leur créneau, leurs agents,
-  leurs modes opératoires et leurs check-lists, plus les activités non soldées de la semaine
-  précédente.
-- Une **bibliothèque de modes opératoires et de check-lists** à glisser sur les activités.
+- Trois statuts : **Planifié**, **Fait**, **Reporté**.
+- **＋ Semaine** prépare la semaine suivante en reprenant les activités de la précédente (créneaux,
+  agents, équipe, fréquence) ; les activités non faites y sont reportées.
 
 ## Onglets
 
-| Onglet                             | Contenu                                                                                                                                                                                                                                                                                                                                                                                         |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 📅 Gantt                           | Un jour à la fois (Lundi / Mardi). Glisser une barre pour la déplacer, ses bords pour changer l'horaire, cliquer sur une ligne vide pour placer un créneau d'1 h (Maj + clic : créneau supplémentaire). Ligne « agents mobilisés » par quart d'heure, conflits d'agent ou de pont signalés en rouge. 🖨️ imprime le Gantt du jour au format de la feuille Excel (A3 paysage, colonne signature). |
-| 📋 Activités                       | Compteurs (statuts, check-lists à compléter, points non conformes), avancement par équipe, liste filtrable. Statut modifiable dans la liste ; clic sur une pastille ☑ pour remplir la check-list. Impressions : dossiers d'intervention, analyses de risque, compte rendu.                                                                                                                     |
-| 📚 Modes opératoires / check-lists | La bibliothèque : dépôt de fichiers, création et modification des check-lists, nombre d'activités qui utilisent chaque document.                                                                                                                                                                                                                                                                |
-| 🔁 Gamme préventive                | Activités récurrentes : fréquence, jour et créneau habituels, agents, documents, dernière réalisation, état pour la semaine affichée (échue, en retard, à jour).                                                                                                                                                                                                                                |
-| 🗺️ Schéma laminoir                 | Avancement de la semaine zone par zone ; un clic ouvre le Gantt filtré sur la zone.                                                                                                                                                                                                                                                                                                             |
-| 👷 Charge et effectifs             | Agents présents de la semaine (nombre × heures), heures de maintenance par équipe et par jour, taux d'occupation (feuille « Total heures » de l'Excel). Occupation de chaque intervenant au quart d'heure, avec les doublons.                                                                                                                                                                   |
-| 🗂️ Semaines                        | Historique des arrêts (activités, soldées, heures, occupation, check-lists), préparation, clôture, import Excel.                                                                                                                                                                                                                                                                                |
-| ⚙️ Administration                  | Jours et horaires, pas du Gantt, diamètres, fréquences, consignes, zones et machines, équipes, ponts, personnel, éditeur JSON.                                                                                                                                                                                                                                                                  |
-
-## Modes opératoires et check-lists
-
-- **Ajouter** : glisser des fichiers dans l'onglet 📚 (ou dans le panneau « Bibliothèque » à droite
-  des onglets Gantt, Activités et Gamme). PDF, Word, Excel, images → mode opératoire ;
-  `.txt` / `.csv` → check-list (un point par ligne). On peut aussi créer une check-list à la main.
-- **Format d'une check-list** : une ligne par point ; `# Titre` pour une section ;
-  `Point | unité | valeur attendue` pour une mesure (ex. `Pression accumulateur | bar | 120`).
-- **Rattacher** : glisser la carte de la bibliothèque sur une activité (Gantt, Activités ou Gamme),
-  ou sur l'en-tête d'une zone pour toutes ses activités du jour. Un fichier déposé directement
-  sur une activité rejoint la bibliothèque et l'activité. Sur téléphone (pas de glisser-déposer),
-  utiliser « Choisir dans la bibliothèque » dans la fiche de l'activité.
-- Un document rattaché à une activité qui vient de la gamme est aussi ajouté à la gamme : il
-  revient les semaines suivantes.
-- **Diamètres** : une check-list marquée pour certains diamètres (ex. « avant démarrage ø25 »)
-  n'est jointe qu'aux semaines de ces diamètres. Dans la gamme, « Ø25 » dans la description est
-  remplacé par le diamètre de la semaine.
-- **Remplir** : OK / NOK / N/A, mesure et commentaire par point, « Rempli par ». Passer une
-  activité à « Fait » avec une check-list incomplète demande confirmation. Les points NOK
-  apparaissent dans le compte rendu.
-- **Dossiers d'intervention** (onglet Activités, après avoir filtré, par exemple Mécanique +
-  Lundi) : pour chaque activité, l'analyse de risque, les check-lists et les pages des modes
-  opératoires PDF, à imprimer d'un coup.
+| Onglet                 | Contenu                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 📅 Gantt               | Un jour à la fois (Lundi / Mardi). Glisser une barre pour la déplacer, ses bords pour changer l'horaire, cliquer sur une ligne vide pour placer un créneau d'1 h (Maj + clic : créneau supplémentaire). Ligne « agents mobilisés » par quart d'heure, conflits d'agent ou de pont signalés en rouge. 🖨️ imprime le Gantt du jour au format de la feuille Excel (A3 paysage, colonne signature). |
+| 📋 Activités           | Compteurs Planifié / Fait / Reporté, avancement par équipe, liste filtrable avec statut modifiable. Impressions : analyses de risque, compte rendu de l'arrêt.                                                                                                                                                                                                                                  |
+| 🗺️ Schéma laminoir     | Avancement de la semaine zone par zone ; un clic ouvre le Gantt filtré sur la zone.                                                                                                                                                                                                                                                                                                             |
+| 👷 Charge et effectifs | Agents présents de la semaine (nombre × heures), heures de maintenance par équipe et par jour, taux d'occupation (feuille « Total heures » de l'Excel). Occupation de chaque intervenant au quart d'heure, avec les doublons.                                                                                                                                                                   |
+| 🗂️ Semaines            | Historique des arrêts (activités, faites, heures, occupation), préparation, clôture, import Excel.                                                                                                                                                                                                                                                                                              |
+| ⚙️ Administration      | Jours et horaires, pas du Gantt, diamètres, fréquences, consignes, zones et machines, équipes, ponts, personnel, éditeur JSON.                                                                                                                                                                                                                                                                  |
 
 ## Importer le Gantt Excel
 
@@ -64,7 +37,7 @@ Onglet 🗂️ Semaines → **📥 Importer un Gantt Excel** (ou glisser le `.xl
   et crée les autres (Consignation, CM500, Check-list avant démarrage…) ;
 - rapproche les agents du personnel par nom (« KHELOUFI / CASTERA ») ; les inconnus sont créés
   et classés dans l'équipe de la ligne (MSEM, ALPA, SIE → entreprises) ;
-- crée l'arrêt de la semaine et alimente la gamme avec les lignes qui ont une fréquence.
+- crée l'arrêt de la semaine avec ses activités (créneaux, agents, fréquences).
 
 L'import lit le classeur avec SheetJS (cdnjs) : il faut une connexion Internet.
 
@@ -82,10 +55,9 @@ sont alors fusionnés avec la bonne personne quand le nom correspond.
    reprendre l'arrêt technique. Ensuite : **📂 Ouvrir** `data.json`.
 3. Les modifications sont conservées dans le navigateur ; **💾 Enregistrer** (Ctrl+S) les écrit
    dans `data.json`.
-4. Chaque semaine : **＋ Semaine** → cocher les activités proposées → ajuster le Gantt → imprimer
-   le Gantt et les dossiers → saisir statuts, signatures et check-lists → **Clôturer** (onglet
-   Semaines) : les activités non soldées passent en « Reportée » et seront proposées la semaine
-   suivante.
+4. Chaque semaine : **＋ Semaine** → cocher les activités à reprendre → ajuster le Gantt → imprimer
+   le Gantt → saisir statuts et signatures → **Clôturer** (onglet Semaines) : les activités encore
+   planifiées passent en « Reporté » et seront proposées la semaine suivante.
 
 Le compte administrateur, l'analyse de risque AQA.QSE.15, les photos avant/après et les
 obligations pour les entreprises extérieures (n° de commande, plan de prévention) fonctionnent
@@ -99,15 +71,10 @@ grossit avec eux.
   (`lib`, `service`, `nb`, `h`).
 - `arrets[]` : `id`, `lundi`, `diametre`, `statut` (`prepa`, `encours`, `cloture`),
   `effectifs[]`, `consignes[]`, `notes`.
-- `activites[]` : `arret`, `gamme`, `zone`, `machine`, `service` (équipe du Gantt), `designation`,
+- `activites[]` : `arret`, `zone`, `machine`, `service` (équipe du Gantt), `designation`,
   `frequence`, `jour` (indice dans `meta.jours`), `creneaux[]` (`debut`, `fin` en `HH:MM`), `nb`
-  (agents mobilisés), `intervenants[]`, `pont`, `statut`, `signePar`, `signeLe`, `modes[]`
-  (`doc`, `rep` = réponses par point `{v: ok|nok|na, m, c}`, `par`, `date`), `ar`, `docs`,
-  `photos`, `commande`, `pdpRef`, `origine` / `reprise` (report d'une semaine à l'autre), `ordre`.
-- `gamme[]` : mêmes champs de planification, plus `modes[]` (ids de documents), `actif`,
-  `derniere` (dernière réalisation saisie à la main).
-- `bibliotheque[]` : `type` (`mop` ou `checklist`), `titre`, `ref`, `version`, `service`, `zone`,
-  `diametres[]`, `fichier` (`nom`, `type`, `data`), `points[]` (`t`, `unite`, `attendu`,
-  `section`), `consigne`.
+  (agents mobilisés), `intervenants[]`, `pont`, `statut` (`planifie`, `fait`, `reportee`),
+  `signePar`, `signeLe`, `ar`, `docs`, `photos`, `commande`, `pdpRef`, `origine` / `reprise`
+  (report d'une semaine à l'autre), `ordre`.
 - `zones[]`, `flux[]`, `personnel[]`, `equipes[]`, `services[]`, `ponts[]` : comme l'arrêt
   technique.
