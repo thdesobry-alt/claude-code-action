@@ -1980,9 +1980,13 @@
       const hMaint = (a) => (dureeMin(a) * (a.nb || 1)) / 60;
       const creneauxTxt = (a) =>
         (a.creneaux || []).map((c) => c.debut + "–" + c.fin).join(", ");
+      // Diamètres laminés de la semaine (2 au plus).
+      const diametresArret = (ar) =>
+        [ar?.diametre, ar?.diametre2].filter(Boolean);
       const semLabel = (ar) => {
         const s = D.sem(ar.lundi);
-        return `Semaine ${s.n}${ar.diametre ? " · " + ar.diametre : ""} · lun. ${D.fmt(ar.lundi)}`;
+        const dias = diametresArret(ar);
+        return `Semaine ${s.n}${dias.length ? " · " + dias.join(" + ") : ""} · lun. ${D.fmt(ar.lundi)}`;
       };
 
       // ---------- Persistance ----------
@@ -2217,7 +2221,10 @@
         m.jours.forEach((j) => (j.pauses ??= []));
         m.pas ??= 15;
         m.consignes ??= [];
-        m.diametres ??= ["ø16", "ø20", "ø25", "ø28", "ø32", "ø40"];
+        const DIAMETRES = ["ø16", "ø18", "ø20", "ø25", "ø28", "ø32", "ø40"];
+        // Ancienne liste par défaut (sans ø18) : remplacée par la liste complète.
+        if (!m.diametres || m.diametres.join() === "ø16,ø20,ø25,ø28,ø32,ø40")
+          m.diametres = DIAMETRES;
         m.frequences ??= FREQUENCES.map((f) => f[0]);
         // Effectifs présents (feuille « Total heures » du Gantt Excel).
         m.effectifs ??= [
@@ -2240,6 +2247,7 @@
           "taches",
         ])
           d[k] ??= [];
+        d.programmes.forEach((p) => (p.diametre ??= ""));
         d.zones.forEach((z) => (z.machines ??= []));
         d.personnel.forEach((p) => (p.absences ??= []));
         d.arrets.forEach((r) => {
@@ -3122,14 +3130,14 @@
             )
           : txt;
       // Copie d'une activité dans l'arrêt d'une semaine (reprise ou import).
-      function copierActivite(o, ar) {
+      function copierActivite(o, ar, dia = ar.diametre) {
         return {
           id: uid("a"),
           arret: ar.id,
           zone: o.zone,
           machine: o.machine || "",
           service: o.service,
-          designation: avecDiametre(o.designation, ar.diametre),
+          designation: avecDiametre(o.designation, dia),
           frequence: o.frequence || "",
           statut: "planifie",
           jour: o.jour,
@@ -3172,30 +3180,47 @@
       const memeActivite = (a, b) =>
         a.zone === b.zone &&
         a.jour === b.jour &&
-        sansAccents(a.designation).replace(/[ØO]\s?\d+/g, "Ø") ===
-          sansAccents(b.designation).replace(/[ØO]\s?\d+/g, "Ø");
+        sansAccents(a.designation) === sansAccents(b.designation);
       // Ajoute des modèles à la semaine ; ceux déjà présents (même zone, jour et description) sont ignorés.
-      function ajouterALaSemaine(modeles, ar) {
+      function ajouterALaSemaine(modeles, ar, dia = ar.diametre) {
         let n = 0,
           deja = 0;
         for (const m of modeles) {
-          if (actsArret(ar).some((a) => memeActivite(a, m))) {
+          const cible = { ...m, designation: avecDiametre(m.designation, dia) };
+          if (actsArret(ar).some((a) => memeActivite(a, cible))) {
             deja++;
             continue;
           }
-          DB.activites.push(copierActivite(m, ar));
+          DB.activites.push(copierActivite(m, ar, dia));
           n++;
         }
         return { n, deja };
       }
+      // Programmes types associés aux diamètres de la semaine (tâches spécifiques au diamètre).
+      const programmesDiametre = (dias) =>
+        DB.programmes.filter((p) => p.diametre && dias.includes(p.diametre));
+      // « Ø25 » -> « Ø16 » seulement pour l'ancien diamètre (l'autre diamètre de la semaine reste).
+      const remplacerDiametre = (txt, ancien, nouveau) => {
+        const n0 = String(ancien || "").replace(/^[øØ]\s?/, "");
+        if (!n0 || !nouveau) return txt;
+        return txt.replace(
+          new RegExp("([øØ])\\s?" + n0 + "(?!\\d)", "g"),
+          (m, c) => c + nouveau.replace(/^[øØ]\s?/, ""),
+        );
+      };
+      const optsDiametreProg = (sel) =>
+        opt("", "Aucun : programme de base", sel || "") +
+        DB.meta.diametres
+          .map((x) => opt(x, "Tâches spécifiques au " + x, sel))
+          .join("");
       function renderTaches() {
         const ar = arret();
         $("#pt-new").disabled = !ar;
         $("#pt-table").innerHTML = DB.programmes.length
-          ? `<table><thead><tr><th>Programme type</th><th>Activités</th><th>Heures de maintenance</th><th>Mis à jour</th><th></th></tr></thead><tbody>${DB.programmes
+          ? `<table><thead><tr><th>Programme type</th><th>Diamètre</th><th>Activités</th><th>Heures de maintenance</th><th>Mis à jour</th><th></th></tr></thead><tbody>${DB.programmes
               .map(
                 (p) =>
-                  `<tr data-pid="${p.id}"><td><b>${esc(p.nom)}</b>${p.note ? `<br><small class="muted">${esc(p.note)}</small>` : ""}</td><td>${p.activites.length}<br><small class="muted">${DB.meta.jours.map((j, i) => j.nom + " " + p.activites.filter((a) => a.jour === i).length).join(" · ")}</small></td>
+                  `<tr data-pid="${p.id}"><td><b>${esc(p.nom)}</b>${p.note ? `<br><small class="muted">${esc(p.note)}</small>` : ""}</td><td>${p.diametre ? `<span class="tag" style="background:var(--accent);color:#fff">📐 ${esc(p.diametre)}</span>` : '<span class="muted">Base</span>'}</td><td>${p.activites.length}<br><small class="muted">${DB.meta.jours.map((j, i) => j.nom + " " + p.activites.filter((a) => a.jour === i).length).join(" · ")}</small></td>
                   <td>${h(p.activites.reduce((s, a) => s + hMaint(a), 0))}</td><td>${p.maj ? D.fmt(p.maj) + "/" + p.maj.slice(2, 4) : ""}</td>
                   <td style="white-space:nowrap"><button class="btn small primary" data-pact="appliquer" ${ar ? "" : "disabled"}>Appliquer à la ${ar ? "S" + D.sem(ar.lundi).n : "semaine"}</button> <button class="btn small" data-pact="voir">Voir / modifier</button> <button class="btn small" data-pact="maj" ${ar ? "" : "disabled"} title="Remplace le contenu du programme par les activités de la semaine affichée">Remplacer par la semaine</button></td></tr>`,
               )
@@ -3274,9 +3299,17 @@
         if (!l.length) return alert("La semaine affichée n'a aucune activité.");
         dialogue(
           "Nouveau programme type",
-          `<div class="form"><label class="full">Nom<input id="pg-nom" value="${esc("Programme type" + (ar.diametre ? " " + ar.diametre : ""))}"></label>
+          `<div class="form"><label>Nom<input id="pg-nom" value="Programme type"></label>
+            <label>Diamètre associé<select id="pg-dia">${optsDiametreProg("")}</select></label>
             <label class="full">Note (facultative)<input id="pg-note" placeholder="ex. semaine avec changement de cylindres"></label>
-            <p class="full muted" style="margin:0">${l.length} activité(s) de la ${esc(semLabel(ar))}, avec leurs créneaux et leurs agents. Statuts, signatures, photos et documents ne sont pas repris.</p></div>`,
+            <p class="full muted" style="margin:0">Cochez les activités de la ${esc(semLabel(ar))} à mettre dans le programme (créneaux et agents compris ; statuts, signatures, photos et documents ne sont pas repris). Un programme associé à un diamètre ne contient que les tâches spécifiques à ce diamètre : il est ajouté automatiquement aux semaines qui laminent ce diamètre.</p>
+            <div class="full"><div class="row" style="margin-bottom:4px"><button type="button" class="btn small" data-pgt="1">Tout cocher</button><button type="button" class="btn small" data-pgt="0">Tout décocher</button><input type="search" id="pg-q" placeholder="🔎 Filtrer (ex. Ø25, check list…)" style="flex:1;border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--card)"></div>
+            <div style="max-height:40vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${l
+              .map(
+                (a, i) =>
+                  `<label class="pchk" data-pgl="${esc(sansAccents(a.designation + " " + zoneNom(a.zone) + " " + a.service))}"><input type="checkbox" data-pgn="${i}" checked><span>${esc(a.designation)} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small></span></label>`,
+              )
+              .join("")}</div></div></div>`,
           [
             ["Annuler", "", () => {}],
             [
@@ -3285,21 +3318,55 @@
               () => {
                 const nom = $("#pg-nom").value.trim();
                 if (!nom) return alert("Nom obligatoire."), false;
+                const choix = [
+                  ...document.querySelectorAll("[data-pgn]:checked"),
+                ].map((c) => l[Number(c.dataset.pgn)]);
+                if (!choix.length)
+                  return alert("Cochez au moins une activité."), false;
                 DB.programmes.push({
                   id: uid("pt"),
                   nom,
+                  diametre: $("#pg-dia").value,
                   note: $("#pg-note").value.trim(),
                   maj: D.today(),
-                  activites: l.map(gabarit),
+                  activites: choix.map(gabarit),
                 });
                 changed();
                 toast(
-                  `Programme type « ${nom} » enregistré (${l.length} activités)`,
+                  `Programme type « ${nom} » enregistré (${choix.length} activités)`,
                 );
               },
             ],
           ],
         );
+        $("#pg-dia").onchange = () => {
+          const d = $("#pg-dia").value;
+          if (d) {
+            $("#pg-nom").value = "Tâches " + d;
+            // Pré-sélection : les activités qui citent ce diamètre.
+            const n0 = d.replace(/^[øØ]\s?/, "");
+            $("#pg-q").value = "Ø" + n0;
+            document.querySelectorAll("[data-pgn]").forEach((c) => {
+              c.checked = new RegExp("[ØO]\\s?" + n0 + "(?!\\d)").test(
+                c.closest("[data-pgl]").dataset.pgl,
+              );
+            });
+            $("#pg-q").oninput();
+          }
+        };
+        $("#pg-q").oninput = () => {
+          const q = sansAccents($("#pg-q").value);
+          document
+            .querySelectorAll("[data-pgl]")
+            .forEach((x) => (x.hidden = !!q && !x.dataset.pgl.includes(q)));
+        };
+        $("#dlg-b").onclick = (e) => {
+          const t = e.target.dataset.pgt;
+          if (t != null)
+            document
+              .querySelectorAll("[data-pgl]:not([hidden]) [data-pgn]")
+              .forEach((c) => (c.checked = t === "1"));
+        };
       }
       function appliquerProgramme(p) {
         const ar = arret();
@@ -3310,7 +3377,7 @@
           )
         )
           return;
-        const r = ajouterALaSemaine(p.activites, ar);
+        const r = ajouterALaSemaine(p.activites, ar, p.diametre || ar.diametre);
         changed();
         toast(
           `${r.n} activité(s) ajoutée(s)${r.deja ? `, ${r.deja} déjà présente(s)` : ""}`,
@@ -3330,14 +3397,28 @@
           );
         dialogue(
           "Programme type : " + p.nom,
-          `<div class="form"><label>Nom<input id="pg-nom" value="${esc(p.nom)}"></label><label>Note<input id="pg-note" value="${esc(p.note || "")}"></label></div>
-          <p class="muted">Décochez les activités à retirer du programme. Pour en ajouter ou en modifier, appliquez le programme à une semaine, ajustez-la, puis « Remplacer par la semaine ».</p>
-          <div style="max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${ordre
+          `<div class="form"><label>Nom<input id="pg-nom" value="${esc(p.nom)}"></label><label>Diamètre associé<select id="pg-dia">${optsDiametreProg(p.diametre)}</select></label><label class="full">Note<input id="pg-note" value="${esc(p.note || "")}"></label></div>
+          <p class="muted">Décochez les activités à retirer du programme. Pour modifier une activité, appliquez le programme à une semaine, ajustez-la, puis « Remplacer par la semaine ».</p>
+          <div style="max-height:34vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${
+            ordre
+              .map(
+                ({ a, i }) =>
+                  `<label class="pchk"><input type="checkbox" data-pgi="${i}" checked><span>${esc(a.designation)} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small></span></label>`,
+              )
+              .join("") || '<p class="muted">Programme vide.</p>'
+          }</div>
+          ${
+            DB.taches.length
+              ? `<h3 style="margin:12px 0 4px;font-size:14px">＋ Ajouter des tâches de la réserve</h3>
+          <input type="search" id="pg-tq" placeholder="🔎 Rechercher une tâche…" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--card);margin-bottom:4px">
+          <div style="max-height:24vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${DB.taches
             .map(
-              ({ a, i }) =>
-                `<label class="pchk"><input type="checkbox" data-pgi="${i}" checked><span>${esc(a.designation)} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small></span></label>`,
+              (t) =>
+                `<label class="pchk" data-tql="${esc(sansAccents(t.designation + " " + zoneNom(t.zone) + " " + t.service))}"><input type="checkbox" data-pgt-add="${t.id}"><span>${esc(t.designation)} <small class="muted">· ${esc(zoneNom(t.zone))} · ${esc(t.service)} · ${esc(jourDef(t.jour).nom)} ${creneauxTxt(t)}</small></span></label>`,
             )
-            .join("")}</div>`,
+            .join("")}</div>`
+              : ""
+          }`,
           [
             [
               "Supprimer le programme",
@@ -3363,13 +3444,29 @@
                   );
                 p.nom = nom;
                 p.note = $("#pg-note").value.trim();
+                p.diametre = $("#pg-dia").value;
                 p.activites = p.activites.filter((_, i) => garder.has(i));
+                document
+                  .querySelectorAll("[data-pgt-add]:checked")
+                  .forEach((c) => {
+                    const t = DB.taches.find((x) => x.id === c.dataset.pgtAdd);
+                    if (t && !p.activites.some((a) => memeActivite(a, t)))
+                      p.activites.push(gabarit(t));
+                  });
                 p.maj = D.today();
                 changed();
               },
             ],
           ],
         );
+        const tq = $("#pg-tq");
+        if (tq)
+          tq.oninput = () => {
+            const q = sansAccents(tq.value);
+            document
+              .querySelectorAll("[data-tql]")
+              .forEach((x) => (x.hidden = !!q && !x.dataset.tql.includes(q)));
+          };
       }
       function remplacerProgramme(p) {
         const ar = arret();
@@ -3546,9 +3643,24 @@
           b.lundi.localeCompare(a.lundi),
         )[0];
         const lundi0 = dern ? D.add(dern.lundi, 7) : D.lundi(D.today());
-        const corps = (lundi, dia, src) => {
+        const base = DB.programmes.filter((p) => !p.diametre);
+        const corps = (lundi, dia, src, dia2) => {
           const prec = semainePrecedente(lundi);
           const prog = DB.programmes.find((x) => x.id === src);
+          const dp = programmesDiametre([dia, dia2].filter(Boolean));
+          const blocDia = dp
+            .map(
+              (
+                p,
+              ) => `<h3 style="margin:10px 0 4px;font-size:14px">📐 ${esc(p.diametre)} — programme « ${esc(p.nom)} » : ${p.activites.length} tâche(s) spécifique(s)</h3>
+            <div style="max-height:22vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${p.activites
+              .map(
+                (a, i) =>
+                  `<label class="pchk"><input type="checkbox" data-pd="${p.id}|${i}" checked><span>${esc(a.designation)} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small></span></label>`,
+              )
+              .join("")}</div>`,
+            )
+            .join("");
           const l = prec
             ? trierPourImpression(actsArret(prec)).filter(
                 (a) => !prog || a.statut !== "fait",
@@ -3575,19 +3687,25 @@
               .join("")}</div>`
             : "";
           if (src === "vide")
-            return `<p class="muted">La semaine sera créée vide.</p>`;
+            return `<p class="muted">Aucune activité de base : seules les tâches spécifiques aux diamètres sont ajoutées.</p>${blocDia}`;
           return `<p class="muted" style="margin-top:0">Semaine ${D.sem(lundi).n} : ${joursArret(
             { lundi },
           )
             .map((j) => j.nom + " " + D.fmt(j.date))
-            .join(", ")}${dia ? " · " + esc(dia) : ""}</p>${blocProg}
+            .join(
+              ", ",
+            )}${dia || dia2 ? " · " + esc([dia, dia2].filter(Boolean).join(" + ")) : ""}</p>${blocProg}${blocDia}${
+            (dia || dia2) && !dp.length
+              ? `<p class="muted">Aucun programme type associé à ${esc([dia, dia2].filter(Boolean).join(" ni à "))} (onglet 🧰 Programmes et tâches).</p>`
+              : ""
+          }
             <h3 style="margin:10px 0 4px;font-size:14px">↪ ${prog ? "Activités non faites" : "Activités"} de la ${prec ? semLabel(prec) : "semaine précédente"} : ${l.length}</h3>
             <div class="row" style="margin-bottom:4px"><button type="button" class="btn small" data-tout="1">Tout cocher</button><button type="button" class="btn small" data-tout="0">Tout décocher</button><button type="button" class="btn small" data-tout="r">Seulement les non faites</button></div>
             <div style="max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px">${
               l
                 .map((a) => {
-                  const dansProg = prog?.activites.some((m) =>
-                    memeActivite(m, a),
+                  const dansProg = [prog, ...dp].some((p) =>
+                    p?.activites.some((m) => memeActivite(m, a)),
                   );
                   return `<label class="pchk"><input type="checkbox" data-pr="${a.id}" data-nf="${a.statut === "fait" || dansProg ? 0 : 1}" ${dansProg ? "" : "checked"}><span>${esc(avecDiametre(a.designation, dia))} <small class="muted">· ${esc(zoneNom(a.zone))} · ${esc(a.service)}${a.frequence ? " · " + esc(a.frequence) : ""} · ${esc(jourDef(a.jour).nom)} ${creneauxTxt(a)}</small>${a.statut !== "fait" ? ` <span class="late">${esc(stLabel(a.statut))}</span>` : ""}${dansProg ? ' <span class="muted">— déjà dans le programme</span>' : ""}</span></label>`;
                 })
@@ -3599,7 +3717,8 @@
           `<div class="form">
             <label>Lundi de la semaine<input type="date" id="ns-lundi" value="${lundi0}"></label>
             <label>Diamètre laminé<select id="ns-dia">${opt("", "—", dern?.diametre || "")}${DB.meta.diametres.map((x) => opt(x, x, dern?.diametre || "")).join("")}</select></label>
-            <label class="full">Partir de<select id="ns-src">${DB.programmes.map((p) => opt(p.id, "Programme type : " + p.nom, DB.programmes[0]?.id)).join("")}${opt("prec", "La semaine précédente", DB.programmes.length ? "" : "prec")}${opt("vide", "Une semaine vide", "")}</select></label>
+            <label>2ᵉ diamètre (facultatif)<select id="ns-dia2">${opt("", "—", "")}${DB.meta.diametres.map((x) => opt(x, x, "")).join("")}</select></label>
+            <label>Partir de<select id="ns-src">${base.map((p) => opt(p.id, "Programme type : " + p.nom, base[0]?.id)).join("")}${opt("prec", "La semaine précédente", base.length ? "" : "prec")}${opt("vide", "Rien (diamètres seulement)", "")}</select></label>
             <div class="full" id="ns-corps"></div></div>`,
           [
             ["Annuler", "", () => {}],
@@ -3612,8 +3731,12 @@
                   return (
                     alert("Un arrêt existe déjà pour cette semaine."), false
                   );
-                const dia = $("#ns-dia").value;
+                let dia = $("#ns-dia").value,
+                  dia2 = $("#ns-dia2").value;
+                if (!dia) [dia, dia2] = [dia2, ""];
+                if (dia2 === dia) dia2 = "";
                 const ar = nouvelArret(DB, lundi, dia);
+                ar.diametre2 = dia2;
                 const prec = semainePrecedente(lundi);
                 if (prec) ar.effectifs = structuredClone(prec.effectifs);
                 DB.arrets.push(ar);
@@ -3626,6 +3749,18 @@
                       (c) => prog.activites[Number(c.dataset.pp)],
                     ),
                     ar,
+                  );
+                // Tâches spécifiques à chaque diamètre de la semaine.
+                for (const pd of programmesDiametre(
+                  [dia, dia2].filter(Boolean),
+                ))
+                  ajouterALaSemaine(
+                    [...document.querySelectorAll("[data-pd]:checked")]
+                      .map((c) => c.dataset.pd.split("|"))
+                      .filter(([pid]) => pid === pd.id)
+                      .map(([, i]) => pd.activites[Number(i)]),
+                    ar,
+                    pd.diametre,
                   );
                 document.querySelectorAll("[data-pr]:checked").forEach((c) => {
                   const o = DB.activites.find((x) => x.id === c.dataset.pr);
@@ -3653,9 +3788,11 @@
             D.lundi($("#ns-lundi").value || lundi0),
             $("#ns-dia").value,
             $("#ns-src").value,
+            $("#ns-dia2").value,
           ));
         $("#ns-lundi").onchange =
           $("#ns-dia").onchange =
+          $("#ns-dia2").onchange =
           $("#ns-src").onchange =
             maj;
         $("#dlg-b").onclick = (e) => {
@@ -3696,6 +3833,7 @@
           `<div class="form">
             <label>Lundi<input type="date" id="w-lundi" value="${ar.lundi}"></label>
             <label>Diamètre<select id="w-dia">${opt("", "—", ar.diametre)}${DB.meta.diametres.map((x) => opt(x, x, ar.diametre)).join("")}</select></label>
+            <label>2ᵉ diamètre<select id="w-dia2">${opt("", "—", ar.diametre2 || "")}${DB.meta.diametres.map((x) => opt(x, x, ar.diametre2 || "")).join("")}</select></label>
             <label>Statut<select id="w-st">${opt("prepa", "En préparation", ar.statut)}${opt("encours", "En cours", ar.statut)}${opt("cloture", "Clôturé", ar.statut)}</select></label>
             <label class="full">Consignes de la semaine (une par ligne)<textarea id="w-cons" rows="3">${esc(ar.consignes.join("\n"))}</textarea></label>
             <label class="full">Notes<textarea id="w-notes" rows="3">${esc(ar.notes || "")}</textarea></label></div>`,
@@ -3740,14 +3878,42 @@
                   return (
                     alert("Un arrêt existe déjà pour cette semaine."), false
                   );
-                const dia = $("#w-dia").value;
-                if (dia !== ar.diametre && ar.diametre)
+                let dia = $("#w-dia").value,
+                  dia2 = $("#w-dia2").value;
+                if (!dia) [dia, dia2] = [dia2, ""];
+                if (dia2 === dia) dia2 = "";
+                const avant = diametresArret(ar);
+                // Diamètre principal changé : « Ø25 » -> « Ø16 » dans les descriptions qui le citent.
+                if (
+                  dia &&
+                  ar.diametre &&
+                  dia !== ar.diametre &&
+                  !avant.includes(dia)
+                )
                   actsArret(ar).forEach(
-                    (a) => (a.designation = avecDiametre(a.designation, dia)),
+                    (a) =>
+                      (a.designation = remplacerDiametre(
+                        a.designation,
+                        ar.diametre,
+                        dia,
+                      )),
+                  );
+                const nouveaux = programmesDiametre(
+                  [dia, dia2].filter((x) => x && !avant.includes(x)),
+                );
+                if (
+                  nouveaux.length &&
+                  confirm(
+                    `Ajouter les tâches spécifiques de ${nouveaux.map((p) => p.diametre + " (« " + p.nom + " », " + p.activites.length + " tâches)").join(" et ")} ?`,
+                  )
+                )
+                  nouveaux.forEach((p) =>
+                    ajouterALaSemaine(p.activites, ar, p.diametre),
                   );
                 Object.assign(ar, {
                   lundi,
                   diametre: dia,
+                  diametre2: dia2,
                   statut: $("#w-st").value,
                   consignes: $("#w-cons")
                     .value.split("\n")
@@ -3777,7 +3943,9 @@
                   ar,
                 )
                   .map((j) => D.jour(j.date) + " " + D.fmt(j.date))
-                  .join(", ")}</td><td>${esc(ar.diametre || "—")}</td>
+                  .join(
+                    ", ",
+                  )}</td><td>${esc(diametresArret(ar).join(" + ") || "—")}</td>
                   <td>${l.length}</td><td><div class="prog" style="width:90px">${STATUTS.map((s) => `<i style="width:${(l.filter((a) => a.statut === s.id).length / n) * 100}%;background:var(--${s.id})"></i>`).join("")}</div><small class="muted">${Math.round((sol / n) * 100)} %</small></td>
                   <td>${h(hm)}</td><td>${eff.h ? pct(hm / eff.h) : "—"}</td>
                   <td><span class="st-arret ${ar.statut}">${{ prepa: "En préparation", encours: "En cours", cloture: "Clôturé" }[ar.statut]}</span></td>

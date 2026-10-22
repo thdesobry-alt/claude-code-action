@@ -27,6 +27,19 @@ modèle de l'application « Arrêt technique ». Elle remplace le classeur
 | 🗂️ Semaines             | Historique des arrêts (activités, faites, heures, occupation), préparation, clôture, import Excel.                                                                                                                                                                                                                                                                                                                                                                                         |
 | ⚙️ Administration       | Jours et horaires, pas du Gantt, diamètres, fréquences, consignes, zones et machines, équipes, ponts, personnel, éditeur JSON.                                                                                                                                                                                                                                                                                                                                                             |
 
+## Programmes types par diamètre
+
+- Diamètres : ø16, ø18, ø20, ø25, ø28, ø32, ø40 (modifiables dans Administration).
+- Un programme type peut être **associé à un diamètre** : il ne contient alors que les tâches
+  spécifiques à ce diamètre (check-lists avant démarrage, contrôles des guides…). En choisissant
+  le diamètre à l'enregistrement, les activités qui citent ce diamètre (« Ø25 ») sont
+  pré-cochées. « Voir / modifier » permet de changer le diamètre, de retirer des activités et
+  d'ajouter des tâches de la réserve.
+- Les programmes sans diamètre sont les **programmes de base**, proposés dans « Partir de ».
+- Dans **＋ Semaine**, on choisit 1 ou 2 diamètres : les tâches des programmes associés à ces
+  diamètres sont ajoutées automatiquement (décochables). Changer ou ajouter un diamètre dans les
+  paramètres de la semaine propose aussi d'ajouter les tâches du nouveau diamètre.
+
 ## Importer le Gantt Excel
 
 Onglet 🗂️ Semaines → **📥 Importer un Gantt Excel** (ou glisser le `.xlsx` sur la page). L'import :
@@ -71,14 +84,14 @@ grossit avec eux.
 - `meta` : `titre`, `admin`, `jours[]` (`dow` 0 = dimanche, `nom`, `debut`, `fin`, `pauses[]`),
   `pas` (minutes), `diametres[]`, `frequences[]`, `consignes[]`, `effectifs[]` par défaut
   (`lib`, `service`, `nb`, `h`).
-- `arrets[]` : `id`, `lundi`, `diametre`, `statut` (`prepa`, `encours`, `cloture`),
+- `arrets[]` : `id`, `lundi`, `diametre`, `diametre2` (2ᵉ diamètre facultatif), `statut` (`prepa`, `encours`, `cloture`),
   `effectifs[]`, `consignes[]`, `notes`.
 - `activites[]` : `arret`, `zone`, `machine`, `service` (équipe du Gantt), `designation`,
   `frequence`, `jour` (indice dans `meta.jours`), `creneaux[]` (`debut`, `fin` en `HH:MM`), `nb`
   (agents mobilisés), `intervenants[]`, `pont`, `statut` (`planifie`, `fait`, `reportee`),
   `signePar`, `signeLe`, `ar`, `docs`, `photos`, `commande`, `pdpRef`, `origine` / `reprise`
   (report d'une semaine à l'autre), `ordre`.
-- `programmes[]` : `id`, `nom`, `note`, `maj`, `activites[]` (modèles : zone, machine, équipe,
+- `programmes[]` : `id`, `nom`, `diametre` (vide = programme de base), `note`, `maj`, `activites[]` (modèles : zone, machine, équipe,
   description, fréquence, jour, créneaux, agents, pont, GMAO).
 - `taches[]` : mêmes champs que les modèles, plus `note` et `cree` ; les activités planifiées
   depuis une tâche portent son identifiant dans `tache`.
