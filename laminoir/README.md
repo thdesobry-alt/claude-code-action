@@ -4,12 +4,29 @@ Application HTML autonome (aucune installation) avec base de données `data.json
 
 ## Onglets
 
-- **Synthèse** : dépenses du mois (total et par onglet), écart vs mois précédent, suivi des budgets, répartition, évolution sur 6 mois, top 5 des dépenses et points clés.
+- **Synthèse** : dépenses du mois (total et par onglet), écart vs mois précédent, suivi des budgets, répartition, évolution sur 6 mois, dépenses par autorisant, top 5 des dépenses et points clés.
 - **Ricambi** : pièces de rechange par famille (roulements, hydraulique, électrique…).
 - **EPI** : silhouette d'opérateur où chaque zone (casque, lunettes, masque, bouchons d'oreille, gants, vêtements, manchettes, chaussures) affiche son % et son montant, colorée du vert (moins cher) au rouge (plus cher).
 - **Outillage** : dépenses regroupées par catégorie (vérins, clés, marteaux, levage, mesure…).
 
 Chaque onglet permet d'ajouter, modifier, supprimer et rechercher des lignes. Une désignation déjà connue préremplit la catégorie, la référence et le prix.
+
+## Importer l'extraction (copier-coller)
+
+1. Dans l'extraction des consommations, sélectionnez **tout le tableau, ligne de titres comprise** (Soc., Mag., … Valore … Nome Autorizzante … Descrizione2), puis copiez-le.
+2. Dans l'application, faites **Ctrl+V n'importe où sur la page** (ou bouton **📋 Coller les données**). L'import et la mise à jour sont immédiats.
+
+- Le montant utilisé est la colonne **Valore** ; la date est **Data Documento**.
+- Chaque nouveau collage **remplace** l'import précédent et les données de démo. Les lignes saisies à la main sont conservées.
+- Si la ligne de titres manque, les colonnes sont lues dans l'ordre standard de l'extraction.
+- **Onglet** : déterminé par **Descrizione2** (« … PROTECTION INDIVIDUEL » → EPI, « … OUTILLAGE … » → Outillage, le reste → Ricambi). Le tableau « Classement des familles » de la Synthèse permet de corriger une famille ; le choix est mémorisé pour les imports suivants.
+- **Catégorie** : EPI et Outillage sont classés par mots-clés de la désignation (CASQUE, GANT, LUNETTE, VERIN, CLE, MARTEAU…) ; les Ricambi prennent la famille Descrizione2. Une ligne mal classée se corrige avec ✎.
+
+## Filtre et extraction par autorisant
+
+- Liste **Autorisant** dans l'en-tête : filtre toute l'application sur un « Nome Autorizzante ».
+- Synthèse → **Dépenses par autorisant** : montant par onglet pour chaque autorisant du mois ; cliquer un nom active le filtre, **⬇ CSV** extrait ses lignes.
+- **⬇ CSV du mois** exporte le mois en tenant compte du filtre.
 
 ## Utilisation
 
@@ -27,6 +44,7 @@ Servie par un serveur web (ex. `python3 -m http.server` dans ce dossier), l'appl
   "service": "Laminoir",
   "budgets": { "ricambi": 22000, "epi": 4500, "outillage": 4000 },
   "categories": { "ricambi": ["…"], "epi": ["…"], "outillage": ["…"] },
+  "mapping": { "LAMINOIR.XXX": "outillage" },
   "consommations": [
     {
       "id": "c0001",
@@ -36,12 +54,16 @@ Servie par un serveur web (ex. `python3 -m http.server` dans ce dossier), l'appl
       "designation": "Gants anti-coupure niveau D",
       "reference": "GAN-COUP-D",
       "quantite": 21,
-      "prixUnitaire": 8.02,
-      "demandeur": "Cylindrerie",
-      "commentaire": ""
+      "valeur": 168.42,
+      "prelevant": "KEVIN",
+      "autorisant": "DUPONT CLAIRE",
+      "famille": "LAMINOIR.EQUIPEMENT DE PROTECTION INDIVIDUEL",
+      "document": "6359",
+      "commentaire": "",
+      "source": "import"
     }
   ]
 }
 ```
 
-`type` vaut `ricambi`, `epi` ou `outillage`. Le fichier fourni contient des données fictives (mai à octobre 2026) à remplacer par les vôtres.
+`type` vaut `ricambi`, `epi` ou `outillage` ; `source` vaut `import`, `manuel` ou `demo`. Le fichier fourni contient des données fictives (mai à octobre 2026, noms inventés) qui disparaissent au premier collage.
