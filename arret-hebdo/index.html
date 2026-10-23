@@ -680,6 +680,45 @@
       #schema.edit .z {
         cursor: move;
       }
+      .s-tools {
+        border: 1px dashed var(--accent);
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+        background: var(--weekend);
+      }
+      .s-tools input {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 3px 6px;
+        background: var(--card);
+      }
+      #schema .vide rect {
+        fill: transparent;
+        stroke: var(--line);
+        stroke-width: 2;
+        stroke-dasharray: 6 5;
+        cursor: pointer;
+      }
+      #schema .vide:hover rect,
+      #schema .vide.cible rect {
+        stroke: var(--accent);
+        fill: color-mix(in srgb, var(--accent) 10%, transparent);
+      }
+      #schema .vide text {
+        fill: var(--muted);
+        font-size: 18px;
+        pointer-events: none;
+      }
+      #schema .z.cible rect.box {
+        stroke: var(--accent);
+        stroke-width: 4;
+        stroke-dasharray: 3 3;
+      }
+      #schema .z.drag {
+        opacity: 0.75;
+        pointer-events: none;
+      }
       #schema.edit .z rect.box {
         stroke-dasharray: 6 4;
         cursor: move;
@@ -1580,6 +1619,42 @@
             <button class="btn" id="s-zone-add">＋ Zone</button>
             <select id="s-svc"></select>
           </div>
+          <div class="s-tools" id="s-tools" hidden>
+            <div class="row">
+              <b>Grille :</b>
+              <span>Colonnes</span>
+              <button class="btn small" data-sg="col-">−</button>
+              <b id="s-cols"></b>
+              <button class="btn small" data-sg="col+">＋</button>
+              <span style="margin-left: 10px">Lignes</span>
+              <button class="btn small" data-sg="row-">−</button>
+              <b id="s-rows"></b>
+              <button class="btn small" data-sg="row+">＋</button>
+              <span style="margin-left: 10px">Ranger toutes les zones sur</span>
+              <input
+                id="s-ncols"
+                type="number"
+                min="1"
+                max="20"
+                style="width: 60px"
+              />
+              <span>colonnes</span>
+              <label class="muted"
+                ><input type="checkbox" id="s-serp" checked /> en
+                serpentin</label
+              >
+              <button class="btn small primary" data-sg="ranger">
+                ↻ Ranger
+              </button>
+            </div>
+            <p class="muted" style="margin: 6px 0 0">
+              Glissez un bloc sur un autre pour les <b>échanger</b>, sur une
+              case vide (＋) pour le <b>déplacer</b>. Cliquez sur un bloc pour
+              le renommer ou changer ses machines, sur une case vide pour créer
+              une zone. « − » ne retire une ligne ou une colonne que si elle est
+              vide (dernière ligne / colonne).
+            </p>
+          </div>
           <div class="legend" style="margin-bottom: 8px">
             <span>Cliquez sur une zone pour ouvrir son Gantt.</span>
             <span><i style="background: var(--fait)"></i>Terminé</span>
@@ -2289,6 +2364,7 @@
         // Gamme préventive et bibliothèque des premières versions : retirées.
         delete d.gamme;
         delete d.bibliotheque;
+        placerGrille(d);
         const n1 = { mto: "p1274", meca: "p1302", elec: "p1382" };
         d.equipes.forEach((e) => {
           if (e.responsable === undefined)
@@ -4193,12 +4269,132 @@
         }
         return out.slice(0, 3);
       }
+      // ---------- Grille du schéma ----------
+      // Chaque zone occupe une case (col, row) ; x, y, w, h en sont déduits pour le dessin.
+      const GR = { cw: 130, ch: 70, gx: 22, gy: 56, x0: 20, y0: 40 };
+      const caseX = (c) => GR.x0 + c * (GR.cw + GR.gx);
+      const caseY = (r) => GR.y0 + r * (GR.ch + GR.gy);
+      function placerGrille(d) {
+        d.meta.schema ??= {};
+        const sans = d.zones.filter((z) => z.col == null || z.row == null);
+        if (sans.length) {
+          // Ancien schéma en coordonnées libres : rangées par hauteur, colonnes par position.
+          const ys = [...new Set(sans.map((z) => z.y ?? 0))].sort(
+            (a, b) => a - b,
+          );
+          const rangs = [];
+          for (const y of ys)
+            if (!rangs.length || y - rangs.at(-1).y > 30)
+              rangs.push({ y, n: rangs.length });
+          const rangDe = (y) =>
+            rangs.reduce((m, r) =>
+              Math.abs(r.y - y) < Math.abs(m.y - y) ? r : m,
+            ).n;
+          const base = d.zones.some((z) => z.row != null)
+            ? Math.max(
+                ...d.zones.filter((z) => z.row != null).map((z) => z.row),
+              ) + 1
+            : 0;
+          const pris = new Set(
+            d.zones
+              .filter((z) => z.row != null && z.col != null)
+              .map((z) => z.row + "," + z.col),
+          );
+          for (const z of [...sans].sort(
+            (a, b) => (a.y ?? 0) - (b.y ?? 0) || (a.x ?? 0) - (b.x ?? 0),
+          )) {
+            const r = base + rangDe(z.y ?? 0);
+            let c = Math.max(
+              0,
+              Math.round(((z.x ?? 0) - GR.x0) / (GR.cw + GR.gx)),
+            );
+            while (pris.has(r + "," + c)) c++;
+            z.row = r;
+            z.col = c;
+            pris.add(r + "," + c);
+          }
+        }
+        const sc = d.meta.schema;
+        sc.cols = Math.max(sc.cols || 0, 1, ...d.zones.map((z) => z.col + 1));
+        sc.rows = Math.max(sc.rows || 0, 1, ...d.zones.map((z) => z.row + 1));
+        for (const z of d.zones)
+          Object.assign(z, {
+            x: caseX(z.col),
+            y: caseY(z.row),
+            w: GR.cw,
+            h: GR.ch,
+          });
+      }
+      // Première case libre (ligne par ligne), sinon une nouvelle ligne.
+      function caseLibre() {
+        const sc = DB.meta.schema;
+        const pris = new Set(DB.zones.map((z) => z.row + "," + z.col));
+        for (let r = 0; r < sc.rows; r++)
+          for (let c = 0; c < sc.cols; c++)
+            if (!pris.has(r + "," + c)) return { row: r, col: c };
+        sc.rows++;
+        return { row: sc.rows - 1, col: 0 };
+      }
+      const zoneEn = (r, c) => DB.zones.find((z) => z.row === r && z.col === c);
+      // Range toutes les zones sur N colonnes : ligne de laminage dans le sens du produit, puis zones générales et utilités ;
+      // chaque type commence sur une nouvelle ligne ; « serpentin » : une ligne sur deux de droite à gauche.
+      function rangerSchema(cols, serpentin) {
+        const fl = DB.flux;
+        const lecture = (a, b) => a.row - b.row || a.col - b.col;
+        const groupes = ["process", "general", "utilite"].map((t) =>
+          DB.zones
+            .filter(
+              (z) =>
+                (z.type || "general") === t ||
+                (t === "general" && !["process", "utilite"].includes(z.type)),
+            )
+            .sort((a, b) =>
+              t === "process"
+                ? (fl.indexOf(a.id) < 0 ? 1e6 : fl.indexOf(a.id)) -
+                    (fl.indexOf(b.id) < 0 ? 1e6 : fl.indexOf(b.id)) ||
+                  lecture(a, b)
+                : lecture(a, b),
+            ),
+        );
+        let r = 0;
+        for (const [gi, l] of groupes.entries()) {
+          l.forEach((z, i) => {
+            const ligne = r + Math.floor(i / cols);
+            const pos = i % cols;
+            z.row = ligne;
+            z.col =
+              serpentin && gi === 0 && Math.floor(i / cols) % 2
+                ? cols - 1 - pos
+                : pos;
+          });
+          if (l.length) r += Math.ceil(l.length / cols);
+        }
+        DB.meta.schema.cols = cols;
+        DB.meta.schema.rows = Math.max(1, r);
+      }
+      function renderOutilsSchema() {
+        const sc = DB.meta.schema;
+        $("#s-tools").hidden = !ui.editSchema;
+        if (!ui.editSchema) return;
+        $("#s-cols").textContent = sc.cols;
+        $("#s-rows").textContent = sc.rows;
+        $("#s-ncols").value ||= sc.cols;
+      }
       function renderSchema() {
+        placerGrille(DB);
+        renderOutilsSchema();
         const Z = DB.zones;
         if (!Z.length)
           return ($("#schema").innerHTML = '<p class="muted">Aucune zone.</p>');
-        const W = Math.max(...Z.map((z) => z.x + z.w)) + 20,
-          H = Math.max(...Z.map((z) => z.y + z.h)) + 20;
+        const sc = DB.meta.schema;
+        const W = caseX(sc.cols),
+          H = caseY(sc.rows) - GR.gy + 20;
+        let vides = "";
+        if (ui.editSchema)
+          for (let r = 0; r < sc.rows; r++)
+            for (let c = 0; c < sc.cols; c++)
+              if (!zoneEn(r, c))
+                vides += `<g class="vide" data-cell="${r},${c}"><rect x="${caseX(c)}" y="${caseY(r)}" width="${GR.cw}" height="${GR.ch}" rx="10"/><text x="${caseX(c) + GR.cw / 2}" y="${caseY(r) + GR.ch / 2 + 4}" text-anchor="middle">＋</text></g>`;
         const byId = Object.fromEntries(Z.map((z) => [z.id, z]));
         let fl = "";
         const paires = [
@@ -4294,7 +4490,7 @@
         $("#schema").innerHTML =
           `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Schéma du laminoir">
           <defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs>
-          ${titres}${fl}${boxes}</svg>`;
+          ${ui.editSchema ? "" : titres}${vides}${ui.editSchema ? "" : fl}${boxes}</svg>`;
       }
 
       // ---------- Onglet Administration ----------
@@ -4362,18 +4558,15 @@
           .map((o) => opt(o.id, o.nom, ""))
           .join("")}</select></label>`;
       }
-      function editerZone(id) {
+      function editerZone(id, place = null) {
         const z = id
           ? DB.zones.find((x) => x.id === id)
           : {
               id: uid("z"),
               nom: "",
-              type: "process",
-              x: 20,
-              y: 20,
-              w: 130,
-              h: 70,
+              type: "general",
               machines: [],
+              ...(place || caseLibre()),
             };
         z.machines ??= [];
         const pos = DB.flux.indexOf(z.id);
@@ -4384,11 +4577,7 @@
             <label>Nom<input id="z-nom" value="${esc(z.nom)}"></label>
             <label>Type<select id="z-type">${opt("process", "Ligne de laminage", z.type)}${opt("general", "Zone générale", z.type)}${opt("utilite", "Utilité / fluides", z.type)}</select></label>
             <label>Position dans le sens du produit<input id="z-pos" type="number" min="1" value="${pos < 0 ? "" : pos + 1}" placeholder="vide = hors ligne"></label>
-            <label>Astuce<input value="Position : glisser la zone sur le schéma" disabled></label>
-            <label>Largeur<input id="z-w" type="number" min="60" step="10" value="${z.w}"></label>
-            <label>Hauteur<input id="z-h" type="number" min="40" step="10" value="${z.h}"></label>
-            <label>X<input id="z-x" type="number" step="10" value="${z.x}"></label>
-            <label>Y<input id="z-y" type="number" step="10" value="${z.y}"></label>
+            <label>Place sur le schéma<input value="Ligne ${z.row + 1}, colonne ${z.col + 1} — glisser le bloc pour la changer" disabled></label>
             <label class="full">Machines / équipements de la zone (une par ligne : code Macc puis nom, le code est facultatif)<textarea id="z-mach" rows="8">${esc(z.machines.map((mc) => (mc.code ? mc.code + " " : "") + mc.nom).join("\n"))}</textarea></label>
             ${id && n ? choixRemplacement(DB.zones, id).replace("Réaffecter les éléments liés vers", `En cas de suppression, réaffecter les ${n} activité(s) vers`) : ""}
           </div>`,
@@ -4435,18 +4624,7 @@
                   )
                 )
                   return alert("Une zone porte déjà ce nom."), false;
-                const num = (sel, def) =>
-                  Number.isFinite(Number($(sel).value)) && $(sel).value !== ""
-                    ? Number($(sel).value)
-                    : def;
-                Object.assign(z, {
-                  nom,
-                  type: $("#z-type").value,
-                  w: Math.max(60, num("#z-w", 130)),
-                  h: Math.max(40, num("#z-h", 70)),
-                  x: num("#z-x", z.x),
-                  y: num("#z-y", z.y),
-                });
+                Object.assign(z, { nom, type: $("#z-type").value });
                 // Les machines gardent leur identifiant quand leur nom ne change pas.
                 const noms = $("#z-mach")
                   .value.split("\n")
@@ -4474,20 +4652,7 @@
                 const p = Number($("#z-pos").value);
                 if (p >= 1)
                   DB.flux.splice(Math.min(p - 1, DB.flux.length), 0, z.id);
-                if (!id) {
-                  // Nouvelle zone placée sous le schéma existant.
-                  if (
-                    !$("#z-x").value ||
-                    !$("#z-y").value ||
-                    (z.x === 20 && z.y === 20)
-                  ) {
-                    z.y = DB.zones.length
-                      ? Math.max(...DB.zones.map((x) => x.y + x.h)) + 40
-                      : 40;
-                    z.x = 20;
-                  }
-                  DB.zones.push(z);
-                }
+                if (!id) DB.zones.push(z);
                 remplirFiltres();
                 changed();
               },
@@ -4646,7 +4811,7 @@
         URL.revokeObjectURL(a.href);
       }
 
-      // Déplacement des zones sur le schéma (mode édition).
+      // Édition du schéma : échange ou déplacement des blocs sur la grille.
       function brancherSchemaEdition() {
         let drag = null;
         const svgPt = (svg, e) => {
@@ -4654,6 +4819,25 @@
           p.x = e.clientX;
           p.y = e.clientY;
           return p.matrixTransform(svg.getScreenCTM().inverse());
+        };
+        const caseSous = (p) => {
+          const sc = DB.meta.schema;
+          const c = Math.floor((p.x - GR.x0 + GR.gx / 2) / (GR.cw + GR.gx));
+          const r = Math.floor((p.y - GR.y0 + GR.gy / 2) / (GR.ch + GR.gy));
+          return c < 0 || r < 0 || c >= sc.cols || r >= sc.rows
+            ? null
+            : { r, c };
+        };
+        const marquer = (cell) => {
+          document
+            .querySelectorAll("#schema .cible")
+            .forEach((x) => x.classList.remove("cible"));
+          if (!cell) return;
+          const z = zoneEn(cell.r, cell.c);
+          const el = z
+            ? $(`#schema [data-z="${z.id}"]`)
+            : $(`#schema [data-cell="${cell.r},${cell.c}"]`);
+          if (el && el !== drag.g) el.classList.add("cible");
         };
         $("#schema").addEventListener("pointerdown", (e) => {
           if (!ui.editSchema) return;
@@ -4665,26 +4849,76 @@
             svg,
             z: DB.zones.find((z) => z.id === g.dataset.z),
             p0: svgPt(svg, e),
-            dx: 0,
-            dy: 0,
+            bouge: false,
           };
-          g.setPointerCapture(e.pointerId);
+          svg.setPointerCapture(e.pointerId);
           e.preventDefault();
         });
         $("#schema").addEventListener("pointermove", (e) => {
           if (!drag) return;
           const p = svgPt(drag.svg, e);
-          drag.dx = Math.round((p.x - drag.p0.x) / 10) * 10;
-          drag.dy = Math.round((p.y - drag.p0.y) / 10) * 10;
-          drag.g.setAttribute("transform", `translate(${drag.dx},${drag.dy})`);
+          const dx = p.x - drag.p0.x,
+            dy = p.y - drag.p0.y;
+          if (Math.abs(dx) + Math.abs(dy) > 6) drag.bouge = true;
+          if (!drag.bouge) return;
+          drag.g.classList.add("drag");
+          drag.g.parentNode.append(drag.g);
+          drag.g.setAttribute("transform", `translate(${dx},${dy})`);
+          marquer(caseSous(p));
         });
-        $("#schema").addEventListener("pointerup", () => {
+        $("#schema").addEventListener("pointerup", (e) => {
           if (!drag) return;
-          const { z, dx, dy } = drag;
+          const { z, bouge, svg } = drag;
+          const cell = bouge ? caseSous(svgPt(svg, e)) : null;
           drag = null;
-          if (!dx && !dy) return editerZone(z.id);
-          z.x = Math.max(0, z.x + dx);
-          z.y = Math.max(20, z.y + dy);
+          if (!bouge) return editerZone(z.id);
+          if (!cell || (cell.r === z.row && cell.c === z.col))
+            return renderSchema();
+          const autre = zoneEn(cell.r, cell.c);
+          if (autre) Object.assign(autre, { row: z.row, col: z.col });
+          Object.assign(z, { row: cell.r, col: cell.c });
+          changed();
+        });
+        // Case vide : nouvelle zone à cet endroit.
+        $("#schema").addEventListener("click", (e) => {
+          if (!ui.editSchema) return;
+          const v = e.target.closest("[data-cell]");
+          if (!v) return;
+          const [row, col] = v.dataset.cell.split(",").map(Number);
+          editerZone(null, { row, col });
+        });
+        $("#s-tools").addEventListener("click", (e) => {
+          const a = e.target.closest("[data-sg]")?.dataset.sg;
+          if (!a) return;
+          const sc = DB.meta.schema;
+          if (a === "col+") sc.cols++;
+          if (a === "row+") sc.rows++;
+          if (a === "col-" || a === "row-") {
+            const ligne = a === "row-";
+            const n = ligne ? sc.rows : sc.cols;
+            if (n <= 1) return;
+            const occupees = DB.zones.filter(
+              (z) => (ligne ? z.row : z.col) === n - 1,
+            );
+            if (occupees.length)
+              return alert(
+                `La dernière ${ligne ? "ligne" : "colonne"} contient ${occupees.map((z) => z.nom).join(", ")}. Déplacez ces blocs avant de la retirer, ou utilisez « Ranger ».`,
+              );
+            ligne ? sc.rows-- : sc.cols--;
+          }
+          if (a === "ranger") {
+            const n = Math.max(
+              1,
+              Math.min(20, Number($("#s-ncols").value) || sc.cols),
+            );
+            if (
+              !confirm(
+                `Ranger les ${DB.zones.length} zones sur ${n} colonnes ? La disposition actuelle sera remplacée.`,
+              )
+            )
+              return;
+            rangerSchema(n, $("#s-serp").checked);
+          }
           changed();
         });
       }
@@ -6236,19 +6470,12 @@
         if (z) return z.id;
         const id = slug(section) || uid("z");
         if (!DB.zones.some((x) => x.id === id)) {
-          const bas = Math.max(40, ...DB.zones.map((x) => x.y + x.h)) + 40;
-          // Nouvelles zones rangées sous le schéma, 8 par ligne.
-          creees.y0 ??= bas;
-          const k = creees.length;
           DB.zones.push({
             id,
             nom: section.toUpperCase(),
             type: "general",
-            x: 20 + (k % 8) * 152,
-            y: creees.y0 + Math.floor(k / 8) * 110,
-            w: 130,
-            h: 70,
             machines: [],
+            ...caseLibre(),
           });
           creees.push(section);
         }
@@ -6529,6 +6756,9 @@
           if (x) Object.assign(x, v);
           else DB.zones.push({ id: z.id, ...v });
         }
+        // Disposition de l'arrêt technique reprise sur la grille.
+        DB.zones.forEach((z) => (z.col = z.row = null));
+        DB.meta.schema = {};
         if (at.flux?.length) DB.flux = [...at.flux];
         if (at.liens) DB.liens = [...at.liens];
         for (const s of at.services || [])
@@ -6862,6 +7092,8 @@
           : "✏️ Modifier le schéma";
         $("#s-edit").classList.toggle("primary", ui.editSchema);
         $("#schema").classList.toggle("edit", ui.editSchema);
+        $("#s-ncols").value = "";
+        renderSchema();
       };
       $("#s-zone-add").onclick = () => editerZone(null);
 
