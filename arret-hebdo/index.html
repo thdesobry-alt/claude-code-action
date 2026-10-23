@@ -1766,6 +1766,16 @@
               placeholder="🔎 Rechercher un agent…"
             />
           </form>
+          <div
+            class="row filters"
+            id="pe-n1"
+            style="margin-bottom: 10px; gap: 6px 14px"
+          ></div>
+          <p class="muted" style="margin: 0 0 8px">
+            Le N+1 d'un agent est celui de son équipe, sauf s'il en a un choisi
+            dans la colonne N+1. Il est reporté automatiquement sur les analyses
+            de risque.
+          </p>
           <div class="scroll-x tall" id="pe-table"></div>
         </div>
         <div class="card">
@@ -3422,7 +3432,7 @@
             <div class="doc-sec"><h4>📝 Analyse des risques (AQA.QSE.15)</h4>
               <label class="pchk" style="font-weight:600"><input type="checkbox" id="e-arreq" ${w.arRequise ? "checked" : ""}> Cette activité nécessite une analyse de risque</label>
               <div class="row" ${w.arRequise ? "" : "hidden"}><button type="button" class="btn" id="e-ar">Remplir / imprimer l'analyse pré-remplie</button>
-              <span class="muted">${(w.ar.coches || []).length} case(s) cochée(s) · N+1 : ${esc(responsablesActivite({ ...a, intervenants: getInter() }).join(", ") || "à définir (fiche opérateur)")}</span></div>
+              <span class="muted">${(w.ar.coches || []).length} case(s) cochée(s) · N+1 : ${esc(responsablesActivite({ ...a, intervenants: getInter() }).join(", ") || "à définir (Charge et effectifs → Personnel)")}</span></div>
               <div class="depot" id="e-ar-pdf" ${w.arRequise ? "" : "hidden"}>${w.docs.ar ? pj(w.docs.ar, "ar") : "Glisser ici le PDF de l'analyse de risque signée (ou cliquer)"}</div></div>
             ${
               ext.length
@@ -3604,7 +3614,15 @@
             <td>${esc(a.designation)}<br><small class="muted">${esc(zoneNom(a.zone))}${a.machine ? " · " + esc(machineNom(a)) : ""}</small></td>
             <td><span class="svc" style="--sc:${svcColor(a.service)};padding-left:6px">${esc(a.service)}</span></td>
             <td><small>${creneauxTxt(a) || "—"}</small></td>
-            <td>${a.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}</td>
+            <td>${
+              a.intervenants
+                .map((i) => {
+                  const r = responsableDe(pers(i));
+                  return `<div><span class="tag">${esc(persNom(pers(i)))}</span> <small class="${r || !a.arRequise ? "muted" : "late"}">N+1 : ${esc(r ? persNom(r) : "à définir")}</small></div>`;
+                })
+                .join("") ||
+              `<span class="${a.arRequise ? "late" : "muted"}">Aucun intervenant</span>`
+            }</td>
             <td style="color:${coul};font-weight:600">${esc(e.label)}${a.docs?.ar ? `<br><small><a href="#" data-ract="voir">${esc(a.docs.ar.nom)}</a></small>` : ""}</td>
             <td style="white-space:nowrap">${
               a.arRequise
@@ -3613,7 +3631,7 @@
             }</td></tr>`;
         }
         $("#r-table").innerHTML = l.length
-          ? `<table><thead><tr><th>AR</th><th>Activité</th><th>Équipe</th><th>Horaire</th><th>Intervenants</th><th>État</th><th></th></tr></thead><tbody>${html}</tbody></table>`
+          ? `<table><thead><tr><th>AR</th><th>Activité</th><th>Équipe</th><th>Horaire</th><th>Intervenants et N+1</th><th>État</th><th></th></tr></thead><tbody>${html}</tbody></table>`
           : `<p class="muted">${arret() ? "Aucune activité pour ces filtres." : "Aucun arrêt : cliquez sur « ＋ Semaine »."}</p>`;
       }
 
@@ -6007,10 +6025,18 @@
           <table class="arf-i">
             <tr><td><u>Date de l'intervention</u> : <b>${dateLongue(jour || dateAct(a))}</b></td>
               <td><u>Zone de l'intervention</u> : <b>${esc(zoneNom(a.zone))}${machine ? " — " + esc(machine) : ""}</b></td>
-              <td rowspan="2" class="n1"><u><b>Signature du responsable N+1</b></u> <i>avant intervention et après vérification des habilitations et autorisations diverses (Nom et signature)</i><br><b>${esc(responsablesActivite(a).join(" / "))}</b></td></tr>
+              <td rowspan="2" class="n1"><u><b>Signature du responsable N+1</b></u> <i>avant intervention et après vérification des habilitations et autorisations diverses (Nom et signature)</i><br><b>${esc(responsablesActivite(a).join(" / ") || "……………………")}</b></td></tr>
             <tr><td colspan="2"><u>Nature de l'activité/ tâche à réaliser</u> : <b>${esc(a.designation)}</b>${a.gmao ? ` <span class="arf-m">(GMAO ${esc(a.gmao)})</span>` : ""}</td></tr>
-            <tr><td colspan="2"><u>Noms des intervenants</u> : <b>${esc(a.intervenants.map((i) => persNom(pers(i))).join(", "))}</b></td>
-              <td><u>Signature des intervenants</u> :</td></tr>
+            <tr><td colspan="2"><u>Noms des intervenants</u> :${
+              a.intervenants
+                .map((i) => {
+                  const p = pers(i),
+                    r = responsableDe(p);
+                  return `<br><b>${esc(persNom(p))}</b>${p?.matricule ? ` (mat. ${esc(p.matricule)})` : ""} — N+1 : <b>${esc(r ? persNom(r) : "……………")}</b>`;
+                })
+                .join("") || " ……………………"
+            }</td>
+              <td><u>Signature des intervenants</u> :${a.intervenants.map((i) => `<br>${esc(persNom(pers(i)))} : ………………`).join("")}</td></tr>
             ${ext.length ? `<tr><td colspan="3">Entreprise extérieure : <b>${esc(ext.map((i) => persNom(pers(i))).join(", "))}</b> — N° de commande : <b>${esc(a.commande || "……………")}</b> — Plan de prévention : <b>${esc(a.pdpRef || (a.docs?.pdp ? a.docs.pdp.nom : "……………"))}</b></td></tr>` : ""}
           </table>
           <table class="arf-g">
@@ -6155,7 +6181,41 @@
         DB.personnel.find(
           (p) => p.id !== id && mat && String(p.matricule ?? "").trim() === mat,
         );
+      // Choix du N+1 d'un agent : le sien, sinon celui de son équipe.
+      function optsN1(p) {
+        const eq = DB.equipes.find((e) => e.id === p.equipe);
+        const n1Eq =
+          eq?.responsable && eq.responsable !== p.id
+            ? pers(eq.responsable)
+            : null;
+        return (
+          opt(
+            "",
+            n1Eq ? `Celui de l'équipe : ${persNom(n1Eq)}` : "— à définir —",
+            p.responsable || "",
+          ) +
+          [...DB.personnel]
+            .filter((x) => x.id !== p.id)
+            .sort((x, y) => persNom(x).localeCompare(persNom(y)))
+            .map((x) => opt(x.id, persNom(x), p.responsable || ""))
+            .join("")
+        );
+      }
+      function renderN1Equipes() {
+        const ps = [...DB.personnel].sort((x, y) =>
+          persNom(x).localeCompare(persNom(y)),
+        );
+        $("#pe-n1").innerHTML =
+          "<b>N+1 par équipe :</b>" +
+          DB.equipes
+            .map(
+              (e) =>
+                `<label class="muted">${esc(e.nom)} <select data-eqn1="${esc(e.id)}" style="max-width:170px;border:1px solid ${e.responsable ? "var(--line)" : "#e5484d"};border-radius:6px;padding:3px;background:var(--card)">${opt("", "— aucun —", e.responsable || "")}${ps.map((x) => opt(x.id, persNom(x), e.responsable || "")).join("")}</select></label>`,
+            )
+            .join("");
+      }
       function renderPersonnel() {
+        renderN1Equipes();
         $("#pe-eq").innerHTML = DB.equipes
           .map((e) => opt(e.id, e.nom, ui.peEq || DB.equipes[0]?.id))
           .join("");
@@ -6180,7 +6240,7 @@
         const inp = (p, k, w) =>
           `<input data-pe="${p.id}" data-k="${k}" value="${esc(p[k] ?? "")}" style="width:${w}px;border:1px solid ${(k === "matricule" || k === "prenom") && !p[k] ? "#e5484d" : "var(--line)"};border-radius:6px;padding:3px 6px;background:var(--card)">`;
         $("#pe-table").innerHTML = l.length
-          ? `<table><thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th>Activités</th><th></th></tr></thead><tbody>${l
+          ? `<table><thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Équipe</th><th>N+1</th><th>Activités</th><th></th></tr></thead><tbody>${l
               .map((p) => {
                 const nSem = ar
                   ? actsArret(ar).filter((a) => a.intervenants.includes(p.id))
@@ -6191,6 +6251,7 @@
                 ).length;
                 return `<tr><td>${inp(p, "matricule", 100)}</td><td>${inp(p, "nom", 170)}</td><td>${inp(p, "prenom", 150)}</td>
                   <td><select data-pe="${p.id}" data-k="equipe" style="border:1px solid var(--line);border-radius:6px;padding:3px;background:var(--card)">${DB.equipes.map((e) => opt(e.id, e.nom, p.equipe)).join("")}</select></td>
+                  <td><select data-pe="${p.id}" data-k="responsable" style="max-width:190px;border:1px solid ${responsableDe(p) ? "var(--line)" : "#e5484d"};border-radius:6px;padding:3px;background:var(--card)">${optsN1(p)}</select></td>
                   <td>${nSem} cette semaine <small class="muted">· ${nTot} au total</small></td>
                   <td><button class="btn small danger" data-perm="${p.id}" title="Supprimer l'agent">✕</button></td></tr>`;
               })
@@ -7295,6 +7356,12 @@
         ajouterAgent();
       };
       $("#pe-q").oninput = renderPersonnel;
+      $("#pe-n1").addEventListener("change", (e) => {
+        const id = e.target.dataset.eqn1;
+        if (id == null) return;
+        DB.equipes.find((x) => x.id === id).responsable = e.target.value;
+        changed();
+      });
       $("#pe-table").addEventListener("change", (e) => {
         const t = e.target;
         if (!t.dataset.pe) return;
@@ -7317,6 +7384,8 @@
           return renderPersonnel();
         }
         p[t.dataset.k] = v;
+        if (t.dataset.k === "responsable" || t.dataset.k === "equipe")
+          return changed();
         t.value = v;
         t.style.borderColor = "";
         // Pas de nouveau rendu : la saisie peut continuer avec Tab.
