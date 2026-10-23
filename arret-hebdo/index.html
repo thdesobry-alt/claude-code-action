@@ -1434,6 +1434,7 @@
         <button data-tab="activites">📋 Activités</button>
         <button data-tab="schema">🗺️ Schéma laminoir</button>
         <button data-tab="charge">👷 Charge et effectifs</button>
+        <button data-tab="ar">📝 Analyses de risque</button>
         <button data-tab="taches">🧰 Programmes et tâches</button>
         <button data-tab="semaines">🗂️ Semaines</button>
         <button data-tab="admin">⚙️ Administration</button>
@@ -1526,7 +1527,7 @@
               <option value="manque-ext">
                 Entreprise ext. : commande / PdP manquant
               </option>
-              <option value="sans-ar">Sans analyse de risque signée</option>
+              <option value="sans-ar">Analyse de risque non signée</option>
               <option value="photos">Avec photos</option>
             </select>
             <button class="btn small" id="f-reset">Réinitialiser</button>
@@ -1555,6 +1556,56 @@
             </table>
           </div>
         </div>
+      </section>
+
+      <!-- ANALYSES DE RISQUE -->
+      <section class="tab" id="tab-ar">
+        <div class="kpis" id="r-kpis"></div>
+        <div class="card">
+          <div class="row" style="margin-bottom: 6px">
+            <h2 style="margin: 0">Analyses de risque (AQA.QSE.15)</h2>
+            <div class="spacer"></div>
+            <button class="btn primary" id="r-print">
+              🖨️ Imprimer toutes les analyses
+            </button>
+          </div>
+          <p class="muted" style="margin-top: 0">
+            Cochez les activités qui nécessitent une analyse de risque. Chaque
+            analyse est pré-remplie (date, zone, tâche, intervenants, N+1) : «
+            Remplir » pour cocher les risques et moyens de prévention, 📎 pour
+            joindre le PDF signé, 🖨️ pour l'imprimer seule. « Imprimer toutes
+            les analyses » imprime celles des activités cochées et affichées
+            (PDF signé s'il est joint, sinon le formulaire pré-rempli).
+          </p>
+          <div class="row filters" style="margin-bottom: 10px">
+            <input
+              id="r-q"
+              type="search"
+              placeholder="🔎 Rechercher…"
+              style="min-width: 200px"
+            />
+            <select id="r-jour"></select>
+            <select id="r-svc"></select>
+            <select id="r-vue">
+              <option value="">Toutes les activités</option>
+              <option value="oui">Avec analyse de risque</option>
+              <option value="afaire">Analyse à remplir</option>
+              <option value="non">Sans analyse de risque</option>
+            </select>
+            <div class="spacer"></div>
+            <span class="muted" id="r-count"></span>
+            <button
+              class="btn small"
+              id="r-all-on"
+              title="Coche « analyse nécessaire » pour toutes les activités affichées"
+            >
+              Tout cocher
+            </button>
+            <button class="btn small" id="r-all-off">Tout décocher</button>
+          </div>
+          <div class="scroll-x tall" id="r-table"></div>
+        </div>
+        <input type="file" id="r-pdf" accept="application/pdf,.pdf" hidden />
       </section>
 
       <!-- PROGRAMMES TYPES ET TÂCHES -->
@@ -1931,6 +1982,7 @@
         f: {},
         g: {},
         t: {},
+        r: { vue: "" },
         tSel: new Set(),
         lib: true,
         schemaSvc: "",
@@ -2434,6 +2486,7 @@
           activites: renderActivites,
           schema: renderSchema,
           charge: renderCharge,
+          ar: renderAR,
           taches: renderTaches,
           semaines: renderSemaines,
           admin: renderAdmin,
@@ -2465,6 +2518,12 @@
         const ps = [...DB.personnel].sort((a, b) =>
           persNom(a).localeCompare(persNom(b)),
         );
+        $("#r-svc").innerHTML = sOpts(ui.r.svc);
+        $("#r-jour").innerHTML =
+          opt("", "Tous les jours", ui.r.jour ?? "") +
+          DB.meta.jours
+            .map((j, i) => opt(String(i), j.nom, ui.r.jour ?? ""))
+            .join("");
         $("#ta-zone").innerHTML = zOpts(ui.t.zone);
         $("#ta-svc").innerHTML = sOpts(ui.t.svc);
         $("#ta-jour").innerHTML =
@@ -2612,6 +2671,7 @@
             })
             .join("");
           const tags = [
+            tagAR(a),
             a.pont
               ? `<span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>`
               : "",
@@ -2960,7 +3020,7 @@
             (!f.pers || a.intervenants.includes(f.pers)) &&
             (!f.doc ||
               (f.doc === "manque-ext" && manquesExterne(a).length > 0) ||
-              (f.doc === "sans-ar" && !a.docs?.ar) ||
+              (f.doc === "sans-ar" && a.arRequise && !a.docs?.ar) ||
               (f.doc === "photos" && a.photos?.length > 0)) &&
             recherche(a, q)
           );
@@ -3014,7 +3074,7 @@
           }
           const manque = manquesExterne(a);
           html += `<tr data-id="${a.id}">
-            <td>${esc(a.designation)}${a.machine ? ` <span class="tag">⚙️ ${esc(machineNom(a))}</span>` : ""}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${a.docs?.ar ? ' <span class="tag" title="Analyse de risque signée jointe">📄 AR</span>' : ""}${a.photos?.length ? ` <span class="tag">📷 ${a.photos.length}</span>` : ""}${manque.length ? ` <span class="tag manque">⚠️ ${manque.join(" et ")} manquant</span>` : ""}${a.origine ? ' <span class="tag" title="Reprise d\'une semaine précédente">↪ reprise</span>' : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}</td>
+            <td>${esc(a.designation)}${a.machine ? ` <span class="tag">⚙️ ${esc(machineNom(a))}</span>` : ""}${a.pont ? ` <span class="tag">🏗️ ${esc(DB.ponts.find((p) => p.id === a.pont)?.nom || a.pont)}</span>` : ""}${tagAR(a)}${a.photos?.length ? ` <span class="tag">📷 ${a.photos.length}</span>` : ""}${manque.length ? ` <span class="tag manque">⚠️ ${manque.join(" et ")} manquant</span>` : ""}${a.origine ? ' <span class="tag" title="Reprise d\'une semaine précédente">↪ reprise</span>' : ""}${a.commentaire ? `<br><small class="muted">💬 ${esc(a.commentaire)}</small>` : ""}</td>
             <td><span class="svc" style="--sc:${svcColor(a.service)};padding-left:6px">${esc(a.service)}</span></td>
             <td><small>${esc(a.frequence || "")}</small></td>
             <td>${a.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}${a.nb > 1 ? `<br><small class="muted">${a.nb} agents mobilisés</small>` : ""}</td>
@@ -3025,6 +3085,20 @@
           html ||
           `<tr><td colspan="6" class="muted">${arret() ? "Aucune activité." : "Aucun arrêt : cliquez sur « ＋ Semaine »."}</td></tr>`;
       }
+      // Analyse de risque d'une activité : non requise, à remplir, remplie (cases cochées) ou signée (PDF joint).
+      function etatAR(a) {
+        if (!a.arRequise) return { id: "non", label: "Non nécessaire" };
+        if (a.docs?.ar) return { id: "signee", label: "Signée (PDF joint)" };
+        const n = (a.ar?.coches || []).length;
+        if (n) return { id: "remplie", label: `Remplie (${n} case(s))` };
+        return { id: "afaire", label: "À remplir" };
+      }
+      const tagAR = (a) => {
+        const e = etatAR(a);
+        if (e.id === "non") return "";
+        const cls = e.id === "afaire" ? "manque" : "";
+        return ` <span class="tag ${cls}" title="Analyse de risque : ${e.label}">📝 AR${e.id === "signee" ? " signée" : e.id === "afaire" ? " à remplir" : ""}</span>`;
+      };
       // Passage d'une activité à un statut.
       function changerStatut(a, st) {
         a.statut = st;
@@ -3208,6 +3282,7 @@
           creneaux: structuredClone(a.creneaux || []),
           commande: a.commande || "",
           pdpRef: a.pdpRef || "",
+          arRequise: !!a.arRequise,
         };
         const zo = zoneOrder();
         const zones = [...DB.zones].sort((x, y) => zo[x.id] - zo[y.id]);
@@ -3305,6 +3380,7 @@
                   photos: w.photos,
                   commande: w.commande.trim(),
                   pdpRef: w.pdpRef.trim(),
+                  arRequise: w.arRequise,
                 });
                 if (st !== avant && !changerStatut(a, st)) return false;
                 if (!id) DB.activites.push(a);
@@ -3344,9 +3420,10 @@
               .join("");
           el.innerHTML = `
             <div class="doc-sec"><h4>📝 Analyse des risques (AQA.QSE.15)</h4>
-              <div class="row"><button type="button" class="btn" id="e-ar">Remplir / imprimer l'analyse pré-remplie</button>
+              <label class="pchk" style="font-weight:600"><input type="checkbox" id="e-arreq" ${w.arRequise ? "checked" : ""}> Cette activité nécessite une analyse de risque</label>
+              <div class="row" ${w.arRequise ? "" : "hidden"}><button type="button" class="btn" id="e-ar">Remplir / imprimer l'analyse pré-remplie</button>
               <span class="muted">${(w.ar.coches || []).length} case(s) cochée(s) · N+1 : ${esc(responsablesActivite({ ...a, intervenants: getInter() }).join(", ") || "à définir (fiche opérateur)")}</span></div>
-              <div class="depot" id="e-ar-pdf">${w.docs.ar ? pj(w.docs.ar, "ar") : "Glisser ici le PDF de l'analyse de risque signée (ou cliquer)"}</div></div>
+              <div class="depot" id="e-ar-pdf" ${w.arRequise ? "" : "hidden"}>${w.docs.ar ? pj(w.docs.ar, "ar") : "Glisser ici le PDF de l'analyse de risque signée (ou cliquer)"}</div></div>
             ${
               ext.length
                 ? `<div class="doc-sec ext"><h4>🏢 Entreprise extérieure : ${esc(ext.map((i) => persNom(pers(i))).join(", "))}</h4>
@@ -3359,6 +3436,10 @@
               <div><b>Avant</b><div class="depot ph-zone" id="e-ph-avant">${photos("avant")}<span class="muted">＋ glisser ou cliquer</span></div></div>
               <div><b>Après</b><div class="depot ph-zone" id="e-ph-apres">${photos("apres")}<span class="muted">＋ glisser ou cliquer</span></div></div>
             </div></div>`;
+          $("#e-arreq").onchange = (e) => {
+            w.arRequise = e.target.checked;
+            rendre();
+          };
           $("#e-ar").onclick = () =>
             ouvrirAR(
               { ...a, intervenants: getInter() },
@@ -3454,8 +3535,86 @@
           ar: {},
           commande: o.commande || "",
           pdpRef: o.pdpRef || "",
+          arRequise: !!o.arRequise,
           ...(o.tache ? { tache: o.tache } : {}),
         };
+      }
+
+      // ---------- Onglet Analyses de risque ----------
+      function filtrerAR() {
+        const f = ui.r,
+          q = (f.q || "").toLowerCase();
+        return trierPourImpression(
+          actsArret().filter(
+            (a) =>
+              (f.jour == null || f.jour === "" || a.jour === Number(f.jour)) &&
+              (!f.svc || a.service === f.svc) &&
+              (!f.vue ||
+                (f.vue === "oui" && a.arRequise) ||
+                (f.vue === "non" && !a.arRequise) ||
+                (f.vue === "afaire" && etatAR(a).id === "afaire")) &&
+              recherche(a, q),
+          ),
+        );
+      }
+      function renderAR() {
+        const all = actsArret();
+        const n = (id) => all.filter((a) => etatAR(a).id === id).length;
+        const req = all.filter((a) => a.arRequise).length;
+        $("#r-kpis").innerHTML = [
+          ["", req, "Activités avec analyse de risque", "var(--accent)"],
+          ["afaire", n("afaire"), "À remplir", "#e5484d"],
+          [
+            "remplie",
+            n("remplie"),
+            "Remplies (non signées)",
+            "var(--reportee)",
+          ],
+          ["signee", n("signee"), "Signées (PDF joint)", "var(--fait)"],
+          ["non", n("non"), "Sans analyse de risque", "var(--planifie)"],
+        ]
+          .map(
+            ([k, v, l, c]) =>
+              `<div class="kpi" style="--c:${c};cursor:default"><b>${v}</b><span>${l}</span></div>`,
+          )
+          .join("");
+        const l = filtrerAR();
+        const aImprimer = l.filter((a) => a.arRequise);
+        $("#r-count").textContent =
+          `${l.length} activité(s) · ${aImprimer.length} avec analyse`;
+        $("#r-print").textContent =
+          `🖨️ Imprimer toutes les analyses (${aImprimer.length})`;
+        $("#r-print").disabled = !aImprimer.length;
+        let html = "",
+          jc = null;
+        for (const a of l) {
+          if (a.jour !== jc) {
+            jc = a.jour;
+            html += `<tr class="zone-h"><td colspan="7">${esc(jourDef(a.jour).nom)} ${D.fmt(dateAct(a))}</td></tr>`;
+          }
+          const e = etatAR(a);
+          const coul = {
+            afaire: "#e5484d",
+            remplie: "var(--reportee)",
+            signee: "var(--fait)",
+            non: "var(--muted)",
+          }[e.id];
+          html += `<tr data-rid="${a.id}">
+            <td style="text-align:center"><input type="checkbox" data-rreq="${a.id}" ${a.arRequise ? "checked" : ""} title="Nécessite une analyse de risque" style="width:18px;height:18px"></td>
+            <td>${esc(a.designation)}<br><small class="muted">${esc(zoneNom(a.zone))}${a.machine ? " · " + esc(machineNom(a)) : ""}</small></td>
+            <td><span class="svc" style="--sc:${svcColor(a.service)};padding-left:6px">${esc(a.service)}</span></td>
+            <td><small>${creneauxTxt(a) || "—"}</small></td>
+            <td>${a.intervenants.map((i) => `<span class="tag">${esc(persNom(pers(i)))}</span>`).join("") || '<span class="muted">—</span>'}</td>
+            <td style="color:${coul};font-weight:600">${esc(e.label)}${a.docs?.ar ? `<br><small><a href="#" data-ract="voir">${esc(a.docs.ar.nom)}</a></small>` : ""}</td>
+            <td style="white-space:nowrap">${
+              a.arRequise
+                ? `<button class="btn small primary" data-ract="remplir">Remplir</button> <button class="btn small" data-ract="pdf" title="Joindre le PDF de l'analyse signée">📎</button>${a.docs?.ar ? ` <button class="btn small danger" data-ract="sanspdf" title="Retirer le PDF signé">✕</button>` : ""} <button class="btn small" data-ract="print" title="Imprimer cette analyse">🖨️</button>`
+                : ""
+            }</td></tr>`;
+        }
+        $("#r-table").innerHTML = l.length
+          ? `<table><thead><tr><th>AR</th><th>Activité</th><th>Équipe</th><th>Horaire</th><th>Intervenants</th><th>État</th><th></th></tr></thead><tbody>${html}</tbody></table>`
+          : `<p class="muted">${arret() ? "Aucune activité pour ces filtres." : "Aucun arrêt : cliquez sur « ＋ Semaine »."}</p>`;
       }
 
       // ---------- Programmes types et tâches à planifier ----------
@@ -3476,6 +3635,7 @@
         ordre: a.ordre,
         commande: a.commande || "",
         pdpRef: a.pdpRef || "",
+        arRequise: !!a.arRequise,
       });
       const memeActivite = (a, b) =>
         a.zone === b.zone &&
@@ -7049,8 +7209,11 @@
       $("#b-new").onclick = () => editerActivite(null);
       $("#b-cr").onclick = imprimerCR;
       $("#b-ar-print").onclick = () => {
-        const list = trierPourImpression(filtrer());
-        if (!list.length) return alert("Aucune activité dans le filtre.");
+        const list = trierPourImpression(filtrer().filter((a) => a.arRequise));
+        if (!list.length)
+          return alert(
+            "Aucune activité du filtre ne nécessite d'analyse de risque. Cochez-les dans l'onglet 📝 Analyses de risque ou dans la fiche de l'activité.",
+          );
         if (
           list.length > 15 &&
           !confirm(`Imprimer les ${list.length} analyses de risque du filtre ?`)
@@ -7195,6 +7358,81 @@
         }
         const c = e.target.closest("[data-acts]");
         if (c) editerActivite(c.dataset.acts.split(",")[0]);
+      };
+
+      // Analyses de risque
+      for (const [sel, k] of Object.entries({
+        "#r-q": "q",
+        "#r-jour": "jour",
+        "#r-svc": "svc",
+        "#r-vue": "vue",
+      }))
+        $(sel).addEventListener(sel === "#r-q" ? "input" : "change", (e) => {
+          ui.r[k] = e.target.value;
+          renderAR();
+        });
+      $("#r-table").addEventListener("change", (e) => {
+        const id = e.target.dataset.rreq;
+        if (!id) return;
+        DB.activites.find((a) => a.id === id).arRequise = e.target.checked;
+        changed();
+      });
+      let arPdf = null;
+      $("#r-table").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-ract]");
+        const tr = e.target.closest("tr[data-rid]");
+        if (!tr || e.target.closest("[data-rreq]")) return;
+        const a = DB.activites.find((x) => x.id === tr.dataset.rid);
+        if (!b) return editerActivite(a.id);
+        e.preventDefault();
+        const act = b.dataset.ract;
+        if (act === "remplir") ouvrirAR(a, (a.ar ||= {}), changed, dateAct(a));
+        if (act === "print") imprimerAR([{ a }]);
+        if (act === "voir") ouvrirPieceJointe(a.docs.ar.data);
+        if (
+          act === "sanspdf" &&
+          confirm("Retirer le PDF signé de cette analyse ?")
+        )
+          delete a.docs.ar, changed();
+        if (act === "pdf") {
+          arPdf = a;
+          $("#r-pdf").click();
+        }
+      });
+      $("#r-pdf").onchange = async (e) => {
+        const f = e.target.files[0];
+        e.target.value = "";
+        if (!f || !arPdf) return;
+        try {
+          (arPdf.docs ||= {}).ar = await lirePdf(f);
+          changed();
+        } catch (err) {
+          alert("Fichier refusé : " + err.message);
+        }
+      };
+      const cocherAR = (v) => {
+        const l = filtrerAR();
+        if (!l.length) return;
+        if (
+          !confirm(
+            `${v ? "Cocher" : "Décocher"} « analyse de risque » pour les ${l.length} activité(s) affichée(s) ?`,
+          )
+        )
+          return;
+        l.forEach((a) => (a.arRequise = v));
+        changed();
+      };
+      $("#r-all-on").onclick = () => cocherAR(true);
+      $("#r-all-off").onclick = () => cocherAR(false);
+      $("#r-print").onclick = () => {
+        const l = filtrerAR().filter((a) => a.arRequise);
+        if (!l.length) return;
+        if (
+          l.length > 15 &&
+          !confirm(`Imprimer les ${l.length} analyses de risque ?`)
+        )
+          return;
+        imprimerAR(l.map((a) => ({ a })));
       };
 
       // Programmes types et tâches
