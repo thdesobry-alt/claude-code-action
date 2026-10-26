@@ -28,6 +28,8 @@ La liste **Autorisant** de l'en-tête filtre toute l'application sur un « Nome 
 2. Dans l'application, faites **Ctrl+V n'importe où sur la page** (ou bouton **📋 Coller les données**). L'import et la mise à jour sont immédiats.
 
 - Les lignes collées **s'ajoutent** aux données existantes. Une ligne déjà présente (même date, document, produit, quantité, valeur, prélevant et autorisant) n'est pas ajoutée deux fois : on peut recoller une extraction qui chevauche la précédente.
+- Chaque mois, collez simplement l'extraction du mois : elle s'ajoute à la base. Le tableau **Contenu de la base de données** (Synthèse) liste les mois présents avec leurs totaux.
+- Si `data.json` a été ouvert (📂) ou enregistré (💾) dans la session (Chrome / Edge), il est **mis à jour automatiquement** après chaque collage ou modification. Sinon, les données restent dans le navigateur : pensez à 💾 Enregistrer JSON pour en garder une copie.
 - **↶ Annuler le dernier collage** (bas de page) retire les lignes du dernier collage.
 - Les données de démonstration disparaissent au premier collage.
 - Le montant utilisé est la colonne **Valore** ; la date est **Data Documento**. Sans ligne de titres, les colonnes sont lues dans l'ordre standard de l'extraction.

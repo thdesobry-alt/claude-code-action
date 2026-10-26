@@ -867,6 +867,14 @@
           <h3>Top 10 des plus grosses dépenses du mois</h3>
           <div id="syn-top"></div>
         </div>
+        <div class="panel">
+          <h3>Contenu de la base de données</h3>
+          <p class="muted" style="margin-top: 0; font-size: 12px">
+            Chaque collage ajoute ses lignes à la base, mois après mois. Cliquez
+            sur un mois pour l'afficher.
+          </p>
+          <div id="syn-db"></div>
+        </div>
       </section>
     </main>
 
@@ -5491,6 +5499,11 @@
         }
         dirty = true;
         renderFooter();
+        // Fichier data.json ouvert ou enregistré dans cette session : il est mis à jour automatiquement
+        if (fileHandle) {
+          clearTimeout(persist.t);
+          persist.t = setTimeout(() => writeHandle(true).catch(() => {}), 400);
+        }
       }
 
       /* ---------- Import par copier-coller ---------- */
@@ -5642,10 +5655,12 @@
           (t) =>
             `${TYPES[t].label} ${added.filter((r) => r.type === t).length}`,
         ).join(" · ");
+        const allMonths = db.consommations.map((c) => monthOf(c.date)).sort();
         toast(
           `${added.length} ligne(s) ajoutée(s) (${by})` +
             (dup ? ` — ${dup} déjà présente(s) non ajoutée(s)` : "") +
-            (skipped ? ` — ${skipped} illisible(s)` : ""),
+            (skipped ? ` — ${skipped} illisible(s)` : "") +
+            ` · La base contient ${db.consommations.length} lignes, de ${monthLabel(allMonths[0])} à ${monthLabel(allMonths[allMonths.length - 1])}.`,
         );
       }
       function undoPaste() {
@@ -5961,6 +5976,46 @@
         }
         $("#syn-insights").innerHTML = ins.map((s) => `<li>${s}</li>`).join("");
         $("#syn-trend").innerHTML = trendSVG(m);
+        // Contenu de la base, mois par mois (tous autorisants)
+        const perMonth = [
+          ...new Set(db.consommations.map((c) => monthOf(c.date))),
+        ]
+          .sort()
+          .reverse()
+          .map((mm) => {
+            const rows = db.consommations.filter((c) => monthOf(c.date) === mm);
+            const r = { mois: mm, lignes: rows.length, valeur: sum(rows) };
+            for (const t of TYPE_KEYS)
+              r[t] = sum(rows.filter((c) => c.type === t));
+            return r;
+          });
+        $("#syn-db").innerHTML = dataTable(
+          "syn-db",
+          [
+            {
+              k: "mois",
+              label: "Mois",
+              val: (r) => r.mois,
+              text: (r) => monthLabel(r.mois),
+              html: (r) =>
+                `<button class="linkbtn" data-goto="${r.mois}">${monthLabel(r.mois)}</button>${r.mois === m ? ' <span class="muted">(affiché)</span>' : ""}`,
+            },
+            { k: "lignes", label: "Lignes", num: true, val: (r) => r.lignes },
+            ...TYPE_KEYS.map((t) => ({
+              k: t,
+              label: TYPES[t].label,
+              num: true,
+              val: (r) => r[t],
+              text: (r) => eur2.format(r[t]),
+            })),
+            { ...C.val, label: "Total" },
+          ],
+          perMonth,
+          {
+            sort: { k: "mois", dir: -1 },
+            empty: "La base est vide : collez une extraction.",
+          },
+        );
         $("#syn-top").innerHTML = dataTable(
           "syn-top",
           [
@@ -6506,14 +6561,14 @@
 
       /* ---------- Fichiers ---------- */
       const jsonText = () => JSON.stringify(db, null, 2);
-      async function writeHandle() {
+      async function writeHandle(quiet) {
         const w = await fileHandle.createWritable();
         await w.write(jsonText());
         await w.close();
         dirty = false;
         source = "Fichier JSON";
         renderFooter();
-        toast(`Base enregistrée dans ${fileHandle.name}`);
+        if (!quiet) toast(`Base enregistrée dans ${fileHandle.name}`);
       }
       function download(name, text, type) {
         const a = document.createElement("a");
@@ -6650,6 +6705,10 @@
         $("#tabs").addEventListener("click", (e) => {
           const b = e.target.closest("button[data-tab]");
           if (b) showTab(b.dataset.tab);
+        });
+        document.addEventListener("click", (e) => {
+          const go = e.target.closest("[data-goto]");
+          if (go) setMonth(go.dataset.goto);
         });
         const setMonth = (m) => {
           if (!/^\d{4}-\d{2}$/.test(m)) return;
