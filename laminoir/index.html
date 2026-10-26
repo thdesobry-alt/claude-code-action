@@ -875,6 +875,15 @@
           </p>
           <div id="syn-db"></div>
         </div>
+        <div class="panel">
+          <h3>Historique des ajouts</h3>
+          <p class="muted" style="margin-top: 0; font-size: 12px">
+            Chaque collage est enregistré ici. En cas d'erreur, « Supprimer cet
+            ajout » retire toutes les lignes ajoutées par ce collage, et
+            uniquement elles.
+          </p>
+          <div id="syn-hist"></div>
+        </div>
       </section>
     </main>
 
@@ -5489,6 +5498,24 @@
             source: c.source || (legacy ? "demo" : "manuel"),
             lot: c.lot || "",
           }));
+        d.historique ??= [];
+        const known = new Set(d.historique.map((h) => h.lot));
+        const lots = new Map();
+        for (const c of d.consommations)
+          if (c.lot && !known.has(c.lot))
+            lots.set(c.lot, [...(lots.get(c.lot) || []), c]);
+        for (const [lot, rows] of lots)
+          d.historique.push({
+            lot,
+            le: new Date(parseInt(lot, 36)).toISOString(),
+            lignes: rows.length,
+            doublons: 0,
+            ignorees: 0,
+            mois: [...new Set(rows.map((c) => monthOf(c.date)))].sort(),
+            valeur: round2(sum(rows)),
+            statut: "actif",
+          });
+        d.historique.sort((a, b) => a.le.localeCompare(b.le));
         return d;
       }
       function persist() {
@@ -5632,6 +5659,16 @@
           } else added.push({ id: `i${lot}-${added.length}`, lot, ...r });
         }
         db.consommations = [...keep, ...added];
+        db.historique.push({
+          lot,
+          le: new Date().toISOString(),
+          lignes: added.length,
+          doublons: dup,
+          ignorees: skipped,
+          mois: [...new Set(added.map((r) => monthOf(r.date)))].sort(),
+          valeur: round2(sum(added)),
+          statut: added.length ? "actif" : "rien ajouté",
+        });
         db.import = {
           le: new Date().toISOString(),
           lot: added.length ? lot : db.import?.lot || "",
@@ -5663,21 +5700,32 @@
             ` · La base contient ${db.consommations.length} lignes, de ${monthLabel(allMonths[0])} à ${monthLabel(allMonths[allMonths.length - 1])}.`,
         );
       }
-      function undoPaste() {
-        const lot = db.import?.lot;
-        const n = db.consommations.filter((c) => c.lot === lot).length;
+      const lotCount = (lot) =>
+        db.consommations.filter((c) => c.lot === lot).length;
+      const lastActiveLot = () =>
+        [...db.historique]
+          .reverse()
+          .find((h) => h.statut === "actif" && lotCount(h.lot))?.lot;
+      // Supprime toutes les lignes ajoutées par un collage ; l'entrée reste dans l'historique
+      function deleteLot(lot) {
+        const h = db.historique.find((x) => x.lot === lot);
+        const n = lotCount(lot);
+        if (!h || !n) return;
+        const when = new Date(h.le).toLocaleString("fr-FR");
         if (
-          !lot ||
-          !n ||
-          !confirm(`Retirer les ${n} lignes ajoutées par le dernier collage ?`)
+          !confirm(
+            `Supprimer les ${n} ligne(s) ajoutée(s) par le collage du ${when} (${eur2.format(h.valeur)}) ?`,
+          )
         )
           return;
         db.consommations = db.consommations.filter((c) => c.lot !== lot);
-        db.import.lot = "";
+        h.statut = "supprimé";
+        h.supprimeLe = new Date().toISOString();
         persist();
         renderAll();
-        toast(`${n} ligne(s) retirée(s)`);
+        toast(`Collage du ${when} supprimé : ${n} ligne(s) retirée(s)`);
       }
+      const undoPaste = () => deleteLot(lastActiveLot());
       const looksLikeData = (t) => t && t.includes("\t");
 
       /* ---------- Tableaux filtrables et triables ---------- */
@@ -6014,6 +6062,79 @@
           {
             sort: { k: "mois", dir: -1 },
             empty: "La base est vide : collez une extraction.",
+          },
+        );
+        const dt = (iso) =>
+          new Date(iso).toLocaleString("fr-FR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          });
+        $("#syn-hist").innerHTML = dataTable(
+          "syn-hist",
+          [
+            {
+              k: "le",
+              label: "Ajouté le",
+              val: (h) => h.le,
+              text: (h) => dt(h.le),
+            },
+            {
+              k: "mois",
+              label: "Mois concernés",
+              val: (h) => h.mois.join(" "),
+              text: (h) => h.mois.map((x) => monthLabel(x)).join(", "),
+            },
+            {
+              k: "lignes",
+              label: "Lignes ajoutées",
+              num: true,
+              val: (h) => h.lignes,
+            },
+            {
+              k: "doublons",
+              label: "Déjà présentes",
+              num: true,
+              val: (h) => h.doublons,
+            },
+            { ...C.val, label: "Valeur ajoutée" },
+            {
+              k: "enbase",
+              label: "Encore en base",
+              num: true,
+              val: (h) => lotCount(h.lot),
+            },
+            {
+              k: "statut",
+              label: "Statut",
+              val: (h) =>
+                h.statut === "supprimé"
+                  ? `Supprimé le ${dt(h.supprimeLe)}`
+                  : h.statut === "actif"
+                    ? "Actif"
+                    : "Rien ajouté",
+              html: (h) =>
+                h.statut === "supprimé"
+                  ? `<span class="up">Supprimé le ${dt(h.supprimeLe)}</span>`
+                  : h.statut === "actif"
+                    ? `<span class="down">Actif</span>`
+                    : `<span class="muted">Rien ajouté</span>`,
+            },
+            {
+              k: "_del",
+              label: "",
+              nofilter: true,
+              nosort: true,
+              val: () => "",
+              html: (h) =>
+                lotCount(h.lot)
+                  ? `<button class="btn small" data-del-lot="${h.lot}">🗑 Supprimer cet ajout</button>`
+                  : "",
+            },
+          ],
+          db.historique,
+          {
+            sort: { k: "le", dir: -1 },
+            empty: "Aucun collage pour l'instant.",
           },
         );
         $("#syn-top").innerHTML = dataTable(
@@ -6465,10 +6586,7 @@
         $("#src").textContent =
           `Source : ${source}${fileHandle ? ` (${fileHandle.name})` : ""} · ${db.consommations.length} lignes${imp}`;
         $("#dirty").hidden = !dirty;
-        $("#undo-paste").hidden = !(
-          db.import?.lot &&
-          db.consommations.some((c) => c.lot === db.import.lot)
-        );
+        $("#undo-paste").hidden = !lastActiveLot();
       }
 
       function renderAll() {
@@ -6709,6 +6827,8 @@
         document.addEventListener("click", (e) => {
           const go = e.target.closest("[data-goto]");
           if (go) setMonth(go.dataset.goto);
+          const dl = e.target.closest("[data-del-lot]");
+          if (dl) deleteLot(dl.dataset.delLot);
         });
         const setMonth = (m) => {
           if (!/^\d{4}-\d{2}$/.test(m)) return;
