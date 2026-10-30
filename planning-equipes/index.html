@@ -778,6 +778,22 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      /* Croix de survol : ligne et colonne de la case survolée. */
+      .cal tr.hl-row > td:not(.cal-closed),
+      .cal td[data-col].hl-col:not(.cal-closed) {
+        background-color: var(--hl) !important;
+      }
+      .cal tr.hl-row > td.cal-name {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .cal tr.cal-days th.hl-col {
+        background: var(--accent) !important;
+        color: var(--accent-fg) !important;
+      }
+      .cal td.hl-cell {
+        box-shadow: inset 0 0 0 2px var(--accent);
+      }
       .cal-btn:hover {
         outline: 2px solid var(--accent);
         outline-offset: -2px;
@@ -2963,7 +2979,7 @@
             { shift: "N", title: "20 × 8", label: "Nuit 20h–8h" },
           ];
           const head = `<tr class="cal-top"><th class="cal-corner" colspan="2">Semaine ${isoWeek(mon)}</th><th class="cal-week" colspan="7">du ${fmtShort(mon)} au ${fmtShort(days[6])}/${days[6].slice(0, 4)}</th><th class="cal-corner" colspan="2"></th></tr>
-        <tr class="cal-days"><th colspan="2"></th>${days.map((ds) => `<th${ds === todayStr() ? ' class="today"' : ""}>${DOW[dow(ds)]} ${fmtShort(ds)}</th>`).join("")}<th colspan="2"></th></tr>`;
+        <tr class="cal-days"><th colspan="2"></th>${days.map((ds, k) => `<th data-col="${k}"${ds === todayStr() ? ' class="today"' : ""}>${DOW[dow(ds)]} ${fmtShort(ds)}</th>`).join("")}<th colspan="2"></th></tr>`;
           let body = "";
           for (const b of blocks) {
             // Équipes de ce poste dans la semaine, dans l'ordre de leur premier jour.
@@ -3001,11 +3017,12 @@
               body += `<tr><td class="cal-n">${la ? i + 1 : ""}</td><td class="cal-name">${la ? esc(fullName(la)) : ""}</td>${days
                 .map((ds, k) => {
                   const sd = side(ds, k);
-                  if (sd === "closed") return `<td class="cal-closed"></td>`;
+                  if (sd === "closed")
+                    return `<td class="cal-closed" data-col="${k}"></td>`;
                   const a = sd === "left" ? la : ra;
-                  if (!a) return `<td class="cal-${sd}"></td>`;
+                  if (!a) return `<td class="cal-${sd}" data-col="${k}"></td>`;
                   const v = calCell(a, ds, b.shift);
-                  return `<td class="cal-${sd}"><button class="cal-btn ${v.cls}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(fullName(a))} · ${fmtShort(ds)}${v.tip ? " · " + esc(v.tip) : " · présent"}">${esc(v.txt)}</button></td>`;
+                  return `<td class="cal-${sd}" data-col="${k}"><button class="cal-btn ${v.cls}" data-act="cell" data-id="${a.id}" data-date="${ds}" title="${esc(fullName(a))} · ${fmtShort(ds)}${v.tip ? " · " + esc(v.tip) : " · présent"}">${esc(v.txt)}</button></td>`;
                 })
                 .join(
                   "",
@@ -3025,7 +3042,7 @@
             body += `<tr class="cal-extra"><td colspan="2">Pers. en plus <small>(ex. formation)</small></td>${days
               .map(
                 (ds, k) =>
-                  `<td class="cal-${side(ds, k)}">${extra[k].map((a) => `<button class="cal-btn" data-act="cell" data-id="${a.id}" data-date="${ds}">${esc(fullName(a))}</button>`).join("")}</td>`,
+                  `<td class="cal-${side(ds, k)}" data-col="${k}">${extra[k].map((a) => `<button class="cal-btn" data-act="cell" data-id="${a.id}" data-date="${ds}">${esc(fullName(a))}</button>`).join("")}</td>`,
               )
               .join("")}<td colspan="2" class="cal-r"></td></tr>`;
           }
@@ -4489,11 +4506,45 @@
         let hlKey = "";
         function clearHl() {
           document
-            .querySelectorAll(".plan .hl-row, .plan .hl-col, .plan .hl-cell")
+            .querySelectorAll(
+              ".plan .hl-row, .plan .hl-col, .plan .hl-cell, .cal .hl-row, .cal .hl-col, .cal .hl-cell",
+            )
             .forEach((x) => x.classList.remove("hl-row", "hl-col", "hl-cell"));
           hlKey = "";
         }
         document.addEventListener("mouseover", (ev) => {
+          // Onglet Calendaire : colonnes repérées par data-col.
+          const cc = ev.target.closest("table.cal td, table.cal th");
+          if (cc) {
+            const tr = cc.parentElement;
+            const col = cc.dataset.col;
+            const key =
+              "cal:" +
+              [...tr.parentElement.rows].indexOf(tr) +
+              ":" +
+              (col ?? "");
+            if (
+              key === hlKey &&
+              (tr.classList.contains("hl-row") ||
+                cc.classList.contains("hl-col"))
+            )
+              return;
+            clearHl();
+            hlKey = key;
+            if (
+              !tr.classList.contains("cal-band") &&
+              !tr.classList.contains("cal-top") &&
+              !tr.classList.contains("cal-days")
+            )
+              tr.classList.add("hl-row");
+            if (col !== undefined) {
+              tr.closest("table")
+                .querySelectorAll(`[data-col="${col}"]`)
+                .forEach((x) => x.classList.add("hl-col"));
+              if (cc.tagName === "TD") cc.classList.add("hl-cell");
+            }
+            return;
+          }
           const cell = ev.target.closest(".plan tbody td, .plan tbody th");
           if (!cell) {
             if (hlKey) clearHl();
