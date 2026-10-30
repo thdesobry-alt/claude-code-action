@@ -3407,11 +3407,11 @@
               if (!activeOn(a, ds) || eqOn(a, ds) !== team) continue;
               const e = entryOf(a.id, ds);
               if (!e) continue;
-              const nom = `${fullName(a)}${a.fn ? ` (${a.fn})` : ""}`;
+              const nom = fullName(a);
               if (isAway(e.c)) {
                 const r = e.r ? agentById(e.r) : null;
                 items.push(
-                  `• ${nom} – ${LABEL[e.c]} → ${r ? `remplacé par ${fullName(r)}${r.fn ? ` (${r.fn})` : ""}, ${eqOn(r, ds) === POOL ? "remplaçant" : "équipe " + eqOn(r, ds)}` : "NON REMPLACÉ"}`,
+                  `• ${nom} – ${LABEL[e.c]} → ${r ? `remplacé par ${fullName(r)}, ${eqOn(r, ds) === POOL ? "remplaçant" : "équipe " + eqOn(r, ds)}` : "NON REMPLACÉ"}`,
                 );
               } else if (e.pa && isWork(codeOf(a, ds)))
                 items.push(
