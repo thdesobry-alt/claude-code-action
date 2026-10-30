@@ -656,6 +656,25 @@
   .plan tr.hl-row > th.name {
     color: var(--accent);
   }
+  .reports {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    align-items: center;
+  }
+  .wkrep {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 3px 4px 3px 8px;
+    font-size: 13px;
+  }
+  .wkrep .btn {
+    min-width: 28px;
+  }
   .plan tr.team.pool th,
   .plan tr.team.pool td {
     background: var(--accent-soft);
@@ -3005,7 +3024,14 @@
         );
       };
 
+      const weeksBar = [...new Set(days.map(mondayOf))]
+        .map(
+          (w) =>
+            `<div class="wkrep"><span class="mono">S${isoWeek(w)}</span><span class="muted">${fmtShort(w)}–${fmtShort(addDays(w, 6))}</span>${TEAMS.map((t) => `<button class="btn sm" data-act="report" data-team="${t}" data-week="${w}" title="Texte des remplacements de l'équipe ${t}, semaine ${isoWeek(w)}">${t}</button>`).join("")}</div>`,
+        )
+        .join("");
       return `<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="reports"><span class="label">Remplacements à envoyer</span>${weeksBar}</div>
     <div class="gridwrap"><table class="plan">
       <thead><tr><th class="name" rowspan="2">Agent</th>${wkrow}<th class="tot" rowspan="2">H mois</th></tr><tr>${head}</tr></thead>
       <tbody>${body}${staff("J")}${staff("N")}${hoursRow("J")}${hoursRow("N")}${mfRow()}</tbody>
@@ -3294,8 +3320,66 @@
       applyCandFilter();
       refocus(fid);
     }
+    // Texte des remplacements d'une équipe sur une semaine (lundi → dimanche), à copier-coller.
+    function reportText(team, monday) {
+      const lines = [];
+      const sun = addDays(monday, 6);
+      lines.push(
+        `Équipe ${team} – Remplacements semaine ${isoWeek(monday)} (du ${fmtShort(monday)} au ${fmtShort(sun)}/${sun.slice(0, 4)})`,
+      );
+      let count = 0;
+      for (let i = 0; i < 7; i++) {
+        const ds = addDays(monday, i);
+        const shift = teamCode(team, ds);
+        if (!isWork(shift)) continue;
+        const items = [];
+        for (const a of sortedAgents()) {
+          if (!activeOn(a, ds) || eqOn(a, ds) !== team) continue;
+          const e = entryOf(a.id, ds);
+          if (!e) continue;
+          const nom = `${fullName(a)}${a.fn ? ` (${a.fn})` : ""}`;
+          if (isAway(e.c)) {
+            const r = e.r ? agentById(e.r) : null;
+            items.push(
+              `• ${nom} – ${LABEL[e.c]} → ${r ? `remplacé par ${fullName(r)}${r.fn ? ` (${r.fn})` : ""}, ${eqOn(r, ds) === POOL ? "remplaçant" : "équipe " + eqOn(r, ds)}` : "NON REMPLACÉ"}`,
+            );
+          } else if (e.pa && isWork(codeOf(a, ds)))
+            items.push(
+              `• ${nom} – absence partielle ${e.pa.from}–${e.pa.to} (${ABS[e.pa.m] || "absence"})`,
+            );
+        }
+        if (!items.length) continue;
+        count += items.length;
+        lines.push("");
+        lines.push(
+          `${DAYS_LONG[dow(ds)][0].toUpperCase()}${DAYS_LONG[dow(ds)].slice(1)} ${fmtShort(ds)} – ${LABEL[shift]}`,
+        );
+        lines.push(...items);
+      }
+      if (!count) {
+        lines.push("");
+        lines.push("Aucune absence prévue cette semaine.");
+      }
+      return lines.join("\n");
+    }
     function drawOverlay() {
       const o = $("#overlay");
+      if (S.report) {
+        const { team, week } = S.report;
+        const txt = reportText(team, week);
+        o.innerHTML = `<div class="scrim" data-act="close"></div>
+  <aside class="drawer" role="dialog" aria-label="Remplacements équipe ${team}">
+    <header><div><div class="label">Texte à envoyer aux chefs de poste</div><h2>Équipe ${team} · semaine ${isoWeek(week)}</h2><div class="muted">du ${fmtShort(week)} au ${fmtShort(addDays(week, 6))}</div></div>
+      <button class="btn iconbtn ghost" data-act="close" aria-label="Fermer">✕</button></header>
+    <div class="body">
+      <div class="choices">${TEAMS.map((t) => `<button class="choice" data-act="report" data-team="${t}" data-week="${week}" aria-pressed="${t === team}">Équipe ${t}</button>`).join("")}</div>
+      <textarea id="report-txt" readonly style="min-height:340px;font-family:var(--f-body);font-size:14px">${esc(txt)}</textarea>
+      <div class="choices"><button class="btn primary" data-act="reportcopy">Copier le texte</button><button class="btn" data-act="report" data-team="${team}" data-week="${addDays(week, -7)}">← Semaine précédente</button><button class="btn" data-act="report" data-team="${team}" data-week="${addDays(week, 7)}">Semaine suivante →</button></div>
+      <p class="note">Le texte liste, jour par jour, les postes de l'équipe où quelqu'un est absent (congé, maladie, formation, maintien four…) et qui le remplace, ainsi que les absences partielles.</p>
+    </div>
+  </aside>`;
+        return;
+      }
       if (S.pop) {
         const { team, ds, x, y } = S.pop;
         const cur = teamOverride(team, ds);
@@ -3455,9 +3539,33 @@
       }
       if (!b) return;
       const act = b.dataset.act;
+      if (act === "report") {
+        S.drawer = null;
+        S.pop = null;
+        S.report = { team: b.dataset.team, week: b.dataset.week };
+        await ensureMonths([
+          ymOf(b.dataset.week),
+          ymOf(addDays(b.dataset.week, 6)),
+        ]);
+        renderOverlay();
+        return;
+      }
+      if (act === "reportcopy") {
+        const ta = $("#report-txt");
+        try {
+          await navigator.clipboard.writeText(ta.value);
+          toast("Texte copié : collez-le dans votre message");
+        } catch {
+          ta.focus();
+          ta.select();
+          toast("Texte sélectionné : faites Ctrl+C pour le copier");
+        }
+        return;
+      }
       if (act === "close") {
         S.drawer = null;
         S.pop = null;
+        S.report = null;
         renderOverlay();
         return;
       }
@@ -3469,11 +3577,13 @@
       }
       if (act === "cell") {
         S.pop = null;
+        S.report = null;
         S.drawer = { id: b.dataset.id, ds: b.dataset.date };
         renderOverlay();
         return;
       }
       if (act === "team") {
+        S.report = null;
         const r = b.getBoundingClientRect();
         S.drawer = null;
         S.pop = {
@@ -4038,9 +4148,10 @@
       if (ev.target === document.documentElement) clearHl();
     });
     document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape" && (S.drawer || S.pop)) {
+      if (ev.key === "Escape" && (S.drawer || S.pop || S.report)) {
         S.drawer = null;
         S.pop = null;
+        S.report = null;
         renderOverlay();
       }
     });
@@ -4135,6 +4246,7 @@
       S.ym = ym;
       S.drawer = null;
       S.pop = null;
+      S.report = null;
       watchMonths();
       render();
     }
