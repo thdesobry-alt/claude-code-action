@@ -3341,7 +3341,7 @@
           if (isAway(e.c)) {
             const r = e.r ? agentById(e.r) : null;
             items.push(
-              `• ${nom} – ${LABEL[e.c]} → ${r ? `remplacé par ${fullName(r)}, ${eqOn(r, ds) === POOL ? "remplaçant" : "équipe " + eqOn(r, ds)}` : "NON REMPLACÉ"}`,
+              `• ${nom} – ${LABEL[e.c]} → ${r ? `remplacé par ${fullName(r)}, ${eqOn(r, ds) === POOL ? "remplaçant" : "équipe " + eqOn(r, ds)}` : "Recherche en cours pour remplaçant"}`,
             );
           } else if (e.pa && isWork(codeOf(a, ds)))
             items.push(
