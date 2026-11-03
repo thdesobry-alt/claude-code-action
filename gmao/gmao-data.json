@@ -1111,8 +1111,8 @@
       "organes": [
         {
           "id": "sd-mors",
-          "nom": "Mors",
-          "slot": "mors",
+          "nom": "Mors côté four supérieur",
+          "slot": "mors_four_sup",
           "mode": "tonnes",
           "seuilVigilance": 76500,
           "seuilRemplacement": 85000,
@@ -1120,6 +1120,45 @@
             "date": "2026-01-05",
             "heures": 13800,
             "tonnes": 873750
+          }
+        },
+        {
+          "id": "sd-mors_four_inf",
+          "nom": "Mors côté four inférieur",
+          "slot": "mors_four_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 76500,
+          "seuilRemplacement": 85000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13800,
+            "tonnes": 893750
+          }
+        },
+        {
+          "id": "sd-mors_train_sup",
+          "nom": "Mors côté train supérieur",
+          "slot": "mors_train_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 76500,
+          "seuilRemplacement": 85000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13800,
+            "tonnes": 858750
+          }
+        },
+        {
+          "id": "sd-mors_train_inf",
+          "nom": "Mors côté train inférieur",
+          "slot": "mors_train_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 76500,
+          "seuilRemplacement": 85000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13800,
+            "tonnes": 878750
           }
         },
         {
@@ -1444,5 +1483,5 @@
     }
   ],
   "journal": [],
-  "schema": 12
+  "schema": 13
 }

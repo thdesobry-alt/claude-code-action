@@ -94,3 +94,8 @@ Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi q
 ## TRO-0 : entraînement
 
 À gauche des galets : un moteur, un réducteur, et deux allonges qui relient le réducteur au galet supérieur et au galet inférieur. Les flexibles des deux vérins descendent sous le TRO-0 jusque sous le moteur, où ils sont reliés à une EV. Le moteur, le réducteur, les allonges et l'EV sont suivis ; une base existante les reçoit à l'ouverture, avec un suivi qui démarre à zéro.
+
+## Soudeuse : mors et transfos
+
+- Les mors sont suivis séparément : côté four (à gauche) supérieur et inférieur, côté train de laminage (à droite) supérieur et inférieur. Une base existante convertit l'ancien « Mors » en 4 organes qui reprennent son usure.
+- Les transfos sont dessinés derrière la soudeuse (côté moteur), reliés aux mors par des barres de courant.
