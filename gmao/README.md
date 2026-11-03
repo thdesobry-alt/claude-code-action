@@ -37,6 +37,9 @@ Organes suivis en plus : rail côté piste, rail côté moteur, crémaillère (l
 
 ## Centrale Nortek
 
+Une deuxième image sous le dessin de la centrale montre les coffrets **LAO 2, LAO 3 et LAO 4**, tous identiques : en haut la tuyauterie d'air (filtre, manomètre réglable, EV, pressostat), en bas la tuyauterie d'huile (compteur, EV principale, puis ligne A et ligne B avec chacune une EV et un pressostat). Chaque composant est un organe suivi (10 par coffret).
+
+
 Cuve de centrale, 2 pompes de fonctionnement (en bas à gauche) suivies du filtre avant envoi dans les coffrets, pompe de recirculation (en bas à droite) avec ses 2 filtres, et EV de retour à la bâche. Une base existante reçoit la centrale automatiquement à l'ouverture : elle prend les compteurs de la centrale hydraulique enfournement et son suivi démarre à zéro.
 
 ## Voies à rouleaux motorisées

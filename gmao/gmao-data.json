@@ -195,6 +195,396 @@
             "heures": 10250,
             "tonnes": 572000
           }
+        },
+        {
+          "id": "nk-lao2_filtre_air",
+          "nom": "LAO 2 – Filtre air",
+          "slot": "lao2_filtre_air",
+          "mode": "tonnes",
+          "seuilVigilance": 255000,
+          "seuilRemplacement": 300000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 642000
+          }
+        },
+        {
+          "id": "nk-lao2_mano_air",
+          "nom": "LAO 2 – Manomètre réglable air",
+          "slot": "lao2_mano_air",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao2_ev_air",
+          "nom": "LAO 2 – EV air",
+          "slot": "lao2_ev_air",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao2_press_air",
+          "nom": "LAO 2 – Pressostat air",
+          "slot": "lao2_press_air",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao2_compteur",
+          "nom": "LAO 2 – Compteur huile",
+          "slot": "lao2_compteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao2_ev_huile",
+          "nom": "LAO 2 – EV principale huile",
+          "slot": "lao2_ev_huile",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao2_ev_a",
+          "nom": "LAO 2 – EV ligne A",
+          "slot": "lao2_ev_a",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao2_press_a",
+          "nom": "LAO 2 – Pressostat ligne A",
+          "slot": "lao2_press_a",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao2_ev_b",
+          "nom": "LAO 2 – EV ligne B",
+          "slot": "lao2_ev_b",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao2_press_b",
+          "nom": "LAO 2 – Pressostat ligne B",
+          "slot": "lao2_press_b",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_filtre_air",
+          "nom": "LAO 3 – Filtre air",
+          "slot": "lao3_filtre_air",
+          "mode": "tonnes",
+          "seuilVigilance": 255000,
+          "seuilRemplacement": 300000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_mano_air",
+          "nom": "LAO 3 – Manomètre réglable air",
+          "slot": "lao3_mano_air",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_ev_air",
+          "nom": "LAO 3 – EV air",
+          "slot": "lao3_ev_air",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_press_air",
+          "nom": "LAO 3 – Pressostat air",
+          "slot": "lao3_press_air",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_compteur",
+          "nom": "LAO 3 – Compteur huile",
+          "slot": "lao3_compteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_ev_huile",
+          "nom": "LAO 3 – EV principale huile",
+          "slot": "lao3_ev_huile",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_ev_a",
+          "nom": "LAO 3 – EV ligne A",
+          "slot": "lao3_ev_a",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_press_a",
+          "nom": "LAO 3 – Pressostat ligne A",
+          "slot": "lao3_press_a",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao3_ev_b",
+          "nom": "LAO 3 – EV ligne B",
+          "slot": "lao3_ev_b",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 382000
+          }
+        },
+        {
+          "id": "nk-lao3_press_b",
+          "nom": "LAO 3 – Pressostat ligne B",
+          "slot": "lao3_press_b",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_filtre_air",
+          "nom": "LAO 4 – Filtre air",
+          "slot": "lao4_filtre_air",
+          "mode": "tonnes",
+          "seuilVigilance": 255000,
+          "seuilRemplacement": 300000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_mano_air",
+          "nom": "LAO 4 – Manomètre réglable air",
+          "slot": "lao4_mano_air",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_ev_air",
+          "nom": "LAO 4 – EV air",
+          "slot": "lao4_ev_air",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_press_air",
+          "nom": "LAO 4 – Pressostat air",
+          "slot": "lao4_press_air",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_compteur",
+          "nom": "LAO 4 – Compteur huile",
+          "slot": "lao4_compteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_ev_huile",
+          "nom": "LAO 4 – EV principale huile",
+          "slot": "lao4_ev_huile",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_ev_a",
+          "nom": "LAO 4 – EV ligne A",
+          "slot": "lao4_ev_a",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_press_a",
+          "nom": "LAO 4 – Pressostat ligne A",
+          "slot": "lao4_press_a",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_ev_b",
+          "nom": "LAO 4 – EV ligne B",
+          "slot": "lao4_ev_b",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "nk-lao4_press_b",
+          "nom": "LAO 4 – Pressostat ligne B",
+          "slot": "lao4_press_b",
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
         }
       ]
     },
@@ -866,5 +1256,5 @@
     }
   ],
   "journal": [],
-  "schema": 8
+  "schema": 9
 }
