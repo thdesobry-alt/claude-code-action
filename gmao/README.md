@@ -86,7 +86,7 @@ Le choix se fait dans la fiche de l'organe (✏️) ou sur la page 🎚 Seuils. 
 
 ## Curseur et centrale hydraulique curseur
 
-- **Curseur** : vérin séparateur, vérin déviateur, vérin pneumatique curseur et vérin hydraulique curseur.
+- **Curseur** : en bas, le vérin hydraulique curseur relié par un tronçon au vérin pneumatique curseur monté en sens opposé au bout ; au-dessus, décalé vers la droite, le vérin déviateur ; encore au-dessus, décalé vers la droite, le vérin séparateur.
 - **Centrale hydraulique curseur** : même dessin que la centrale d'enfournement (réservoir, filtre, pompes). Le nombre de pompes (1 à 3) se règle dans « Modifier l'équipement » ; il est à 1 par défaut.
 
 Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi qui démarre à zéro.
