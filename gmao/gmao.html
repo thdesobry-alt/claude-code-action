@@ -907,8 +907,8 @@
       >
         ⏱ Relevé compteurs
       </button>
-      <button class="btn" id="btnOpen" title="Ouvrir un fichier gmao-data.json">
-        📂 Ouvrir BDD
+      <button class="btn" id="btnOpen" title="Ouvrir la base de la GMAO (gmao-data.json). La base production se connecte dans la page Production.">
+        📂 Ouvrir BDD GMAO
       </button>
       <button
         class="btn pri"
@@ -1486,21 +1486,47 @@
         render();
         toast("Base chargée : " + (name || ""));
       }
-      async function openFile() {
+      // Ouvre une base GMAO ; si le fichier choisi est la base production, il est connecté comme telle
+      async function openText(txt, name, lastMod, handle) {
+        let json;
+        try {
+          json = JSON.parse(txt);
+        } catch (e) {
+          throw new Error("ce fichier n'est pas un fichier JSON lisible.");
+        }
+        if (json && Array.isArray(json.rapports) && !Array.isArray(json.equipements)) {
+          if (handle) {
+            await idb.set("prodHandle", handle);
+            prodFileMod = lastMod;
+          }
+          Object.assign(prodCfg(), { mode: "fichier", fichier: name, actif: true });
+          setProd(json, name, new Date(lastMod).toISOString());
+          commit();
+          go("production");
+          toast("« " + name + " » est la base production : elle est connectée. (« Ouvrir BDD GMAO » sert à ouvrir la base de la GMAO.)");
+          return false;
+        }
+        if (!json || !Array.isArray(json.equipements))
+          throw new Error("ce fichier n'est ni une base GMAO (gmao-data.json) ni une base production (rapports).");
         if (
           dirty &&
           !confirm(
             "Des modifications ne sont pas enregistrées dans le fichier. Les abandonner et ouvrir un autre fichier ?",
           )
         )
-          return;
+          return false;
+        loadText(txt, name);
+        return true;
+      }
+      async function openFile() {
         if (window.showOpenFilePicker) {
           try {
             const [h] = await showOpenFilePicker({ types: JSON_TYPES });
             const f = await h.getFile();
-            loadText(await f.text(), h.name);
-            fileHandle = h;
-            fileLastMod = f.lastModified;
+            if (await openText(await f.text(), h.name, f.lastModified, h)) {
+              fileHandle = h;
+              fileLastMod = f.lastModified;
+            }
           } catch (e) {
             if (e.name !== "AbortError")
               alert("Ouverture impossible : " + e.message);
@@ -1511,8 +1537,7 @@
         const f = ev.target.files[0];
         if (!f) return;
         try {
-          loadText(await f.text(), f.name);
-          fileHandle = null;
+          if (await openText(await f.text(), f.name, f.lastModified, null)) fileHandle = null;
         } catch (e) {
           alert("Ouverture impossible : " + e.message);
         }

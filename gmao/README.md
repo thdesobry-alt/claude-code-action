@@ -6,7 +6,7 @@ Outil de suivi d'usure en un seul fichier HTML, avec une base JSON.
 
 1. Placez `gmao.html` et `gmao-data.json` dans un dossier partagé.
 2. Ouvrez `gmao.html` dans Chrome ou Edge.
-3. **📂 Ouvrir BDD** → choisissez `gmao-data.json`. **💾 Enregistrer** (ou Ctrl+S) écrit directement dans ce fichier.
+3. **📂 Ouvrir BDD GMAO** → choisissez `gmao-data.json`. **💾 Enregistrer** (ou Ctrl+S) écrit directement dans ce fichier.
    Si quelqu'un a modifié le fichier entre-temps, l'outil vous prévient avant de l'écraser.
    Sous Firefox, l'enregistrement télécharge un nouveau `gmao-data.json` qui remplace l'ancien.
 
@@ -57,7 +57,7 @@ Galet supérieur et galet inférieur, deux vérins pneumatiques (côté piste / 
 
 ## Base production (tonnages par diamètre)
 
-Page « 🏭 Production » :
+Page « 🏭 Production » (si on choisit par erreur la base production avec « Ouvrir BDD GMAO », elle est reconnue et connectée comme base production) :
 
 1. **Connexion** : « Choisir le fichier production… » (ex. `base_production_laminoir.json` sur le dossier partagé), ou « Adresse web » si la base est servie par un serveur. Le choix est mémorisé : à chaque ouverture, la GMAO relit automatiquement la dernière version du fichier. Si le navigateur demande une autorisation, cliquer « 🏭 Reconnecter la production » dans le bandeau (et choisir « Autoriser à chaque visite »).
 2. **Diamètres par équipement** : cocher les diamètres qui font travailler chaque équipement (aucun coché = tous les diamètres). Aussi modifiable dans « Modifier l'équipement ».
