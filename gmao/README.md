@@ -87,7 +87,7 @@ Le choix se fait dans la fiche de l'organe (✏️) ou sur la page 🎚 Seuils. 
 ## Curseur et centrale hydraulique curseur
 
 - **Curseur** : en bas, le vérin hydraulique curseur relié par un tronçon au vérin pneumatique curseur monté en sens opposé au bout ; au-dessus, décalé vers la droite, le vérin déviateur ; encore au-dessus, décalé vers la droite, le vérin séparateur.
-- **Centrale hydraulique curseur** : même dessin que la centrale d'enfournement (réservoir, filtre, pompes). Le nombre de pompes (1 à 3) se règle dans « Modifier l'équipement » ; il est à 1 par défaut.
+- **Centrale hydraulique curseur** : même dessin que la centrale d'enfournement (réservoir, filtre, pompes). Elle a 2 pompes ; le nombre de pompes (1 à 3) se règle dans « Modifier l'équipement ».
 
 Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi qui démarre à zéro.
 
@@ -98,4 +98,4 @@ Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi q
 ## Soudeuse : mors et transfos
 
 - Les mors sont suivis séparément : côté four (à gauche) supérieur et inférieur, côté train de laminage (à droite) supérieur et inférieur. Une base existante convertit l'ancien « Mors » en 4 organes qui reprennent son usure.
-- Les transfos sont dessinés derrière la soudeuse (côté moteur), reliés aux mors par des barres de courant.
+- Les transfos sont dessinés derrière la soudeuse (côté moteur), avec un éclair jaune (symbole électrique) sur chaque face, et reliés aux mors par des barres de courant.

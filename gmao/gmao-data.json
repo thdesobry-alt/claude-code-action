@@ -1364,7 +1364,7 @@
       "zone": "Curseur",
       "type": "hydraulique",
       "options": {
-        "nbPompes": 1
+        "nbPompes": 2
       },
       "diametres": [],
       "compteurs": {
@@ -1397,6 +1397,19 @@
             "date": "2026-01-05",
             "heures": 0,
             "tonnes": 812000
+          }
+        },
+        {
+          "id": "ch-curseur-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 852000
           }
         },
         {
@@ -1483,5 +1496,5 @@
     }
   ],
   "journal": [],
-  "schema": 13
+  "schema": 14
 }
