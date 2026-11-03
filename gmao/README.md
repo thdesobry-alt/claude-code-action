@@ -12,8 +12,8 @@ Outil de suivi d'usure en un seul fichier HTML, avec une base JSON.
 
 ## Principe
 
-- Chaque équipement a deux compteurs : **heures** et **tonnes** (bouton ⏱ Relevé compteurs).
-- Chaque organe est suivi en heures **ou** en tonnes (au choix, page 🎚 Seuils ou ✏️ sur l'organe), avec un seuil de vigilance et un seuil de remplacement.
+- Tout est suivi **à la tonne** : chaque organe a un seuil de vigilance et un seuil de remplacement en tonnes (page 🎚 Seuils ou ✏️ sur l'organe).
+- Le tonnage vient de la base production (page 🏭 Production) ; sans base production, il se saisit avec « ⚖️ Saisir tonnages ».
 - Usure = compteur actuel − compteur au dernier remplacement.
   - 🟢 vert : sous le seuil de vigilance
   - 🟠 orange : seuil de vigilance atteint
@@ -64,3 +64,7 @@ Page « 🏭 Production » (si on choisit par erreur la base production avec « 
 3. **Calcul** : pour un organe suivi en tonnes, usure = tonnes produites dans les diamètres de l'équipement depuis la date de son dernier remplacement (journées de production à partir de cette date incluse), + les tonnes antérieures au début de la base si on les a saisies dans la fiche de l'organe. Les heures restent saisies par relevé.
 
 Si la base n'est pas joignable, la GMAO utilise la dernière copie lue (gardée dans le navigateur) et le signale dans le bandeau.
+
+## Suivi à la tonne uniquement
+
+Le compteur d'heures a été supprimé. À l'ouverture d'une base qui contenait des organes suivis en heures, leurs seuils sont convertis en tonnes avec une cadence moyenne de 85 t/h (ex. 2 000 h → 170 000 t), et une ligne est ajoutée au journal. Ces seuils convertis sont à vérifier sur la page 🎚 Seuils.

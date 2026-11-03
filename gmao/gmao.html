@@ -903,9 +903,9 @@
       <button
         class="btn"
         id="btnReleveLigne"
-        title="Saisir les compteurs de tous les équipements"
+        title="Saisir le tonnage de tous les équipements (sans base production)"
       >
-        ⏱ Relevé compteurs
+        ⚖️ Saisir tonnages
       </button>
       <button class="btn" id="btnOpen" title="Ouvrir la base de la GMAO (gmao-data.json). La base production se connecte dans la page Production.">
         📂 Ouvrir BDD GMAO
@@ -938,7 +938,7 @@
      ouvre / enregistre avec les boutons du bandeau.
    - Une copie de travail est gardée dans le navigateur.
    ============================================================ */
-      const DEFAULT_DB = /*DEFAULT_DB*/{"version":1,"nom":"GMAO Ligne","maj":"2026-11-03T08:00:00.000Z","equipements":[{"id":"ch-enf","nom":"Centrale hydraulique enfournement","zone":"Enfournement","type":"hydraulique","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"ch-filtre","nom":"Filtre","slot":"filtre","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":12400,"tonnes":793600}},{"id":"ch-pompe1","nom":"Pompe 1","slot":"pompe_1","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"ch-pompe2","nom":"Pompe 2","slot":"pompe_2","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":5250,"tonnes":336000}},{"id":"ch-pompe3","nom":"Pompe 3","slot":"pompe_3","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"ch-vidange","nom":"Vidange centrale","slot":"vidange","mode":"heures","seuilVigilance":4500,"seuilRemplacement":5000,"ref":{"date":"2026-01-05","heures":9100,"tonnes":582400}}]},{"id":"nortek","nom":"Centrale Nortek","zone":"Enfournement","type":"nortek","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"nk-cuve","nom":"Cuve de centrale (vidange / nettoyage)","slot":"cuve","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"nk-pompe_1","nom":"Pompe de fonctionnement 1","slot":"pompe_1","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":5250,"tonnes":336000}},{"id":"nk-pompe_2","nom":"Pompe de fonctionnement 2","slot":"pompe_2","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":2250,"tonnes":144000}},{"id":"nk-filtre_envoi","nom":"Filtre avant envoi coffrets","slot":"filtre_envoi","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":13150,"tonnes":841600}},{"id":"nk-pompe_recirc","nom":"Pompe de recirculation","slot":"pompe_recirc","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":8250,"tonnes":528000}},{"id":"nk-filtre_recirc1","nom":"Filtre recirculation 1","slot":"filtre_recirc1","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":12350,"tonnes":790400}},{"id":"nk-filtre_recirc2","nom":"Filtre recirculation 2","slot":"filtre_recirc2","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":13650,"tonnes":873600}},{"id":"nk-ev_retour","nom":"EV retour bâche","slot":"ev_retour","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":10250,"tonnes":656000}}]},{"id":"vr-chg","nom":"Voie rouleaux chargement","zone":"Chargement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vrc-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vrc-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13773,"tonnes":881500}},{"id":"vrc-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13523,"tonnes":865500}},{"id":"vrc-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14125,"tonnes":904000}},{"id":"vrc-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13906,"tonnes":890000}},{"id":"vrc-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13453,"tonnes":861000}},{"id":"vrc-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14016,"tonnes":897000}},{"id":"vrc-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13641,"tonnes":873000}}]},{"id":"vr-enf","nom":"Voie rouleaux enfournement","zone":"Enfournement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vre-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14172,"tonnes":907000}},{"id":"vre-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13969,"tonnes":894000}},{"id":"vre-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13844,"tonnes":886000}},{"id":"vre-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13516,"tonnes":865000}},{"id":"vre-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13734,"tonnes":879000}},{"id":"vre-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14109,"tonnes":903000}},{"id":"vre-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vre-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13609,"tonnes":871000}}],"options":{"motorise":true}},{"id":"pous","nom":"Pousseuse","zone":"Enfournement","type":"pousseuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"pous-bg","nom":"Bras gauche","slot":"bras1","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":13281,"tonnes":850000}},{"id":"pous-bd","nom":"Bras droit","slot":"bras2","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":12797,"tonnes":819000}}]},{"id":"defo","nom":"Défourneuse","zone":"Défournement","type":"defourneuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"defo-galet_sup","nom":"Galet supérieur","slot":"galet_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":12750,"tonnes":816000}},{"id":"defo-galet_inf","nom":"Galet inférieur","slot":"galet_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":13350,"tonnes":854400}},{"id":"defo-verin_1","nom":"Vérin pneumatique côté piste","slot":"verin_1","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"defo-verin_2","nom":"Vérin pneumatique côté moteur","slot":"verin_2","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"defo-moteur_sup","nom":"Moteur hydraulique galet supérieur","slot":"moteur_sup","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":6250,"tonnes":400000}},{"id":"defo-moteur_inf","nom":"Moteur hydraulique galet inférieur","slot":"moteur_inf","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":6250,"tonnes":400000}}]},{"id":"tro0","nom":"TRO-0","zone":"Ligne","type":"tro0","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"tro-gsup","nom":"Galet supérieur","slot":"galet_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":11850,"tonnes":758400}},{"id":"tro-ginf","nom":"Galet inférieur","slot":"galet_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":13050,"tonnes":835200}},{"id":"tro-verin1","nom":"Vérin pneumatique côté piste","slot":"verin_1","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":6950,"tonnes":444800}},{"id":"tro-verin2","nom":"Vérin pneumatique côté moteur","slot":"verin_2","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":10150,"tonnes":649600}},{"id":"tro-flex","nom":"Flexibles","slot":"flexible","mode":"heures","seuilVigilance":4000,"seuilRemplacement":4500,"ref":{"date":"2026-01-05","heures":12150,"tonnes":777600}}]},{"id":"soud","nom":"Soudeuse","zone":"Ligne","type":"soudeuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"sd-mors","nom":"Mors","slot":"mors","mode":"heures","seuilVigilance":900,"seuilRemplacement":1000,"ref":{"date":"2026-01-05","heures":13800,"tonnes":883200}},{"id":"sd-transfo","nom":"Transformateurs","slot":"transfo","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-vmors","nom":"Vérins de mors","slot":"verin_mors","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11050,"tonnes":707200}},{"id":"sd-offsup","nom":"Vérin offsetting supérieur","slot":"offset_sup","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":9150,"tonnes":585600}},{"id":"sd-offinf","nom":"Vérin offsetting inférieur","slot":"offset_inf","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":6150,"tonnes":393600}},{"id":"sd-bacier-sup","nom":"Bagues acier – offsetting sup.","slot":"bague_acier_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":11500,"tonnes":736000}},{"id":"sd-bteflon-sup","nom":"Bagues téflon – offsetting sup.","slot":"bague_teflon_sup","mode":"heures","seuilVigilance":1300,"seuilRemplacement":1500,"ref":{"date":"2026-01-05","heures":13650,"tonnes":873600}},{"id":"sd-bacier-inf","nom":"Bagues acier – offsetting inf.","slot":"bague_acier_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":12450,"tonnes":796800}},{"id":"sd-bteflon-inf","nom":"Bagues téflon – offsetting inf.","slot":"bague_teflon_inf","mode":"heures","seuilVigilance":1300,"seuilRemplacement":1500,"ref":{"date":"2026-01-05","heures":12900,"tonnes":825600}},{"id":"sd-gav1","nom":"Galet porteur avant 1 (côté piste)","slot":"galet_av1","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"sd-gav2","nom":"Galet porteur avant 2 (côté piste)","slot":"galet_av2","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"sd-gar1","nom":"Galet porteur arrière 1 (côté moteur)","slot":"galet_ar1","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":8150,"tonnes":521600}},{"id":"sd-gar2","nom":"Galet porteur arrière 2 (côté moteur)","slot":"galet_ar2","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":5050,"tonnes":323200}},{"id":"sd-rail-piste","nom":"Rail côté piste","slot":"rail_piste","mode":"heures","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-rail-moteur","nom":"Rail côté moteur","slot":"rail_moteur","mode":"heures","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-cremaillere","nom":"Crémaillère (rail côté moteur)","slot":"cremaillere","mode":"heures","seuilVigilance":27000,"seuilRemplacement":30000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}}]}],"journal":[],"schema":7};
+      const DEFAULT_DB = /*DEFAULT_DB*/{"version":1,"nom":"GMAO Ligne","maj":"2026-11-03T08:00:00.000Z","equipements":[{"id":"ch-enf","nom":"Centrale hydraulique enfournement","zone":"Enfournement","type":"hydraulique","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"ch-filtre","nom":"Filtre","slot":"filtre","mode":"tonnes","seuilVigilance":153000,"seuilRemplacement":170000,"ref":{"date":"2026-01-05","heures":12400,"tonnes":754750}},{"id":"ch-pompe1","nom":"Pompe 1","slot":"pompe_1","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":0,"tonnes":-299250}},{"id":"ch-pompe2","nom":"Pompe 2","slot":"pompe_2","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":5250,"tonnes":147000}},{"id":"ch-pompe3","nom":"Pompe 3","slot":"pompe_3","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":657000}},{"id":"ch-vidange","nom":"Vidange centrale","slot":"vidange","mode":"tonnes","seuilVigilance":382500,"seuilRemplacement":425000,"ref":{"date":"2026-01-05","heures":9100,"tonnes":474250}}]},{"id":"nortek","nom":"Centrale Nortek","zone":"Enfournement","type":"nortek","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"nk-cuve","nom":"Cuve de centrale (vidange / nettoyage)","slot":"cuve","mode":"tonnes","seuilVigilance":595000,"seuilRemplacement":680000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":657000}},{"id":"nk-pompe_1","nom":"Pompe de fonctionnement 1","slot":"pompe_1","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":5250,"tonnes":147000}},{"id":"nk-pompe_2","nom":"Pompe de fonctionnement 2","slot":"pompe_2","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":2250,"tonnes":-108000}},{"id":"nk-filtre_envoi","nom":"Filtre avant envoi coffrets","slot":"filtre_envoi","mode":"tonnes","seuilVigilance":153000,"seuilRemplacement":170000,"ref":{"date":"2026-01-05","heures":13150,"tonnes":818500}},{"id":"nk-pompe_recirc","nom":"Pompe de recirculation","slot":"pompe_recirc","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":8250,"tonnes":402000}},{"id":"nk-filtre_recirc1","nom":"Filtre recirculation 1","slot":"filtre_recirc1","mode":"tonnes","seuilVigilance":153000,"seuilRemplacement":170000,"ref":{"date":"2026-01-05","heures":12350,"tonnes":750500}},{"id":"nk-filtre_recirc2","nom":"Filtre recirculation 2","slot":"filtre_recirc2","mode":"tonnes","seuilVigilance":153000,"seuilRemplacement":170000,"ref":{"date":"2026-01-05","heures":13650,"tonnes":861000}},{"id":"nk-ev_retour","nom":"EV retour bâche","slot":"ev_retour","mode":"tonnes","seuilVigilance":765000,"seuilRemplacement":850000,"ref":{"date":"2026-01-05","heures":10250,"tonnes":572000}}]},{"id":"vr-chg","nom":"Voie rouleaux chargement","zone":"Chargement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vrc-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vrc-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13773,"tonnes":881500}},{"id":"vrc-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13523,"tonnes":865500}},{"id":"vrc-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14125,"tonnes":904000}},{"id":"vrc-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13906,"tonnes":890000}},{"id":"vrc-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13453,"tonnes":861000}},{"id":"vrc-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14016,"tonnes":897000}},{"id":"vrc-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13641,"tonnes":873000}}]},{"id":"vr-enf","nom":"Voie rouleaux enfournement","zone":"Enfournement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vre-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14172,"tonnes":907000}},{"id":"vre-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13969,"tonnes":894000}},{"id":"vre-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13844,"tonnes":886000}},{"id":"vre-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13516,"tonnes":865000}},{"id":"vre-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13734,"tonnes":879000}},{"id":"vre-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14109,"tonnes":903000}},{"id":"vre-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vre-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13609,"tonnes":871000}}],"options":{"motorise":true}},{"id":"pous","nom":"Pousseuse","zone":"Enfournement","type":"pousseuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"pous-bg","nom":"Bras gauche","slot":"bras1","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":13281,"tonnes":850000}},{"id":"pous-bd","nom":"Bras droit","slot":"bras2","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":12797,"tonnes":819000}}]},{"id":"defo","nom":"Défourneuse","zone":"Défournement","type":"defourneuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"defo-galet_sup","nom":"Galet supérieur","slot":"galet_sup","mode":"tonnes","seuilVigilance":229500,"seuilRemplacement":255000,"ref":{"date":"2026-01-05","heures":12750,"tonnes":784500}},{"id":"defo-galet_inf","nom":"Galet inférieur","slot":"galet_inf","mode":"tonnes","seuilVigilance":229500,"seuilRemplacement":255000,"ref":{"date":"2026-01-05","heures":13350,"tonnes":835500}},{"id":"defo-verin_1","nom":"Vérin pneumatique côté piste","slot":"verin_1","mode":"tonnes","seuilVigilance":595000,"seuilRemplacement":680000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":657000}},{"id":"defo-verin_2","nom":"Vérin pneumatique côté moteur","slot":"verin_2","mode":"tonnes","seuilVigilance":595000,"seuilRemplacement":680000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":657000}},{"id":"defo-moteur_sup","nom":"Moteur hydraulique galet supérieur","slot":"moteur_sup","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":6250,"tonnes":232000}},{"id":"defo-moteur_inf","nom":"Moteur hydraulique galet inférieur","slot":"moteur_inf","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":6250,"tonnes":232000}}]},{"id":"tro0","nom":"TRO-0","zone":"Ligne","type":"tro0","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"tro-gsup","nom":"Galet supérieur","slot":"galet_sup","mode":"tonnes","seuilVigilance":229500,"seuilRemplacement":255000,"ref":{"date":"2026-01-05","heures":11850,"tonnes":708000}},{"id":"tro-ginf","nom":"Galet inférieur","slot":"galet_inf","mode":"tonnes","seuilVigilance":229500,"seuilRemplacement":255000,"ref":{"date":"2026-01-05","heures":13050,"tonnes":810000}},{"id":"tro-verin1","nom":"Vérin pneumatique côté piste","slot":"verin_1","mode":"tonnes","seuilVigilance":595000,"seuilRemplacement":680000,"ref":{"date":"2026-01-05","heures":6950,"tonnes":291500}},{"id":"tro-verin2","nom":"Vérin pneumatique côté moteur","slot":"verin_2","mode":"tonnes","seuilVigilance":595000,"seuilRemplacement":680000,"ref":{"date":"2026-01-05","heures":10150,"tonnes":563500}},{"id":"tro-flex","nom":"Flexibles","slot":"flexible","mode":"tonnes","seuilVigilance":340000,"seuilRemplacement":382500,"ref":{"date":"2026-01-05","heures":12150,"tonnes":733500}}]},{"id":"soud","nom":"Soudeuse","zone":"Ligne","type":"soudeuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"sd-mors","nom":"Mors","slot":"mors","mode":"tonnes","seuilVigilance":76500,"seuilRemplacement":85000,"ref":{"date":"2026-01-05","heures":13800,"tonnes":873750}},{"id":"sd-transfo","nom":"Transformateurs","slot":"transfo","mode":"tonnes","seuilVigilance":1530000,"seuilRemplacement":1700000,"ref":{"date":"2026-01-05","heures":0,"tonnes":-299250}},{"id":"sd-vmors","nom":"Vérins de mors","slot":"verin_mors","mode":"tonnes","seuilVigilance":595000,"seuilRemplacement":680000,"ref":{"date":"2026-01-05","heures":11050,"tonnes":640000}},{"id":"sd-offsup","nom":"Vérin offsetting supérieur","slot":"offset_sup","mode":"tonnes","seuilVigilance":595000,"seuilRemplacement":680000,"ref":{"date":"2026-01-05","heures":9150,"tonnes":478500}},{"id":"sd-offinf","nom":"Vérin offsetting inférieur","slot":"offset_inf","mode":"tonnes","seuilVigilance":595000,"seuilRemplacement":680000,"ref":{"date":"2026-01-05","heures":6150,"tonnes":223500}},{"id":"sd-bacier-sup","nom":"Bagues acier – offsetting sup.","slot":"bague_acier_sup","mode":"tonnes","seuilVigilance":229500,"seuilRemplacement":255000,"ref":{"date":"2026-01-05","heures":11500,"tonnes":678250}},{"id":"sd-bteflon-sup","nom":"Bagues téflon – offsetting sup.","slot":"bague_teflon_sup","mode":"tonnes","seuilVigilance":110500,"seuilRemplacement":127500,"ref":{"date":"2026-01-05","heures":13650,"tonnes":861000}},{"id":"sd-bacier-inf","nom":"Bagues acier – offsetting inf.","slot":"bague_acier_inf","mode":"tonnes","seuilVigilance":229500,"seuilRemplacement":255000,"ref":{"date":"2026-01-05","heures":12450,"tonnes":759000}},{"id":"sd-bteflon-inf","nom":"Bagues téflon – offsetting inf.","slot":"bague_teflon_inf","mode":"tonnes","seuilVigilance":110500,"seuilRemplacement":127500,"ref":{"date":"2026-01-05","heures":12900,"tonnes":797250}},{"id":"sd-gav1","nom":"Galet porteur avant 1 (côté piste)","slot":"galet_av1","mode":"tonnes","seuilVigilance":765000,"seuilRemplacement":850000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":657000}},{"id":"sd-gav2","nom":"Galet porteur avant 2 (côté piste)","slot":"galet_av2","mode":"tonnes","seuilVigilance":765000,"seuilRemplacement":850000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":657000}},{"id":"sd-gar1","nom":"Galet porteur arrière 1 (côté moteur)","slot":"galet_ar1","mode":"tonnes","seuilVigilance":765000,"seuilRemplacement":850000,"ref":{"date":"2026-01-05","heures":8150,"tonnes":393500}},{"id":"sd-gar2","nom":"Galet porteur arrière 2 (côté moteur)","slot":"galet_ar2","mode":"tonnes","seuilVigilance":765000,"seuilRemplacement":850000,"ref":{"date":"2026-01-05","heures":5050,"tonnes":130000}},{"id":"sd-rail-piste","nom":"Rail côté piste","slot":"rail_piste","mode":"tonnes","seuilVigilance":3825000,"seuilRemplacement":4250000,"ref":{"date":"2026-01-05","heures":0,"tonnes":-299250}},{"id":"sd-rail-moteur","nom":"Rail côté moteur","slot":"rail_moteur","mode":"tonnes","seuilVigilance":3825000,"seuilRemplacement":4250000,"ref":{"date":"2026-01-05","heures":0,"tonnes":-299250}},{"id":"sd-cremaillere","nom":"Crémaillère (rail côté moteur)","slot":"cremaillere","mode":"tonnes","seuilVigilance":2295000,"seuilRemplacement":2550000,"ref":{"date":"2026-01-05","heures":0,"tonnes":-299250}}]}],"journal":[],"schema":8};
       const LS_KEY = "gmao-ligne-db";
       const STATUS_TXT = {
         ok: "OK",
@@ -948,6 +948,8 @@
       };
       const RANK = { none: 0, ok: 1, warn: 2, crit: 3 };
       const UNIT = { heures: "h", tonnes: "t" };
+      // cadence moyenne du laminoir, utilisée une seule fois pour convertir les anciens seuils en heures
+      const T_PAR_H = 85;
 
       /* Gabarits de dessin et emplacements (slots) disponibles sur chaque dessin */
       const TYPES = {
@@ -1246,6 +1248,7 @@
         toast(prodEtat.st === "ok" ? "Base production rechargée" : "Production : " + (prodEtat.msg || "indisponible"));
       }
       function renderProdChip() {
+        $("#btnReleveLigne").hidden = prodActive();
         const b = $("#prodChip"), c = db.production;
         if (!c || !c.actif) { b.hidden = true; return; }
         b.hidden = false;
@@ -1431,6 +1434,25 @@
           });
           d.schema = 7;
         }
+        // v8 : tout est suivi à la tonne. Les seuils en heures sont convertis avec la cadence
+        // moyenne du laminoir (T_PAR_H) ; à vérifier organe par organe.
+        let conv = 0;
+        d.equipements.forEach((e) =>
+          e.organes.forEach((o) => {
+            if (o.mode === "tonnes") return;
+            const k = (x) => Math.round((+x || 0) * T_PAR_H / 100) * 100;
+            o.seuilVigilance = k(o.seuilVigilance);
+            o.seuilRemplacement = k(o.seuilRemplacement);
+            o.mode = "tonnes";
+            conv++;
+          }),
+        );
+        if (conv) {
+          d.journal.push({ id: "j-" + Math.random().toString(36).slice(2, 8), ts: new Date().toISOString(), type: "config", date: new Date().toISOString().slice(0, 10),
+            eqNom: "Tous", commentaire: conv + " organe(s) passés des heures aux tonnes (seuils × " + T_PAR_H + " t/h, à vérifier)" });
+          d._migrated = true;
+        }
+        d.schema = Math.max(d.schema, 8);
         return d;
       }
       function saveLocal() {
@@ -2188,7 +2210,7 @@
       return `<div class="card eqcard ${eqStatus(e)}" data-goeq="${e.id}">
       <div class="hd"><span class="dot ${eqStatus(e)}"></span><b>${esc(e.nom)}</b>${badge(eqStatus(e))}</div>
       ${drawing(e, true)}
-      <div class="meta"><span>${fmt(e.compteurs.heures)} h</span><span>${fmt(e.compteurs.tonnes)} t</span>
+      <div class="meta"><span>${fmt(eqTonnes(e))} t${prodActive() ? " · " + diamTxt(e) : ""}</span>
         <span>${e.organes.length} organe(s)</span>${cc.warn ? `<span style="color:var(--warn)">${cc.warn} vigilance</span>` : ""}${cc.crit ? `<span style="color:var(--crit)">${cc.crit} à remplacer</span>` : ""}</div>
     </div>`;
     })
@@ -2211,16 +2233,15 @@
           .join("");
         return `<div class="eqhead"><div class="t"><h2>${esc(e.nom)}</h2><p class="sub" style="margin:0">${esc(e.zone || "")} · ${esc(TYPES[e.type].label)} · ${badge(eqStatus(e))}</p></div>
     <div class="counters">
-      <div class="card counter"><div class="k">Compteur heures</div><div class="v">${fmt(e.compteurs.heures)} h</div></div>
       ${prodActive()
         ? `<div class="card counter" title="Tonnes produites dans la base production (${diamTxt(e)})"><div class="k">Tonnage produit · ${diamTxt(e)}</div><div class="v">${fmt(prodTonnes(e, ""))} t</div></div>`
         : `<div class="card counter"><div class="k">Compteur tonnage</div><div class="v">${fmt(e.compteurs.tonnes)} t</div></div>`}
     </div></div>
   <div class="toolbar noprint">
-    <button class="btn pri" data-act="releve">⏱ Saisir relevé</button>
+    ${prodActive() ? "" : '<button class="btn pri" data-act="releve">⚖️ Saisir le tonnage</button>'}
     <button class="btn" data-act="addorg">＋ Ajouter un organe</button>
     <button class="btn" data-act="editeq">⚙️ Modifier l'équipement</button>
-    <span class="muted" style="font-size:12px">Dernier relevé : ${fdate(e.compteurs.date)} · Cliquez une pièce du dessin pour sa fiche.</span>
+    <span class="muted" style="font-size:12px">${prodActive() ? "Tonnage : base production au " + fdate(PROD.fin) : "Dernier relevé : " + fdate(e.compteurs.date)} · Cliquez une pièce du dessin pour sa fiche.</span>
   </div>
   <div class="split">
     <div class="card" style="padding:10px">${drawing(e)}${legend}</div>
@@ -2234,10 +2255,10 @@
       }
 
       function viewSeuils() {
-        return `<h2>Seuils</h2><p class="sub">Réglez pour chaque organe l'unité de suivi (heures ou tonnes) et les seuils. Les modifications sont appliquées immédiatement.</p>
+        return `<h2>Seuils</h2><p class="sub">Réglez pour chaque organe ses seuils, en tonnes. Les modifications sont appliquées immédiatement.</p>
   <div class="toolbar"><input type="search" id="fSeuil" placeholder="Filtrer (équipement, organe)…"></div>
-  <div class="card tablewrap"><table id="tSeuils"><thead><tr><th>Équipement</th><th>Organe</th><th>Unité</th>
-    <th class="num">Seuil vigilance</th><th class="num">Seuil remplacement</th><th class="num">Usure actuelle</th><th>État</th></tr></thead><tbody>
+  <div class="card tablewrap"><table id="tSeuils"><thead><tr><th>Équipement</th><th>Organe</th>
+    <th class="num">Seuil vigilance (t)</th><th class="num">Seuil remplacement (t)</th><th class="num">Usure actuelle</th><th>État</th></tr></thead><tbody>
   ${allOrg()
     .map(
       ([
@@ -2245,7 +2266,6 @@
         o,
       ]) => `<tr data-eq="${e.id}" data-org="${o.id}" data-q="${esc((e.nom + " " + o.nom).toLowerCase())}">
     <td>${esc(e.nom)}</td><td>${esc(o.nom)}</td>
-    <td><select class="inline-in" data-f="mode"><option value="heures"${o.mode === "heures" ? " selected" : ""}>Heures</option><option value="tonnes"${o.mode === "tonnes" ? " selected" : ""}>Tonnes</option></select></td>
     <td class="num"><input class="inline-in" type="number" min="0" step="any" data-f="seuilVigilance" value="${o.seuilVigilance}"></td>
     <td class="num"><input class="inline-in" type="number" min="0" step="any" data-f="seuilRemplacement" value="${o.seuilRemplacement}"></td>
     <td class="num" data-u>${fmt(usage(e, o))} ${UNIT[o.mode]}</td><td data-s>${badge(status(e, o))}</td></tr>`,
@@ -2268,14 +2288,14 @@
   <div class="card tablewrap">${
     j.length
       ? `<table id="tJour"><thead><tr><th>Date</th><th>Type</th><th>Équipement</th><th>Organe</th><th>Intervenant</th>
-    <th class="num">Compteurs</th><th class="num">Usure au rempl.</th><th>Commentaire</th></tr></thead><tbody>
+    <th class="num">Tonnage</th><th class="num">Usure au rempl.</th><th>Commentaire</th></tr></thead><tbody>
     ${j
       .map(
         (
           x,
         ) => `<tr data-q="${esc([x.eqNom, x.orgNom, x.intervenant, x.commentaire, x.type].join(" ").toLowerCase())}">
       <td class="num">${fdate(x.date)}</td><td>${T[x.type] || esc(x.type)}</td><td>${esc(x.eqNom)}</td><td>${esc(x.orgNom || "")}</td>
-      <td>${esc(x.intervenant || "")}</td><td class="num">${fmt(x.heures)} h · ${fmt(x.tonnes)} t</td>
+      <td>${esc(x.intervenant || "")}</td><td class="num">${fmt(x.tonnes)} t</td>
       <td class="num">${x.usage != null ? fmt(x.usage) + " " + (UNIT[x.mode] || "") : ""}</td><td>${esc(x.commentaire || "")}</td></tr>`,
       )
       .join("")}
@@ -2470,11 +2490,10 @@
           `
     <dl class="kv">
       <dt>Équipement</dt><dd>${esc(e.nom)}</dd>
-      <dt>Suivi en</dt><dd>${o.mode === "heures" ? "Heures de fonctionnement" : "Tonnage"}</dd>
       <dt>Usure depuis remplacement</dt><dd><b>${fmt(usage(e, o))} ${UNIT[o.mode]}</b> — ${remainTxt(e, o)}</dd>
       <dt>Seuil vigilance</dt><dd>${fmt(o.seuilVigilance)} ${UNIT[o.mode]}</dd>
       <dt>Seuil remplacement</dt><dd>${fmt(o.seuilRemplacement)} ${UNIT[o.mode]}</dd>
-      <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)}${o.mode === "tonnes" && prodActive() ? "" : ` (à ${fmt(o.ref.heures)} h · ${fmt(o.ref.tonnes)} t)`}</dd>
+      <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)}${o.mode === "tonnes" && prodActive() ? "" : ` (à ${fmt(o.ref.tonnes)} t)`}</dd>
       ${o.mode === "tonnes" && prodActive() ? `<dt>Calcul</dt><dd>Tonnes produites ${diamTxt(e)} depuis le ${fdate(o.ref.date)} (base production)${+o.tonnesInit ? " + " + fmt(o.tonnesInit) + " t antérieures" : ""}</dd>` : ""}
     </dl>${bar(e, o)}
     <h4 style="margin:16px 0 6px">Historique</h4>
@@ -2512,9 +2531,9 @@
     <p class="full hint">${esc(e.nom)} · usure actuelle <b>${fmt(usage(e, o))} ${UNIT[o.mode]}</b>. Le compteur d'usure de l'organe repartira de zéro à partir des compteurs ci-dessous.</p>
     <label>Date<input type="date" name="date" value="${today()}" required></label>
     <label>Intervenant<input name="intervenant" placeholder="Nom / équipe" autocomplete="off"></label>
-    <fieldset class="full"><legend>Compteurs de l'équipement au moment du remplacement</legend>
-      <label>Heures<input type="number" name="heures" min="0" step="any" value="${e.compteurs.heures}" required></label>
-      <label>Tonnes<input type="number" name="tonnes" min="0" step="any" value="${Math.round(eqTonnes(e) * 1000) / 1000}" required${prodActive() ? " readonly" : ""}></label>
+    <fieldset class="full"><legend>Tonnage de l'équipement au moment du remplacement</legend>
+      <input type="hidden" name="heures" value="${e.compteurs.heures}">
+      <label class="full">Tonnage de l'équipement<input type="number" name="tonnes" min="0" step="any" value="${Math.round(eqTonnes(e) * 1000) / 1000}" required${prodActive() ? " readonly" : ""}></label>
       ${prodActive() ? `<div class="full hint">Tonnage calculé par la base production (${diamTxt(e)}) : un organe suivi en tonnes repart de zéro à la date saisie.</div>` : ""}
     </fieldset>
     <label class="full">Commentaire<textarea name="commentaire" rows="3" placeholder="Référence pièce, constat, n° OT…"></textarea></label></div>`,
@@ -2570,7 +2589,7 @@
         const d = o || {
           nom: "",
           slot: Object.keys(TYPES[e.type].slots)[0] || "",
-          mode: "heures",
+          mode: "tonnes",
           seuilVigilance: "",
           seuilRemplacement: "",
           ref: {
@@ -2584,18 +2603,16 @@
           `<div class="form">
     <label class="full">Nom de l'organe<input name="nom" value="${esc(d.nom)}" required placeholder="ex. Rouleau R9, Filtre retour…"></label>
     <label class="full">Emplacement sur le dessin<select name="slot">${slotOptions(e, d.slot)}</select></label>
-    <div class="full"><div class="hint" style="margin-bottom:4px">Suivi en</div>
-      <div class="seg"><label><input type="radio" name="mode" value="heures"${d.mode === "heures" ? " checked" : ""}>⏱ Heures</label>
-      <label><input type="radio" name="mode" value="tonnes"${d.mode === "tonnes" ? " checked" : ""}>⚖️ Tonnes</label></div></div>
-    <label>Seuil vigilance (<span data-un>${UNIT[d.mode]}</span>)<input type="number" name="seuilVigilance" min="0" step="any" value="${d.seuilVigilance}" required></label>
-    <label>Seuil remplacement (<span data-un>${UNIT[d.mode]}</span>)<input type="number" name="seuilRemplacement" min="0" step="any" value="${d.seuilRemplacement}" required></label>
+    <input type="hidden" name="mode" value="tonnes">
+    <label>Seuil vigilance (t)<input type="number" name="seuilVigilance" min="0" step="any" value="${d.seuilVigilance}" required></label>
+    <label>Seuil remplacement (t)<input type="number" name="seuilRemplacement" min="0" step="any" value="${d.seuilRemplacement}" required></label>
     <fieldset class="full"><legend>Dernier remplacement (point zéro de l'usure)</legend>
       <label class="full">Date<input type="date" name="rdate" value="${esc(d.ref.date)}"></label>
-      <label>Compteur heures à ce moment<input type="number" name="rh" min="0" step="any" value="${d.ref.heures}"></label>
-      <label>Compteur tonnes à ce moment<input type="number" name="rt" min="0" step="any" value="${d.ref.tonnes}"></label>
-      <div class="full hint">Compteurs actuels de l'équipement : ${fmt(e.compteurs.heures)} h · ${fmt(eqTonnes(e))} t. Pour une pièce neuve, laissez les compteurs actuels.</div>
+      <input type="hidden" name="rh" value="${d.ref.heures}">
+      <label class="full">Tonnage de l'équipement à ce moment<input type="number" name="rt" min="0" step="any" value="${d.ref.tonnes}"></label>
+      ${prodActive() ? "" : `<div class="full hint">Tonnage actuel de l'équipement : ${fmt(eqTonnes(e))} t. Pour une pièce neuve, laissez le tonnage actuel.</div>`}
       ${prodActive() ? `<label class="full">Tonnes déjà faites avant le début de la base production (${fdate(PROD.debut)})<input type="number" name="tinit" min="0" step="any" value="${+d.tonnesInit || 0}"></label>
-      <div class="full hint">Suivi en tonnes : l'usure = tonnes produites ${diamTxt(e)} depuis la date ci-dessus (base production) + ces tonnes antérieures. Le « compteur tonnes » n'est alors pas utilisé.</div>` : ""}
+      <div class="full hint">Usure = tonnes produites ${diamTxt(e)} depuis la date ci-dessus (base production) + ces tonnes antérieures. Le tonnage saisi au-dessus n'est alors pas utilisé.</div>` : ""}
     </fieldset></div>`,
           {
             ok: isNew ? "Ajouter" : "Enregistrer",
@@ -2708,8 +2725,7 @@
     <label class="full" style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" name="motorise"${d.options && d.options.motorise ? " checked" : ""}> Voie à rouleaux motorisée (paliers + motoréducteur sur le dessin)</label>
     ${
       isNew
-        ? `<label>Compteur heures actuel<input type="number" name="h" min="0" step="any" value="0"></label>
-    <label>Compteur tonnes actuel<input type="number" name="t" min="0" step="any" value="0"></label>`
+        ? `<label>Tonnage actuel (si pas de base production)<input type="number" name="t" min="0" step="any" value="0"></label>`
         : ""
     }</div>`,
           {
@@ -2763,12 +2779,11 @@
 
       function releve(e) {
         modal(
-          "Relevé compteurs — " + esc(e.nom),
+          "Tonnage — " + esc(e.nom),
           `<div class="form">
-    <p class="full hint">Saisissez les valeurs <b>totales</b> lues sur l'équipement. Valeurs actuelles : ${fmt(e.compteurs.heures)} h · ${fmt(e.compteurs.tonnes)} t.</p>
-    <label>Heures<input type="number" name="h" min="0" step="any" value="${e.compteurs.heures}" required></label>
-    <label>Tonnes<input type="number" name="t" min="0" step="any" value="${Math.round(eqTonnes(e) * 1000) / 1000}" required${prodActive() ? " readonly" : ""}></label>
-    ${prodActive() ? `<p class="full hint">Le tonnage vient de la base production (${diamTxt(e)}) : seules les heures sont à saisir.</p>` : ""}
+    <p class="full hint">Saisissez le tonnage <b>total</b> de l'équipement. Valeur actuelle : ${fmt(e.compteurs.tonnes)} t.</p>
+    <input type="hidden" name="h" value="${e.compteurs.heures}">
+    <label class="full">Tonnes<input type="number" name="t" min="0" step="any" value="${Math.round(eqTonnes(e) * 1000) / 1000}" required${prodActive() ? " readonly" : ""}></label>
     <label>Date<input type="date" name="date" value="${today()}" required></label>
     <label>Relevé par<input name="intervenant" autocomplete="off"></label></div>`,
           {
@@ -2831,20 +2846,19 @@
       }
       function releveLigne() {
         modal(
-          "Relevé compteurs — tous les équipements",
+          "Tonnage — tous les équipements",
           `<div class="form">
     <label>Date<input type="date" name="date" value="${today()}" required></label>
     <label>Relevé par<input name="intervenant" autocomplete="off"></label>
-    <div class="full tablewrap"><table><thead><tr><th>Équipement</th><th class="num">Heures</th><th class="num">Tonnes</th></tr></thead><tbody>
+    <div class="full tablewrap"><table><thead><tr><th>Équipement</th><th class="num">Tonnes</th></tr></thead><tbody>
     ${db.equipements
       .map(
         (e) => `<tr><td>${esc(e.nom)}</td>
-      <td class="num"><input class="inline-in" style="width:110px" type="number" min="0" step="any" name="h_${e.id}" value="${e.compteurs.heures}"></td>
-      <td class="num"><input class="inline-in" style="width:120px" type="number" min="0" step="any" name="t_${e.id}" value="${Math.round(eqTonnes(e) * 1000) / 1000}"${prodActive() ? " readonly" : ""}></td></tr>`,
+      <td class="num"><input type="hidden" name="h_${e.id}" value="${e.compteurs.heures}"><input class="inline-in" style="width:120px" type="number" min="0" step="any" name="t_${e.id}" value="${Math.round(eqTonnes(e) * 1000) / 1000}"${prodActive() ? " readonly" : ""}></td></tr>`,
       )
       .join("")}
     </tbody></table></div>
-    <p class="full hint">Astuce : « Appliquer la 1re ligne à tous » recopie les compteurs du premier équipement (compteur ligne commun).</p></div>`,
+    <p class="full hint">Astuce : « Appliquer la 1re ligne à tous » recopie le tonnage du premier équipement (tonnage ligne commun).</p></div>`,
           {
             wide: true,
             ok: "Valider le relevé",
@@ -2913,7 +2927,6 @@
           "eqNom",
           "orgNom",
           "intervenant",
-          "heures",
           "tonnes",
           "usage",
           "mode",

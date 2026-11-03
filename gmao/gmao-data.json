@@ -18,65 +18,65 @@
           "id": "ch-filtre",
           "nom": "Filtre",
           "slot": "filtre",
-          "mode": "heures",
-          "seuilVigilance": 1800,
-          "seuilRemplacement": 2000,
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
           "ref": {
             "date": "2026-01-05",
             "heures": 12400,
-            "tonnes": 793600
+            "tonnes": 754750
           }
         },
         {
           "id": "ch-pompe1",
           "nom": "Pompe 1",
           "slot": "pompe_1",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 0,
-            "tonnes": 0
+            "tonnes": -299250
           }
         },
         {
           "id": "ch-pompe2",
           "nom": "Pompe 2",
           "slot": "pompe_2",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 5250,
-            "tonnes": 336000
+            "tonnes": 147000
           }
         },
         {
           "id": "ch-pompe3",
           "nom": "Pompe 3",
           "slot": "pompe_3",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11250,
-            "tonnes": 720000
+            "tonnes": 657000
           }
         },
         {
           "id": "ch-vidange",
           "nom": "Vidange centrale",
           "slot": "vidange",
-          "mode": "heures",
-          "seuilVigilance": 4500,
-          "seuilRemplacement": 5000,
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
           "ref": {
             "date": "2026-01-05",
             "heures": 9100,
-            "tonnes": 582400
+            "tonnes": 474250
           }
         }
       ]
@@ -96,104 +96,104 @@
           "id": "nk-cuve",
           "nom": "Cuve de centrale (vidange / nettoyage)",
           "slot": "cuve",
-          "mode": "heures",
-          "seuilVigilance": 7000,
-          "seuilRemplacement": 8000,
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11250,
-            "tonnes": 720000
+            "tonnes": 657000
           }
         },
         {
           "id": "nk-pompe_1",
           "nom": "Pompe de fonctionnement 1",
           "slot": "pompe_1",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 5250,
-            "tonnes": 336000
+            "tonnes": 147000
           }
         },
         {
           "id": "nk-pompe_2",
           "nom": "Pompe de fonctionnement 2",
           "slot": "pompe_2",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 2250,
-            "tonnes": 144000
+            "tonnes": -108000
           }
         },
         {
           "id": "nk-filtre_envoi",
           "nom": "Filtre avant envoi coffrets",
           "slot": "filtre_envoi",
-          "mode": "heures",
-          "seuilVigilance": 1800,
-          "seuilRemplacement": 2000,
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
           "ref": {
             "date": "2026-01-05",
             "heures": 13150,
-            "tonnes": 841600
+            "tonnes": 818500
           }
         },
         {
           "id": "nk-pompe_recirc",
           "nom": "Pompe de recirculation",
           "slot": "pompe_recirc",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 8250,
-            "tonnes": 528000
+            "tonnes": 402000
           }
         },
         {
           "id": "nk-filtre_recirc1",
           "nom": "Filtre recirculation 1",
           "slot": "filtre_recirc1",
-          "mode": "heures",
-          "seuilVigilance": 1800,
-          "seuilRemplacement": 2000,
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
           "ref": {
             "date": "2026-01-05",
             "heures": 12350,
-            "tonnes": 790400
+            "tonnes": 750500
           }
         },
         {
           "id": "nk-filtre_recirc2",
           "nom": "Filtre recirculation 2",
           "slot": "filtre_recirc2",
-          "mode": "heures",
-          "seuilVigilance": 1800,
-          "seuilRemplacement": 2000,
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
           "ref": {
             "date": "2026-01-05",
             "heures": 13650,
-            "tonnes": 873600
+            "tonnes": 861000
           }
         },
         {
           "id": "nk-ev_retour",
           "nom": "EV retour bâche",
           "slot": "ev_retour",
-          "mode": "heures",
-          "seuilVigilance": 9000,
-          "seuilRemplacement": 10000,
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
           "ref": {
             "date": "2026-01-05",
             "heures": 10250,
-            "tonnes": 656000
+            "tonnes": 572000
           }
         }
       ]
@@ -489,78 +489,78 @@
           "id": "defo-galet_sup",
           "nom": "Galet supérieur",
           "slot": "galet_sup",
-          "mode": "heures",
-          "seuilVigilance": 2700,
-          "seuilRemplacement": 3000,
+          "mode": "tonnes",
+          "seuilVigilance": 229500,
+          "seuilRemplacement": 255000,
           "ref": {
             "date": "2026-01-05",
             "heures": 12750,
-            "tonnes": 816000
+            "tonnes": 784500
           }
         },
         {
           "id": "defo-galet_inf",
           "nom": "Galet inférieur",
           "slot": "galet_inf",
-          "mode": "heures",
-          "seuilVigilance": 2700,
-          "seuilRemplacement": 3000,
+          "mode": "tonnes",
+          "seuilVigilance": 229500,
+          "seuilRemplacement": 255000,
           "ref": {
             "date": "2026-01-05",
             "heures": 13350,
-            "tonnes": 854400
+            "tonnes": 835500
           }
         },
         {
           "id": "defo-verin_1",
           "nom": "Vérin pneumatique côté piste",
           "slot": "verin_1",
-          "mode": "heures",
-          "seuilVigilance": 7000,
-          "seuilRemplacement": 8000,
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11250,
-            "tonnes": 720000
+            "tonnes": 657000
           }
         },
         {
           "id": "defo-verin_2",
           "nom": "Vérin pneumatique côté moteur",
           "slot": "verin_2",
-          "mode": "heures",
-          "seuilVigilance": 7000,
-          "seuilRemplacement": 8000,
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11250,
-            "tonnes": 720000
+            "tonnes": 657000
           }
         },
         {
           "id": "defo-moteur_sup",
           "nom": "Moteur hydraulique galet supérieur",
           "slot": "moteur_sup",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 6250,
-            "tonnes": 400000
+            "tonnes": 232000
           }
         },
         {
           "id": "defo-moteur_inf",
           "nom": "Moteur hydraulique galet inférieur",
           "slot": "moteur_inf",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 6250,
-            "tonnes": 400000
+            "tonnes": 232000
           }
         }
       ]
@@ -580,65 +580,65 @@
           "id": "tro-gsup",
           "nom": "Galet supérieur",
           "slot": "galet_sup",
-          "mode": "heures",
-          "seuilVigilance": 2700,
-          "seuilRemplacement": 3000,
+          "mode": "tonnes",
+          "seuilVigilance": 229500,
+          "seuilRemplacement": 255000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11850,
-            "tonnes": 758400
+            "tonnes": 708000
           }
         },
         {
           "id": "tro-ginf",
           "nom": "Galet inférieur",
           "slot": "galet_inf",
-          "mode": "heures",
-          "seuilVigilance": 2700,
-          "seuilRemplacement": 3000,
+          "mode": "tonnes",
+          "seuilVigilance": 229500,
+          "seuilRemplacement": 255000,
           "ref": {
             "date": "2026-01-05",
             "heures": 13050,
-            "tonnes": 835200
+            "tonnes": 810000
           }
         },
         {
           "id": "tro-verin1",
           "nom": "Vérin pneumatique côté piste",
           "slot": "verin_1",
-          "mode": "heures",
-          "seuilVigilance": 7000,
-          "seuilRemplacement": 8000,
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
           "ref": {
             "date": "2026-01-05",
             "heures": 6950,
-            "tonnes": 444800
+            "tonnes": 291500
           }
         },
         {
           "id": "tro-verin2",
           "nom": "Vérin pneumatique côté moteur",
           "slot": "verin_2",
-          "mode": "heures",
-          "seuilVigilance": 7000,
-          "seuilRemplacement": 8000,
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
           "ref": {
             "date": "2026-01-05",
             "heures": 10150,
-            "tonnes": 649600
+            "tonnes": 563500
           }
         },
         {
           "id": "tro-flex",
           "nom": "Flexibles",
           "slot": "flexible",
-          "mode": "heures",
-          "seuilVigilance": 4000,
-          "seuilRemplacement": 4500,
+          "mode": "tonnes",
+          "seuilVigilance": 340000,
+          "seuilRemplacement": 382500,
           "ref": {
             "date": "2026-01-05",
             "heures": 12150,
-            "tonnes": 777600
+            "tonnes": 733500
           }
         }
       ]
@@ -658,213 +658,213 @@
           "id": "sd-mors",
           "nom": "Mors",
           "slot": "mors",
-          "mode": "heures",
-          "seuilVigilance": 900,
-          "seuilRemplacement": 1000,
+          "mode": "tonnes",
+          "seuilVigilance": 76500,
+          "seuilRemplacement": 85000,
           "ref": {
             "date": "2026-01-05",
             "heures": 13800,
-            "tonnes": 883200
+            "tonnes": 873750
           }
         },
         {
           "id": "sd-transfo",
           "nom": "Transformateurs",
           "slot": "transfo",
-          "mode": "heures",
-          "seuilVigilance": 18000,
-          "seuilRemplacement": 20000,
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
           "ref": {
             "date": "2026-01-05",
             "heures": 0,
-            "tonnes": 0
+            "tonnes": -299250
           }
         },
         {
           "id": "sd-vmors",
           "nom": "Vérins de mors",
           "slot": "verin_mors",
-          "mode": "heures",
-          "seuilVigilance": 7000,
-          "seuilRemplacement": 8000,
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11050,
-            "tonnes": 707200
+            "tonnes": 640000
           }
         },
         {
           "id": "sd-offsup",
           "nom": "Vérin offsetting supérieur",
           "slot": "offset_sup",
-          "mode": "heures",
-          "seuilVigilance": 7000,
-          "seuilRemplacement": 8000,
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
           "ref": {
             "date": "2026-01-05",
             "heures": 9150,
-            "tonnes": 585600
+            "tonnes": 478500
           }
         },
         {
           "id": "sd-offinf",
           "nom": "Vérin offsetting inférieur",
           "slot": "offset_inf",
-          "mode": "heures",
-          "seuilVigilance": 7000,
-          "seuilRemplacement": 8000,
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
           "ref": {
             "date": "2026-01-05",
             "heures": 6150,
-            "tonnes": 393600
+            "tonnes": 223500
           }
         },
         {
           "id": "sd-bacier-sup",
           "nom": "Bagues acier – offsetting sup.",
           "slot": "bague_acier_sup",
-          "mode": "heures",
-          "seuilVigilance": 2700,
-          "seuilRemplacement": 3000,
+          "mode": "tonnes",
+          "seuilVigilance": 229500,
+          "seuilRemplacement": 255000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11500,
-            "tonnes": 736000
+            "tonnes": 678250
           }
         },
         {
           "id": "sd-bteflon-sup",
           "nom": "Bagues téflon – offsetting sup.",
           "slot": "bague_teflon_sup",
-          "mode": "heures",
-          "seuilVigilance": 1300,
-          "seuilRemplacement": 1500,
+          "mode": "tonnes",
+          "seuilVigilance": 110500,
+          "seuilRemplacement": 127500,
           "ref": {
             "date": "2026-01-05",
             "heures": 13650,
-            "tonnes": 873600
+            "tonnes": 861000
           }
         },
         {
           "id": "sd-bacier-inf",
           "nom": "Bagues acier – offsetting inf.",
           "slot": "bague_acier_inf",
-          "mode": "heures",
-          "seuilVigilance": 2700,
-          "seuilRemplacement": 3000,
+          "mode": "tonnes",
+          "seuilVigilance": 229500,
+          "seuilRemplacement": 255000,
           "ref": {
             "date": "2026-01-05",
             "heures": 12450,
-            "tonnes": 796800
+            "tonnes": 759000
           }
         },
         {
           "id": "sd-bteflon-inf",
           "nom": "Bagues téflon – offsetting inf.",
           "slot": "bague_teflon_inf",
-          "mode": "heures",
-          "seuilVigilance": 1300,
-          "seuilRemplacement": 1500,
+          "mode": "tonnes",
+          "seuilVigilance": 110500,
+          "seuilRemplacement": 127500,
           "ref": {
             "date": "2026-01-05",
             "heures": 12900,
-            "tonnes": 825600
+            "tonnes": 797250
           }
         },
         {
           "id": "sd-gav1",
           "nom": "Galet porteur avant 1 (côté piste)",
           "slot": "galet_av1",
-          "mode": "heures",
-          "seuilVigilance": 9000,
-          "seuilRemplacement": 10000,
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11250,
-            "tonnes": 720000
+            "tonnes": 657000
           }
         },
         {
           "id": "sd-gav2",
           "nom": "Galet porteur avant 2 (côté piste)",
           "slot": "galet_av2",
-          "mode": "heures",
-          "seuilVigilance": 9000,
-          "seuilRemplacement": 10000,
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
           "ref": {
             "date": "2026-01-05",
             "heures": 11250,
-            "tonnes": 720000
+            "tonnes": 657000
           }
         },
         {
           "id": "sd-gar1",
           "nom": "Galet porteur arrière 1 (côté moteur)",
           "slot": "galet_ar1",
-          "mode": "heures",
-          "seuilVigilance": 9000,
-          "seuilRemplacement": 10000,
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
           "ref": {
             "date": "2026-01-05",
             "heures": 8150,
-            "tonnes": 521600
+            "tonnes": 393500
           }
         },
         {
           "id": "sd-gar2",
           "nom": "Galet porteur arrière 2 (côté moteur)",
           "slot": "galet_ar2",
-          "mode": "heures",
-          "seuilVigilance": 9000,
-          "seuilRemplacement": 10000,
+          "mode": "tonnes",
+          "seuilVigilance": 765000,
+          "seuilRemplacement": 850000,
           "ref": {
             "date": "2026-01-05",
             "heures": 5050,
-            "tonnes": 323200
+            "tonnes": 130000
           }
         },
         {
           "id": "sd-rail-piste",
           "nom": "Rail côté piste",
           "slot": "rail_piste",
-          "mode": "heures",
-          "seuilVigilance": 45000,
-          "seuilRemplacement": 50000,
+          "mode": "tonnes",
+          "seuilVigilance": 3825000,
+          "seuilRemplacement": 4250000,
           "ref": {
             "date": "2026-01-05",
             "heures": 0,
-            "tonnes": 0
+            "tonnes": -299250
           }
         },
         {
           "id": "sd-rail-moteur",
           "nom": "Rail côté moteur",
           "slot": "rail_moteur",
-          "mode": "heures",
-          "seuilVigilance": 45000,
-          "seuilRemplacement": 50000,
+          "mode": "tonnes",
+          "seuilVigilance": 3825000,
+          "seuilRemplacement": 4250000,
           "ref": {
             "date": "2026-01-05",
             "heures": 0,
-            "tonnes": 0
+            "tonnes": -299250
           }
         },
         {
           "id": "sd-cremaillere",
           "nom": "Crémaillère (rail côté moteur)",
           "slot": "cremaillere",
-          "mode": "heures",
-          "seuilVigilance": 27000,
-          "seuilRemplacement": 30000,
+          "mode": "tonnes",
+          "seuilVigilance": 2295000,
+          "seuilRemplacement": 2550000,
           "ref": {
             "date": "2026-01-05",
             "heures": 0,
-            "tonnes": 0
+            "tonnes": -299250
           }
         }
       ]
     }
   ],
   "journal": [],
-  "schema": 7
+  "schema": 8
 }
