@@ -1082,6 +1082,19 @@
             "heures": 0,
             "tonnes": 312000
           }
+        },
+        {
+          "id": "tro-ev_verins",
+          "nom": "EV des vérins pneumatiques",
+          "slot": "ev_verins",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
         }
       ]
     },
@@ -1431,5 +1444,5 @@
     }
   ],
   "journal": [],
-  "schema": 11
+  "schema": 12
 }
