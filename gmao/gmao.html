@@ -933,7 +933,7 @@
      ouvre / enregistre avec les boutons du bandeau.
    - Une copie de travail est gardée dans le navigateur.
    ============================================================ */
-      const DEFAULT_DB = /*DEFAULT_DB*/{"version":1,"nom":"GMAO Ligne","maj":"2026-11-03T08:00:00.000Z","equipements":[{"id":"ch-enf","nom":"Centrale hydraulique enfournement","zone":"Enfournement","type":"hydraulique","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"ch-filtre","nom":"Filtre","slot":"filtre","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":12400,"tonnes":793600}},{"id":"ch-pompe","nom":"Pompe","slot":"pompe","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"ch-vidange","nom":"Vidange centrale","slot":"vidange","mode":"heures","seuilVigilance":4500,"seuilRemplacement":5000,"ref":{"date":"2026-01-05","heures":9100,"tonnes":582400}}]},{"id":"nortek","nom":"Centrale Nortek","zone":"Enfournement","type":"nortek","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"nk-cuve","nom":"Cuve de centrale (vidange / nettoyage)","slot":"cuve","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"nk-pompe_1","nom":"Pompe de fonctionnement 1","slot":"pompe_1","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":5250,"tonnes":336000}},{"id":"nk-pompe_2","nom":"Pompe de fonctionnement 2","slot":"pompe_2","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":2250,"tonnes":144000}},{"id":"nk-filtre_envoi","nom":"Filtre avant envoi coffrets","slot":"filtre_envoi","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":13150,"tonnes":841600}},{"id":"nk-pompe_recirc","nom":"Pompe de recirculation","slot":"pompe_recirc","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":8250,"tonnes":528000}},{"id":"nk-filtre_recirc1","nom":"Filtre recirculation 1","slot":"filtre_recirc1","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":12350,"tonnes":790400}},{"id":"nk-filtre_recirc2","nom":"Filtre recirculation 2","slot":"filtre_recirc2","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":13650,"tonnes":873600}},{"id":"nk-ev_retour","nom":"EV retour bâche","slot":"ev_retour","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":10250,"tonnes":656000}}]},{"id":"vr-chg","nom":"Voie rouleaux chargement","zone":"Chargement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vrc-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vrc-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13773,"tonnes":881500}},{"id":"vrc-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13523,"tonnes":865500}},{"id":"vrc-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14125,"tonnes":904000}},{"id":"vrc-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13906,"tonnes":890000}},{"id":"vrc-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13453,"tonnes":861000}},{"id":"vrc-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14016,"tonnes":897000}},{"id":"vrc-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13641,"tonnes":873000}}]},{"id":"vr-enf","nom":"Voie rouleaux enfournement","zone":"Enfournement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vre-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14172,"tonnes":907000}},{"id":"vre-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13969,"tonnes":894000}},{"id":"vre-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13844,"tonnes":886000}},{"id":"vre-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13516,"tonnes":865000}},{"id":"vre-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13734,"tonnes":879000}},{"id":"vre-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14109,"tonnes":903000}},{"id":"vre-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vre-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13609,"tonnes":871000}}],"options":{"motorise":true}},{"id":"pous","nom":"Pousseuse","zone":"Enfournement","type":"pousseuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"pous-bg","nom":"Bras gauche","slot":"bras1","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":13281,"tonnes":850000}},{"id":"pous-bd","nom":"Bras droit","slot":"bras2","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":12797,"tonnes":819000}}]},{"id":"defo","nom":"Défourneuse","zone":"Défournement","type":"defourneuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"defo-galet_sup","nom":"Galet supérieur","slot":"galet_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":12750,"tonnes":816000}},{"id":"defo-galet_inf","nom":"Galet inférieur","slot":"galet_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":13350,"tonnes":854400}},{"id":"defo-verin_1","nom":"Vérin pneumatique côté piste","slot":"verin_1","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"defo-verin_2","nom":"Vérin pneumatique côté moteur","slot":"verin_2","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"defo-moteur_sup","nom":"Moteur hydraulique galet supérieur","slot":"moteur_sup","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":6250,"tonnes":400000}},{"id":"defo-moteur_inf","nom":"Moteur hydraulique galet inférieur","slot":"moteur_inf","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":6250,"tonnes":400000}}]},{"id":"tro0","nom":"TRO-0","zone":"Ligne","type":"tro0","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"tro-gsup","nom":"Galet supérieur","slot":"galet_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":11850,"tonnes":758400}},{"id":"tro-ginf","nom":"Galet inférieur","slot":"galet_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":13050,"tonnes":835200}},{"id":"tro-verin1","nom":"Vérin pneumatique côté piste","slot":"verin_1","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":6950,"tonnes":444800}},{"id":"tro-verin2","nom":"Vérin pneumatique côté moteur","slot":"verin_2","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":10150,"tonnes":649600}},{"id":"tro-flex","nom":"Flexibles","slot":"flexible","mode":"heures","seuilVigilance":4000,"seuilRemplacement":4500,"ref":{"date":"2026-01-05","heures":12150,"tonnes":777600}}]},{"id":"soud","nom":"Soudeuse","zone":"Ligne","type":"soudeuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"sd-mors","nom":"Mors","slot":"mors","mode":"heures","seuilVigilance":900,"seuilRemplacement":1000,"ref":{"date":"2026-01-05","heures":13800,"tonnes":883200}},{"id":"sd-transfo","nom":"Transformateurs","slot":"transfo","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-vmors","nom":"Vérins de mors","slot":"verin_mors","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11050,"tonnes":707200}},{"id":"sd-offsup","nom":"Vérin offsetting supérieur","slot":"offset_sup","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":9150,"tonnes":585600}},{"id":"sd-offinf","nom":"Vérin offsetting inférieur","slot":"offset_inf","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":6150,"tonnes":393600}},{"id":"sd-bacier-sup","nom":"Bagues acier – offsetting sup.","slot":"bague_acier_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":11500,"tonnes":736000}},{"id":"sd-bteflon-sup","nom":"Bagues téflon – offsetting sup.","slot":"bague_teflon_sup","mode":"heures","seuilVigilance":1300,"seuilRemplacement":1500,"ref":{"date":"2026-01-05","heures":13650,"tonnes":873600}},{"id":"sd-bacier-inf","nom":"Bagues acier – offsetting inf.","slot":"bague_acier_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":12450,"tonnes":796800}},{"id":"sd-bteflon-inf","nom":"Bagues téflon – offsetting inf.","slot":"bague_teflon_inf","mode":"heures","seuilVigilance":1300,"seuilRemplacement":1500,"ref":{"date":"2026-01-05","heures":12900,"tonnes":825600}},{"id":"sd-gav1","nom":"Galet porteur avant 1 (côté piste)","slot":"galet_av1","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"sd-gav2","nom":"Galet porteur avant 2 (côté piste)","slot":"galet_av2","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"sd-gar1","nom":"Galet porteur arrière 1 (côté moteur)","slot":"galet_ar1","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":8150,"tonnes":521600}},{"id":"sd-gar2","nom":"Galet porteur arrière 2 (côté moteur)","slot":"galet_ar2","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":5050,"tonnes":323200}},{"id":"sd-rail-piste","nom":"Rail côté piste","slot":"rail_piste","mode":"heures","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-rail-moteur","nom":"Rail côté moteur","slot":"rail_moteur","mode":"heures","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-cremaillere","nom":"Crémaillère (rail côté moteur)","slot":"cremaillere","mode":"heures","seuilVigilance":27000,"seuilRemplacement":30000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}}]}],"journal":[],"schema":6};
+      const DEFAULT_DB = /*DEFAULT_DB*/{"version":1,"nom":"GMAO Ligne","maj":"2026-11-03T08:00:00.000Z","equipements":[{"id":"ch-enf","nom":"Centrale hydraulique enfournement","zone":"Enfournement","type":"hydraulique","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"ch-filtre","nom":"Filtre","slot":"filtre","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":12400,"tonnes":793600}},{"id":"ch-pompe1","nom":"Pompe 1","slot":"pompe_1","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"ch-pompe2","nom":"Pompe 2","slot":"pompe_2","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":5250,"tonnes":336000}},{"id":"ch-pompe3","nom":"Pompe 3","slot":"pompe_3","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"ch-vidange","nom":"Vidange centrale","slot":"vidange","mode":"heures","seuilVigilance":4500,"seuilRemplacement":5000,"ref":{"date":"2026-01-05","heures":9100,"tonnes":582400}}]},{"id":"nortek","nom":"Centrale Nortek","zone":"Enfournement","type":"nortek","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"nk-cuve","nom":"Cuve de centrale (vidange / nettoyage)","slot":"cuve","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"nk-pompe_1","nom":"Pompe de fonctionnement 1","slot":"pompe_1","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":5250,"tonnes":336000}},{"id":"nk-pompe_2","nom":"Pompe de fonctionnement 2","slot":"pompe_2","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":2250,"tonnes":144000}},{"id":"nk-filtre_envoi","nom":"Filtre avant envoi coffrets","slot":"filtre_envoi","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":13150,"tonnes":841600}},{"id":"nk-pompe_recirc","nom":"Pompe de recirculation","slot":"pompe_recirc","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":8250,"tonnes":528000}},{"id":"nk-filtre_recirc1","nom":"Filtre recirculation 1","slot":"filtre_recirc1","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":12350,"tonnes":790400}},{"id":"nk-filtre_recirc2","nom":"Filtre recirculation 2","slot":"filtre_recirc2","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":13650,"tonnes":873600}},{"id":"nk-ev_retour","nom":"EV retour bâche","slot":"ev_retour","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":10250,"tonnes":656000}}]},{"id":"vr-chg","nom":"Voie rouleaux chargement","zone":"Chargement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vrc-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vrc-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13773,"tonnes":881500}},{"id":"vrc-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13523,"tonnes":865500}},{"id":"vrc-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14125,"tonnes":904000}},{"id":"vrc-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13906,"tonnes":890000}},{"id":"vrc-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13453,"tonnes":861000}},{"id":"vrc-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14016,"tonnes":897000}},{"id":"vrc-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13641,"tonnes":873000}}]},{"id":"vr-enf","nom":"Voie rouleaux enfournement","zone":"Enfournement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vre-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14172,"tonnes":907000}},{"id":"vre-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13969,"tonnes":894000}},{"id":"vre-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13844,"tonnes":886000}},{"id":"vre-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13516,"tonnes":865000}},{"id":"vre-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13734,"tonnes":879000}},{"id":"vre-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14109,"tonnes":903000}},{"id":"vre-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vre-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13609,"tonnes":871000}}],"options":{"motorise":true}},{"id":"pous","nom":"Pousseuse","zone":"Enfournement","type":"pousseuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"pous-bg","nom":"Bras gauche","slot":"bras1","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":13281,"tonnes":850000}},{"id":"pous-bd","nom":"Bras droit","slot":"bras2","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":12797,"tonnes":819000}}]},{"id":"defo","nom":"Défourneuse","zone":"Défournement","type":"defourneuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"defo-galet_sup","nom":"Galet supérieur","slot":"galet_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":12750,"tonnes":816000}},{"id":"defo-galet_inf","nom":"Galet inférieur","slot":"galet_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":13350,"tonnes":854400}},{"id":"defo-verin_1","nom":"Vérin pneumatique côté piste","slot":"verin_1","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"defo-verin_2","nom":"Vérin pneumatique côté moteur","slot":"verin_2","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"defo-moteur_sup","nom":"Moteur hydraulique galet supérieur","slot":"moteur_sup","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":6250,"tonnes":400000}},{"id":"defo-moteur_inf","nom":"Moteur hydraulique galet inférieur","slot":"moteur_inf","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":6250,"tonnes":400000}}]},{"id":"tro0","nom":"TRO-0","zone":"Ligne","type":"tro0","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"tro-gsup","nom":"Galet supérieur","slot":"galet_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":11850,"tonnes":758400}},{"id":"tro-ginf","nom":"Galet inférieur","slot":"galet_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":13050,"tonnes":835200}},{"id":"tro-verin1","nom":"Vérin pneumatique côté piste","slot":"verin_1","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":6950,"tonnes":444800}},{"id":"tro-verin2","nom":"Vérin pneumatique côté moteur","slot":"verin_2","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":10150,"tonnes":649600}},{"id":"tro-flex","nom":"Flexibles","slot":"flexible","mode":"heures","seuilVigilance":4000,"seuilRemplacement":4500,"ref":{"date":"2026-01-05","heures":12150,"tonnes":777600}}]},{"id":"soud","nom":"Soudeuse","zone":"Ligne","type":"soudeuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"sd-mors","nom":"Mors","slot":"mors","mode":"heures","seuilVigilance":900,"seuilRemplacement":1000,"ref":{"date":"2026-01-05","heures":13800,"tonnes":883200}},{"id":"sd-transfo","nom":"Transformateurs","slot":"transfo","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-vmors","nom":"Vérins de mors","slot":"verin_mors","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11050,"tonnes":707200}},{"id":"sd-offsup","nom":"Vérin offsetting supérieur","slot":"offset_sup","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":9150,"tonnes":585600}},{"id":"sd-offinf","nom":"Vérin offsetting inférieur","slot":"offset_inf","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":6150,"tonnes":393600}},{"id":"sd-bacier-sup","nom":"Bagues acier – offsetting sup.","slot":"bague_acier_sup","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":11500,"tonnes":736000}},{"id":"sd-bteflon-sup","nom":"Bagues téflon – offsetting sup.","slot":"bague_teflon_sup","mode":"heures","seuilVigilance":1300,"seuilRemplacement":1500,"ref":{"date":"2026-01-05","heures":13650,"tonnes":873600}},{"id":"sd-bacier-inf","nom":"Bagues acier – offsetting inf.","slot":"bague_acier_inf","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":12450,"tonnes":796800}},{"id":"sd-bteflon-inf","nom":"Bagues téflon – offsetting inf.","slot":"bague_teflon_inf","mode":"heures","seuilVigilance":1300,"seuilRemplacement":1500,"ref":{"date":"2026-01-05","heures":12900,"tonnes":825600}},{"id":"sd-gav1","nom":"Galet porteur avant 1 (côté piste)","slot":"galet_av1","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"sd-gav2","nom":"Galet porteur avant 2 (côté piste)","slot":"galet_av2","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":11250,"tonnes":720000}},{"id":"sd-gar1","nom":"Galet porteur arrière 1 (côté moteur)","slot":"galet_ar1","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":8150,"tonnes":521600}},{"id":"sd-gar2","nom":"Galet porteur arrière 2 (côté moteur)","slot":"galet_ar2","mode":"heures","seuilVigilance":9000,"seuilRemplacement":10000,"ref":{"date":"2026-01-05","heures":5050,"tonnes":323200}},{"id":"sd-rail-piste","nom":"Rail côté piste","slot":"rail_piste","mode":"heures","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-rail-moteur","nom":"Rail côté moteur","slot":"rail_moteur","mode":"heures","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-cremaillere","nom":"Crémaillère (rail côté moteur)","slot":"cremaillere","mode":"heures","seuilVigilance":27000,"seuilRemplacement":30000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}}]}],"journal":[],"schema":7};
       const LS_KEY = "gmao-ligne-db";
       const STATUS_TXT = {
         ok: "OK",
@@ -950,7 +950,9 @@
           label: "Centrale hydraulique",
           slots: {
             filtre: "Filtre",
-            pompe: "Pompe",
+            pompe_1: "Pompe 1",
+            pompe_2: "Pompe 2",
+            pompe_3: "Pompe 3",
             vidange: "Réservoir / vidange",
           },
         },
@@ -1248,6 +1250,25 @@
             d._migrated = true;
           });
           d.schema = 6;
+        }
+        if (d.schema < 7) {
+          // v7 : centrale hydraulique enfournement = 3 pompes
+          const today_ = new Date().toISOString().slice(0, 10);
+          d.equipements.forEach((e) => {
+            if (e.type !== "hydraulique" || e.organes.some((o) => o.slot === "pompe_2")) return;
+            const old = e.organes.find((o) => o.slot === "pompe");
+            const tpl = old || { mode: "heures", seuilVigilance: 18000, seuilRemplacement: 20000 };
+            if (old) { old.slot = "pompe_1"; if (old.nom === "Pompe") old.nom = "Pompe 1"; }
+            const ref = { date: today_, heures: +e.compteurs.heures || 0, tonnes: +e.compteurs.tonnes || 0 };
+            const at = old ? e.organes.indexOf(old) + 1 : e.organes.length;
+            const add = (k) => ({ id: e.id + "-pompe" + k, nom: "Pompe " + k, slot: "pompe_" + k, mode: tpl.mode,
+              seuilVigilance: tpl.seuilVigilance, seuilRemplacement: tpl.seuilRemplacement, ref: Object.assign({}, ref) });
+            e.organes.splice(at, 0, ...(old ? [] : [add(1)]), add(2), add(3));
+            d.journal.push({ id: "j-" + Math.random().toString(36).slice(2, 8), ts: new Date().toISOString(), type: "config", date: today_,
+              eqId: e.id, eqNom: e.nom, commentaire: "Passage à 3 pompes (pompes 2 et 3 : suivi démarré à zéro)", heures: e.compteurs.heures, tonnes: e.compteurs.tonnes });
+            d._migrated = true;
+          });
+          d.schema = 7;
         }
         return d;
       }
@@ -1553,191 +1574,36 @@
         },
       };
       const DRAW = {
-        hydraulique: (
-          eq,
-          P,
-        ) => `<svg viewBox="0 0 420 250" role="img" aria-label="Centrale hydraulique">
-  <rect class="n" x="10" y="228" width="400" height="8" rx="2"/>
-  <path class="pipe" d="M240 196 H268"/>
-  <path class="pipe" d="M300 140 V104"/>
-  <path class="pipe" d="M282 56 H150 V122"/>
+        hydraulique: (eq, P) => {
+          // pompe verticale : moteur au-dessus, aspiration par le bas
+          const pump = (cx, k) => `<g ${P("pompe_" + k)}>
+      <rect class="f" x="${cx - 14}" y="150" width="28" height="36" rx="4"/>
+      <path class="o" d="M${cx - 7} 155 v26 M${cx} 155 v26 M${cx + 7} 155 v26"/>
+      <circle class="f" cx="${cx}" cy="206" r="18"/>
+      <circle class="o" cx="${cx}" cy="206" r="7"/>
+      <text x="${cx}" y="258" text-anchor="middle">POMPE ${k}</text></g>
+    <rect class="nd" x="${cx - 4}" y="186" width="8" height="4"/>`;
+          return `<svg viewBox="0 0 420 262" role="img" aria-label="Centrale hydraulique">
+  <rect class="n" x="10" y="240" width="400" height="8" rx="2"/>
+  <path class="pipe" d="M220 230 H370 M250 230 V222 M310 230 V222 M370 230 V222"/>
+  <path class="pipe" d="M268 206 H274 V136 M328 206 H334 V136 M388 206 H394 V136 M274 136 H394 M300 136 V104"/>
+  <path class="pipe" d="M282 56 H120 V112"/>
   <g ${P("vidange")}>
-    <rect class="f" x="30" y="120" width="210" height="104" rx="8"/>
-    <rect class="hl2" x="40" y="152" width="190" height="62" rx="4"/>
-    <path class="o" d="M40 152 q12 -6 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t22 0"/>
-    <rect class="f" x="196" y="222" width="18" height="12" rx="2"/>
-    <text class="on" x="135" y="140" text-anchor="middle">RÉSERVOIR · HUILE</text>
+    <rect class="f" x="20" y="110" width="200" height="126" rx="8"/>
+    <rect class="hl2" x="30" y="142" width="180" height="84" rx="4"/>
+    <path class="o" d="M30 142 q12 -6 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t12 0"/>
+    <rect class="f" x="176" y="234" width="18" height="10" rx="2"/>
+    <text class="on" x="120" y="130" text-anchor="middle">RÉSERVOIR · HUILE</text>
   </g>
-  <g ${P("pompe")}>
-    <rect class="f" x="334" y="178" width="66" height="36" rx="5"/>
-    <path class="o" d="M346 184 v24 M356 184 v24 M366 184 v24 M376 184 v24 M386 184 v24"/>
-    <circle class="f" cx="300" cy="196" r="34"/>
-    <circle class="o" cx="300" cy="196" r="14"/>
-    <path class="o" d="M300 182 v28 M286 196 h28 M290 186 l20 20 M310 186 l-20 20"/>
-    <text x="300" y="246" text-anchor="middle">POMPE</text>
-  </g>
+  ${pump(250, 1)}${pump(310, 2)}${pump(370, 3)}
   <g ${P("filtre")}>
     <rect class="n" x="274" y="20" width="52" height="12" rx="3"/>
     <rect class="f" x="282" y="30" width="36" height="76" rx="10"/>
     <path class="o" d="M290 42 v52 M300 42 v52 M310 42 v52"/>
-    <text x="340" y="70">FILTRE</text>
+    <text x="336" y="70">FILTRE</text>
   </g>
-</svg>`,
-        rouleaux: (eq, P, by) => {
-          const rs = by.rouleau || [];
-          const mot = !!(eq.options && eq.options.motorise);
-          const n = Math.max(rs.length, 1),
-            pitch = 380 / n,
-            w = Math.min(pitch * 0.62, 34);
-          // voie motorisée : un palier à chaque bout du rouleau et un motoréducteur en haut
-          const Y = mot ? { rail1: 48, rail2: 174, r0: 62, rh: 110, lab: 206, H: 232 } : { rail1: 36, rail2: 154, r0: 50, rh: 100, lab: 184, H: 200 };
-          let r = "";
-          rs.forEach((o, i) => {
-            const cx = 20 + pitch * i + pitch / 2,
-              s = status(eq, o);
-            const pw = Math.min(pitch * 0.8, 34), mw = Math.min(pitch * 0.7, 30);
-            const extra = mot
-              ? `<g class="mr"><title>Motoréducteur ${esc(o.nom)}</title>
-      <rect class="nd" x="${cx - mw / 2}" y="4" width="${mw}" height="24" rx="3"/>
-      <path class="o" d="M${cx - mw / 4} 8 v16 M${cx} 8 v16 M${cx + mw / 4} 8 v16"/>
-      <rect class="n" x="${cx - mw * 0.38}" y="28" width="${mw * 0.76}" height="12" rx="2"/>
-      <rect class="nd" x="${cx - 3}" y="40" width="6" height="6"/></g>
-      ${[44, 172].map((y) => `<g><title>Palier ${esc(o.nom)}</title><rect class="n" x="${cx - pw / 2}" y="${y}" width="${pw}" height="18" rx="3" style="stroke:var(--metal-dark)"/>
-      <circle class="nd" cx="${cx - pw / 2 + 4}" cy="${y + 9}" r="1.8"/><circle class="nd" cx="${cx + pw / 2 - 4}" cy="${y + 9}" r="1.8"/>
-      <circle class="nd" cx="${cx}" cy="${y + 9}" r="4"/></g>`).join("")}`
-              : `<rect class="nd" x="${cx - 4}" y="38" width="8" height="14" rx="2"/><rect class="nd" x="${cx - 4}" y="148" width="8" height="14" rx="2"/>`;
-            r += `${mot ? extra : ""}<g class="part st-${s}${o.id === selOrg ? " hl" : ""}" data-org="${o.id}"><title>${esc(o.nom + " : " + STATUS_TXT[s])}</title>
-      ${mot ? "" : extra}
-      <rect class="f" x="${cx - w / 2}" y="${Y.r0}" width="${w}" height="${Y.rh}" rx="${Math.min(w / 2, 8)}"/>
-      <rect class="hl2" x="${cx - w / 2 + 3}" y="${Y.r0 + 4}" width="${Math.max(w * 0.28, 2)}" height="${Y.rh - 8}" rx="2"/>
-      <text x="${cx}" y="${Y.lab}" text-anchor="middle">${esc(o.nom.replace(/^Rouleau\s*/i, ""))}</text></g>`;
-          });
-          const arrow = mot
-            ? `<path class="ln" d="M150 222 H270 M262 216 l10 6 -10 6"/><text x="140" y="226" text-anchor="end">sens produit</text>`
-            : `<path class="ln" d="M150 18 H270 M262 12 l10 6 -10 6"/><text x="140" y="22" text-anchor="end">sens produit</text>`;
-          return `<svg viewBox="0 0 420 ${Y.H}" role="img" aria-label="Voie à rouleaux">
-    ${arrow}
-    <rect class="n" x="10" y="${Y.rail1}" width="400" height="10" rx="3"/><rect class="n" x="10" y="${Y.rail2}" width="400" height="10" rx="3"/>
-    ${r || `<text x="210" y="${Y.r0 + Y.rh / 2}" text-anchor="middle">Aucun rouleau suivi</text>`}
-  </svg>`;
-        },
-        pousseuse: (eq, P) => {
-          // chaque bras est entraîné par son propre moteur + réducteur
-          const drive = (y, k) => `
-  <g ${P("moteur" + k)}>
-    <rect class="f" x="14" y="${y - 15}" width="44" height="30" rx="4"/>
-    <path class="o" d="M22 ${y - 10} v20 M29 ${y - 10} v20 M36 ${y - 10} v20 M43 ${y - 10} v20"/>
-    <text x="36" y="${y + 27}" text-anchor="middle" style="font-size:8px">MOTEUR</text>
-  </g>
-  <rect class="nd" x="58" y="${y - 4}" width="8" height="8"/>
-  <g ${P("reducteur" + k)}>
-    <rect class="f" x="66" y="${y - 20}" width="46" height="40" rx="4"/>
-    <circle class="o" cx="80" cy="${y}" r="7"/><circle class="o" cx="99" cy="${y}" r="10"/>
-    <text x="89" y="${y + 31}" text-anchor="middle" style="font-size:8px">RÉDUCTEUR</text>
-  </g>`;
-          // noix mécanique au milieu de chaque bras
-          const nut = (y, k) => `
-  <g ${P("noix" + k)}>
-    <path class="f" d="M218 ${y - 17} H242 L252 ${y} L242 ${y + 17} H218 L208 ${y} Z"/>
-    <path class="o" d="M218 ${y - 9} H242 M216 ${y - 3} H244 M216 ${y + 3} H244 M218 ${y + 9} H242"/>
-    <text x="230" y="${y + 30}" text-anchor="middle" style="font-size:8px">NOIX</text>
-  </g>`;
-          return `<svg viewBox="0 0 420 230" role="img" aria-label="Pousseuse">
-  <rect class="n" x="8" y="30" width="116" height="180" rx="6" opacity=".45"/>
-  <path class="ln" d="M368 115 H400 M392 109 l10 6 -10 6"/>
-  <rect class="n" x="372" y="40" width="40" height="150" rx="3" opacity=".55"/>
-  <text x="392" y="206" text-anchor="middle">charge</text>
-  ${drive(68, 1)}${drive(162, 2)}
-  <g ${P("bras1")}>
-    <rect class="f" x="112" y="58" width="232" height="20" rx="5"/>
-    <rect class="f" x="340" y="44" width="24" height="48" rx="4"/>
-    <rect class="hl2" x="118" y="61" width="216" height="5" rx="2"/>
-    <text class="on" x="165" y="72" text-anchor="middle">BRAS GAUCHE</text>
-  </g>
-  <g ${P("bras2")}>
-    <rect class="f" x="112" y="152" width="232" height="20" rx="5"/>
-    <rect class="f" x="340" y="138" width="24" height="48" rx="4"/>
-    <rect class="hl2" x="118" y="155" width="216" height="5" rx="2"/>
-    <text class="on" x="165" y="166" text-anchor="middle">BRAS DROIT</text>
-  </g>
-  ${nut(68, 1)}${nut(162, 2)}
 </svg>`;
         },
-        defourneuse: (eq, P) => {
-          const verin = (x, k) => `<g ${P("verin_" + k)}>
-    <rect class="f" x="${x}" y="34" width="30" height="40" rx="3"/>
-    <rect class="hl2" x="${x + 4}" y="38" width="6" height="32" rx="2"/>
-    <rect class="f" x="${x + 9}" y="74" width="12" height="16"/></g>`;
-          // galet + son moteur hydraulique (à droite, hors du bâti)
-          const galet = (y, k, label) => `<g ${P("galet_" + k)}>
-    <rect class="f" x="92" y="${y}" width="236" height="36" rx="14"/>
-    <rect class="hl2" x="100" y="${y + 5}" width="220" height="7" rx="3"/>
-    <text class="on" x="210" y="${y + 28}" text-anchor="middle">${label}</text></g>
-  <rect class="nd" x="380" y="${y + 14}" width="8" height="8"/>
-  <g ${P("moteur_" + k)}>
-    <rect class="f" x="388" y="${y + 2}" width="40" height="32" rx="5"/>
-    <circle class="o" cx="408" cy="${y + 18}" r="8"/>
-    <rect class="nd" x="398" y="${y - 6}" width="5" height="8"/><rect class="nd" x="413" y="${y - 6}" width="5" height="8"/>
-  </g>`;
-          return `<svg viewBox="0 0 440 260" role="img" aria-label="Défourneuse">
-  <rect class="n" x="40" y="20" width="340" height="14" rx="2"/>
-  <rect class="n" x="40" y="20" width="20" height="220" rx="2"/><rect class="n" x="360" y="20" width="20" height="220" rx="2"/>
-  <rect class="n" x="20" y="236" width="420" height="12" rx="2"/>
-  <text x="77" y="13" text-anchor="middle">VÉRIN CÔTÉ PISTE</text>
-  <text x="343" y="13" text-anchor="middle">VÉRIN CÔTÉ MOTEUR</text>
-  <rect class="n" x="60" y="90" width="32" height="40" rx="2"/><rect class="n" x="328" y="90" width="32" height="40" rx="2"/>
-  <rect class="n" x="60" y="144" width="32" height="40" rx="2"/><rect class="n" x="328" y="144" width="32" height="40" rx="2"/>
-  ${verin(62, 1)}${verin(328, 2)}
-  ${galet(92, "sup", "GALET SUPÉRIEUR")}
-  ${galet(146, "inf", "GALET INFÉRIEUR")}
-  <text x="408" y="200" text-anchor="middle" style="font-size:8px">MOTEURS</text>
-  <text x="408" y="210" text-anchor="middle" style="font-size:8px">HYDRAUL.</text>
-  <rect class="nd" x="201" y="128" width="18" height="18"/>
-  <text x="226" y="141">billette</text>
-  <path class="ln" d="M104 70 v16 M98 80 l6 8 6 -8 M316 70 v16 M310 80 l6 8 6 -8" />
-  <text x="210" y="214" text-anchor="middle">les vérins pressent le galet supérieur sur la billette</text>
-</svg>`;
-        },
-        tro0: (eq, P) => `<svg viewBox="0 0 420 260" role="img" aria-label="TRO-0">
-  <rect class="n" x="40" y="20" width="340" height="14" rx="2"/>
-  <rect class="n" x="40" y="20" width="20" height="220" rx="2"/><rect class="n" x="360" y="20" width="20" height="220" rx="2"/>
-  <rect class="n" x="20" y="236" width="380" height="12" rx="2"/>
-  <text x="77" y="13" text-anchor="middle">VÉRIN CÔTÉ PISTE</text>
-  <text x="343" y="13" text-anchor="middle">VÉRIN CÔTÉ MOTEUR</text>
-  <rect class="nd" x="176" y="42" width="68" height="20" rx="2"/>
-  <text class="on" x="210" y="56" text-anchor="middle">DISTRIB.</text>
-  <g ${P("flexible")}>
-    <path class="s" d="M176 52 C 140 52, 128 82, 92 62"/>
-    <path class="s" d="M244 52 C 280 52, 292 82, 328 62"/>
-    <text x="210" y="82" text-anchor="middle">FLEXIBLES</text>
-  </g>
-  <rect class="n" x="60" y="90" width="32" height="40" rx="2"/><rect class="n" x="328" y="90" width="32" height="40" rx="2"/>
-  <rect class="n" x="60" y="144" width="32" height="40" rx="2"/><rect class="n" x="328" y="144" width="32" height="40" rx="2"/>
-  <g ${P("verin_1")}>
-    <rect class="f" x="62" y="34" width="30" height="40" rx="3"/>
-    <rect class="hl2" x="66" y="38" width="6" height="32" rx="2"/>
-    <rect class="f" x="71" y="74" width="12" height="16"/>
-  </g>
-  <g ${P("verin_2")}>
-    <rect class="f" x="328" y="34" width="30" height="40" rx="3"/>
-    <rect class="hl2" x="332" y="38" width="6" height="32" rx="2"/>
-    <rect class="f" x="337" y="74" width="12" height="16"/>
-  </g>
-  <g ${P("galet_sup")}>
-    <rect class="f" x="92" y="92" width="236" height="36" rx="14"/>
-    <rect class="hl2" x="100" y="97" width="220" height="7" rx="3"/>
-    <text class="on" x="210" y="120" text-anchor="middle">GALET SUPÉRIEUR</text>
-  </g>
-  <g ${P("galet_inf")}>
-    <rect class="f" x="92" y="146" width="236" height="36" rx="14"/>
-    <rect class="hl2" x="100" y="151" width="220" height="7" rx="3"/>
-    <text class="on" x="210" y="174" text-anchor="middle">GALET INFÉRIEUR</text>
-  </g>
-  <rect class="nd" x="201" y="128" width="18" height="18"/>
-  <text x="226" y="141">billette</text>
-  <path class="ln" d="M104 70 v16 M98 80 l6 8 6 -8 M316 70 v16 M310 80 l6 8 6 -8" />
-  <text x="210" y="214" text-anchor="middle">les vérins appuient le galet supérieur sur la billette</text>
-</svg>`,
         nortek: (eq, P) => {
           // pompe : moteur à gauche, aspiration par le haut (cuve)
           const pump = (cx, slot, label) => `<g ${P(slot)}>

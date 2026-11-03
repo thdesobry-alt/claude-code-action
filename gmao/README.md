@@ -50,3 +50,7 @@ Chaque bras a son propre moteur, son propre réducteur et une noix mécanique au
 ## Défourneuse
 
 Galet supérieur et galet inférieur, deux vérins pneumatiques (côté piste / côté moteur) qui pressent le galet supérieur sur la billette, et un moteur hydraulique par galet. Une base existante reçoit ces 6 organes à l'ouverture, avec un suivi qui démarre à zéro.
+
+## Centrale hydraulique enfournement
+
+3 pompes (moteur au-dessus de chaque pompe), filtre et réservoir. Dans une base existante, l'ancienne pompe devient « Pompe 1 » (son usure est conservée) et les pompes 2 et 3 sont ajoutées avec un suivi qui démarre à zéro.

@@ -28,9 +28,9 @@
           }
         },
         {
-          "id": "ch-pompe",
-          "nom": "Pompe",
-          "slot": "pompe",
+          "id": "ch-pompe1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
           "mode": "heures",
           "seuilVigilance": 18000,
           "seuilRemplacement": 20000,
@@ -38,6 +38,32 @@
             "date": "2026-01-05",
             "heures": 0,
             "tonnes": 0
+          }
+        },
+        {
+          "id": "ch-pompe2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "heures",
+          "seuilVigilance": 18000,
+          "seuilRemplacement": 20000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 5250,
+            "tonnes": 336000
+          }
+        },
+        {
+          "id": "ch-pompe3",
+          "nom": "Pompe 3",
+          "slot": "pompe_3",
+          "mode": "heures",
+          "seuilVigilance": 18000,
+          "seuilRemplacement": 20000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 11250,
+            "tonnes": 720000
           }
         },
         {
@@ -840,5 +866,5 @@
     }
   ],
   "journal": [],
-  "schema": 6
+  "schema": 7
 }
