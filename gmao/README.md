@@ -38,3 +38,7 @@ Organes suivis en plus : rail côté piste, rail côté moteur, crémaillère (l
 ## Centrale Nortek
 
 Cuve de centrale, 2 pompes de fonctionnement (en bas à gauche) suivies du filtre avant envoi dans les coffrets, pompe de recirculation (en bas à droite) avec ses 2 filtres, et EV de retour à la bâche. Une base existante reçoit la centrale automatiquement à l'ouverture : elle prend les compteurs de la centrale hydraulique enfournement et son suivi démarre à zéro.
+
+## Voies à rouleaux motorisées
+
+La voie rouleaux enfournement est dessinée avec un palier à chaque bout de chaque rouleau et un motoréducteur en haut. C'est une option de l'équipement (« Modifier l'équipement » → « Voie à rouleaux motorisée »), qu'on peut aussi activer sur la voie de chargement. Paliers et motoréducteurs sont dessinés en gris : ils ne sont pas suivis pour l'instant.

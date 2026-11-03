@@ -404,7 +404,10 @@
             "tonnes": 871000
           }
         }
-      ]
+      ],
+      "options": {
+        "motorise": true
+      }
     },
     {
       "id": "pous",
@@ -758,5 +761,5 @@
     }
   ],
   "journal": [],
-  "schema": 4
+  "schema": 5
 }
