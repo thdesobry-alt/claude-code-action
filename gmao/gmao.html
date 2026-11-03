@@ -881,6 +881,15 @@
       .form input:focus, .form select:focus, .form textarea:focus, .inline-in:focus,
       .btn:focus-visible { outline: 2px solid var(--sand); outline-offset: 1px; }
       .seg label:has(input:checked) { background: var(--accent); color: var(--accent-text); }
+      .v3bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+      .seg2 { display: inline-flex; border: 1px solid var(--line); }
+      .seg2 button { border: 0; background: var(--panel); padding: 5px 14px; cursor: pointer; font-weight: 500; }
+      .seg2 button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
+      .draw svg.v3d { cursor: grab; touch-action: none; user-select: none; }
+      .draw svg.v3d:active { cursor: grabbing; }
+      svg text.lbl3 { font-size: 13px; fill: var(--accent); letter-spacing: .08em; paint-order: stroke; stroke: var(--draw-bg); stroke-width: 4px; }
+      svg .part.st-crit.f { animation: blink 1.2s ease-in-out infinite; }
+      @media (prefers-reduced-motion: reduce) { svg .part.st-crit.f { animation: none; } }
     </style>
   </head>
   <body>
@@ -1285,12 +1294,12 @@
       });
 
       /* ---------- dessins SVG ---------- */
-      function drawing(eq, small) {
+      function slotInfo(eq) {
         const by = {};
         eq.organes.forEach((o) => {
           (by[o.slot] = by[o.slot] || []).push(o);
         });
-        const P = (slot) => {
+        const S = (slot) => {
           const list = by[slot] || [];
           let s = "none";
           list.forEach((o) => {
@@ -1299,29 +1308,145 @@
           });
           const first = list[0];
           const tip = list.length
-            ? list
-                .map((o) => o.nom + " : " + STATUS_TXT[status(eq, o)])
-                .join("\n")
+            ? list.map((o) => o.nom + " : " + STATUS_TXT[status(eq, o)]).join("\n")
             : (TYPES[eq.type].slots[slot] || slot) + " : non suivi";
-          return `class="part st-${s}${first && first.id === selOrg ? " hl" : ""}"${first ? ` data-org="${first.id}"` : ""}><title>${esc(tip)}</title`;
+          return { cls: `part st-${s}${first && first.id === selOrg ? " hl" : ""}`, org: first && first.id, tip };
         };
+        return { by, S };
+      }
+      function drawing(eq, small) {
+        const { by, S } = slotInfo(eq);
+        const P = (slot) => {
+          const i = S(slot);
+          return `class="${i.cls}"${i.org ? ` data-org="${i.org}"` : ""}><title>${esc(i.tip)}</title`;
+        };
+        const has3d = !!DRAW3D[eq.type];
         const fn = DRAW[eq.type] || DRAW.generique;
-        const svg = fn(eq, P, by);
+        const svg = has3d && V3.on ? render3d(eq, S) : fn(eq, P, by);
+        const bar = has3d && !small
+          ? `<div class="v3bar noprint"><div class="seg2" role="group" aria-label="Type de vue">
+              <button type="button" data-v3="2d" aria-pressed="${!V3.on}">2D</button><button type="button" data-v3="3d" aria-pressed="${V3.on}">3D</button></div>
+              ${V3.on ? `<button type="button" class="btn sm" data-v3="piste">Vue côté piste</button><button type="button" class="btn sm" data-v3="moteur">Vue côté moteur</button>
+              <button type="button" class="btn sm" data-v3="l" aria-label="Tourner à gauche">⟲</button><button type="button" class="btn sm" data-v3="r" aria-label="Tourner à droite">⟳</button>
+              <span class="muted" style="font-size:12px">ou glissez sur le dessin pour tourner</span>` : ""}</div>`
+          : "";
         const known = TYPES[eq.type].slots;
-        const extra =
-          eq.type === "generique"
-            ? []
-            : eq.organes.filter((o) => !known[o.slot]);
+        const extra = eq.type === "generique" ? [] : eq.organes.filter((o) => !known[o.slot]);
         const chips = extra.length
           ? `<div class="chips" style="margin-top:6px">${extra
-              .map(
-                (o) =>
-                  `<span class="chip" data-org="${o.id}"><span class="dot ${status(eq, o)}"></span>${esc(o.nom)}</span>`,
-              )
+              .map((o) => `<span class="chip" data-org="${o.id}"><span class="dot ${status(eq, o)}"></span>${esc(o.nom)}</span>`)
               .join("")}</div>`
           : "";
-        return `<div class="draw" data-eq="${eq.id}">${svg}${small ? "" : chips}</div>${small && extra.length ? chips : ""}`;
+        return `${bar}<div class="draw" data-eq="${eq.id}">${svg}${small ? "" : chips}</div>${small && extra.length ? chips : ""}`;
       }
+      /* ---------- vue 3D (essai) : scène en volumes, projetée en SVG ----------
+         Axes : x = sens de la ligne, y = côté piste (y < 0) → côté moteur (y > 0), z = hauteur. */
+      const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+      const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+      const V3 = { on: lsGet("gmao-vue3d") === "1", yaw: -30, pitch: 26 };
+      let v3Dragged = false;
+      function box(x0, x1, y0, y1, z0, z1, slot, tone) {
+        const P = (x, y, z) => [x, y, z];
+        return [
+          { p: [P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], n: [0, 0, 1] },
+          { p: [P(x0, y0, z0), P(x0, y1, z0), P(x1, y1, z0), P(x1, y0, z0)], n: [0, 0, -1] },
+          { p: [P(x0, y0, z0), P(x1, y0, z0), P(x1, y0, z1), P(x0, y0, z1)], n: [0, -1, 0] },
+          { p: [P(x0, y1, z0), P(x0, y1, z1), P(x1, y1, z1), P(x1, y1, z0)], n: [0, 1, 0] },
+          { p: [P(x0, y0, z0), P(x0, y0, z1), P(x0, y1, z1), P(x0, y1, z0)], n: [-1, 0, 0] },
+          { p: [P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)], n: [1, 0, 0] },
+        ].map((f) => Object.assign(f, { slot, tone }));
+      }
+      function cyl(axis, cx, cy, cz, r, len, slot, tone, n = 16) {
+        const map = (a, h, rr) => {
+          const u = rr * Math.cos(a), v = rr * Math.sin(a);
+          return axis === "z" ? [cx + u, cy + v, cz + h] : axis === "x" ? [cx + h, cy + u, cz + v] : [cx + u, cy + h, cz + v];
+        };
+        const ax = axis === "z" ? [0, 0, 1] : axis === "x" ? [1, 0, 0] : [0, 1, 0];
+        const faces = [], h = len / 2, top = [], bot = [];
+        for (let i = 0; i < n; i++) {
+          const a0 = (i / n) * 2 * Math.PI, a1 = ((i + 1) / n) * 2 * Math.PI, am = (a0 + a1) / 2;
+          const c0 = map(am, 0, 0), nn = map(am, 0, 1).map((v, k) => v - c0[k]);
+          faces.push({ p: [map(a0, -h, r), map(a1, -h, r), map(a1, h, r), map(a0, h, r)], n: nn });
+          top.push(map(a0, h, r)); bot.unshift(map(a0, -h, r));
+        }
+        faces.push({ p: top, n: ax }, { p: bot, n: ax.map((v) => -v) });
+        return faces.map((f) => Object.assign(f, { slot, tone }));
+      }
+      function render3d(eq, S) {
+        const scene = DRAW3D[eq.type]();
+        const th = (V3.yaw * Math.PI) / 180, ph = (V3.pitch * Math.PI) / 180;
+        const c = Math.cos(th), s = Math.sin(th), cp = Math.cos(ph), sp = Math.sin(ph);
+        // écran : X à droite, Y vers le bas ; profondeur : grande = loin
+        const prj = ([x, y, z]) => { const X = x * c - y * s, Y = x * s + y * c; return [X, -z * cp - Y * sp, Y * cp - z * sp]; };
+        const L = [-0.35, -0.6, 0.72], ln = Math.hypot(...L);
+        const faces = [];
+        scene.faces.forEach((f) => {
+          const nX = f.n[0] * c - f.n[1] * s, nY = f.n[0] * s + f.n[1] * c, nz = f.n[2], nl = Math.hypot(nX, nY, nz) || 1;
+          if ((nY * cp - nz * sp) / nl >= -0.001) return; // face tournée vers l'arrière
+          const lam = Math.max(0, (nX * L[0] + nY * L[1] + nz * L[2]) / (nl * ln));
+          const pts = f.p.map(prj);
+          faces.push({ f, lam, d: pts.reduce((a, q) => a + q[2], 0) / pts.length, pts });
+        });
+        faces.sort((a, b) => b.d - a.d);
+        const pt = (q) => q[0].toFixed(1) + "," + q[1].toFixed(1);
+        let out = "";
+        // sol et repères côté piste / côté moteur
+        const floor = [[-260, -150, 0], [260, -150, 0], [260, 150, 0], [-260, 150, 0]].map(prj);
+        out += `<polygon points="${floor.map(pt).join(" ")}" class="n" style="opacity:.35"/>`;
+        faces.forEach(({ f, lam, pts }) => {
+          const P = pts.map(pt).join(" ");
+          if (f.slot) {
+            const i = S(f.slot);
+            out += `<polygon points="${P}" class="${i.cls} f"${i.org ? ` data-org="${i.org}"` : ""}><title>${esc(i.tip)}</title></polygon>`;
+          } else out += `<polygon points="${P}" class="${f.tone || "n"}"/>`;
+          const o = (1 - lam) * 0.45;
+          if (o > 0.03) out += `<polygon points="${P}" fill="#000" fill-opacity="${o.toFixed(2)}" pointer-events="none"/>`;
+        });
+        // repères dessinés par-dessus, pour rester lisibles quel que soit l'angle
+        [["CÔTÉ PISTE", -230, -150], ["CÔTÉ MOTEUR", 230, 150]].forEach(([t, x, y]) => {
+          const q = prj([x, y, 0]);
+          out += `<text x="${q[0].toFixed(1)}" y="${(q[1] + 4).toFixed(1)}" text-anchor="middle" class="lbl3">${t}</text>`;
+        });
+        return `<svg class="v3d" viewBox="${scene.view}" role="img" aria-label="${esc(eq.nom)} en 3D">${out}</svg>`;
+      }
+      const DRAW3D = {
+        soudeuse: () => {
+          let F = [];
+          const add = (a) => (F = F.concat(a));
+          // rails et galets porteurs (avant = côté piste, arrière = côté moteur)
+          add(box(-245, 245, -86, -72, 0, 4, null, "nd"));
+          add(box(-245, 245, 72, 86, 0, 4, null, "nd"));
+          [[-160, -79, "galet_av1"], [160, -79, "galet_av2"], [-160, 79, "galet_ar1"], [160, 79, "galet_ar2"]].forEach(([x, y, sl]) => {
+            add(cyl("y", x, y, 24, 20, 14, sl));
+            add(box(x - 5, x + 5, y < 0 ? -72 : 62, y < 0 ? -62 : 72, 19, 29, null));
+          });
+          add(box(-222, 222, -62, 62, 44, 58, null)); // châssis
+          add(box(-240, 240, -7, 7, 134, 142, null, "nd")); // bande / billette
+          [-95, 95].forEach((cx) => {
+            add(box(cx - 28, cx + 28, -28, 28, 58, 104, null)); // socle
+            add(box(cx - 55, cx + 55, -45, 45, 104, 134, "mors"));
+            add(box(cx - 55, cx + 55, -45, 45, 142, 172, "mors"));
+            add(cyl("z", cx, 0, 180, 6, 16, "verin_mors"));
+            add(cyl("z", cx, 0, 214, 17, 52, "verin_mors"));
+            add(box(cx - 52, cx + 52, -42, 42, 240, 248, null)); // plaque support
+            add(box(cx - 48, cx - 42, -6, 6, 172, 240, null)); add(box(cx + 42, cx + 48, -6, 6, 172, 240, null)); // barres de courant
+            add(box(cx - 46, cx + 46, -40, 40, 248, 304, "transfo"));
+          });
+          // vérins offsetting avec une bague acier + téflon à chaque bout
+          const offset = (z, pos, xEdge) => {
+            add(box(-xEdge, -70, -4, 4, z - 4, z + 4, null)); add(box(70, xEdge, -4, 4, z - 4, z + 4, null));
+            add(cyl("x", -20, 0, z, 11, 60, "offset_" + pos));
+            add(cyl("x", 30, 0, z, 5, 40, "offset_" + pos));
+            [-60, 60].forEach((x) => {
+              add(cyl("y", x, 0, z, 10, 16, "bague_acier_" + pos));
+              add(cyl("y", x, 0, z, 5.5, 20, "bague_teflon_" + pos, null, 12));
+            });
+          };
+          offset(214, "sup", 78);
+          offset(82, "inf", 67);
+          return { faces: F, view: "-280 -350 560 495" };
+        },
+      };
       const DRAW = {
         hydraulique: (
           eq,
@@ -1462,22 +1587,24 @@
 </svg>`,
         soudeuse: (eq, P) => {
           const clamp = (cx) => `
+    <g ${P("transfo")}>
+      <rect class="f" x="${cx - 46}" y="6" width="92" height="52" rx="5"/>
+      <path class="o" d="M${cx - 24} 13 c8 0 8 7 0 7 c8 0 8 7 0 7 c8 0 8 7 0 7 M${cx + 24} 13 c-8 0 -8 7 0 7 c-8 0 -8 7 0 7 c-8 0 -8 7 0 7 M${cx - 6} 11 v26 M${cx + 6} 11 v26"/>
+      <text class="on" x="${cx}" y="52" text-anchor="middle">TRANSFO</text>
+    </g>
+    <rect class="n" x="${cx - 50}" y="58" width="100" height="8"/>
+    <rect class="n" x="${cx - 46}" y="66" width="6" height="66"/><rect class="n" x="${cx + 40}" y="66" width="6" height="66"/>
     <g ${P("verin_mors")}>
-      <rect class="f" x="${cx - 17}" y="28" width="34" height="50" rx="5"/>
-      <rect class="hl2" x="${cx - 13}" y="32" width="7" height="42" rx="2"/>
-      <rect class="f" x="${cx - 6}" y="78" width="12" height="24"/>
+      <rect class="f" x="${cx - 17}" y="66" width="34" height="46" rx="5"/>
+      <rect class="hl2" x="${cx - 13}" y="70" width="7" height="38" rx="2"/>
+      <rect class="f" x="${cx - 6}" y="112" width="12" height="20"/>
     </g>
     <g ${P("mors")}>
-      <rect class="f" x="${cx - 62}" y="102" width="124" height="22" rx="3"/>
-      <rect class="f" x="${cx - 62}" y="140" width="124" height="22" rx="3"/>
-      <rect class="hl2" x="${cx - 58}" y="105" width="116" height="5" rx="2"/>
+      <rect class="f" x="${cx - 62}" y="132" width="124" height="22" rx="3"/>
+      <rect class="f" x="${cx - 62}" y="168" width="124" height="22" rx="3"/>
+      <rect class="hl2" x="${cx - 58}" y="135" width="116" height="5" rx="2"/>
     </g>
-    <rect class="n" x="${cx - 6}" y="162" width="12" height="36"/>
-    <g ${P("transfo")}>
-      <rect class="f" x="${cx - 46}" y="198" width="92" height="56" rx="5"/>
-      <path class="o" d="M${cx - 24} 206 c8 0 8 7 0 7 c8 0 8 7 0 7 c8 0 8 7 0 7 M${cx + 24} 206 c-8 0 -8 7 0 7 c-8 0 -8 7 0 7 c-8 0 -8 7 0 7 M${cx - 6} 204 v26 M${cx + 6} 204 v26"/>
-      <text class="on" x="${cx}" y="248" text-anchor="middle">TRANSFO</text>
-    </g>`;
+    <rect class="n" x="${cx - 8}" y="190" width="16" height="100"/>`;
           // œil de vérin : bague acier (anneau extérieur) + bague téflon (centre)
           const eye = (cx, cy, pos) => `
     <g ${P("bague_acier_" + pos)}><circle class="s" cx="${cx}" cy="${cy}" r="10" style="stroke-width:5"/></g>
@@ -1490,23 +1617,23 @@
       <rect class="f" x="240" y="${y - 5}" width="28" height="10" rx="2"/>
       <text x="230" y="${ly}" text-anchor="middle">${label}</text>
     </g>${eye(180, y, pos)}${eye(280, y, pos)}`;
-          const wheel = (cx, slot) => `<g ${P(slot)}><circle class="f" cx="${cx}" cy="290" r="15"/><circle class="o" cx="${cx}" cy="290" r="5"/></g>`;
-          return `<svg viewBox="0 0 460 336" role="img" aria-label="Soudeuse">
-  <rect class="n" x="190" y="128" width="80" height="8" opacity=".6"/>
-  <rect class="nd" x="0" y="129" width="460" height="6" opacity=".55"/>
-  <text x="230" y="124" text-anchor="middle">bande</text>
+          const wheel = (cx, slot) => `<g ${P(slot)}><circle class="f" cx="${cx}" cy="318" r="15"/><circle class="o" cx="${cx}" cy="318" r="5"/></g>`;
+          return `<svg viewBox="0 0 460 364" role="img" aria-label="Soudeuse">
+  <rect class="n" x="190" y="158" width="80" height="6" opacity=".6"/>
+  <rect class="nd" x="0" y="158" width="460" height="6" opacity=".55"/>
+  <text x="230" y="152" text-anchor="middle">bande</text>
   ${clamp(118)}${clamp(342)}
-  <rect class="n" x="135" y="52" width="37" height="6"/><rect class="n" x="288" y="52" width="37" height="6"/>
-  <rect class="n" x="164" y="222" width="8" height="6"/><rect class="n" x="288" y="222" width="8" height="6"/>
-  ${offset(55, "sup", "OFFSET SUP.", 36)}
-  ${offset(225, "inf", "OFFSET INF.", 252)}
-  <text x="230" y="86" text-anchor="middle" style="font-size:8.5px">bagues : acier = anneau · téflon = centre</text>
-  <rect class="n" x="30" y="262" width="400" height="12" rx="2"/>
-  <rect class="n" x="10" y="305" width="440" height="6" rx="2"/>
+  <rect class="n" x="135" y="86" width="35" height="6"/><rect class="n" x="290" y="86" width="35" height="6"/>
+  <rect class="n" x="126" y="237" width="44" height="6"/><rect class="n" x="290" y="237" width="44" height="6"/>
+  ${offset(89, "sup", "OFFSET SUP.", 72)}
+  ${offset(240, "inf", "OFFSET INF.", 266)}
+  <text x="230" y="118" text-anchor="middle" style="font-size:8.5px">bagues : acier = anneau · téflon = centre</text>
+  <text x="96" y="92" text-anchor="end">VÉRIN MORS</text><text x="364" y="92">VÉRIN MORS</text>
+  <rect class="n" x="30" y="290" width="400" height="12" rx="2"/>
+  <rect class="n" x="10" y="333" width="440" height="6" rx="2"/>
   ${wheel(75, "galet_av1")}${wheel(125, "galet_av2")}${wheel(335, "galet_ar1")}${wheel(385, "galet_ar2")}
-  <text x="100" y="328" text-anchor="middle">AVANT · CÔTÉ PISTE</text>
-  <text x="360" y="328" text-anchor="middle">ARRIÈRE · CÔTÉ MOTEUR</text>
-  <text x="118" y="20" text-anchor="middle">VÉRIN MORS</text><text x="342" y="20" text-anchor="middle">VÉRIN MORS</text>
+  <text x="100" y="356" text-anchor="middle">AVANT · CÔTÉ PISTE</text>
+  <text x="360" y="356" text-anchor="middle">ARRIÈRE · CÔTÉ MOTEUR</text>
 </svg>`;
         },
         generique: (eq) => {
@@ -1760,13 +1887,42 @@
         if (r.page === "eq") {
           const e = findEq(r.id);
           if (!e) return;
-          m.querySelectorAll(".draw [data-org], .chip[data-org]").forEach(
+          m.querySelectorAll(".draw, .chip[data-org]").forEach(
             (el) =>
               (el.onclick = (ev) => {
+                if (v3Dragged) return;
+                const t = ev.target.closest("[data-org]");
+                if (!t) return;
                 ev.stopPropagation();
-                ficheOrgane(e, el.dataset.org);
+                ficheOrgane(e, t.dataset.org);
               }),
           );
+          m.querySelectorAll("[data-v3]").forEach(
+            (b) =>
+              (b.onclick = () => {
+                const k = b.dataset.v3;
+                if (k === "2d" || k === "3d") { V3.on = k === "3d"; lsSet("gmao-vue3d", V3.on ? "1" : "0"); }
+                else if (k === "piste") V3.yaw = -30;
+                else if (k === "moteur") V3.yaw = 150;
+                else V3.yaw += k === "l" ? -30 : 30;
+                renderMain();
+              }),
+          );
+          const d3 = m.querySelector(".draw");
+          if (d3 && V3.on && DRAW3D[e.type]) {
+            let x0 = null, y0 = 0, yaw0 = 0, p0 = 0;
+            d3.onpointerdown = (ev) => { x0 = ev.clientX; y0 = ev.clientY; yaw0 = V3.yaw; p0 = V3.pitch; v3Dragged = false; };
+            d3.onpointermove = (ev) => {
+              if (x0 === null) return;
+              const dx = ev.clientX - x0, dy = ev.clientY - y0;
+              if (!v3Dragged && Math.hypot(dx, dy) < 5) return;
+              if (!v3Dragged) { v3Dragged = true; try { d3.setPointerCapture(ev.pointerId); } catch (er) {} }
+              V3.yaw = yaw0 + dx * 0.5;
+              V3.pitch = Math.max(5, Math.min(70, p0 + dy * 0.3));
+              d3.querySelector("svg").outerHTML = render3d(e, slotInfo(e).S);
+            };
+            d3.onpointerup = d3.onpointercancel = () => { x0 = null; setTimeout(() => (v3Dragged = false), 0); };
+          }
           m.querySelectorAll("tr[data-org]").forEach(
             (el) => (el.onclick = () => ficheOrgane(e, el.dataset.org)),
           );

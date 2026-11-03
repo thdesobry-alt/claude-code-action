@@ -28,3 +28,7 @@ Les seuils et compteurs livrés dans `gmao-data.json` sont des **exemples** : re
 - **Soudeuse** : bagues acier et téflon suivies séparément pour le vérin offsetting supérieur et pour l'inférieur (une bague à chaque bout du vérin), 4 galets porteurs (2 à l'avant côté piste, 2 à l'arrière côté moteur).
 
 Une base créée avec l'ancien modèle est convertie automatiquement à l'ouverture : les organes dédoublés gardent l'usure de l'organe d'origine, et les galets porteurs démarrent à zéro. Enregistrez ensuite le fichier.
+
+## Vue 3D (essai)
+
+Sur la soudeuse, le bouton 2D / 3D au-dessus du dessin affiche une maquette en volume. « Vue côté piste » et « Vue côté moteur » orientent la machine, ⟲ / ⟳ la font tourner, et on peut aussi glisser sur le dessin. Les couleurs d'état et le clic sur une pièce fonctionnent comme en 2D. Le choix 2D / 3D est mémorisé dans le navigateur.
