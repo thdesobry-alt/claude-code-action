@@ -34,3 +34,7 @@ Une base créée avec l'ancien modèle est convertie automatiquement à l'ouvert
 La soudeuse est dessinée uniquement en 3D. « Vue côté piste » et « Vue côté moteur » orientent la machine, ⟲ / ⟳ la font tourner, et on peut aussi glisser sur le dessin. Les couleurs d'état et le clic sur une pièce fonctionnent comme sur les autres dessins.
 
 Organes suivis en plus : rail côté piste, rail côté moteur, crémaillère (le long du rail côté moteur, elle fait avancer la soudeuse). Une base existante les reçoit automatiquement à l'ouverture, avec un suivi qui démarre à zéro.
+
+## Centrale Nortek
+
+Cuve de centrale, 2 pompes de fonctionnement (en bas à gauche) suivies du filtre avant envoi dans les coffrets, pompe de recirculation (en bas à droite) avec ses 2 filtres, et EV de retour à la bâche. Une base existante reçoit la centrale automatiquement à l'ouverture : elle prend les compteurs de la centrale hydraulique enfournement et son suivi démarre à zéro.
