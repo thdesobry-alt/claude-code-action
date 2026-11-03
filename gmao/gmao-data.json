@@ -1253,8 +1253,131 @@
           }
         }
       ]
+    },
+    {
+      "id": "ch-curseur",
+      "nom": "Centrale hydraulique curseur",
+      "zone": "Curseur",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 1
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-curseur-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 792000
+          }
+        },
+        {
+          "id": "ch-curseur-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "ch-curseur-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        }
+      ]
+    },
+    {
+      "id": "curseur",
+      "nom": "Curseur",
+      "zone": "Curseur",
+      "type": "curseur",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "curseur-verin_separateur",
+          "nom": "Vérin séparateur",
+          "slot": "verin_separateur",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "curseur-verin_deviateur",
+          "nom": "Vérin déviateur",
+          "slot": "verin_deviateur",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 302000
+          }
+        },
+        {
+          "id": "curseur-verin_pneu",
+          "nom": "Vérin pneumatique curseur",
+          "slot": "verin_pneu",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "curseur-verin_hydro",
+          "nom": "Vérin hydraulique curseur",
+          "slot": "verin_hydro",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        }
+      ]
     }
   ],
   "journal": [],
-  "schema": 9
+  "schema": 10
 }

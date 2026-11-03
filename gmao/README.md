@@ -83,3 +83,10 @@ Chaque organe se remplace soit **à la tonne** (seuils de vigilance et de rempla
 - 🔴 rouge si cet arrêt est passé sans que le remplacement soit déclaré.
 
 Le choix se fait dans la fiche de l'organe (✏️) ou sur la page 🎚 Seuils. À la déclaration d'un remplacement, on peut choisir l'arrêt technique pendant lequel il a été fait.
+
+## Curseur et centrale hydraulique curseur
+
+- **Curseur** : vérin séparateur, vérin déviateur, vérin pneumatique curseur et vérin hydraulique curseur.
+- **Centrale hydraulique curseur** : même dessin que la centrale d'enfournement (réservoir, filtre, pompes). Le nombre de pompes (1 à 3) se règle dans « Modifier l'équipement » ; il est à 1 par défaut.
+
+Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi qui démarre à zéro.
