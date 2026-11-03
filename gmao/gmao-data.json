@@ -352,9 +352,22 @@
       },
       "organes": [
         {
-          "id": "tro-galet",
-          "nom": "Galets",
-          "slot": "galet",
+          "id": "tro-gsup",
+          "nom": "Galet supérieur",
+          "slot": "galet_sup",
+          "mode": "heures",
+          "seuilVigilance": 2700,
+          "seuilRemplacement": 3000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 11850,
+            "tonnes": 758400
+          }
+        },
+        {
+          "id": "tro-ginf",
+          "nom": "Galet inférieur",
+          "slot": "galet_inf",
           "mode": "heures",
           "seuilVigilance": 2700,
           "seuilRemplacement": 3000,
@@ -365,9 +378,9 @@
           }
         },
         {
-          "id": "tro-verin",
-          "nom": "Vérin pneumatique",
-          "slot": "verin",
+          "id": "tro-verin1",
+          "nom": "Vérin pneumatique côté piste",
+          "slot": "verin_1",
           "mode": "heures",
           "seuilVigilance": 7000,
           "seuilRemplacement": 8000,
@@ -375,6 +388,19 @@
             "date": "2026-01-05",
             "heures": 6950,
             "tonnes": 444800
+          }
+        },
+        {
+          "id": "tro-verin2",
+          "nom": "Vérin pneumatique côté moteur",
+          "slot": "verin_2",
+          "mode": "heures",
+          "seuilVigilance": 7000,
+          "seuilRemplacement": 8000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 10150,
+            "tonnes": 649600
           }
         },
         {
@@ -469,9 +495,9 @@
           }
         },
         {
-          "id": "sd-bacier",
-          "nom": "Bagues d'usure acier",
-          "slot": "bague_acier",
+          "id": "sd-bacier-sup",
+          "nom": "Bagues acier – offsetting sup.",
+          "slot": "bague_acier_sup",
           "mode": "heures",
           "seuilVigilance": 2700,
           "seuilRemplacement": 3000,
@@ -482,9 +508,9 @@
           }
         },
         {
-          "id": "sd-bteflon",
-          "nom": "Bagues d'usure téflon",
-          "slot": "bague_teflon",
+          "id": "sd-bteflon-sup",
+          "nom": "Bagues téflon – offsetting sup.",
+          "slot": "bague_teflon_sup",
           "mode": "heures",
           "seuilVigilance": 1300,
           "seuilRemplacement": 1500,
@@ -493,9 +519,88 @@
             "heures": 13650,
             "tonnes": 873600
           }
+        },
+        {
+          "id": "sd-bacier-inf",
+          "nom": "Bagues acier – offsetting inf.",
+          "slot": "bague_acier_inf",
+          "mode": "heures",
+          "seuilVigilance": 2700,
+          "seuilRemplacement": 3000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 12450,
+            "tonnes": 796800
+          }
+        },
+        {
+          "id": "sd-bteflon-inf",
+          "nom": "Bagues téflon – offsetting inf.",
+          "slot": "bague_teflon_inf",
+          "mode": "heures",
+          "seuilVigilance": 1300,
+          "seuilRemplacement": 1500,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 12900,
+            "tonnes": 825600
+          }
+        },
+        {
+          "id": "sd-gav1",
+          "nom": "Galet porteur avant 1 (côté piste)",
+          "slot": "galet_av1",
+          "mode": "heures",
+          "seuilVigilance": 9000,
+          "seuilRemplacement": 10000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 11250,
+            "tonnes": 720000
+          }
+        },
+        {
+          "id": "sd-gav2",
+          "nom": "Galet porteur avant 2 (côté piste)",
+          "slot": "galet_av2",
+          "mode": "heures",
+          "seuilVigilance": 9000,
+          "seuilRemplacement": 10000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 11250,
+            "tonnes": 720000
+          }
+        },
+        {
+          "id": "sd-gar1",
+          "nom": "Galet porteur arrière 1 (côté moteur)",
+          "slot": "galet_ar1",
+          "mode": "heures",
+          "seuilVigilance": 9000,
+          "seuilRemplacement": 10000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 8150,
+            "tonnes": 521600
+          }
+        },
+        {
+          "id": "sd-gar2",
+          "nom": "Galet porteur arrière 2 (côté moteur)",
+          "slot": "galet_ar2",
+          "mode": "heures",
+          "seuilVigilance": 9000,
+          "seuilRemplacement": 10000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 5050,
+            "tonnes": 323200
+          }
         }
       ]
     }
   ],
-  "journal": []
+  "journal": [],
+  "schema": 2
 }
