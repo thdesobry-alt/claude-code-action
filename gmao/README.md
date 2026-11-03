@@ -45,4 +45,4 @@ La voie rouleaux enfournement est dessinée avec un palier à chaque bout de cha
 
 ## Pousseuse
 
-Chaque bras a son propre moteur et son propre réducteur sur le dessin. Ils apparaissent en gris (« non suivi ») tant qu'aucun organe ne leur est rattaché : pour les suivre, « Ajouter un organe » et choisir l'emplacement « Moteur bras gauche », « Réducteur bras droit », etc.
+Chaque bras a son propre moteur, son propre réducteur et une noix mécanique au milieu du bras sur le dessin. Ils apparaissent en gris (« non suivi ») tant qu'aucun organe ne leur est rattaché : pour les suivre, « Ajouter un organe » et choisir l'emplacement « Moteur bras gauche », « Réducteur bras droit », « Noix mécanique bras gauche », etc.

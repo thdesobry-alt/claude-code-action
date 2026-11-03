@@ -980,6 +980,8 @@
             reducteur1: "Réducteur bras gauche",
             moteur2: "Moteur bras droit",
             reducteur2: "Réducteur bras droit",
+            noix1: "Noix mécanique bras gauche",
+            noix2: "Noix mécanique bras droit",
           },
         },
         defourneuse: {
@@ -1608,6 +1610,13 @@
     <circle class="o" cx="80" cy="${y}" r="7"/><circle class="o" cx="99" cy="${y}" r="10"/>
     <text x="89" y="${y + 31}" text-anchor="middle" style="font-size:8px">RÉDUCTEUR</text>
   </g>`;
+          // noix mécanique au milieu de chaque bras
+          const nut = (y, k) => `
+  <g ${P("noix" + k)}>
+    <path class="f" d="M218 ${y - 17} H242 L252 ${y} L242 ${y + 17} H218 L208 ${y} Z"/>
+    <path class="o" d="M218 ${y - 9} H242 M216 ${y - 3} H244 M216 ${y + 3} H244 M218 ${y + 9} H242"/>
+    <text x="230" y="${y + 30}" text-anchor="middle" style="font-size:8px">NOIX</text>
+  </g>`;
           return `<svg viewBox="0 0 420 230" role="img" aria-label="Pousseuse">
   <rect class="n" x="8" y="30" width="116" height="180" rx="6" opacity=".45"/>
   <path class="ln" d="M368 115 H400 M392 109 l10 6 -10 6"/>
@@ -1618,14 +1627,15 @@
     <rect class="f" x="112" y="58" width="232" height="20" rx="5"/>
     <rect class="f" x="340" y="44" width="24" height="48" rx="4"/>
     <rect class="hl2" x="118" y="61" width="216" height="5" rx="2"/>
-    <text class="on" x="230" y="72" text-anchor="middle">BRAS GAUCHE</text>
+    <text class="on" x="165" y="72" text-anchor="middle">BRAS GAUCHE</text>
   </g>
   <g ${P("bras2")}>
     <rect class="f" x="112" y="152" width="232" height="20" rx="5"/>
     <rect class="f" x="340" y="138" width="24" height="48" rx="4"/>
     <rect class="hl2" x="118" y="155" width="216" height="5" rx="2"/>
-    <text class="on" x="230" y="166" text-anchor="middle">BRAS DROIT</text>
+    <text class="on" x="165" y="166" text-anchor="middle">BRAS DROIT</text>
   </g>
+  ${nut(68, 1)}${nut(162, 2)}
 </svg>`;
         },
         defourneuse: (
