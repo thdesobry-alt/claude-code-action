@@ -68,3 +68,15 @@ Si la base n'est pas joignable, la GMAO utilise la dernière copie lue (gardée 
 ## Suivi à la tonne uniquement
 
 Le compteur d'heures a été supprimé. À l'ouverture d'une base qui contenait des organes suivis en heures, leurs seuils sont convertis en tonnes avec une cadence moyenne de 85 t/h (ex. 2 000 h → 170 000 t), et une ligne est ajoutée au journal. Ces seuils convertis sont à vérifier sur la page 🎚 Seuils.
+
+## Arrêts techniques
+
+Page « 🛠 Arrêts techniques » : ajouter, modifier ou supprimer les arrêts (date de début, fin facultative, libellé) et régler le délai de vigilance (30 jours par défaut). Pour chaque arrêt à venir, la page liste les organes à remplacer.
+
+Chaque organe se remplace soit **à la tonne** (seuils de vigilance et de remplacement en tonnes), soit **aux arrêts techniques** : « remplacer tous les N arrêts » (1 = à chaque arrêt, 2 = un arrêt sur deux…). Pour un organe aux arrêts :
+
+- les arrêts comptés sont ceux passés depuis la date de son dernier remplacement (un arrêt le jour même du remplacement ne compte pas) ;
+- 🟠 orange quand l'arrêt où il doit être remplacé arrive dans le délai de vigilance ;
+- 🔴 rouge si cet arrêt est passé sans que le remplacement soit déclaré.
+
+Le choix se fait dans la fiche de l'organe (✏️) ou sur la page 🎚 Seuils. À la déclaration d'un remplacement, on peut choisir l'arrêt technique pendant lequel il a été fait.

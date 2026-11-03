@@ -947,7 +947,7 @@
         none: "Non suivi",
       };
       const RANK = { none: 0, ok: 1, warn: 2, crit: 3 };
-      const UNIT = { heures: "h", tonnes: "t" };
+      const UNIT = { heures: "h", tonnes: "t", arrets: "arrêt(s)" };
       // cadence moyenne du laminoir, utilisée une seule fois pour convertir les anciens seuils en heures
       const T_PAR_H = 85;
 
@@ -1080,6 +1080,7 @@
 
       /* ---------- calculs d'usure ---------- */
       function usage(eq, o) {
+        if (o.mode === "arrets") return arretsInfo(o).done;
         // tonnes : production des diamètres de l'équipement depuis la date du dernier remplacement
         if (o.mode === "tonnes" && prodActive())
           return Math.max(0, prodTonnes(eq, (o.ref || {}).date || "") + (+o.tonnesInit || 0));
@@ -1088,7 +1089,26 @@
           (+eq.compteurs[o.mode] || 0) - (+(o.ref || {})[o.mode] || 0),
         );
       }
+      /* ---------- arrêts techniques ----------
+         Un organe « aux arrêts » se remplace tous les N arrêts techniques. Les arrêts comptés sont
+         ceux passés (date <= aujourd'hui) après la date de son dernier remplacement. */
+      const joursAvant = (date) => Math.round((new Date(date + "T12:00:00") - new Date(today() + "T12:00:00")) / 864e5);
+      const arretsTries = () => [...db.arrets].sort((a, b) => a.date.localeCompare(b.date));
+      function arretsInfo(o) {
+        const ref = (o.ref && o.ref.date) || "", td = today(), all = arretsTries();
+        const done = all.filter((a) => a.date > ref && a.date <= td).length;
+        const fut = all.filter((a) => a.date > td);
+        const N = Math.max(1, Math.round(+o.seuilRemplacement || 1));
+        const k = N - done; // nombre d'arrêts restant avant le remplacement
+        return { done, N, k, due: k > 0 ? fut[k - 1] || null : null };
+      }
       function status(eq, o) {
+        if (o.mode === "arrets") {
+          const a = arretsInfo(o);
+          if (a.done >= a.N) return "crit";
+          if (a.k === 1 && a.due && joursAvant(a.due.date) <= db.arretsVigilanceJours) return "warn";
+          return "ok";
+        }
         const u = usage(eq, o),
           v = +o.seuilVigilance,
           r = +o.seuilRemplacement;
@@ -1374,6 +1394,9 @@
           );
         d.version = d.version || 1;
         d.journal = Array.isArray(d.journal) ? d.journal : [];
+        d.arrets = (Array.isArray(d.arrets) ? d.arrets : []).filter((a) => a && /^\d{4}-\d{2}-\d{2}$/.test(a.date));
+        d.arrets.forEach((a) => (a.id = a.id || uid("at")));
+        d.arretsVigilanceJours = +d.arretsVigilanceJours > 0 ? +d.arretsVigilanceJours : 30;
         d.production = Object.assign({ actif: false, mode: "fichier", url: "", fichier: "", laminoir: "" }, d.production);
         d.equipements.forEach((e) => {
           e.id = e.id || uid("eq");
@@ -1387,7 +1410,7 @@
           e.diametres = Array.isArray(e.diametres) ? e.diametres.map(Number).filter((x) => x > 0) : [];
           e.organes.forEach((o) => {
             o.id = o.id || uid("org");
-            o.mode = o.mode === "tonnes" ? "tonnes" : "heures";
+            o.mode = ["tonnes", "arrets"].includes(o.mode) ? o.mode : "heures";
             o.ref = Object.assign({ date: "", heures: 0, tonnes: 0 }, o.ref);
           });
         });
@@ -1439,7 +1462,7 @@
         let conv = 0;
         d.equipements.forEach((e) =>
           e.organes.forEach((o) => {
-            if (o.mode === "tonnes") return;
+            if (o.mode !== "heures") return;
             const k = (x) => Math.round((+x || 0) * T_PAR_H / 100) * 100;
             o.seuilVigilance = k(o.seuilVigilance);
             o.seuilRemplacement = k(o.seuilRemplacement);
@@ -2072,6 +2095,7 @@
     <a href="#dash" class="${r.page === "dash" ? "on" : ""}">📊 Tableau de bord</a>
     <a href="#seuils" class="${r.page === "seuils" ? "on" : ""}">🎚 Seuils</a>
     <a href="#journal" class="${r.page === "journal" ? "on" : ""}">📒 Journal</a>
+    <a href="#arrets" class="${r.page === "arrets" ? "on" : ""}">🛠 Arrêts techniques</a>
     <a href="#production" class="${r.page === "production" ? "on" : ""}">🏭 Production</a>
     <div class="grp">Équipements</div>
     ${db.equipements
@@ -2092,14 +2116,18 @@
         else if (r.page === "seuils") m.innerHTML = viewSeuils();
         else if (r.page === "journal") m.innerHTML = viewJournal();
         else if (r.page === "production") m.innerHTML = viewProduction();
+        else if (r.page === "arrets") m.innerHTML = viewArrets();
         else m.innerHTML = viewDash();
         bindMain();
       }
 
+      // texte des seuils d'un organe
+      const seuilTxt = (o) =>
+        o.mode === "arrets" ? `tous les ${arretsInfo(o).N} arrêt(s) tech.` : `${fmt(o.seuilVigilance)} / ${fmt(o.seuilRemplacement)} t`;
       function bar(eq, o) {
         const u = usage(eq, o),
           r = +o.seuilRemplacement || 0,
-          v = +o.seuilVigilance || 0,
+          v = o.mode === "arrets" ? r - 1 : +o.seuilVigilance || 0,
           s = status(eq, o);
         const pct = r ? Math.min(100, (u / r) * 100) : 0,
           vp = r ? Math.min(100, (v / r) * 100) : 0;
@@ -2107,6 +2135,13 @@
     <div class="bar-l">${fmt(u)} / ${fmt(r)} ${UNIT[o.mode]} · ${r ? Math.round((u / r) * 100) : 0} %</div>`;
       }
       function remainTxt(eq, o) {
+        if (o.mode === "arrets") {
+          const a = arretsInfo(o);
+          if (a.done >= a.N) return `Remplacement dû (${a.done} arrêt(s) depuis le dernier remplacement)`;
+          return a.due
+            ? `À remplacer à l'arrêt du ${fdate(a.due.date)} (dans ${joursAvant(a.due.date)} j)`
+            : `À remplacer dans ${a.k} arrêt(s) — arrêt non encore planifié`;
+        }
         const u = usage(eq, o),
           v = +o.seuilVigilance,
           r = +o.seuilRemplacement,
@@ -2119,7 +2154,7 @@
       const badge = (s) =>
         `<span class="badge ${s}"><span class="dot ${s}"></span>${STATUS_TXT[s]}</span>`;
       const legend = `<div class="legend"><span><span class="dot ok"></span>OK</span><span><span class="dot warn"></span>Seuil vigilance atteint</span>
-  <span><span class="dot crit"></span>Seuil remplacement atteint</span><span><span class="dot"></span>Non suivi</span></div>`;
+  <span><span class="dot crit"></span>Seuil remplacement atteint / arrêt dépassé</span><span><span class="dot"></span>Non suivi</span></div>`;
 
       function viewProduction() {
         const c = prodCfg(), P = PROD;
@@ -2170,6 +2205,51 @@
   </div>`;
       }
 
+      // organes aux arrêts à remplacer lors de l'arrêt « a »
+      function organesPourArret(a) {
+        return allOrg().filter(([, o]) => o.mode === "arrets" && arretsInfo(o).due && arretsInfo(o).due.id === a.id);
+      }
+      function viewArrets() {
+        const all = arretsTries(), td = today();
+        const fut = all.filter((a) => a.date > td), past = all.filter((a) => a.date <= td).reverse();
+        const dus = allOrg().filter(([, o]) => o.mode === "arrets" && arretsInfo(o).done >= arretsInfo(o).N);
+        const chips = (list) => list.length
+          ? `<div class="chips">${list.map(([e, o]) => `<a class="chip" href="#eq=${e.id}"><span class="dot ${status(e, o)}"></span>${esc(o.nom)} <span class="muted">· ${esc(e.nom)}</span></a>`).join("")}</div>`
+          : '<span class="muted">—</span>';
+        const row = (a, isFut) => `<tr data-at="${a.id}">
+          <td class="num">${fdate(a.date)}${a.fin && a.fin !== a.date ? " → " + fdate(a.fin) : ""}</td>
+          <td>${esc(a.libelle || "")}</td>
+          <td class="num">${isFut ? "dans " + joursAvant(a.date) + " j" : "il y a " + -joursAvant(a.date) + " j"}</td>
+          ${isFut ? `<td>${chips(organesPourArret(a))}</td>` : ""}
+          <td class="noprint" style="white-space:nowrap"><button class="btn sm" data-at-edit="${a.id}">✏️</button> <button class="btn sm danger" data-at-del="${a.id}">🗑</button></td></tr>`;
+        return `<h2>Arrêts techniques</h2><p class="sub">Planifiez les arrêts techniques. Les organes « remplacés aux arrêts » comptent les arrêts passés depuis leur dernier remplacement (ex. tous les 2 arrêts).</p>
+  <div class="card" style="padding:14px 16px;margin-bottom:14px">
+    <form id="atForm" class="form" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+      <label>Début<input type="date" name="date" required></label>
+      <label>Fin (facultatif)<input type="date" name="fin"></label>
+      <label style="grid-column:span 2">Libellé<input name="libelle" placeholder="ex. Arrêt de Noël, arrêt technique mensuel…"></label>
+      <div class="full" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn pri" type="submit">＋ Ajouter l'arrêt</button>
+        <label style="flex-direction:row;align-items:center;gap:6px">Passer en vigilance <input class="inline-in" style="width:70px" type="number" min="1" id="atVig" value="${db.arretsVigilanceJours}"> jours avant l'arrêt</label>
+      </div>
+    </form>
+  </div>
+  ${dus.length ? `<div class="card alerts"><h3 style="color:var(--crit)">Remplacements dus (arrêt passé sans remplacement)</h3>${chips(dus)}</div>` : ""}
+  <div class="card tablewrap" style="margin-bottom:14px"><div style="padding:12px 14px 0"><h3 style="margin:0;font-size:14px">Arrêts à venir (${fut.length})</h3></div>
+    ${fut.length ? `<table><thead><tr><th class="num">Date</th><th>Libellé</th><th class="num">Échéance</th><th>Organes à remplacer à cet arrêt</th><th class="noprint"></th></tr></thead><tbody>${fut.map((a) => row(a, true)).join("")}</tbody></table>`
+      : '<div class="empty">Aucun arrêt technique planifié.</div>'}</div>
+  <div class="card tablewrap"><div style="padding:12px 14px 0"><h3 style="margin:0;font-size:14px">Arrêts passés (${past.length})</h3></div>
+    ${past.length ? `<table><thead><tr><th class="num">Date</th><th>Libellé</th><th class="num">Il y a</th><th class="noprint"></th></tr></thead><tbody>${past.map((a) => row(a, false)).join("")}</tbody></table>`
+      : '<div class="empty">Aucun arrêt passé enregistré.</div>'}</div>`;
+      }
+      function editArret(a) {
+        modal("Arrêt technique du " + fdate(a.date), `<div class="form">
+          <label>Début<input type="date" name="date" value="${a.date}" required></label>
+          <label>Fin<input type="date" name="fin" value="${a.fin || ""}"></label>
+          <label class="full">Libellé<input name="libelle" value="${esc(a.libelle || "")}"></label></div>`,
+          { onOk: (fd) => { Object.assign(a, { date: fd.get("date"), fin: fd.get("fin") || "", libelle: fd.get("libelle").trim() }); commit(); } });
+      }
+
       function viewDash() {
         const all = allOrg(),
           c = counts(all);
@@ -2181,7 +2261,10 @@
               usage(...b) / (+b[1].seuilRemplacement || 1) -
                 usage(...a) / (+a[1].seuilRemplacement || 1),
           );
-        return `<h2>Tableau de bord</h2><p class="sub">${db.equipements.length} équipements · ${all.length} organes suivis</p>
+        const nextA = arretsTries().find((a) => a.date > today());
+        return `<h2>Tableau de bord</h2><p class="sub">${db.equipements.length} équipements · ${all.length} organes suivis${nextA
+          ? ` · <a href="#arrets">prochain arrêt technique le <b>${fdate(nextA.date)}</b> (dans ${joursAvant(nextA.date)} j, ${organesPourArret(nextA).length} organe(s) à remplacer)</a>`
+          : ' · <a href="#arrets">aucun arrêt technique planifié</a>'}</p>
   <div class="tiles">
     <div class="card tile ok"><div class="k">OK</div><div class="v">${c.ok}</div></div>
     <div class="card tile warn"><div class="k">Vigilance</div><div class="v">${c.warn}</div></div>
@@ -2225,7 +2308,7 @@
       <td><b>${esc(o.nom)}</b><div class="bar-l">${esc(TYPES[e.type].slots[o.slot] || "Hors dessin")}</div></td>
       <td>${badge(s)}<div class="bar-l">${remainTxt(e, o)}</div></td>
       <td style="min-width:160px">${bar(e, o)}</td>
-      <td class="num">${fmt(o.seuilVigilance)} / ${fmt(o.seuilRemplacement)} ${UNIT[o.mode]}</td>
+      <td class="num">${seuilTxt(o)}</td>
       <td class="num">${fdate(o.ref.date)}</td>
       <td class="noprint" style="white-space:nowrap"><button class="btn sm" data-act="repl" data-org="${o.id}">🔁 Remplacé</button>
         <button class="btn sm" data-act="edit" data-org="${o.id}">✏️</button></td></tr>`;
@@ -2248,17 +2331,17 @@
     <div class="card tablewrap">${
       e.organes.length
         ? `<table><thead><tr><th>Organe</th><th>État</th><th>Usure depuis remplacement</th>
-      <th class="num">Vigil. / Rempl.</th><th class="num">Dernier rempl.</th><th class="noprint"></th></tr></thead><tbody>${rows}</tbody></table>`
+      <th class="num">Critère</th><th class="num">Dernier rempl.</th><th class="noprint"></th></tr></thead><tbody>${rows}</tbody></table>`
         : '<div class="empty">Aucun organe suivi sur cet équipement.<br><br><button class="btn pri" data-act="addorg">＋ Ajouter un organe</button></div>'
     }</div>
   </div>`;
       }
 
       function viewSeuils() {
-        return `<h2>Seuils</h2><p class="sub">Réglez pour chaque organe ses seuils, en tonnes. Les modifications sont appliquées immédiatement.</p>
+        return `<h2>Seuils</h2><p class="sub">Pour chaque organe : remplacement à la tonne (seuils de vigilance et de remplacement) ou aux arrêts techniques (tous les N arrêts). Les modifications sont appliquées immédiatement.</p>
   <div class="toolbar"><input type="search" id="fSeuil" placeholder="Filtrer (équipement, organe)…"></div>
-  <div class="card tablewrap"><table id="tSeuils"><thead><tr><th>Équipement</th><th>Organe</th>
-    <th class="num">Seuil vigilance (t)</th><th class="num">Seuil remplacement (t)</th><th class="num">Usure actuelle</th><th>État</th></tr></thead><tbody>
+  <div class="card tablewrap"><table id="tSeuils"><thead><tr><th>Équipement</th><th>Organe</th><th>Remplacement</th>
+    <th class="num">Seuil vigilance (t)</th><th class="num">Remplacement (t ou nb d'arrêts)</th><th class="num">Usure actuelle</th><th>État</th></tr></thead><tbody>
   ${allOrg()
     .map(
       ([
@@ -2266,7 +2349,8 @@
         o,
       ]) => `<tr data-eq="${e.id}" data-org="${o.id}" data-q="${esc((e.nom + " " + o.nom).toLowerCase())}">
     <td>${esc(e.nom)}</td><td>${esc(o.nom)}</td>
-    <td class="num"><input class="inline-in" type="number" min="0" step="any" data-f="seuilVigilance" value="${o.seuilVigilance}"></td>
+    <td><select class="inline-in" data-f="mode"><option value="tonnes"${o.mode !== "arrets" ? " selected" : ""}>À la tonne</option><option value="arrets"${o.mode === "arrets" ? " selected" : ""}>Aux arrêts techniques</option></select></td>
+    <td class="num">${o.mode === "arrets" ? '<span class="muted">—</span>' : `<input class="inline-in" type="number" min="0" step="any" data-f="seuilVigilance" value="${o.seuilVigilance}">`}</td>
     <td class="num"><input class="inline-in" type="number" min="0" step="any" data-f="seuilRemplacement" value="${o.seuilRemplacement}"></td>
     <td class="num" data-u>${fmt(usage(e, o))} ${UNIT[o.mode]}</td><td data-s>${badge(status(e, o))}</td></tr>`,
     )
@@ -2375,6 +2459,24 @@
               }),
           );
         }
+        if (r.page === "arrets") {
+          $("#atForm").onsubmit = (ev) => {
+            ev.preventDefault();
+            const fd = new FormData(ev.target);
+            db.arrets.push({ id: uid("at"), date: fd.get("date"), fin: fd.get("fin") || "", libelle: fd.get("libelle").trim() });
+            log({ type: "config", date: today(), eqNom: "Arrêts techniques", commentaire: "Arrêt technique planifié le " + fdate(fd.get("date")) });
+            commit();
+            toast("Arrêt technique ajouté");
+          };
+          $("#atVig").onchange = (ev) => { db.arretsVigilanceJours = Math.max(1, +ev.target.value || 30); commit(); };
+          m.querySelectorAll("[data-at-edit]").forEach((b) => (b.onclick = () => editArret(db.arrets.find((a) => a.id === b.dataset.atEdit))));
+          m.querySelectorAll("[data-at-del]").forEach((b) => (b.onclick = () => {
+            const a = db.arrets.find((x) => x.id === b.dataset.atDel);
+            if (!confirm("Supprimer l'arrêt technique du " + fdate(a.date) + " ?")) return;
+            db.arrets = db.arrets.filter((x) => x !== a);
+            commit();
+          }));
+        }
         if (r.page === "production") {
           const c = prodCfg();
           m.querySelectorAll("input[name=pmode]").forEach((x) => (x.onchange = () => { c.mode = x.value; commit(); }));
@@ -2409,6 +2511,12 @@
                   o = findOrg(e, tr.dataset.org),
                   f = inp.dataset.f;
                 o[f] = f === "mode" ? inp.value : Math.max(0, +inp.value || 0);
+                if (f === "mode") {
+                  // changement de critère : valeurs par défaut cohérentes
+                  if (o.mode === "arrets") { o.seuilRemplacement = 2; o.seuilVigilance = 1; }
+                  return commit();
+                }
+                if (o.mode === "arrets") { o.seuilRemplacement = Math.max(1, Math.round(o.seuilRemplacement)); o.seuilVigilance = o.seuilRemplacement - 1; }
                 if (+o.seuilVigilance > +o.seuilRemplacement)
                   toast(
                     "⚠ Le seuil de vigilance est supérieur au seuil de remplacement",
@@ -2491,9 +2599,10 @@
     <dl class="kv">
       <dt>Équipement</dt><dd>${esc(e.nom)}</dd>
       <dt>Usure depuis remplacement</dt><dd><b>${fmt(usage(e, o))} ${UNIT[o.mode]}</b> — ${remainTxt(e, o)}</dd>
-      <dt>Seuil vigilance</dt><dd>${fmt(o.seuilVigilance)} ${UNIT[o.mode]}</dd>
-      <dt>Seuil remplacement</dt><dd>${fmt(o.seuilRemplacement)} ${UNIT[o.mode]}</dd>
-      <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)}${o.mode === "tonnes" && prodActive() ? "" : ` (à ${fmt(o.ref.tonnes)} t)`}</dd>
+      ${o.mode === "arrets"
+        ? `<dt>Critère</dt><dd>Remplacement tous les ${arretsInfo(o).N} arrêt(s) technique(s)</dd><dt>Arrêts depuis le remplacement</dt><dd>${arretsInfo(o).done}</dd>`
+        : `<dt>Seuil vigilance</dt><dd>${fmt(o.seuilVigilance)} t</dd><dt>Seuil remplacement</dt><dd>${fmt(o.seuilRemplacement)} t</dd>`}
+      <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)}${o.mode !== "tonnes" || prodActive() ? "" : ` (à ${fmt(o.ref.tonnes)} t)`}</dd>
       ${o.mode === "tonnes" && prodActive() ? `<dt>Calcul</dt><dd>Tonnes produites ${diamTxt(e)} depuis le ${fdate(o.ref.date)} (base production)${+o.tonnesInit ? " + " + fmt(o.tonnesInit) + " t antérieures" : ""}</dd>` : ""}
     </dl>${bar(e, o)}
     <h4 style="margin:16px 0 6px">Historique</h4>
@@ -2531,6 +2640,8 @@
     <p class="full hint">${esc(e.nom)} · usure actuelle <b>${fmt(usage(e, o))} ${UNIT[o.mode]}</b>. Le compteur d'usure de l'organe repartira de zéro à partir des compteurs ci-dessous.</p>
     <label>Date<input type="date" name="date" value="${today()}" required></label>
     <label>Intervenant<input name="intervenant" placeholder="Nom / équipe" autocomplete="off"></label>
+    ${db.arrets.length ? `<label class="full">Fait pendant un arrêt technique ?<select name="arret" onchange="if(this.value)this.form.date.value=this.value"><option value="">— non —</option>${arretsTries()
+      .filter((a) => Math.abs(joursAvant(a.date)) <= 60).map((a) => `<option value="${a.date}">${fdate(a.date)}${a.libelle ? " · " + esc(a.libelle) : ""}</option>`).join("")}</select></label>` : ""}
     <fieldset class="full"><legend>Tonnage de l'équipement au moment du remplacement</legend>
       <input type="hidden" name="heures" value="${e.compteurs.heures}">
       <label class="full">Tonnage de l'équipement<input type="number" name="tonnes" min="0" step="any" value="${Math.round(eqTonnes(e) * 1000) / 1000}" required${prodActive() ? " readonly" : ""}></label>
@@ -2603,16 +2714,20 @@
           `<div class="form">
     <label class="full">Nom de l'organe<input name="nom" value="${esc(d.nom)}" required placeholder="ex. Rouleau R9, Filtre retour…"></label>
     <label class="full">Emplacement sur le dessin<select name="slot">${slotOptions(e, d.slot)}</select></label>
-    <input type="hidden" name="mode" value="tonnes">
-    <label>Seuil vigilance (t)<input type="number" name="seuilVigilance" min="0" step="any" value="${d.seuilVigilance}" required></label>
-    <label>Seuil remplacement (t)<input type="number" name="seuilRemplacement" min="0" step="any" value="${d.seuilRemplacement}" required></label>
+    <div class="full"><div class="hint" style="margin-bottom:4px">Remplacement</div>
+      <div class="seg"><label><input type="radio" name="mode" value="tonnes"${d.mode !== "arrets" ? " checked" : ""}>⚖️ À la tonne</label>
+      <label><input type="radio" name="mode" value="arrets"${d.mode === "arrets" ? " checked" : ""}>🛠 Aux arrêts techniques</label></div></div>
+    <label data-crit="tonnes">Seuil vigilance (t)<input type="number" name="seuilVigilance" min="0" step="any" value="${d.mode === "arrets" ? "" : d.seuilVigilance}"></label>
+    <label data-crit="tonnes">Seuil remplacement (t)<input type="number" name="seuilRemplacement" min="0" step="any" value="${d.mode === "arrets" ? "" : d.seuilRemplacement}"></label>
+    <label class="full" data-crit="arrets">Remplacer tous les … arrêts techniques<input type="number" name="nbArrets" min="1" step="1" value="${d.mode === "arrets" ? d.seuilRemplacement : 1}"></label>
+    <p class="full hint" data-crit="arrets">Ex. 2 = remplacement un arrêt technique sur deux. L'organe passe en orange ${db.arretsVigilanceJours} jours avant l'arrêt où il doit être remplacé, en rouge si cet arrêt est passé sans remplacement. Les arrêts se planifient dans la page 🛠 Arrêts techniques.</p>
     <fieldset class="full"><legend>Dernier remplacement (point zéro de l'usure)</legend>
       <label class="full">Date<input type="date" name="rdate" value="${esc(d.ref.date)}"></label>
       <input type="hidden" name="rh" value="${d.ref.heures}">
-      <label class="full">Tonnage de l'équipement à ce moment<input type="number" name="rt" min="0" step="any" value="${d.ref.tonnes}"></label>
-      ${prodActive() ? "" : `<div class="full hint">Tonnage actuel de l'équipement : ${fmt(eqTonnes(e))} t. Pour une pièce neuve, laissez le tonnage actuel.</div>`}
-      ${prodActive() ? `<label class="full">Tonnes déjà faites avant le début de la base production (${fdate(PROD.debut)})<input type="number" name="tinit" min="0" step="any" value="${+d.tonnesInit || 0}"></label>
-      <div class="full hint">Usure = tonnes produites ${diamTxt(e)} depuis la date ci-dessus (base production) + ces tonnes antérieures. Le tonnage saisi au-dessus n'est alors pas utilisé.</div>` : ""}
+      <label class="full" data-crit="tonnes">Tonnage de l'équipement à ce moment<input type="number" name="rt" min="0" step="any" value="${d.ref.tonnes}"></label>
+      ${prodActive() ? "" : `<div class="full hint" data-crit="tonnes">Tonnage actuel de l'équipement : ${fmt(eqTonnes(e))} t. Pour une pièce neuve, laissez le tonnage actuel.</div>`}
+      ${prodActive() ? `<label class="full" data-crit="tonnes">Tonnes déjà faites avant le début de la base production (${fdate(PROD.debut)})<input type="number" name="tinit" min="0" step="any" value="${+d.tonnesInit || 0}"></label>
+      <div class="full hint" data-crit="tonnes">Usure = tonnes produites ${diamTxt(e)} depuis la date ci-dessus (base production) + ces tonnes antérieures. Le tonnage saisi au-dessus n'est alors pas utilisé.</div>` : ""}
     </fieldset></div>`,
           {
             ok: isNew ? "Ajouter" : "Enregistrer",
@@ -2644,8 +2759,14 @@
               }
             },
             onOk: (fd) => {
-              const v = +fd.get("seuilVigilance"),
-                r = +fd.get("seuilRemplacement");
+              const parArrets = fd.get("mode") === "arrets";
+              const nA = Math.max(1, Math.round(+fd.get("nbArrets") || 1));
+              const v = parArrets ? nA - 1 : +fd.get("seuilVigilance"),
+                r = parArrets ? nA : +fd.get("seuilRemplacement");
+              if (!parArrets && !(r > 0)) {
+                alert("Indiquez un seuil de remplacement en tonnes.");
+                return false;
+              }
               if (v > r) {
                 alert(
                   "Le seuil de vigilance doit être inférieur ou égal au seuil de remplacement.",
@@ -2684,6 +2805,12 @@
             },
           },
         );
+        const syncCrit = () => {
+          const m = ($("#mform").querySelector("input[name=mode]:checked") || {}).value;
+          $("#mform").querySelectorAll("[data-crit]").forEach((x) => (x.style.display = x.dataset.crit === m ? "" : "none"));
+        };
+        $("#mform").querySelectorAll("input[name=mode]").forEach((x) => x.addEventListener("change", syncCrit));
+        syncCrit();
         $("#mform")
           .querySelectorAll("input[name=mode]")
           .forEach(
