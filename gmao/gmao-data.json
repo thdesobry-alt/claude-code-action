@@ -1493,8 +1493,52 @@
           }
         }
       ]
+    },
+    {
+      "id": "ch-tro7",
+      "nom": "Centrale TRO-7 CV5",
+      "zone": "TRO-7",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2,
+        "sansCuve": true
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-tro7-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "ch-tro7-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 662000
+          }
+        }
+      ]
     }
   ],
   "journal": [],
-  "schema": 14
+  "schema": 15
 }

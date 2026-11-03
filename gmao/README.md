@@ -99,3 +99,7 @@ Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi q
 
 - Les mors sont suivis séparément : côté four (à gauche) supérieur et inférieur, côté train de laminage (à droite) supérieur et inférieur. Une base existante convertit l'ancien « Mors » en 4 organes qui reprennent son usure.
 - Les transfos sont dessinés derrière la soudeuse (côté moteur), avec un éclair jaune (symbole électrique) sur chaque face, et reliés aux mors par des barres de courant.
+
+## Centrale TRO-7 CV5
+
+Centrale hydraulique à 2 pompes, sans cuve (option « Centrale sans cuve » dans « Modifier l'équipement »). Le filtre est dessiné mais n'est pas suivi tant qu'aucun organe ne lui est rattaché. Une base existante reçoit cette centrale à l'ouverture, avec un suivi qui démarre à zéro.
