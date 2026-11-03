@@ -42,3 +42,7 @@ Cuve de centrale, 2 pompes de fonctionnement (en bas à gauche) suivies du filtr
 ## Voies à rouleaux motorisées
 
 La voie rouleaux enfournement est dessinée avec un palier à chaque bout de chaque rouleau et un motoréducteur en haut. C'est une option de l'équipement (« Modifier l'équipement » → « Voie à rouleaux motorisée »), qu'on peut aussi activer sur la voie de chargement. Paliers et motoréducteurs sont dessinés en gris : ils ne sont pas suivis pour l'instant.
+
+## Pousseuse
+
+Chaque bras a son propre moteur et son propre réducteur sur le dessin. Ils apparaissent en gris (« non suivi ») tant qu'aucun organe ne leur est rattaché : pour les suivre, « Ajouter un organe » et choisir l'emplacement « Moteur bras gauche », « Réducteur bras droit », etc.
