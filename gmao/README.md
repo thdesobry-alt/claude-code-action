@@ -54,3 +54,13 @@ Galet supérieur et galet inférieur, deux vérins pneumatiques (côté piste / 
 ## Centrale hydraulique enfournement
 
 3 pompes (moteur au-dessus de chaque pompe), filtre et réservoir. Dans une base existante, l'ancienne pompe devient « Pompe 1 » (son usure est conservée) et les pompes 2 et 3 sont ajoutées avec un suivi qui démarre à zéro.
+
+## Base production (tonnages par diamètre)
+
+Page « 🏭 Production » :
+
+1. **Connexion** : « Choisir le fichier production… » (ex. `base_production_laminoir.json` sur le dossier partagé), ou « Adresse web » si la base est servie par un serveur. Le choix est mémorisé : à chaque ouverture, la GMAO relit automatiquement la dernière version du fichier. Si le navigateur demande une autorisation, cliquer « 🏭 Reconnecter la production » dans le bandeau (et choisir « Autoriser à chaque visite »).
+2. **Diamètres par équipement** : cocher les diamètres qui font travailler chaque équipement (aucun coché = tous les diamètres). Aussi modifiable dans « Modifier l'équipement ».
+3. **Calcul** : pour un organe suivi en tonnes, usure = tonnes produites dans les diamètres de l'équipement depuis la date de son dernier remplacement (journées de production à partir de cette date incluse), + les tonnes antérieures au début de la base si on les a saisies dans la fiche de l'organe. Les heures restent saisies par relevé.
+
+Si la base n'est pas joignable, la GMAO utilise la dernière copie lue (gardée dans le navigateur) et le signale dans le bandeau.

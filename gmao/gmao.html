@@ -887,6 +887,9 @@
       svg text.lbl3 { font-size: 13px; fill: var(--accent); letter-spacing: .08em; paint-order: stroke; stroke: var(--draw-bg); stroke-width: 4px; }
       svg .part.st-crit.f { animation: blink 1.2s ease-in-out infinite; }
       @media (prefers-reduced-motion: reduce) { svg .part.st-crit.f { animation: none; } }
+      header.top #prodChip.warn { background: #ffd38a; color: #3a2a12; border-color: #ffd38a; }
+      #tDiam td, #tDiam th { padding: 6px 8px; }
+      #tDiam input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
     </style>
   </head>
   <body>
@@ -895,6 +898,8 @@
       <h1>GMAO <span>Ligne</span></h1>
       <div class="src" id="src"></div>
       <div class="sp"></div>
+      <button class="btn" id="prodChip" hidden></button>
+      <input type="file" id="prodInput" accept=".json,application/json" hidden />
       <button
         class="btn"
         id="btnReleveLigne"
@@ -1073,6 +1078,9 @@
 
       /* ---------- calculs d'usure ---------- */
       function usage(eq, o) {
+        // tonnes : production des diamètres de l'équipement depuis la date du dernier remplacement
+        if (o.mode === "tonnes" && prodActive())
+          return Math.max(0, prodTonnes(eq, (o.ref || {}).date || "") + (+o.tonnesInit || 0));
         return Math.max(
           0,
           (+eq.compteurs[o.mode] || 0) - (+(o.ref || {})[o.mode] || 0),
@@ -1105,6 +1113,157 @@
         db.equipements.forEach((e) => e.organes.forEach((o) => r.push([e, o])));
         return r;
       }
+
+      /* ---------- base production (tonnages AS400 par diamètre) ----------
+         La base (ex. base_production_laminoir.json) contient des « rapports » journaliers
+         (dateDebut, laminoir, lignes[{diam, tonnes}]). On en garde un résumé jour × diamètre. */
+      let PROD = null;
+      let prodEtat = { st: "off", msg: "" }; // off | ok | reconnect | erreur
+      let prodFileMod = 0;
+      const PROD_CACHE = "gmao-prod-cache";
+      const idb = {
+        _p: null,
+        open() {
+          return (this._p = this._p || new Promise((res, rej) => {
+            const r = indexedDB.open("gmao-ligne", 1);
+            r.onupgradeneeded = () => r.result.createObjectStore("kv");
+            r.onsuccess = () => res(r.result);
+            r.onerror = () => rej(r.error);
+          }));
+        },
+        async run(mode, fn) {
+          const d = await this.open();
+          return new Promise((res, rej) => {
+            const t = d.transaction("kv", mode), q = fn(t.objectStore("kv"));
+            t.oncomplete = () => res(q && q.result);
+            t.onerror = () => rej(t.error);
+          });
+        },
+        get(k) { return this.run("readonly", (st) => st.get(k)).catch(() => null); },
+        set(k, v) { return this.run("readwrite", (st) => st.put(v, k)); },
+        del(k) { return this.run("readwrite", (st) => st.delete(k)).catch(() => null); },
+      };
+      const prodCfg = () => db.production;
+      const prodActive = () => !!(db.production && db.production.actif && PROD);
+      const eqDiams = (eq) => (Array.isArray(eq.diametres) ? eq.diametres : []);
+      const diamTxt = (eq) => (eqDiams(eq).length ? "Ø " + eqDiams(eq).join(", ") : "tous diamètres");
+      function aggregateProd(json, source, modif) {
+        if (!json || !Array.isArray(json.rapports))
+          throw new Error("Ce fichier n'est pas une base production : la clé « rapports » est absente.");
+        const jours = [], diams = new Set(), lams = new Set();
+        json.rapports.forEach((r) => {
+          const date = String(r.dateDebut || "").slice(0, 10);
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+          const d = {};
+          (r.lignes || []).forEach((l) => {
+            const k = Number(l.diam);
+            const t = l.tonnes != null ? +l.tonnes : (+l.kgMaj || +l.kgFard || 0) / 1000;
+            if (!(k > 0) || !isFinite(t)) return;
+            d[k] = (d[k] || 0) + t;
+            diams.add(k);
+          });
+          const lam = String(r.laminoir || "");
+          if (lam) lams.add(lam);
+          jours.push({ date, lam, d });
+        });
+        jours.sort((a, b) => a.date.localeCompare(b.date));
+        return { jours, diams: [...diams].sort((a, b) => a - b), lams: [...lams].sort(), debut: jours.length ? jours[0].date : "",
+          fin: jours.length ? jours[jours.length - 1].date : "", nb: json.rapports.length, source, modif, lu: new Date().toISOString() };
+      }
+      // tonnes produites dans les diamètres de l'équipement (tous si aucun), à partir de la date « from » incluse
+      function prodTonnes(eq, from) {
+        if (!PROD) return 0;
+        const ds = eqDiams(eq), lam = prodCfg().laminoir;
+        let s = 0;
+        for (const j of PROD.jours) {
+          if ((from && j.date < from) || (lam && j.lam !== lam)) continue;
+          if (ds.length) for (const k of ds) s += j.d[k] || 0;
+          else for (const k in j.d) s += j.d[k];
+        }
+        return s;
+      }
+      const eqTonnes = (e) => (prodActive() ? prodTonnes(e, "") : +e.compteurs.tonnes || 0);
+      function useProdCache() {
+        if (PROD) return;
+        try {
+          const c = JSON.parse(localStorage.getItem(PROD_CACHE) || "null");
+          if (c && Array.isArray(c.jours)) { PROD = c; prodEtat.cache = true; }
+        } catch (e) {}
+      }
+      function setProd(json, source, modif) {
+        PROD = aggregateProd(json, source, modif);
+        try { localStorage.setItem(PROD_CACHE, JSON.stringify(PROD)); } catch (e) {}
+        prodEtat = { st: "ok" };
+      }
+      // lecture de la base : automatique à l'ouverture (interactive = false), ou sur clic (true)
+      async function loadProd(interactive) {
+        const c = prodCfg();
+        if (!c.actif) { prodEtat = { st: "off" }; return; }
+        try {
+          if (c.mode === "url") {
+            if (!c.url) throw new Error("Adresse de la base non renseignée.");
+            const r = await fetch(c.url, { cache: "no-store" });
+            if (!r.ok) throw new Error("La base ne répond pas (HTTP " + r.status + ").");
+            setProd(await r.json(), c.url, r.headers.get("last-modified"));
+          } else {
+            const h = await idb.get("prodHandle");
+            if (!h) throw new Error("Aucun fichier production choisi sur ce poste.");
+            let perm = await h.queryPermission({ mode: "read" });
+            if (perm !== "granted") {
+              if (!interactive) { prodEtat = { st: "reconnect", msg: h.name }; useProdCache(); return; }
+              perm = await h.requestPermission({ mode: "read" });
+              if (perm !== "granted") throw new Error("Accès au fichier refusé.");
+            }
+            const f = await h.getFile();
+            prodFileMod = f.lastModified;
+            setProd(JSON.parse(await f.text()), h.name, new Date(f.lastModified).toISOString());
+          }
+        } catch (e) {
+          prodEtat = { st: "erreur", msg: e.message };
+          useProdCache();
+        }
+      }
+      const PROD_TYPES = [{ description: "Base production (JSON)", accept: { "application/json": [".json"] } }];
+      async function chooseProdFile() {
+        const c = prodCfg();
+        if (window.showOpenFilePicker) {
+          try {
+            const [h] = await showOpenFilePicker({ types: PROD_TYPES });
+            await idb.set("prodHandle", h);
+            Object.assign(c, { mode: "fichier", fichier: h.name, actif: true });
+            PROD = null;
+            await loadProd(true);
+            commit();
+            if (prodEtat.st === "ok") toast("Base production connectée : " + h.name);
+          } catch (e) {
+            if (e.name !== "AbortError") alert("Connexion impossible : " + e.message);
+          }
+        } else $("#prodInput").click(); // navigateur sans accès direct : lecture ponctuelle
+      }
+      async function prodRefresh() {
+        await loadProd(true);
+        render();
+        toast(prodEtat.st === "ok" ? "Base production rechargée" : "Production : " + (prodEtat.msg || "indisponible"));
+      }
+      function renderProdChip() {
+        const b = $("#prodChip"), c = db.production;
+        if (!c || !c.actif) { b.hidden = true; return; }
+        b.hidden = false;
+        b.classList.toggle("warn", prodEtat.st !== "ok");
+        if (prodEtat.st === "ok") { b.textContent = "🏭 Prod. " + fdate(PROD.fin); b.title = PROD.source + " — lue le " + new Date(PROD.lu).toLocaleString("fr-FR"); }
+        else if (prodEtat.st === "reconnect") { b.textContent = "🏭 Reconnecter la production"; b.title = "Cliquez pour autoriser la lecture de " + prodEtat.msg; }
+        else { b.textContent = "⚠ Production" + (PROD ? " (données du " + fdate(PROD.fin) + ")" : " indisponible"); b.title = prodEtat.msg || ""; }
+      }
+      // revenir sur l'onglet relit la base si elle a changé
+      document.addEventListener("visibilitychange", async () => {
+        if (document.visibilityState !== "visible" || !db || !db.production.actif || prodEtat.st !== "ok") return;
+        if (db.production.mode === "fichier") {
+          const h = await idb.get("prodHandle");
+          try { if (!h || (await h.getFile()).lastModified === prodFileMod) return; } catch (e) { return; }
+        }
+        await loadProd(false);
+        render();
+      });
 
       /* ---------- persistance ---------- */
       /* Conversion d'une base créée avec l'ancien modèle (v1) :
@@ -1212,6 +1371,7 @@
           );
         d.version = d.version || 1;
         d.journal = Array.isArray(d.journal) ? d.journal : [];
+        d.production = Object.assign({ actif: false, mode: "fichier", url: "", fichier: "", laminoir: "" }, d.production);
         d.equipements.forEach((e) => {
           e.id = e.id || uid("eq");
           e.type = TYPES[e.type] ? e.type : "generique";
@@ -1221,6 +1381,7 @@
           );
           e.organes = Array.isArray(e.organes) ? e.organes : [];
           e.options = e.options && typeof e.options === "object" ? e.options : {};
+          e.diametres = Array.isArray(e.diametres) ? e.diametres.map(Number).filter((x) => x > 0) : [];
           e.organes.forEach((o) => {
             o.id = o.id || uid("org");
             o.mode = o.mode === "tonnes" ? "tonnes" : "heures";
@@ -1315,6 +1476,10 @@
         db = d;
         fileName = name || "";
         dirty = false;
+        // relire la base production selon la configuration de cette base GMAO
+        PROD = null;
+        prodEtat = { st: "off" };
+        if (db.production.actif) loadProd(false).then(render);
         if (afterMigration()) return;
         saveLocal();
         selOrg = null;
@@ -1570,7 +1735,7 @@
           };
           offset(214, "sup", 78);
           offset(82, "inf", 67);
-          return { faces: F, view: "-280 -350 560 495" };
+          return { faces: F, view: "-320 -350 640 495" };
         },
       };
       const DRAW = {
@@ -1604,6 +1769,161 @@
   </g>
 </svg>`;
         },
+        rouleaux: (eq, P, by) => {
+          const rs = by.rouleau || [];
+          const mot = !!(eq.options && eq.options.motorise);
+          const n = Math.max(rs.length, 1),
+            pitch = 380 / n,
+            w = Math.min(pitch * 0.62, 34);
+          // voie motorisée : un palier à chaque bout du rouleau et un motoréducteur en haut
+          const Y = mot ? { rail1: 48, rail2: 174, r0: 62, rh: 110, lab: 206, H: 232 } : { rail1: 36, rail2: 154, r0: 50, rh: 100, lab: 184, H: 200 };
+          let r = "";
+          rs.forEach((o, i) => {
+            const cx = 20 + pitch * i + pitch / 2,
+              s = status(eq, o);
+            const pw = Math.min(pitch * 0.8, 34), mw = Math.min(pitch * 0.7, 30);
+            const extra = mot
+              ? `<g class="mr"><title>Motoréducteur ${esc(o.nom)}</title>
+      <rect class="nd" x="${cx - mw / 2}" y="4" width="${mw}" height="24" rx="3"/>
+      <path class="o" d="M${cx - mw / 4} 8 v16 M${cx} 8 v16 M${cx + mw / 4} 8 v16"/>
+      <rect class="n" x="${cx - mw * 0.38}" y="28" width="${mw * 0.76}" height="12" rx="2"/>
+      <rect class="nd" x="${cx - 3}" y="40" width="6" height="6"/></g>
+      ${[44, 172].map((y) => `<g><title>Palier ${esc(o.nom)}</title><rect class="n" x="${cx - pw / 2}" y="${y}" width="${pw}" height="18" rx="3" style="stroke:var(--metal-dark)"/>
+      <circle class="nd" cx="${cx - pw / 2 + 4}" cy="${y + 9}" r="1.8"/><circle class="nd" cx="${cx + pw / 2 - 4}" cy="${y + 9}" r="1.8"/>
+      <circle class="nd" cx="${cx}" cy="${y + 9}" r="4"/></g>`).join("")}`
+              : `<rect class="nd" x="${cx - 4}" y="38" width="8" height="14" rx="2"/><rect class="nd" x="${cx - 4}" y="148" width="8" height="14" rx="2"/>`;
+            r += `${mot ? extra : ""}<g class="part st-${s}${o.id === selOrg ? " hl" : ""}" data-org="${o.id}"><title>${esc(o.nom + " : " + STATUS_TXT[s])}</title>
+      ${mot ? "" : extra}
+      <rect class="f" x="${cx - w / 2}" y="${Y.r0}" width="${w}" height="${Y.rh}" rx="${Math.min(w / 2, 8)}"/>
+      <rect class="hl2" x="${cx - w / 2 + 3}" y="${Y.r0 + 4}" width="${Math.max(w * 0.28, 2)}" height="${Y.rh - 8}" rx="2"/>
+      <text x="${cx}" y="${Y.lab}" text-anchor="middle">${esc(o.nom.replace(/^Rouleau\s*/i, ""))}</text></g>`;
+          });
+          const arrow = mot
+            ? `<path class="ln" d="M150 222 H270 M262 216 l10 6 -10 6"/><text x="140" y="226" text-anchor="end">sens produit</text>`
+            : `<path class="ln" d="M150 18 H270 M262 12 l10 6 -10 6"/><text x="140" y="22" text-anchor="end">sens produit</text>`;
+          return `<svg viewBox="0 0 420 ${Y.H}" role="img" aria-label="Voie à rouleaux">
+    ${arrow}
+    <rect class="n" x="10" y="${Y.rail1}" width="400" height="10" rx="3"/><rect class="n" x="10" y="${Y.rail2}" width="400" height="10" rx="3"/>
+    ${r || `<text x="210" y="${Y.r0 + Y.rh / 2}" text-anchor="middle">Aucun rouleau suivi</text>`}
+  </svg>`;
+        },
+        pousseuse: (eq, P) => {
+          // chaque bras est entraîné par son propre moteur + réducteur
+          const drive = (y, k) => `
+  <g ${P("moteur" + k)}>
+    <rect class="f" x="14" y="${y - 15}" width="44" height="30" rx="4"/>
+    <path class="o" d="M22 ${y - 10} v20 M29 ${y - 10} v20 M36 ${y - 10} v20 M43 ${y - 10} v20"/>
+    <text x="36" y="${y + 27}" text-anchor="middle" style="font-size:8px">MOTEUR</text>
+  </g>
+  <rect class="nd" x="58" y="${y - 4}" width="8" height="8"/>
+  <g ${P("reducteur" + k)}>
+    <rect class="f" x="66" y="${y - 20}" width="46" height="40" rx="4"/>
+    <circle class="o" cx="80" cy="${y}" r="7"/><circle class="o" cx="99" cy="${y}" r="10"/>
+    <text x="89" y="${y + 31}" text-anchor="middle" style="font-size:8px">RÉDUCTEUR</text>
+  </g>`;
+          // noix mécanique au milieu de chaque bras
+          const nut = (y, k) => `
+  <g ${P("noix" + k)}>
+    <path class="f" d="M218 ${y - 17} H242 L252 ${y} L242 ${y + 17} H218 L208 ${y} Z"/>
+    <path class="o" d="M218 ${y - 9} H242 M216 ${y - 3} H244 M216 ${y + 3} H244 M218 ${y + 9} H242"/>
+    <text x="230" y="${y + 30}" text-anchor="middle" style="font-size:8px">NOIX</text>
+  </g>`;
+          return `<svg viewBox="0 0 420 230" role="img" aria-label="Pousseuse">
+  <rect class="n" x="8" y="30" width="116" height="180" rx="6" opacity=".45"/>
+  <path class="ln" d="M368 115 H400 M392 109 l10 6 -10 6"/>
+  <rect class="n" x="372" y="40" width="40" height="150" rx="3" opacity=".55"/>
+  <text x="392" y="206" text-anchor="middle">charge</text>
+  ${drive(68, 1)}${drive(162, 2)}
+  <g ${P("bras1")}>
+    <rect class="f" x="112" y="58" width="232" height="20" rx="5"/>
+    <rect class="f" x="340" y="44" width="24" height="48" rx="4"/>
+    <rect class="hl2" x="118" y="61" width="216" height="5" rx="2"/>
+    <text class="on" x="165" y="72" text-anchor="middle">BRAS GAUCHE</text>
+  </g>
+  <g ${P("bras2")}>
+    <rect class="f" x="112" y="152" width="232" height="20" rx="5"/>
+    <rect class="f" x="340" y="138" width="24" height="48" rx="4"/>
+    <rect class="hl2" x="118" y="155" width="216" height="5" rx="2"/>
+    <text class="on" x="165" y="166" text-anchor="middle">BRAS DROIT</text>
+  </g>
+  ${nut(68, 1)}${nut(162, 2)}
+</svg>`;
+        },
+        defourneuse: (eq, P) => {
+          const verin = (x, k) => `<g ${P("verin_" + k)}>
+    <rect class="f" x="${x}" y="34" width="30" height="40" rx="3"/>
+    <rect class="hl2" x="${x + 4}" y="38" width="6" height="32" rx="2"/>
+    <rect class="f" x="${x + 9}" y="74" width="12" height="16"/></g>`;
+          // galet + son moteur hydraulique (à droite, hors du bâti)
+          const galet = (y, k, label) => `<g ${P("galet_" + k)}>
+    <rect class="f" x="92" y="${y}" width="236" height="36" rx="14"/>
+    <rect class="hl2" x="100" y="${y + 5}" width="220" height="7" rx="3"/>
+    <text class="on" x="210" y="${y + 28}" text-anchor="middle">${label}</text></g>
+  <rect class="nd" x="380" y="${y + 14}" width="8" height="8"/>
+  <g ${P("moteur_" + k)}>
+    <rect class="f" x="388" y="${y + 2}" width="40" height="32" rx="5"/>
+    <circle class="o" cx="408" cy="${y + 18}" r="8"/>
+    <rect class="nd" x="398" y="${y - 6}" width="5" height="8"/><rect class="nd" x="413" y="${y - 6}" width="5" height="8"/>
+  </g>`;
+          return `<svg viewBox="0 0 440 260" role="img" aria-label="Défourneuse">
+  <rect class="n" x="40" y="20" width="340" height="14" rx="2"/>
+  <rect class="n" x="40" y="20" width="20" height="220" rx="2"/><rect class="n" x="360" y="20" width="20" height="220" rx="2"/>
+  <rect class="n" x="20" y="236" width="420" height="12" rx="2"/>
+  <text x="77" y="13" text-anchor="middle">VÉRIN CÔTÉ PISTE</text>
+  <text x="343" y="13" text-anchor="middle">VÉRIN CÔTÉ MOTEUR</text>
+  <rect class="n" x="60" y="90" width="32" height="40" rx="2"/><rect class="n" x="328" y="90" width="32" height="40" rx="2"/>
+  <rect class="n" x="60" y="144" width="32" height="40" rx="2"/><rect class="n" x="328" y="144" width="32" height="40" rx="2"/>
+  ${verin(62, 1)}${verin(328, 2)}
+  ${galet(92, "sup", "GALET SUPÉRIEUR")}
+  ${galet(146, "inf", "GALET INFÉRIEUR")}
+  <text x="408" y="200" text-anchor="middle" style="font-size:8px">MOTEURS</text>
+  <text x="408" y="210" text-anchor="middle" style="font-size:8px">HYDRAUL.</text>
+  <rect class="nd" x="201" y="128" width="18" height="18"/>
+  <text x="226" y="141">billette</text>
+  <path class="ln" d="M104 70 v16 M98 80 l6 8 6 -8 M316 70 v16 M310 80 l6 8 6 -8" />
+  <text x="210" y="214" text-anchor="middle">les vérins pressent le galet supérieur sur la billette</text>
+</svg>`;
+        },
+        tro0: (eq, P) => `<svg viewBox="0 0 420 260" role="img" aria-label="TRO-0">
+  <rect class="n" x="40" y="20" width="340" height="14" rx="2"/>
+  <rect class="n" x="40" y="20" width="20" height="220" rx="2"/><rect class="n" x="360" y="20" width="20" height="220" rx="2"/>
+  <rect class="n" x="20" y="236" width="380" height="12" rx="2"/>
+  <text x="77" y="13" text-anchor="middle">VÉRIN CÔTÉ PISTE</text>
+  <text x="343" y="13" text-anchor="middle">VÉRIN CÔTÉ MOTEUR</text>
+  <rect class="nd" x="176" y="42" width="68" height="20" rx="2"/>
+  <text class="on" x="210" y="56" text-anchor="middle">DISTRIB.</text>
+  <g ${P("flexible")}>
+    <path class="s" d="M176 52 C 140 52, 128 82, 92 62"/>
+    <path class="s" d="M244 52 C 280 52, 292 82, 328 62"/>
+    <text x="210" y="82" text-anchor="middle">FLEXIBLES</text>
+  </g>
+  <rect class="n" x="60" y="90" width="32" height="40" rx="2"/><rect class="n" x="328" y="90" width="32" height="40" rx="2"/>
+  <rect class="n" x="60" y="144" width="32" height="40" rx="2"/><rect class="n" x="328" y="144" width="32" height="40" rx="2"/>
+  <g ${P("verin_1")}>
+    <rect class="f" x="62" y="34" width="30" height="40" rx="3"/>
+    <rect class="hl2" x="66" y="38" width="6" height="32" rx="2"/>
+    <rect class="f" x="71" y="74" width="12" height="16"/>
+  </g>
+  <g ${P("verin_2")}>
+    <rect class="f" x="328" y="34" width="30" height="40" rx="3"/>
+    <rect class="hl2" x="332" y="38" width="6" height="32" rx="2"/>
+    <rect class="f" x="337" y="74" width="12" height="16"/>
+  </g>
+  <g ${P("galet_sup")}>
+    <rect class="f" x="92" y="92" width="236" height="36" rx="14"/>
+    <rect class="hl2" x="100" y="97" width="220" height="7" rx="3"/>
+    <text class="on" x="210" y="120" text-anchor="middle">GALET SUPÉRIEUR</text>
+  </g>
+  <g ${P("galet_inf")}>
+    <rect class="f" x="92" y="146" width="236" height="36" rx="14"/>
+    <rect class="hl2" x="100" y="151" width="220" height="7" rx="3"/>
+    <text class="on" x="210" y="174" text-anchor="middle">GALET INFÉRIEUR</text>
+  </g>
+  <rect class="nd" x="201" y="128" width="18" height="18"/>
+  <text x="226" y="141">billette</text>
+  <path class="ln" d="M104 70 v16 M98 80 l6 8 6 -8 M316 70 v16 M310 80 l6 8 6 -8" />
+  <text x="210" y="214" text-anchor="middle">les vérins appuient le galet supérieur sur la billette</text>
+</svg>`,
         nortek: (eq, P) => {
           // pompe : moteur à gauche, aspiration par le haut (cuve)
           const pump = (cx, slot, label) => `<g ${P(slot)}>
@@ -1695,6 +2015,7 @@
 
       function render() {
         renderSrc();
+        renderProdChip();
         renderNav();
         renderMain();
       }
@@ -1704,6 +2025,7 @@
     <a href="#dash" class="${r.page === "dash" ? "on" : ""}">📊 Tableau de bord</a>
     <a href="#seuils" class="${r.page === "seuils" ? "on" : ""}">🎚 Seuils</a>
     <a href="#journal" class="${r.page === "journal" ? "on" : ""}">📒 Journal</a>
+    <a href="#production" class="${r.page === "production" ? "on" : ""}">🏭 Production</a>
     <div class="grp">Équipements</div>
     ${db.equipements
       .map((e) => {
@@ -1722,6 +2044,7 @@
           m.innerHTML = viewEquip(findEq(r.id));
         else if (r.page === "seuils") m.innerHTML = viewSeuils();
         else if (r.page === "journal") m.innerHTML = viewJournal();
+        else if (r.page === "production") m.innerHTML = viewProduction();
         else m.innerHTML = viewDash();
         bindMain();
       }
@@ -1750,6 +2073,55 @@
         `<span class="badge ${s}"><span class="dot ${s}"></span>${STATUS_TXT[s]}</span>`;
       const legend = `<div class="legend"><span><span class="dot ok"></span>OK</span><span><span class="dot warn"></span>Seuil vigilance atteint</span>
   <span><span class="dot crit"></span>Seuil remplacement atteint</span><span><span class="dot"></span>Non suivi</span></div>`;
+
+      function viewProduction() {
+        const c = prodCfg(), P = PROD;
+        const etat = !c.actif ? badge("none").replace("Non suivi", "Non connectée")
+          : prodEtat.st === "ok" ? '<span class="badge ok"><span class="dot ok"></span>Connectée</span>'
+          : prodEtat.st === "reconnect" ? '<span class="badge warn"><span class="dot warn"></span>À reconnecter</span>'
+          : '<span class="badge crit"><span class="dot crit"></span>Erreur</span>';
+        const diams = P ? [...new Set([...P.diams, ...db.equipements.flatMap(eqDiams)])].sort((a, b) => a - b) : [...new Set(db.equipements.flatMap(eqDiams))].sort((a, b) => a - b);
+        const totD = (k) => (P ? P.jours.filter((j) => !c.laminoir || j.lam === c.laminoir).reduce((a, j) => a + (j.d[k] || 0), 0) : 0);
+        return `<h2>Production</h2><p class="sub">Connexion à la base production du laminoir (tonnages AS400 par diamètre). Les organes suivis en <b>tonnes</b> comptent les tonnes produites dans les diamètres de leur équipement depuis la date de leur dernier remplacement.</p>
+  <div class="split" style="margin-bottom:14px">
+    <div class="card" style="padding:14px 16px">
+      <h3 style="margin:0 0 10px;font-size:14px">Connexion ${etat}</h3>
+      <dl class="kv">
+        <dt>Source</dt><dd>${P ? esc(P.source) : c.mode === "url" ? esc(c.url || "—") : esc(c.fichier || "—")}</dd>
+        <dt>Période couverte</dt><dd>${P ? fdate(P.debut) + " → " + fdate(P.fin) + " (" + P.nb + " rapports)" : "—"}</dd>
+        <dt>Dernière lecture</dt><dd>${P ? new Date(P.lu).toLocaleString("fr-FR") + (prodEtat.st !== "ok" && P ? " (copie gardée dans ce navigateur)" : "") : "—"}</dd>
+        ${prodEtat.st === "erreur" ? `<dt>Problème</dt><dd style="color:var(--crit)">${esc(prodEtat.msg)}</dd>` : ""}
+      </dl>
+      <div class="form">
+        <div class="full"><div class="hint" style="margin-bottom:4px">Où se trouve la base ?</div>
+          <div class="seg"><label><input type="radio" name="pmode" value="fichier"${c.mode !== "url" ? " checked" : ""}>📁 Fichier (dossier partagé)</label>
+          <label><input type="radio" name="pmode" value="url"${c.mode === "url" ? " checked" : ""}>🌐 Adresse web</label></div></div>
+        ${c.mode === "url"
+          ? `<label class="full">Adresse de la base<input id="pUrl" value="${esc(c.url)}" placeholder="ex. base_production_laminoir.json ou https://serveur/base_production_laminoir.json"></label>`
+          : `<p class="full hint">Choisissez le fichier une fois (ex. <b>base_production_laminoir.json</b> sur le dossier partagé). Le navigateur le relit ensuite à chaque ouverture de la GMAO, toujours dans sa dernière version. Si le navigateur le demande, cliquez « Reconnecter » dans le bandeau (choisissez « Autoriser à chaque visite » pour ne plus avoir à le faire).</p>`}
+        <label>Laminoir<select id="pLam"><option value="">Tous</option>${(P ? P.lams : []).map((l) => `<option${l === c.laminoir ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></label>
+        <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text);align-self:end"><input type="checkbox" id="pActif"${c.actif ? " checked" : ""}> Compter les tonnes avec la base production</label>
+      </div>
+      <div class="toolbar" style="margin:12px 0 0">
+        ${c.mode === "url" ? '<button class="btn pri" data-p="url">🔗 Connecter</button>' : '<button class="btn pri" data-p="file">📂 Choisir le fichier production…</button>'}
+        <button class="btn" data-p="reload"${c.actif ? "" : " disabled"}>🔄 Recharger</button>
+      </div>
+    </div>
+    <div class="card tablewrap">${P ? `<table><thead><tr><th>Diamètre</th><th class="num">Tonnes produites (base)</th></tr></thead><tbody>
+      ${P.diams.map((k) => `<tr><td>Ø ${k}</td><td class="num">${fmt(totD(k))} t</td></tr>`).join("")}
+      <tr><td><b>Total</b></td><td class="num"><b>${fmt(P.diams.reduce((a, k) => a + totD(k), 0))} t</b></td></tr></tbody></table>`
+      : '<div class="empty">Aucune base production chargée.</div>'}</div>
+  </div>
+  <div class="card tablewrap">
+    <div style="padding:12px 14px 0"><h3 style="margin:0;font-size:14px">Diamètres par équipement</h3>
+      <p class="hint" style="font-size:12.5px;color:var(--muted);margin:4px 0 8px">Cochez les diamètres qui font travailler chaque équipement. Sans case cochée, l'équipement compte <b>tous</b> les diamètres.</p></div>
+    ${diams.length ? `<table id="tDiam"><thead><tr><th>Équipement</th>${diams.map((k) => `<th class="num">Ø ${k}</th>`).join("")}<th class="num">Tonnes comptées (base)</th><th class="num">Organes en tonnes</th></tr></thead><tbody>
+      ${db.equipements.map((e) => `<tr data-eq="${e.id}"><td><a href="#eq=${e.id}">${esc(e.nom)}</a><div class="bar-l">${diamTxt(e)}</div></td>
+        ${diams.map((k) => `<td class="num"><input type="checkbox" data-d="${k}"${eqDiams(e).includes(k) ? " checked" : ""} aria-label="${esc(e.nom)} Ø ${k}"></td>`).join("")}
+        <td class="num">${P ? fmt(prodTonnes(e, "")) + " t" : "—"}</td><td class="num">${e.organes.filter((o) => o.mode === "tonnes").length}</td></tr>`).join("")}
+    </tbody></table>` : '<div class="empty">Connectez la base production pour voir les diamètres.</div>'}
+  </div>`;
+      }
 
       function viewDash() {
         const all = allOrg(),
@@ -1815,7 +2187,9 @@
         return `<div class="eqhead"><div class="t"><h2>${esc(e.nom)}</h2><p class="sub" style="margin:0">${esc(e.zone || "")} · ${esc(TYPES[e.type].label)} · ${badge(eqStatus(e))}</p></div>
     <div class="counters">
       <div class="card counter"><div class="k">Compteur heures</div><div class="v">${fmt(e.compteurs.heures)} h</div></div>
-      <div class="card counter"><div class="k">Compteur tonnage</div><div class="v">${fmt(e.compteurs.tonnes)} t</div></div>
+      ${prodActive()
+        ? `<div class="card counter" title="Tonnes produites dans la base production (${diamTxt(e)})"><div class="k">Tonnage produit · ${diamTxt(e)}</div><div class="v">${fmt(prodTonnes(e, ""))} t</div></div>`
+        : `<div class="card counter"><div class="k">Compteur tonnage</div><div class="v">${fmt(e.compteurs.tonnes)} t</div></div>`}
     </div></div>
   <div class="toolbar noprint">
     <button class="btn pri" data-act="releve">⏱ Saisir relevé</button>
@@ -1956,6 +2330,25 @@
               }),
           );
         }
+        if (r.page === "production") {
+          const c = prodCfg();
+          m.querySelectorAll("input[name=pmode]").forEach((x) => (x.onchange = () => { c.mode = x.value; commit(); }));
+          const u = $("#pUrl");
+          if (u) u.onchange = () => { c.url = u.value.trim(); commit(true); };
+          $("#pLam").onchange = (ev) => { c.laminoir = ev.target.value; commit(); };
+          $("#pActif").onchange = async (ev) => { c.actif = ev.target.checked; if (c.actif) await loadProd(true); else prodEtat = { st: "off" }; commit(); };
+          m.querySelectorAll("[data-p]").forEach((b) => (b.onclick = async () => {
+            const k = b.dataset.p;
+            if (k === "file") chooseProdFile();
+            else if (k === "url") { if (u) c.url = u.value.trim(); c.actif = true; PROD = null; await loadProd(true); commit(); toast(prodEtat.st === "ok" ? "Base production connectée" : "Connexion impossible : " + prodEtat.msg); }
+            else prodRefresh();
+          }));
+          m.querySelectorAll("#tDiam input[data-d]").forEach((x) => (x.onchange = () => {
+            const e = findEq(x.closest("tr").dataset.eq), k = +x.dataset.d;
+            e.diametres = x.checked ? [...new Set([...eqDiams(e), k])].sort((a, b) => a - b) : eqDiams(e).filter((d) => d !== k);
+            commit();
+          }));
+        }
         if (r.page === "seuils") {
           $("#fSeuil").oninput = (ev) => {
             const q = ev.target.value.toLowerCase();
@@ -2056,7 +2449,8 @@
       <dt>Usure depuis remplacement</dt><dd><b>${fmt(usage(e, o))} ${UNIT[o.mode]}</b> — ${remainTxt(e, o)}</dd>
       <dt>Seuil vigilance</dt><dd>${fmt(o.seuilVigilance)} ${UNIT[o.mode]}</dd>
       <dt>Seuil remplacement</dt><dd>${fmt(o.seuilRemplacement)} ${UNIT[o.mode]}</dd>
-      <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)} (à ${fmt(o.ref.heures)} h · ${fmt(o.ref.tonnes)} t)</dd>
+      <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)}${o.mode === "tonnes" && prodActive() ? "" : ` (à ${fmt(o.ref.heures)} h · ${fmt(o.ref.tonnes)} t)`}</dd>
+      ${o.mode === "tonnes" && prodActive() ? `<dt>Calcul</dt><dd>Tonnes produites ${diamTxt(e)} depuis le ${fdate(o.ref.date)} (base production)${+o.tonnesInit ? " + " + fmt(o.tonnesInit) + " t antérieures" : ""}</dd>` : ""}
     </dl>${bar(e, o)}
     <h4 style="margin:16px 0 6px">Historique</h4>
     ${
@@ -2095,7 +2489,8 @@
     <label>Intervenant<input name="intervenant" placeholder="Nom / équipe" autocomplete="off"></label>
     <fieldset class="full"><legend>Compteurs de l'équipement au moment du remplacement</legend>
       <label>Heures<input type="number" name="heures" min="0" step="any" value="${e.compteurs.heures}" required></label>
-      <label>Tonnes<input type="number" name="tonnes" min="0" step="any" value="${e.compteurs.tonnes}" required></label>
+      <label>Tonnes<input type="number" name="tonnes" min="0" step="any" value="${Math.round(eqTonnes(e) * 1000) / 1000}" required${prodActive() ? " readonly" : ""}></label>
+      ${prodActive() ? `<div class="full hint">Tonnage calculé par la base production (${diamTxt(e)}) : un organe suivi en tonnes repart de zéro à la date saisie.</div>` : ""}
     </fieldset>
     <label class="full">Commentaire<textarea name="commentaire" rows="3" placeholder="Référence pièce, constat, n° OT…"></textarea></label></div>`,
           {
@@ -2103,11 +2498,12 @@
             onOk: (fd) => {
               const h = +fd.get("heures"),
                 t = +fd.get("tonnes");
-              const used = Math.max(
-                0,
-                (o.mode === "heures" ? h : t) - (+o.ref[o.mode] || 0),
-              );
+              const used =
+                o.mode === "tonnes" && prodActive()
+                  ? usage(e, o)
+                  : Math.max(0, (o.mode === "heures" ? h : t) - (+o.ref[o.mode] || 0));
               o.ref = { date: fd.get("date"), heures: h, tonnes: t };
+              o.tonnesInit = 0;
               log({
                 type: "remplacement",
                 date: fd.get("date"),
@@ -2172,7 +2568,9 @@
       <label class="full">Date<input type="date" name="rdate" value="${esc(d.ref.date)}"></label>
       <label>Compteur heures à ce moment<input type="number" name="rh" min="0" step="any" value="${d.ref.heures}"></label>
       <label>Compteur tonnes à ce moment<input type="number" name="rt" min="0" step="any" value="${d.ref.tonnes}"></label>
-      <div class="full hint">Compteurs actuels de l'équipement : ${fmt(e.compteurs.heures)} h · ${fmt(e.compteurs.tonnes)} t. Pour une pièce neuve, laissez les compteurs actuels.</div>
+      <div class="full hint">Compteurs actuels de l'équipement : ${fmt(e.compteurs.heures)} h · ${fmt(eqTonnes(e))} t. Pour une pièce neuve, laissez les compteurs actuels.</div>
+      ${prodActive() ? `<label class="full">Tonnes déjà faites avant le début de la base production (${fdate(PROD.debut)})<input type="number" name="tinit" min="0" step="any" value="${+d.tonnesInit || 0}"></label>
+      <div class="full hint">Suivi en tonnes : l'usure = tonnes produites ${diamTxt(e)} depuis la date ci-dessus (base production) + ces tonnes antérieures. Le « compteur tonnes » n'est alors pas utilisé.</div>` : ""}
     </fieldset></div>`,
           {
             ok: isNew ? "Ajouter" : "Enregistrer",
@@ -2225,6 +2623,7 @@
                   tonnes: +fd.get("rt") || 0,
                 },
               });
+              if (fd.has("tinit")) t.tonnesInit = Math.max(0, +fd.get("tinit") || 0);
               if (isNew) {
                 e.organes.push(t);
                 log({
@@ -2254,6 +2653,10 @@
           );
       }
 
+      function readDiams(fd) {
+        const plus = String(fd.get("diamPlus") || "").split(/[;,\s]+/).map(Number).filter((x) => x > 0);
+        return [...new Set([...fd.getAll("diam").map(Number), ...plus])].sort((a, b) => a - b);
+      }
       function editEquip(e) {
         const isNew = !e,
           d = e || {
@@ -2273,6 +2676,10 @@
           `<option value="${k}"${k === d.type ? " selected" : ""}>${esc(v.label)}</option>`,
       )
       .join("")}</select></label>
+    <div class="full"><div class="hint" style="margin-bottom:4px">Diamètres associés (tonnage compté depuis la base production — aucun coché = tous)</div>
+      <div class="chips">${[...new Set([...(PROD ? PROD.diams : []), ...(d.diametres || [])])].sort((a, b) => a - b)
+        .map((k) => `<label class="chip" style="flex-direction:row;color:var(--text)"><input type="checkbox" name="diam" value="${k}"${(d.diametres || []).includes(k) ? " checked" : ""}> Ø ${k}</label>`).join("") || '<span class="hint">Connectez la base production (page Production) pour choisir parmi ses diamètres.</span>'}</div>
+      <label style="margin-top:6px">Autres diamètres (séparés par ;)<input name="diamPlus" placeholder="ex. 12;14"></label></div>
     <label class="full" style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" name="motorise"${d.options && d.options.motorise ? " checked" : ""}> Voie à rouleaux motorisée (paliers + motoréducteur sur le dessin)</label>
     ${
       isNew
@@ -2303,6 +2710,7 @@
                   zone: fd.get("zone").trim(),
                   type: fd.get("type"),
                   options: { motorise: !!fd.get("motorise") },
+                  diametres: readDiams(fd),
                   compteurs: {
                     heures: +fd.get("h") || 0,
                     tonnes: +fd.get("t") || 0,
@@ -2319,6 +2727,7 @@
                   zone: fd.get("zone").trim(),
                   type: fd.get("type"),
                   options: Object.assign({}, e.options, { motorise: !!fd.get("motorise") }),
+                  diametres: readDiams(fd),
                 });
                 commit();
               }
@@ -2333,7 +2742,8 @@
           `<div class="form">
     <p class="full hint">Saisissez les valeurs <b>totales</b> lues sur l'équipement. Valeurs actuelles : ${fmt(e.compteurs.heures)} h · ${fmt(e.compteurs.tonnes)} t.</p>
     <label>Heures<input type="number" name="h" min="0" step="any" value="${e.compteurs.heures}" required></label>
-    <label>Tonnes<input type="number" name="t" min="0" step="any" value="${e.compteurs.tonnes}" required></label>
+    <label>Tonnes<input type="number" name="t" min="0" step="any" value="${Math.round(eqTonnes(e) * 1000) / 1000}" required${prodActive() ? " readonly" : ""}></label>
+    ${prodActive() ? `<p class="full hint">Le tonnage vient de la base production (${diamTxt(e)}) : seules les heures sont à saisir.</p>` : ""}
     <label>Date<input type="date" name="date" value="${today()}" required></label>
     <label>Relevé par<input name="intervenant" autocomplete="off"></label></div>`,
           {
@@ -2342,7 +2752,7 @@
               const h = +fd.get("h"),
                 t = +fd.get("t");
               if (
-                (h < e.compteurs.heures || t < e.compteurs.tonnes) &&
+                (h < e.compteurs.heures || (!prodActive() && t < e.compteurs.tonnes)) &&
                 !confirm(
                   "Une valeur est inférieure au relevé précédent. Confirmer ?",
                 )
@@ -2405,7 +2815,7 @@
       .map(
         (e) => `<tr><td>${esc(e.nom)}</td>
       <td class="num"><input class="inline-in" style="width:110px" type="number" min="0" step="any" name="h_${e.id}" value="${e.compteurs.heures}"></td>
-      <td class="num"><input class="inline-in" style="width:120px" type="number" min="0" step="any" name="t_${e.id}" value="${e.compteurs.tonnes}"></td></tr>`,
+      <td class="num"><input class="inline-in" style="width:120px" type="number" min="0" step="any" name="t_${e.id}" value="${Math.round(eqTonnes(e) * 1000) / 1000}"${prodActive() ? " readonly" : ""}></td></tr>`,
       )
       .join("")}
     </tbody></table></div>
@@ -2427,7 +2837,7 @@
               const down = db.equipements.filter(
                 (e) =>
                   +fd.get("h_" + e.id) < e.compteurs.heures ||
-                  +fd.get("t_" + e.id) < e.compteurs.tonnes,
+                  (!prodActive() && +fd.get("t_" + e.id) < e.compteurs.tonnes),
               );
               if (
                 down.length &&
@@ -2458,6 +2868,18 @@
         );
       }
       $("#btnReleveLigne").onclick = releveLigne;
+      $("#prodChip").onclick = () => (prodEtat.st === "reconnect" ? prodRefresh() : go("production"));
+      $("#prodInput").addEventListener("change", async (ev) => {
+        const f = ev.target.files[0];
+        if (!f) return;
+        try {
+          setProd(JSON.parse(await f.text()), f.name, new Date(f.lastModified).toISOString());
+          Object.assign(prodCfg(), { mode: "fichier", fichier: f.name, actif: true });
+          commit();
+          toast("Base production chargée (ce navigateur ne permet pas la reconnexion automatique)");
+        } catch (e) { alert("Lecture impossible : " + e.message); }
+        ev.target.value = "";
+      });
 
       function exportCsv() {
         const cols = [
@@ -2505,6 +2927,11 @@
         }
         if (!db) db = normalize(JSON.parse(JSON.stringify(DEFAULT_DB)));
         if (!afterMigration()) render();
+        // connexion automatique à la base production, dans sa dernière version
+        if (db.production.actif) {
+          await loadProd(false);
+          render();
+        }
       })();
     </script>
   </body>
