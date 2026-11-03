@@ -1,0 +1,2184 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GMAO Ligne</title>
+    <style>
+      :root {
+        --bg: #f3f5f8;
+        --panel: #ffffff;
+        --panel2: #f8f9fb;
+        --text: #1d2430;
+        --muted: #667085;
+        --line: #dde2ea;
+        --accent: #2457c5;
+        --accent-text: #fff;
+        --ok: #1f9d55;
+        --warn: #f08c00;
+        --crit: #e03131;
+        --none: #a5adba;
+        --ok-bg: #e6f6ec;
+        --warn-bg: #fff3e0;
+        --crit-bg: #fdecec;
+        --none-bg: #eef0f3;
+        --metal: #c9d0da;
+        --metal2: #9aa4b2;
+        --metal-dark: #5f6b7a;
+        --draw-bg: #fbfcfd;
+        --shadow:
+          0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #11151b;
+          --panel: #1a2029;
+          --panel2: #151a22;
+          --text: #e6e9ee;
+          --muted: #98a2b3;
+          --line: #2c3440;
+          --accent: #5b8def;
+          --ok-bg: #12321f;
+          --warn-bg: #3a2a10;
+          --crit-bg: #3d1717;
+          --none-bg: #252c36;
+          --metal: #3b4552;
+          --metal2: #56616f;
+          --metal-dark: #8a96a6;
+          --draw-bg: #161b23;
+          --shadow: none;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #11151b;
+        --panel: #1a2029;
+        --panel2: #151a22;
+        --text: #e6e9ee;
+        --muted: #98a2b3;
+        --line: #2c3440;
+        --accent: #5b8def;
+        --ok-bg: #12321f;
+        --warn-bg: #3a2a10;
+        --crit-bg: #3d1717;
+        --none-bg: #252c36;
+        --metal: #3b4552;
+        --metal2: #56616f;
+        --metal-dark: #8a96a6;
+        --draw-bg: #161b23;
+        --shadow: none;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px/1.45 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+      a {
+        color: var(--accent);
+      }
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 10px 16px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+      }
+      header.top h1 {
+        font-size: 17px;
+        margin: 0;
+        white-space: nowrap;
+      }
+      header.top .src {
+        font-size: 12px;
+        color: var(--muted);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      header.top .src b.dirty {
+        color: var(--warn);
+      }
+      header.top .sp {
+        flex: 1;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        padding: 6px 12px;
+        border-radius: 7px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        border-color: var(--accent);
+      }
+      .btn.pri {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-text);
+      }
+      .btn.danger {
+        color: var(--crit);
+        border-color: var(--crit);
+      }
+      .btn.sm {
+        padding: 3px 8px;
+        font-size: 12.5px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        min-height: calc(100vh - 52px);
+      }
+      nav.side {
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 12px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      nav.side .grp {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin: 12px 8px 4px;
+      }
+      nav.side a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 7px;
+        text-decoration: none;
+        color: var(--text);
+      }
+      nav.side a:hover {
+        background: var(--panel2);
+      }
+      nav.side a.on {
+        background: var(--panel2);
+        font-weight: 600;
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+      nav.side a .cnt b {
+        display: inline-block;
+        min-width: 18px;
+        padding: 0 5px;
+        border-radius: 99px;
+        color: #fff;
+        font-size: 11px;
+        text-align: center;
+        margin-left: 3px;
+      }
+      .split .draw svg {
+        max-height: 380px;
+      }
+      nav.side a .cnt {
+        white-space: nowrap;
+        display: flex;
+        margin-left: auto;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex: none;
+        background: var(--none);
+      }
+      .dot.ok {
+        background: var(--ok);
+      }
+      .dot.warn {
+        background: var(--warn);
+      }
+      .dot.crit {
+        background: var(--crit);
+      }
+      main {
+        padding: 18px 20px;
+        min-width: 0;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 16px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .tile {
+        padding: 12px 14px;
+      }
+      .tile .k {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .tile .v {
+        font-size: 26px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile.ok .v {
+        color: var(--ok);
+      }
+      .tile.warn .v {
+        color: var(--warn);
+      }
+      .tile.crit .v {
+        color: var(--crit);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 14px;
+      }
+      .eqcard {
+        padding: 12px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border-top: 4px solid var(--none);
+      }
+      .eqcard.ok {
+        border-top-color: var(--ok);
+      }
+      .eqcard.warn {
+        border-top-color: var(--warn);
+      }
+      .eqcard.crit {
+        border-top-color: var(--crit);
+      }
+      .eqcard:hover {
+        border-color: var(--accent);
+      }
+      .eqcard .hd {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .eqcard .hd b {
+        flex: 1;
+      }
+      .eqcard .meta {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .draw {
+        background: var(--draw-bg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 6px;
+      }
+      .draw svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .badge.ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .badge.warn {
+        background: var(--warn-bg);
+        color: var(--warn);
+      }
+      .badge.crit {
+        background: var(--crit-bg);
+        color: var(--crit);
+      }
+      .badge.none {
+        background: var(--none-bg);
+        color: var(--muted);
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 9px;
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        font-size: 12px;
+        background: var(--panel);
+        cursor: pointer;
+      }
+      .alerts {
+        padding: 12px 14px;
+        margin-bottom: 16px;
+      }
+      .alerts h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+      .alerts .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        border-top: 1px solid var(--line);
+        cursor: pointer;
+      }
+      .alerts .row:first-of-type {
+        border-top: 0;
+      }
+      .alerts .row .n {
+        flex: 1;
+        min-width: 0;
+      }
+      .alerts .row .n small {
+        color: var(--muted);
+        display: block;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .eqhead {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .eqhead .t {
+        flex: 1;
+        min-width: 220px;
+      }
+      .counters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .counter {
+        padding: 8px 14px;
+        min-width: 140px;
+      }
+      .counter .k {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .counter .v {
+        font-size: 20px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        gap: 14px;
+        align-items: start;
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: middle;
+      }
+      th {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        background: var(--panel2);
+        white-space: nowrap;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      tr.sel td {
+        background: var(--panel2);
+      }
+      tr.click {
+        cursor: pointer;
+      }
+      .bar {
+        position: relative;
+        height: 9px;
+        background: var(--none-bg);
+        border-radius: 99px;
+        min-width: 110px;
+        overflow: visible;
+      }
+      .bar i {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 99px;
+        background: var(--ok);
+      }
+      .bar.warn i {
+        background: var(--warn);
+      }
+      .bar.crit i {
+        background: var(--crit);
+      }
+      .bar b {
+        position: absolute;
+        top: -3px;
+        bottom: -3px;
+        width: 2px;
+        background: var(--warn);
+        border-radius: 1px;
+      }
+      .bar-l {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-top: 3px;
+        white-space: nowrap;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .empty {
+        padding: 28px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .inline-in {
+        width: 100px;
+        padding: 4px 6px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        text-align: right;
+      }
+      select.inline-in {
+        text-align: left;
+        width: auto;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+        align-items: center;
+      }
+      .toolbar input[type="search"] {
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--panel);
+        min-width: 220px;
+      }
+
+      /* Dessins : les organes prennent la couleur de leur état */
+      svg .part {
+        cursor: pointer;
+        --c: var(--none);
+      }
+      svg .part.st-ok {
+        --c: var(--ok);
+      }
+      svg .part.st-warn {
+        --c: var(--warn);
+      }
+      svg .part.st-crit {
+        --c: var(--crit);
+      }
+      svg .part:hover {
+        filter: brightness(1.12) drop-shadow(0 0 3px var(--c));
+      }
+      svg .part.hl {
+        filter: drop-shadow(0 0 5px var(--c));
+      }
+      svg .f {
+        fill: var(--c);
+        stroke: rgba(0, 0, 0, 0.35);
+        stroke-width: 1.2;
+      }
+      svg .s {
+        fill: none;
+        stroke: var(--c);
+        stroke-width: 6;
+        stroke-linecap: round;
+      }
+      svg .o {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.75);
+        stroke-width: 2;
+      }
+      svg .hl2 {
+        fill: rgba(255, 255, 255, 0.28);
+      }
+      svg .n {
+        fill: var(--metal);
+        stroke: var(--metal2);
+        stroke-width: 1.2;
+      }
+      svg .nd {
+        fill: var(--metal-dark);
+      }
+      svg .pipe {
+        fill: none;
+        stroke: var(--metal2);
+        stroke-width: 7;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+      }
+      svg .ln {
+        fill: none;
+        stroke: var(--metal2);
+        stroke-width: 1.5;
+      }
+      svg text {
+        fill: var(--muted);
+        font:
+          600 10px system-ui,
+          sans-serif;
+        pointer-events: none;
+      }
+      svg text.on {
+        fill: #fff;
+        font-size: 10px;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0.55;
+        }
+      }
+      svg .part.st-crit .f,
+      svg .part.st-crit .s {
+        animation: blink 1.2s ease-in-out infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        svg .part.st-crit .f,
+        svg .part.st-crit .s {
+          animation: none;
+        }
+      }
+
+      dialog {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 0;
+        background: var(--panel);
+        color: var(--text);
+        width: min(560px, calc(100vw - 32px));
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+      }
+      dialog::backdrop {
+        background: rgba(10, 15, 25, 0.45);
+      }
+      dialog .mh {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      dialog .mh h3 {
+        margin: 0;
+        font-size: 16px;
+        flex: 1;
+      }
+      dialog .mb {
+        padding: 16px 18px;
+        max-height: 65vh;
+        overflow: auto;
+      }
+      dialog .mf {
+        padding: 12px 18px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+      dialog .mf .left {
+        margin-right: auto;
+      }
+      .form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .form .full {
+        grid-column: 1/-1;
+      }
+      .form label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      .form input,
+      .form select,
+      .form textarea {
+        padding: 7px 9px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--panel);
+        color: var(--text);
+      }
+      .form .hint {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .form fieldset {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .form fieldset legend {
+        font-size: 12px;
+        color: var(--muted);
+        padding: 0 4px;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .seg label {
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        color: var(--text);
+        font-size: 13px;
+      }
+      .seg label:has(input:checked) {
+        background: var(--accent);
+        color: var(--accent-text);
+      }
+      .seg input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 14px;
+        margin-bottom: 12px;
+      }
+      .kv dt {
+        color: var(--muted);
+      }
+      .kv dd {
+        margin: 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .toast {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--text);
+        color: var(--bg);
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+        z-index: 50;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .menu-btn {
+        display: none;
+      }
+
+      @media (max-width: 1500px) {
+        .split {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        nav.side {
+          display: none;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        nav.side.open {
+          display: flex;
+        }
+        .menu-btn {
+          display: inline-block;
+        }
+        .split {
+          grid-template-columns: 1fr;
+        }
+        .tiles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        main {
+          padding: 14px 16px;
+        }
+        header.top {
+          padding: 10px 16px;
+        }
+        .form {
+          grid-template-columns: 1fr;
+        }
+        .form fieldset {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media print {
+        header.top,
+        nav.side,
+        .noprint {
+          display: none !important;
+        }
+        .layout {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <button class="btn menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+      <h1>🔧 GMAO Ligne</h1>
+      <div class="src" id="src"></div>
+      <div class="sp"></div>
+      <button
+        class="btn"
+        id="btnReleveLigne"
+        title="Saisir les compteurs de tous les équipements"
+      >
+        ⏱ Relevé compteurs
+      </button>
+      <button class="btn" id="btnOpen" title="Ouvrir un fichier gmao-data.json">
+        📂 Ouvrir BDD
+      </button>
+      <button
+        class="btn pri"
+        id="btnSave"
+        title="Enregistrer dans le fichier JSON (Ctrl+S)"
+      >
+        💾 Enregistrer
+      </button>
+      <input
+        type="file"
+        id="fileInput"
+        accept=".json,application/json"
+        hidden
+      />
+    </header>
+    <div class="layout">
+      <nav class="side" id="side"></nav>
+      <main id="main"></main>
+    </div>
+    <dialog id="dlg"></dialog>
+    <div class="toast" id="toast"></div>
+
+    <script>
+      /* ============================================================
+   GMAO Ligne — fichier unique HTML + base JSON
+   - Les données sont dans un fichier JSON (gmao-data.json) que l'on
+     ouvre / enregistre avec les boutons du bandeau.
+   - Une copie de travail est gardée dans le navigateur.
+   ============================================================ */
+      const DEFAULT_DB = /*DEFAULT_DB*/{"version":1,"nom":"GMAO Ligne","maj":"2026-11-03T08:00:00.000Z","equipements":[{"id":"ch-enf","nom":"Centrale hydraulique enfournement","zone":"Enfournement","type":"hydraulique","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"ch-filtre","nom":"Filtre","slot":"filtre","mode":"heures","seuilVigilance":1800,"seuilRemplacement":2000,"ref":{"date":"2026-01-05","heures":12400,"tonnes":793600}},{"id":"ch-pompe","nom":"Pompe","slot":"pompe","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"ch-vidange","nom":"Vidange centrale","slot":"vidange","mode":"heures","seuilVigilance":4500,"seuilRemplacement":5000,"ref":{"date":"2026-01-05","heures":9100,"tonnes":582400}}]},{"id":"vr-chg","nom":"Voie rouleaux chargement","zone":"Chargement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vrc-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vrc-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13773,"tonnes":881500}},{"id":"vrc-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13523,"tonnes":865500}},{"id":"vrc-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14125,"tonnes":904000}},{"id":"vrc-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13906,"tonnes":890000}},{"id":"vrc-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13453,"tonnes":861000}},{"id":"vrc-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14016,"tonnes":897000}},{"id":"vrc-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13641,"tonnes":873000}}]},{"id":"vr-enf","nom":"Voie rouleaux enfournement","zone":"Enfournement","type":"rouleaux","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"vre-r1","nom":"Rouleau R1","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14172,"tonnes":907000}},{"id":"vre-r2","nom":"Rouleau R2","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13969,"tonnes":894000}},{"id":"vre-r3","nom":"Rouleau R3","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13844,"tonnes":886000}},{"id":"vre-r4","nom":"Rouleau R4","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13516,"tonnes":865000}},{"id":"vre-r5","nom":"Rouleau R5","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13734,"tonnes":879000}},{"id":"vre-r6","nom":"Rouleau R6","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14109,"tonnes":903000}},{"id":"vre-r7","nom":"Rouleau R7","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":14062,"tonnes":900000}},{"id":"vre-r8","nom":"Rouleau R8","slot":"rouleau","mode":"tonnes","seuilVigilance":45000,"seuilRemplacement":50000,"ref":{"date":"2026-01-05","heures":13609,"tonnes":871000}}]},{"id":"pous","nom":"Pousseuse","zone":"Enfournement","type":"pousseuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"pous-bg","nom":"Bras gauche","slot":"bras1","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":13281,"tonnes":850000}},{"id":"pous-bd","nom":"Bras droit","slot":"bras2","mode":"tonnes","seuilVigilance":90000,"seuilRemplacement":100000,"ref":{"date":"2026-01-05","heures":12797,"tonnes":819000}}]},{"id":"defo","nom":"Défourneuse","zone":"Défournement","type":"defourneuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[]},{"id":"tro0","nom":"TRO-0","zone":"Ligne","type":"tro0","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"tro-galet","nom":"Galets","slot":"galet","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":13050,"tonnes":835200}},{"id":"tro-verin","nom":"Vérin pneumatique","slot":"verin","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":6950,"tonnes":444800}},{"id":"tro-flex","nom":"Flexibles","slot":"flexible","mode":"heures","seuilVigilance":4000,"seuilRemplacement":4500,"ref":{"date":"2026-01-05","heures":12150,"tonnes":777600}}]},{"id":"soud","nom":"Soudeuse","zone":"Ligne","type":"soudeuse","compteurs":{"heures":14250,"tonnes":912000,"date":"2026-11-03"},"organes":[{"id":"sd-mors","nom":"Mors","slot":"mors","mode":"heures","seuilVigilance":900,"seuilRemplacement":1000,"ref":{"date":"2026-01-05","heures":13800,"tonnes":883200}},{"id":"sd-transfo","nom":"Transformateurs","slot":"transfo","mode":"heures","seuilVigilance":18000,"seuilRemplacement":20000,"ref":{"date":"2026-01-05","heures":0,"tonnes":0}},{"id":"sd-vmors","nom":"Vérins de mors","slot":"verin_mors","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":11050,"tonnes":707200}},{"id":"sd-offsup","nom":"Vérin offsetting supérieur","slot":"offset_sup","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":9150,"tonnes":585600}},{"id":"sd-offinf","nom":"Vérin offsetting inférieur","slot":"offset_inf","mode":"heures","seuilVigilance":7000,"seuilRemplacement":8000,"ref":{"date":"2026-01-05","heures":6150,"tonnes":393600}},{"id":"sd-bacier","nom":"Bagues d'usure acier","slot":"bague_acier","mode":"heures","seuilVigilance":2700,"seuilRemplacement":3000,"ref":{"date":"2026-01-05","heures":11500,"tonnes":736000}},{"id":"sd-bteflon","nom":"Bagues d'usure téflon","slot":"bague_teflon","mode":"heures","seuilVigilance":1300,"seuilRemplacement":1500,"ref":{"date":"2026-01-05","heures":13650,"tonnes":873600}}]}],"journal":[]};
+      const LS_KEY = "gmao-ligne-db";
+      const STATUS_TXT = {
+        ok: "OK",
+        warn: "Vigilance",
+        crit: "À remplacer",
+        none: "Non suivi",
+      };
+      const RANK = { none: 0, ok: 1, warn: 2, crit: 3 };
+      const UNIT = { heures: "h", tonnes: "t" };
+
+      /* Gabarits de dessin et emplacements (slots) disponibles sur chaque dessin */
+      const TYPES = {
+        hydraulique: {
+          label: "Centrale hydraulique",
+          slots: {
+            filtre: "Filtre",
+            pompe: "Pompe",
+            vidange: "Réservoir / vidange",
+          },
+        },
+        rouleaux: {
+          label: "Voie à rouleaux",
+          slots: { rouleau: "Rouleau (un dessin par organe)" },
+        },
+        pousseuse: {
+          label: "Pousseuse",
+          slots: { bras1: "Bras gauche", bras2: "Bras droit" },
+        },
+        defourneuse: {
+          label: "Défourneuse",
+          slots: {
+            general: "Corps machine",
+            perche: "Perche / bras extracteur",
+            roues: "Roues / translation",
+          },
+        },
+        tro0: {
+          label: "TRO-0",
+          slots: {
+            galet: "Galets",
+            verin: "Vérin pneumatique",
+            flexible: "Flexibles",
+          },
+        },
+        soudeuse: {
+          label: "Soudeuse",
+          slots: {
+            mors: "Mors",
+            transfo: "Transformateurs",
+            verin_mors: "Vérins de mors",
+            offset_sup: "Vérin offsetting supérieur",
+            offset_inf: "Vérin offsetting inférieur",
+            bague_acier: "Bagues d'usure acier",
+            bague_teflon: "Bagues d'usure téflon",
+          },
+        },
+        generique: { label: "Générique (blocs)", slots: {} },
+      };
+
+      let db,
+        fileHandle = null,
+        fileName = "",
+        fileLastMod = 0,
+        dirty = false,
+        selOrg = null;
+
+      /* ---------- utilitaires ---------- */
+      const $ = (s) => document.querySelector(s);
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      const fmt = (n) => Math.round(+n || 0).toLocaleString("fr-FR");
+      const today = () => new Date().toISOString().slice(0, 10);
+      const uid = (p) => p + "-" + Math.random().toString(36).slice(2, 8);
+      const fdate = (d) =>
+        d
+          ? new Date(d.length === 10 ? d + "T12:00:00" : d).toLocaleDateString(
+              "fr-FR",
+            )
+          : "—";
+      function toast(msg) {
+        const t = $("#toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(t._h);
+        t._h = setTimeout(() => t.classList.remove("show"), 2200);
+      }
+      const findEq = (id) => db.equipements.find((e) => e.id === id);
+      const findOrg = (eq, id) => eq && eq.organes.find((o) => o.id === id);
+
+      /* ---------- calculs d'usure ---------- */
+      function usage(eq, o) {
+        return Math.max(
+          0,
+          (+eq.compteurs[o.mode] || 0) - (+(o.ref || {})[o.mode] || 0),
+        );
+      }
+      function status(eq, o) {
+        const u = usage(eq, o),
+          v = +o.seuilVigilance,
+          r = +o.seuilRemplacement;
+        if (!(r > 0)) return "none";
+        if (u >= r) return "crit";
+        if (v > 0 && u >= v) return "warn";
+        return "ok";
+      }
+      function eqStatus(eq) {
+        let s = "none";
+        for (const o of eq.organes) {
+          const x = status(eq, o);
+          if (RANK[x] > RANK[s]) s = x;
+        }
+        return s;
+      }
+      function counts(list) {
+        const c = { ok: 0, warn: 0, crit: 0, none: 0 };
+        list.forEach(([e, o]) => c[status(e, o)]++);
+        return c;
+      }
+      function allOrg() {
+        const r = [];
+        db.equipements.forEach((e) => e.organes.forEach((o) => r.push([e, o])));
+        return r;
+      }
+
+      /* ---------- persistance ---------- */
+      function normalize(d) {
+        if (!d || !Array.isArray(d.equipements))
+          throw new Error(
+            "Fichier invalide : la clé « equipements » est absente.",
+          );
+        d.version = d.version || 1;
+        d.journal = Array.isArray(d.journal) ? d.journal : [];
+        d.equipements.forEach((e) => {
+          e.id = e.id || uid("eq");
+          e.type = TYPES[e.type] ? e.type : "generique";
+          e.compteurs = Object.assign(
+            { heures: 0, tonnes: 0, date: "" },
+            e.compteurs,
+          );
+          e.organes = Array.isArray(e.organes) ? e.organes : [];
+          e.organes.forEach((o) => {
+            o.id = o.id || uid("org");
+            o.mode = o.mode === "tonnes" ? "tonnes" : "heures";
+            o.ref = Object.assign({ date: "", heures: 0, tonnes: 0 }, o.ref);
+          });
+        });
+        return d;
+      }
+      function saveLocal() {
+        try {
+          localStorage.setItem(LS_KEY, JSON.stringify({ db, fileName }));
+        } catch (e) {}
+      }
+      function commit(noRender) {
+        db.maj = new Date().toISOString();
+        dirty = true;
+        saveLocal();
+        if (noRender) renderSrc();
+        else render();
+      }
+      function renderSrc() {
+        $("#src").innerHTML =
+          (fileName
+            ? "Fichier : <b>" + esc(fileName) + "</b>"
+            : "Copie navigateur (pas encore de fichier)") +
+          (dirty
+            ? ' · <b class="dirty">modifications non enregistrées</b>'
+            : " · à jour") +
+          (db.maj ? " · maj " + new Date(db.maj).toLocaleString("fr-FR") : "");
+      }
+      const JSON_TYPES = [
+        {
+          description: "Base GMAO (JSON)",
+          accept: { "application/json": [".json"] },
+        },
+      ];
+      function loadText(txt, name) {
+        const d = normalize(JSON.parse(txt));
+        db = d;
+        fileName = name || "";
+        dirty = false;
+        saveLocal();
+        selOrg = null;
+        render();
+        toast("Base chargée : " + (name || ""));
+      }
+      async function openFile() {
+        if (
+          dirty &&
+          !confirm(
+            "Des modifications ne sont pas enregistrées dans le fichier. Les abandonner et ouvrir un autre fichier ?",
+          )
+        )
+          return;
+        if (window.showOpenFilePicker) {
+          try {
+            const [h] = await showOpenFilePicker({ types: JSON_TYPES });
+            const f = await h.getFile();
+            loadText(await f.text(), h.name);
+            fileHandle = h;
+            fileLastMod = f.lastModified;
+          } catch (e) {
+            if (e.name !== "AbortError")
+              alert("Ouverture impossible : " + e.message);
+          }
+        } else $("#fileInput").click();
+      }
+      $("#fileInput").addEventListener("change", async (ev) => {
+        const f = ev.target.files[0];
+        if (!f) return;
+        try {
+          loadText(await f.text(), f.name);
+          fileHandle = null;
+        } catch (e) {
+          alert("Ouverture impossible : " + e.message);
+        }
+        ev.target.value = "";
+      });
+      async function saveFile() {
+        const txt = JSON.stringify(db, null, 2);
+        try {
+          if (fileHandle) {
+            const cur = await fileHandle.getFile();
+            if (
+              fileLastMod &&
+              cur.lastModified > fileLastMod &&
+              !confirm(
+                "Le fichier a été modifié par quelqu'un d'autre depuis son ouverture.\nL'écraser quand même ? (Annuler pour garder les deux : rouvrez-le ensuite)",
+              )
+            )
+              return;
+          } else if (window.showSaveFilePicker) {
+            fileHandle = await showSaveFilePicker({
+              suggestedName: fileName || "gmao-data.json",
+              types: JSON_TYPES,
+            });
+          }
+          if (fileHandle) {
+            const w = await fileHandle.createWritable();
+            await w.write(txt);
+            await w.close();
+            fileLastMod = (await fileHandle.getFile()).lastModified;
+            fileName = fileHandle.name;
+            dirty = false;
+            saveLocal();
+            renderSrc();
+            toast("Enregistré dans " + fileName);
+            return;
+          }
+        } catch (e) {
+          if (e.name === "AbortError") return;
+          console.warn(e);
+        }
+        // Navigateur sans accès direct aux fichiers : téléchargement
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(
+          new Blob([txt], { type: "application/json" }),
+        );
+        a.download = fileName || "gmao-data.json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        dirty = false;
+        saveLocal();
+        renderSrc();
+        toast("Fichier téléchargé : remplacez l’ancien gmao-data.json");
+      }
+      $("#btnOpen").onclick = openFile;
+      $("#btnSave").onclick = saveFile;
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+          e.preventDefault();
+          saveFile();
+        }
+      });
+      window.addEventListener("beforeunload", (e) => {
+        if (dirty) {
+          e.preventDefault();
+          e.returnValue = "";
+        }
+      });
+
+      /* ---------- dessins SVG ---------- */
+      function drawing(eq, small) {
+        const by = {};
+        eq.organes.forEach((o) => {
+          (by[o.slot] = by[o.slot] || []).push(o);
+        });
+        const P = (slot) => {
+          const list = by[slot] || [];
+          let s = "none";
+          list.forEach((o) => {
+            const x = status(eq, o);
+            if (RANK[x] > RANK[s]) s = x;
+          });
+          const first = list[0];
+          const tip = list.length
+            ? list
+                .map((o) => o.nom + " : " + STATUS_TXT[status(eq, o)])
+                .join("\n")
+            : (TYPES[eq.type].slots[slot] || slot) + " : non suivi";
+          return `class="part st-${s}${first && first.id === selOrg ? " hl" : ""}"${first ? ` data-org="${first.id}"` : ""}><title>${esc(tip)}</title`;
+        };
+        const fn = DRAW[eq.type] || DRAW.generique;
+        const svg = fn(eq, P, by);
+        const known = TYPES[eq.type].slots;
+        const extra =
+          eq.type === "generique"
+            ? []
+            : eq.organes.filter((o) => !known[o.slot]);
+        const chips = extra.length
+          ? `<div class="chips" style="margin-top:6px">${extra
+              .map(
+                (o) =>
+                  `<span class="chip" data-org="${o.id}"><span class="dot ${status(eq, o)}"></span>${esc(o.nom)}</span>`,
+              )
+              .join("")}</div>`
+          : "";
+        return `<div class="draw" data-eq="${eq.id}">${svg}${small ? "" : chips}</div>${small && extra.length ? chips : ""}`;
+      }
+      const DRAW = {
+        hydraulique: (
+          eq,
+          P,
+        ) => `<svg viewBox="0 0 420 250" role="img" aria-label="Centrale hydraulique">
+  <rect class="n" x="10" y="228" width="400" height="8" rx="2"/>
+  <path class="pipe" d="M240 196 H268"/>
+  <path class="pipe" d="M300 140 V104"/>
+  <path class="pipe" d="M282 56 H150 V122"/>
+  <g ${P("vidange")}>
+    <rect class="f" x="30" y="120" width="210" height="104" rx="8"/>
+    <rect class="hl2" x="40" y="152" width="190" height="62" rx="4"/>
+    <path class="o" d="M40 152 q12 -6 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t22 0"/>
+    <rect class="f" x="196" y="222" width="18" height="12" rx="2"/>
+    <text class="on" x="135" y="140" text-anchor="middle">RÉSERVOIR · HUILE</text>
+  </g>
+  <g ${P("pompe")}>
+    <rect class="f" x="334" y="178" width="66" height="36" rx="5"/>
+    <path class="o" d="M346 184 v24 M356 184 v24 M366 184 v24 M376 184 v24 M386 184 v24"/>
+    <circle class="f" cx="300" cy="196" r="34"/>
+    <circle class="o" cx="300" cy="196" r="14"/>
+    <path class="o" d="M300 182 v28 M286 196 h28 M290 186 l20 20 M310 186 l-20 20"/>
+    <text x="300" y="246" text-anchor="middle">POMPE</text>
+  </g>
+  <g ${P("filtre")}>
+    <rect class="n" x="274" y="20" width="52" height="12" rx="3"/>
+    <rect class="f" x="282" y="30" width="36" height="76" rx="10"/>
+    <path class="o" d="M290 42 v52 M300 42 v52 M310 42 v52"/>
+    <text x="340" y="70">FILTRE</text>
+  </g>
+</svg>`,
+        rouleaux: (eq, P, by) => {
+          const rs = by.rouleau || [];
+          const n = Math.max(rs.length, 1),
+            pitch = 380 / n,
+            w = Math.min(pitch * 0.62, 34);
+          let r = "";
+          rs.forEach((o, i) => {
+            const cx = 20 + pitch * i + pitch / 2,
+              s = status(eq, o);
+            r += `<g class="part st-${s}${o.id === selOrg ? " hl" : ""}" data-org="${o.id}"><title>${esc(o.nom + " : " + STATUS_TXT[s])}</title>
+      <rect class="nd" x="${cx - 4}" y="38" width="8" height="14" rx="2"/><rect class="nd" x="${cx - 4}" y="148" width="8" height="14" rx="2"/>
+      <rect class="f" x="${cx - w / 2}" y="50" width="${w}" height="100" rx="${Math.min(w / 2, 8)}"/>
+      <rect class="hl2" x="${cx - w / 2 + 3}" y="54" width="${Math.max(w * 0.28, 2)}" height="92" rx="2"/>
+      <text x="${cx}" y="184" text-anchor="middle">${esc(o.nom.replace(/^Rouleau\s*/i, ""))}</text></g>`;
+          });
+          return `<svg viewBox="0 0 420 200" role="img" aria-label="Voie à rouleaux">
+    <path class="ln" d="M150 18 H270 M262 12 l10 6 -10 6"/><text x="140" y="22" text-anchor="end">sens produit</text>
+    <rect class="n" x="10" y="36" width="400" height="10" rx="3"/><rect class="n" x="10" y="154" width="400" height="10" rx="3"/>
+    ${r || '<text x="210" y="104" text-anchor="middle">Aucun rouleau suivi</text>'}
+  </svg>`;
+        },
+        pousseuse: (
+          eq,
+          P,
+        ) => `<svg viewBox="0 0 420 220" role="img" aria-label="Pousseuse">
+  <rect class="n" x="14" y="40" width="104" height="140" rx="8"/>
+  <rect class="nd" x="30" y="92" width="72" height="36" rx="6"/>
+  <text class="on" x="66" y="114" text-anchor="middle">VÉRIN</text>
+  <rect class="n" x="108" y="100" width="20" height="20"/>
+  <path class="ln" d="M368 110 H400 M392 104 l10 6 -10 6"/>
+  <rect class="n" x="372" y="40" width="40" height="140" rx="3" opacity=".55"/>
+  <text x="392" y="196" text-anchor="middle">charge</text>
+  <g ${P("bras1")}>
+    <rect class="f" x="118" y="58" width="226" height="20" rx="5"/>
+    <rect class="f" x="340" y="44" width="24" height="48" rx="4"/>
+    <rect class="hl2" x="124" y="61" width="210" height="5" rx="2"/>
+    <text class="on" x="230" y="72" text-anchor="middle">BRAS GAUCHE</text>
+  </g>
+  <g ${P("bras2")}>
+    <rect class="f" x="118" y="142" width="226" height="20" rx="5"/>
+    <rect class="f" x="340" y="128" width="24" height="48" rx="4"/>
+    <rect class="hl2" x="124" y="145" width="210" height="5" rx="2"/>
+    <text class="on" x="230" y="156" text-anchor="middle">BRAS DROIT</text>
+  </g>
+  <rect class="n" x="128" y="78" width="12" height="64"/>
+</svg>`,
+        defourneuse: (
+          eq,
+          P,
+        ) => `<svg viewBox="0 0 420 220" role="img" aria-label="Défourneuse">
+  <rect class="n" x="10" y="196" width="400" height="8" rx="2"/>
+  <g ${P("perche")}>
+    <rect class="f" x="170" y="96" width="210" height="18" rx="4"/>
+    <path class="f" d="M380 86 h22 v38 h-22 z"/>
+    <rect class="hl2" x="176" y="99" width="196" height="5" rx="2"/>
+  </g>
+  <g ${P("general")}>
+    <rect class="f" x="30" y="60" width="150" height="110" rx="8"/>
+    <rect class="hl2" x="44" y="74" width="54" height="36" rx="4"/>
+    <rect class="hl2" x="108" y="74" width="58" height="36" rx="4"/>
+    <text class="on" x="105" y="146" text-anchor="middle">DÉFOURNEUSE</text>
+  </g>
+  <g ${P("roues")}>
+    <circle class="f" cx="62" cy="182" r="14"/><circle class="f" cx="148" cy="182" r="14"/>
+    <circle class="o" cx="62" cy="182" r="5"/><circle class="o" cx="148" cy="182" r="5"/>
+  </g>
+</svg>`,
+        tro0: (
+          eq,
+          P,
+        ) => `<svg viewBox="0 0 420 220" role="img" aria-label="TRO-0">
+  <rect class="n" x="10" y="200" width="400" height="7" rx="2"/>
+  <rect class="n" x="60" y="44" width="300" height="122" rx="6" style="fill:none;stroke-width:9"/>
+  <rect class="nd" x="34" y="8" width="66" height="22" rx="3"/>
+  <text class="on" x="67" y="23" text-anchor="middle">DISTRIB.</text>
+  <g ${P("flexible")}>
+    <path class="s" d="M52 30 C 56 70, 90 66, 128 86"/>
+    <path class="s" d="M84 30 C 150 30, 250 34, 262 76"/>
+    <text x="196" y="30">FLEXIBLES</text>
+  </g>
+  <g ${P("verin")}>
+    <rect class="f" x="120" y="76" width="150" height="30" rx="7"/>
+    <rect class="hl2" x="126" y="80" width="138" height="6" rx="2"/>
+    <rect class="f" x="270" y="85" width="62" height="12" rx="3"/>
+    <circle class="f" cx="336" cy="91" r="9"/>
+    <text class="on" x="195" y="98" text-anchor="middle">VÉRIN PNEU.</text>
+  </g>
+  <g ${P("galet")}>
+    ${[100, 170, 250, 320].map((x) => `<circle class="f" cx="${x}" cy="176" r="22"/><circle class="o" cx="${x}" cy="176" r="8"/>`).join("")}
+    <text x="210" y="142" text-anchor="middle">GALETS</text>
+  </g>
+</svg>`,
+        soudeuse: (eq, P) => {
+          const clamp = (cx) => `
+    <g ${P("verin_mors")}>
+      <rect class="f" x="${cx - 17}" y="28" width="34" height="50" rx="5"/>
+      <rect class="hl2" x="${cx - 13}" y="32" width="7" height="42" rx="2"/>
+      <rect class="f" x="${cx - 6}" y="78" width="12" height="24"/>
+    </g>
+    <g ${P("mors")}>
+      <rect class="f" x="${cx - 62}" y="102" width="124" height="22" rx="3"/>
+      <rect class="f" x="${cx - 62}" y="140" width="124" height="22" rx="3"/>
+      <rect class="hl2" x="${cx - 58}" y="105" width="116" height="5" rx="2"/>
+    </g>
+    <rect class="n" x="${cx - 6}" y="162" width="12" height="36"/>
+    <g ${P("transfo")}>
+      <rect class="f" x="${cx - 46}" y="198" width="92" height="56" rx="5"/>
+      <path class="o" d="M${cx - 24} 210 c8 0 8 8 0 8 c8 0 8 8 0 8 c8 0 8 8 0 8 M${cx + 24} 210 c-8 0 -8 8 0 8 c-8 0 -8 8 0 8 c-8 0 -8 8 0 8 M${cx - 6} 208 v38 M${cx + 6} 208 v38"/>
+    </g>`;
+          const ring = (x, y, slot) =>
+            `<g ${P(slot)}><rect class="f" x="${x - 13}" y="${y}" width="26" height="14" rx="3"/></g>`;
+          return `<svg viewBox="0 0 460 290" role="img" aria-label="Soudeuse">
+  <rect class="n" x="16" y="16" width="10" height="262" rx="3"/><rect class="n" x="434" y="16" width="10" height="262" rx="3"/>
+  <rect class="n" x="190" y="128" width="80" height="8" opacity=".6"/>
+  <rect class="nd" x="0" y="129" width="460" height="6" opacity=".55"/>
+  <text x="230" y="124" text-anchor="middle">bande</text>
+  ${clamp(118)}${clamp(342)}
+  <g ${P("offset_sup")}>
+    <rect class="f" x="186" y="44" width="58" height="22" rx="5"/>
+    <rect class="f" x="244" y="50" width="56" height="10" rx="2"/>
+    <text x="230" y="38" text-anchor="middle">OFFSET SUP.</text>
+  </g>
+  <g ${P("offset_inf")}>
+    <rect class="f" x="186" y="214" width="58" height="22" rx="5"/>
+    <rect class="f" x="244" y="220" width="44" height="10" rx="2"/>
+    <text x="230" y="252" text-anchor="middle">OFFSET INF.</text>
+  </g>
+  ${ring(21, 58, "bague_acier")}${ring(21, 206, "bague_acier")}${ring(439, 58, "bague_acier")}${ring(439, 206, "bague_acier")}
+  ${ring(21, 88, "bague_teflon")}${ring(21, 176, "bague_teflon")}${ring(439, 88, "bague_teflon")}${ring(439, 176, "bague_teflon")}
+  <text x="40" y="70">acier</text><text x="40" y="100">téflon</text>
+  <text x="118" y="286" text-anchor="middle">TRANSFO</text><text x="342" y="286" text-anchor="middle">TRANSFO</text>
+  <text x="118" y="20" text-anchor="middle">VÉRIN MORS</text><text x="342" y="20" text-anchor="middle">VÉRIN MORS</text>
+</svg>`;
+        },
+        generique: (eq) => {
+          const os = eq.organes,
+            cols = Math.min(Math.max(os.length, 1), 4),
+            rows = Math.ceil(Math.max(os.length, 1) / cols);
+          const W = 420,
+            cw = (W - 20) / cols,
+            ch = 64,
+            H = rows * ch + 20;
+          return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(eq.nom)}">${
+            os
+              .map((o, i) => {
+                const x = 10 + (i % cols) * cw,
+                  y = 10 + Math.floor(i / cols) * ch,
+                  s = status(eq, o);
+                return `<g class="part st-${s}${o.id === selOrg ? " hl" : ""}" data-org="${o.id}"><title>${esc(o.nom)}</title>
+      <rect class="f" x="${x + 4}" y="${y + 4}" width="${cw - 8}" height="${ch - 8}" rx="8"/>
+      <text class="on" x="${x + cw / 2}" y="${y + ch / 2 + 4}" text-anchor="middle">${esc(o.nom.slice(0, 22))}</text></g>`;
+              })
+              .join("") ||
+            `<text x="210" y="${H / 2}" text-anchor="middle">Aucun organe suivi</text>`
+          }</svg>`;
+        },
+      };
+
+      /* ---------- rendu ---------- */
+      function route() {
+        const h = location.hash.slice(1);
+        const [p, id] = h.split("=");
+        return { page: p || "dash", id };
+      }
+      function go(h) {
+        location.hash = h;
+      }
+      window.addEventListener("hashchange", () => {
+        selOrg = null;
+        render();
+        window.scrollTo(0, 0);
+        $("#side").classList.remove("open");
+      });
+      $("#menuBtn").onclick = () => $("#side").classList.toggle("open");
+
+      function render() {
+        renderSrc();
+        renderNav();
+        renderMain();
+      }
+      function renderNav() {
+        const r = route();
+        $("#side").innerHTML = `
+    <a href="#dash" class="${r.page === "dash" ? "on" : ""}">📊 Tableau de bord</a>
+    <a href="#seuils" class="${r.page === "seuils" ? "on" : ""}">🎚 Seuils</a>
+    <a href="#journal" class="${r.page === "journal" ? "on" : ""}">📒 Journal</a>
+    <div class="grp">Équipements</div>
+    ${db.equipements
+      .map((e) => {
+        const c = counts(e.organes.map((o) => [e, o]));
+        return `<a href="#eq=${e.id}" class="${r.page === "eq" && r.id === e.id ? "on" : ""}"><span class="dot ${eqStatus(e)}"></span>${esc(e.nom)}
+        <span class="cnt">${c.crit ? '<b style="background:var(--crit)" title="À remplacer">' + c.crit + "</b>" : ""}${c.warn ? '<b style="background:var(--warn)" title="Vigilance">' + c.warn + "</b>" : ""}</span></a>`;
+      })
+      .join("")}
+    <a href="javascript:void 0" id="addEq" class="muted">＋ Ajouter un équipement</a>`;
+        $("#addEq").onclick = () => editEquip(null);
+      }
+      function renderMain() {
+        const r = route(),
+          m = $("#main");
+        if (r.page === "eq" && findEq(r.id))
+          m.innerHTML = viewEquip(findEq(r.id));
+        else if (r.page === "seuils") m.innerHTML = viewSeuils();
+        else if (r.page === "journal") m.innerHTML = viewJournal();
+        else m.innerHTML = viewDash();
+        bindMain();
+      }
+
+      function bar(eq, o) {
+        const u = usage(eq, o),
+          r = +o.seuilRemplacement || 0,
+          v = +o.seuilVigilance || 0,
+          s = status(eq, o);
+        const pct = r ? Math.min(100, (u / r) * 100) : 0,
+          vp = r ? Math.min(100, (v / r) * 100) : 0;
+        return `<div class="bar ${s}"><i style="width:${pct}%"></i>${v && r ? `<b style="left:calc(${vp}% - 1px)" title="Seuil vigilance"></b>` : ""}</div>
+    <div class="bar-l">${fmt(u)} / ${fmt(r)} ${UNIT[o.mode]} · ${r ? Math.round((u / r) * 100) : 0} %</div>`;
+      }
+      function remainTxt(eq, o) {
+        const u = usage(eq, o),
+          v = +o.seuilVigilance,
+          r = +o.seuilRemplacement,
+          un = UNIT[o.mode];
+        if (!(r > 0)) return "Seuils non définis";
+        if (u >= r) return `Dépassé de ${fmt(u - r)} ${un}`;
+        if (v > 0 && u < v) return `Vigilance dans ${fmt(v - u)} ${un}`;
+        return `Remplacement dans ${fmt(r - u)} ${un}`;
+      }
+      const badge = (s) =>
+        `<span class="badge ${s}"><span class="dot ${s}"></span>${STATUS_TXT[s]}</span>`;
+      const legend = `<div class="legend"><span><span class="dot ok"></span>OK</span><span><span class="dot warn"></span>Seuil vigilance atteint</span>
+  <span><span class="dot crit"></span>Seuil remplacement atteint</span><span><span class="dot"></span>Non suivi</span></div>`;
+
+      function viewDash() {
+        const all = allOrg(),
+          c = counts(all);
+        const al = all
+          .filter(([e, o]) => ["warn", "crit"].includes(status(e, o)))
+          .sort(
+            (a, b) =>
+              RANK[status(...b)] - RANK[status(...a)] ||
+              usage(...b) / (+b[1].seuilRemplacement || 1) -
+                usage(...a) / (+a[1].seuilRemplacement || 1),
+          );
+        return `<h2>Tableau de bord</h2><p class="sub">${db.equipements.length} équipements · ${all.length} organes suivis</p>
+  <div class="tiles">
+    <div class="card tile ok"><div class="k">OK</div><div class="v">${c.ok}</div></div>
+    <div class="card tile warn"><div class="k">Vigilance</div><div class="v">${c.warn}</div></div>
+    <div class="card tile crit"><div class="k">À remplacer</div><div class="v">${c.crit}</div></div>
+    <div class="card tile"><div class="k">Non suivis</div><div class="v">${c.none}</div></div>
+  </div>
+  <div class="card alerts"><h3>Actions à prévoir</h3>
+    ${
+      al.length
+        ? al
+            .map(
+              ([
+                e,
+                o,
+              ]) => `<div class="row" data-goeq="${e.id}" data-org="${o.id}">${badge(status(e, o))}
+      <div class="n"><b>${esc(o.nom)}</b><small>${esc(e.nom)} · ${remainTxt(e, o)}</small></div>
+      <div style="width:150px" class="noprint">${bar(e, o)}</div></div>`,
+            )
+            .join("")
+        : '<div class="muted">Rien à signaler : tous les organes sont sous le seuil de vigilance.</div>'
+    }
+  </div>
+  <div class="grid">${db.equipements
+    .map((e) => {
+      const cc = counts(e.organes.map((o) => [e, o]));
+      return `<div class="card eqcard ${eqStatus(e)}" data-goeq="${e.id}">
+      <div class="hd"><span class="dot ${eqStatus(e)}"></span><b>${esc(e.nom)}</b>${badge(eqStatus(e))}</div>
+      ${drawing(e, true)}
+      <div class="meta"><span>${fmt(e.compteurs.heures)} h</span><span>${fmt(e.compteurs.tonnes)} t</span>
+        <span>${e.organes.length} organe(s)</span>${cc.warn ? `<span style="color:var(--warn)">${cc.warn} vigilance</span>` : ""}${cc.crit ? `<span style="color:var(--crit)">${cc.crit} à remplacer</span>` : ""}</div>
+    </div>`;
+    })
+    .join("")}</div>${legend}`;
+      }
+
+      function viewEquip(e) {
+        const rows = e.organes
+          .map((o) => {
+            const s = status(e, o);
+            return `<tr class="click${o.id === selOrg ? " sel" : ""}" data-org="${o.id}">
+      <td><b>${esc(o.nom)}</b><div class="bar-l">${esc(TYPES[e.type].slots[o.slot] || "Hors dessin")}</div></td>
+      <td>${badge(s)}<div class="bar-l">${remainTxt(e, o)}</div></td>
+      <td style="min-width:160px">${bar(e, o)}</td>
+      <td class="num">${fmt(o.seuilVigilance)} / ${fmt(o.seuilRemplacement)} ${UNIT[o.mode]}</td>
+      <td class="num">${fdate(o.ref.date)}</td>
+      <td class="noprint" style="white-space:nowrap"><button class="btn sm" data-act="repl" data-org="${o.id}">🔁 Remplacé</button>
+        <button class="btn sm" data-act="edit" data-org="${o.id}">✏️</button></td></tr>`;
+          })
+          .join("");
+        return `<div class="eqhead"><div class="t"><h2>${esc(e.nom)}</h2><p class="sub" style="margin:0">${esc(e.zone || "")} · ${esc(TYPES[e.type].label)} · ${badge(eqStatus(e))}</p></div>
+    <div class="counters">
+      <div class="card counter"><div class="k">Compteur heures</div><div class="v">${fmt(e.compteurs.heures)} h</div></div>
+      <div class="card counter"><div class="k">Compteur tonnage</div><div class="v">${fmt(e.compteurs.tonnes)} t</div></div>
+    </div></div>
+  <div class="toolbar noprint">
+    <button class="btn pri" data-act="releve">⏱ Saisir relevé</button>
+    <button class="btn" data-act="addorg">＋ Ajouter un organe</button>
+    <button class="btn" data-act="editeq">⚙️ Modifier l'équipement</button>
+    <span class="muted" style="font-size:12px">Dernier relevé : ${fdate(e.compteurs.date)} · Cliquez une pièce du dessin pour sa fiche.</span>
+  </div>
+  <div class="split">
+    <div class="card" style="padding:10px">${drawing(e)}${legend}</div>
+    <div class="card tablewrap">${
+      e.organes.length
+        ? `<table><thead><tr><th>Organe</th><th>État</th><th>Usure depuis remplacement</th>
+      <th class="num">Vigil. / Rempl.</th><th class="num">Dernier rempl.</th><th class="noprint"></th></tr></thead><tbody>${rows}</tbody></table>`
+        : '<div class="empty">Aucun organe suivi sur cet équipement.<br><br><button class="btn pri" data-act="addorg">＋ Ajouter un organe</button></div>'
+    }</div>
+  </div>`;
+      }
+
+      function viewSeuils() {
+        return `<h2>Seuils</h2><p class="sub">Réglez pour chaque organe l'unité de suivi (heures ou tonnes) et les seuils. Les modifications sont appliquées immédiatement.</p>
+  <div class="toolbar"><input type="search" id="fSeuil" placeholder="Filtrer (équipement, organe)…"></div>
+  <div class="card tablewrap"><table id="tSeuils"><thead><tr><th>Équipement</th><th>Organe</th><th>Unité</th>
+    <th class="num">Seuil vigilance</th><th class="num">Seuil remplacement</th><th class="num">Usure actuelle</th><th>État</th></tr></thead><tbody>
+  ${allOrg()
+    .map(
+      ([
+        e,
+        o,
+      ]) => `<tr data-eq="${e.id}" data-org="${o.id}" data-q="${esc((e.nom + " " + o.nom).toLowerCase())}">
+    <td>${esc(e.nom)}</td><td>${esc(o.nom)}</td>
+    <td><select class="inline-in" data-f="mode"><option value="heures"${o.mode === "heures" ? " selected" : ""}>Heures</option><option value="tonnes"${o.mode === "tonnes" ? " selected" : ""}>Tonnes</option></select></td>
+    <td class="num"><input class="inline-in" type="number" min="0" step="any" data-f="seuilVigilance" value="${o.seuilVigilance}"></td>
+    <td class="num"><input class="inline-in" type="number" min="0" step="any" data-f="seuilRemplacement" value="${o.seuilRemplacement}"></td>
+    <td class="num" data-u>${fmt(usage(e, o))} ${UNIT[o.mode]}</td><td data-s>${badge(status(e, o))}</td></tr>`,
+    )
+    .join("")}
+  </tbody></table></div>`;
+      }
+
+      function viewJournal() {
+        const j = [...db.journal].sort((a, b) =>
+          (b.date + b.ts).localeCompare(a.date + a.ts),
+        );
+        const T = {
+          remplacement: "🔁 Remplacement",
+          releve: "⏱ Relevé",
+          config: "⚙️ Paramétrage",
+        };
+        return `<h2>Journal</h2><p class="sub">Historique des interventions et relevés (${j.length}).</p>
+  <div class="toolbar"><input type="search" id="fJour" placeholder="Filtrer…"><button class="btn" id="csv">⬇ Export CSV</button></div>
+  <div class="card tablewrap">${
+    j.length
+      ? `<table id="tJour"><thead><tr><th>Date</th><th>Type</th><th>Équipement</th><th>Organe</th><th>Intervenant</th>
+    <th class="num">Compteurs</th><th class="num">Usure au rempl.</th><th>Commentaire</th></tr></thead><tbody>
+    ${j
+      .map(
+        (
+          x,
+        ) => `<tr data-q="${esc([x.eqNom, x.orgNom, x.intervenant, x.commentaire, x.type].join(" ").toLowerCase())}">
+      <td class="num">${fdate(x.date)}</td><td>${T[x.type] || esc(x.type)}</td><td>${esc(x.eqNom)}</td><td>${esc(x.orgNom || "")}</td>
+      <td>${esc(x.intervenant || "")}</td><td class="num">${fmt(x.heures)} h · ${fmt(x.tonnes)} t</td>
+      <td class="num">${x.usage != null ? fmt(x.usage) + " " + (UNIT[x.mode] || "") : ""}</td><td>${esc(x.commentaire || "")}</td></tr>`,
+      )
+      .join("")}
+    </tbody></table>`
+      : '<div class="empty">Aucune entrée pour le moment.</div>'
+  }</div>`;
+      }
+
+      function bindMain() {
+        const m = $("#main"),
+          r = route();
+        m.querySelectorAll("[data-goeq]").forEach(
+          (el) =>
+            (el.onclick = () => {
+              if (el.dataset.org && el.classList.contains("row")) {
+                go("eq=" + el.dataset.goeq);
+                setTimeout(
+                  () => ficheOrgane(findEq(el.dataset.goeq), el.dataset.org),
+                  30,
+                );
+              } else go("eq=" + el.dataset.goeq);
+            }),
+        );
+        if (r.page === "eq") {
+          const e = findEq(r.id);
+          if (!e) return;
+          m.querySelectorAll(".draw [data-org], .chip[data-org]").forEach(
+            (el) =>
+              (el.onclick = (ev) => {
+                ev.stopPropagation();
+                ficheOrgane(e, el.dataset.org);
+              }),
+          );
+          m.querySelectorAll("tr[data-org]").forEach(
+            (el) => (el.onclick = () => ficheOrgane(e, el.dataset.org)),
+          );
+          m.querySelectorAll("[data-act]").forEach(
+            (el) =>
+              (el.onclick = (ev) => {
+                ev.stopPropagation();
+                const o = findOrg(e, el.dataset.org);
+                ({
+                  repl: () => remplacement(e, o),
+                  edit: () => editOrgane(e, o),
+                  releve: () => releve(e),
+                  addorg: () => editOrgane(e, null),
+                  editeq: () => editEquip(e),
+                })[el.dataset.act]();
+              }),
+          );
+        }
+        if (r.page === "seuils") {
+          $("#fSeuil").oninput = (ev) => {
+            const q = ev.target.value.toLowerCase();
+            m.querySelectorAll("#tSeuils tbody tr").forEach(
+              (tr) => (tr.hidden = !tr.dataset.q.includes(q)),
+            );
+          };
+          m.querySelectorAll("#tSeuils [data-f]").forEach(
+            (inp) =>
+              (inp.onchange = () => {
+                const tr = inp.closest("tr"),
+                  e = findEq(tr.dataset.eq),
+                  o = findOrg(e, tr.dataset.org),
+                  f = inp.dataset.f;
+                o[f] = f === "mode" ? inp.value : Math.max(0, +inp.value || 0);
+                if (+o.seuilVigilance > +o.seuilRemplacement)
+                  toast(
+                    "⚠ Le seuil de vigilance est supérieur au seuil de remplacement",
+                  );
+                tr.querySelector("[data-u]").textContent =
+                  fmt(usage(e, o)) + " " + UNIT[o.mode];
+                tr.querySelector("[data-s]").innerHTML = badge(status(e, o));
+                commit(true);
+                renderNav();
+              }),
+          );
+        }
+        if (r.page === "journal") {
+          const f = $("#fJour");
+          if (f)
+            f.oninput = (ev) => {
+              const q = ev.target.value.toLowerCase();
+              m.querySelectorAll("#tJour tbody tr").forEach(
+                (tr) => (tr.hidden = !tr.dataset.q.includes(q)),
+              );
+            };
+          $("#csv").onclick = exportCsv;
+        }
+      }
+
+      /* ---------- fenêtres ---------- */
+      function modal(
+        title,
+        body,
+        { ok = "Enregistrer", onOk, extra = "", onExtra, wide } = {},
+      ) {
+        const d = $("#dlg");
+        d.style.width = wide ? "min(820px, calc(100vw - 32px))" : "";
+        d.innerHTML = `<form method="dialog" id="mform"><div class="mh"><h3>${title}</h3><button class="btn sm" value="cancel" formnovalidate aria-label="Fermer">✕</button></div>
+    <div class="mb">${body}</div>
+    <div class="mf">${extra ? `<span class="left">${extra}</span>` : ""}<button class="btn" value="cancel" formnovalidate>Annuler</button>${ok ? `<button class="btn pri" value="ok">${ok}</button>` : ""}</div></form>`;
+        const f = $("#mform");
+        f.onsubmit = (ev) => {
+          if (ev.submitter && ev.submitter.value === "ok" && onOk) {
+            const res = onOk(new FormData(f), f);
+            if (res === false) {
+              ev.preventDefault();
+              return;
+            }
+          }
+        };
+        if (onExtra)
+          d.querySelectorAll("[data-extra]").forEach(
+            (b) =>
+              (b.onclick = (ev) => {
+                ev.preventDefault();
+                onExtra(b.dataset.extra, f);
+              }),
+          );
+        d.showModal();
+        const first = f.querySelector(".mb input, .mb select, .mb textarea");
+        if (first) first.focus();
+        return f;
+      }
+      const closeModal = () => $("#dlg").close();
+      function log(entry) {
+        db.journal.push(
+          Object.assign({ id: uid("j"), ts: new Date().toISOString() }, entry),
+        );
+      }
+
+      function ficheOrgane(e, orgId) {
+        const o = findOrg(e, orgId);
+        if (!o) return;
+        selOrg = o.id;
+        renderMain();
+        const s = status(e, o),
+          hist = db.journal
+            .filter((j) => j.orgId === o.id)
+            .sort((a, b) => (b.date + b.ts).localeCompare(a.date + a.ts))
+            .slice(0, 8);
+        modal(
+          esc(o.nom) + " " + badge(s),
+          `
+    <dl class="kv">
+      <dt>Équipement</dt><dd>${esc(e.nom)}</dd>
+      <dt>Suivi en</dt><dd>${o.mode === "heures" ? "Heures de fonctionnement" : "Tonnage"}</dd>
+      <dt>Usure depuis remplacement</dt><dd><b>${fmt(usage(e, o))} ${UNIT[o.mode]}</b> — ${remainTxt(e, o)}</dd>
+      <dt>Seuil vigilance</dt><dd>${fmt(o.seuilVigilance)} ${UNIT[o.mode]}</dd>
+      <dt>Seuil remplacement</dt><dd>${fmt(o.seuilRemplacement)} ${UNIT[o.mode]}</dd>
+      <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)} (à ${fmt(o.ref.heures)} h · ${fmt(o.ref.tonnes)} t)</dd>
+    </dl>${bar(e, o)}
+    <h4 style="margin:16px 0 6px">Historique</h4>
+    ${
+      hist.length
+        ? `<table><tbody>${hist
+            .map(
+              (
+                j,
+              ) => `<tr><td class="num">${fdate(j.date)}</td><td>${j.type === "remplacement" ? "🔁 Remplacement" : "⚙️ " + esc(j.type)}</td>
+      <td>${esc(j.intervenant || "")}</td><td>${j.usage != null ? fmt(j.usage) + " " + (UNIT[j.mode] || "") : ""}</td><td>${esc(j.commentaire || "")}</td></tr>`,
+            )
+            .join("")}</tbody></table>`
+        : '<div class="muted">Aucune intervention enregistrée.</div>'
+    }`,
+          {
+            ok: "🔁 Déclarer un remplacement",
+            onOk: () => {
+              setTimeout(() => remplacement(e, o), 0);
+            },
+            extra:
+              '<button class="btn" data-extra="edit">✏️ Modifier / seuils</button>',
+            onExtra: () => {
+              closeModal();
+              editOrgane(e, o);
+            },
+          },
+        );
+      }
+
+      function remplacement(e, o) {
+        modal(
+          "Remplacement — " + esc(o.nom),
+          `<div class="form">
+    <p class="full hint">${esc(e.nom)} · usure actuelle <b>${fmt(usage(e, o))} ${UNIT[o.mode]}</b>. Le compteur d'usure de l'organe repartira de zéro à partir des compteurs ci-dessous.</p>
+    <label>Date<input type="date" name="date" value="${today()}" required></label>
+    <label>Intervenant<input name="intervenant" placeholder="Nom / équipe" autocomplete="off"></label>
+    <fieldset class="full"><legend>Compteurs de l'équipement au moment du remplacement</legend>
+      <label>Heures<input type="number" name="heures" min="0" step="any" value="${e.compteurs.heures}" required></label>
+      <label>Tonnes<input type="number" name="tonnes" min="0" step="any" value="${e.compteurs.tonnes}" required></label>
+    </fieldset>
+    <label class="full">Commentaire<textarea name="commentaire" rows="3" placeholder="Référence pièce, constat, n° OT…"></textarea></label></div>`,
+          {
+            ok: "Valider le remplacement",
+            onOk: (fd) => {
+              const h = +fd.get("heures"),
+                t = +fd.get("tonnes");
+              const used = Math.max(
+                0,
+                (o.mode === "heures" ? h : t) - (+o.ref[o.mode] || 0),
+              );
+              o.ref = { date: fd.get("date"), heures: h, tonnes: t };
+              log({
+                type: "remplacement",
+                date: fd.get("date"),
+                eqId: e.id,
+                eqNom: e.nom,
+                orgId: o.id,
+                orgNom: o.nom,
+                intervenant: fd.get("intervenant").trim(),
+                commentaire: fd.get("commentaire").trim(),
+                heures: h,
+                tonnes: t,
+                usage: used,
+                mode: o.mode,
+              });
+              selOrg = o.id;
+              commit();
+              toast(
+                "Remplacement enregistré — pensez à enregistrer le fichier",
+              );
+            },
+          },
+        );
+      }
+
+      function slotOptions(e, cur) {
+        const sl = TYPES[e.type].slots;
+        return (
+          Object.entries(sl)
+            .map(
+              ([k, v]) =>
+                `<option value="${k}"${k === cur ? " selected" : ""}>${esc(v)}</option>`,
+            )
+            .join("") +
+          `<option value=""${!sl[cur] ? " selected" : ""}>Hors dessin (pastille)</option>`
+        );
+      }
+      function editOrgane(e, o) {
+        const isNew = !o;
+        const d = o || {
+          nom: "",
+          slot: Object.keys(TYPES[e.type].slots)[0] || "",
+          mode: "heures",
+          seuilVigilance: "",
+          seuilRemplacement: "",
+          ref: {
+            date: today(),
+            heures: e.compteurs.heures,
+            tonnes: e.compteurs.tonnes,
+          },
+        };
+        modal(
+          isNew ? "Nouvel organe — " + esc(e.nom) : "Modifier — " + esc(d.nom),
+          `<div class="form">
+    <label class="full">Nom de l'organe<input name="nom" value="${esc(d.nom)}" required placeholder="ex. Rouleau R9, Filtre retour…"></label>
+    <label class="full">Emplacement sur le dessin<select name="slot">${slotOptions(e, d.slot)}</select></label>
+    <div class="full"><div class="hint" style="margin-bottom:4px">Suivi en</div>
+      <div class="seg"><label><input type="radio" name="mode" value="heures"${d.mode === "heures" ? " checked" : ""}>⏱ Heures</label>
+      <label><input type="radio" name="mode" value="tonnes"${d.mode === "tonnes" ? " checked" : ""}>⚖️ Tonnes</label></div></div>
+    <label>Seuil vigilance (<span data-un>${UNIT[d.mode]}</span>)<input type="number" name="seuilVigilance" min="0" step="any" value="${d.seuilVigilance}" required></label>
+    <label>Seuil remplacement (<span data-un>${UNIT[d.mode]}</span>)<input type="number" name="seuilRemplacement" min="0" step="any" value="${d.seuilRemplacement}" required></label>
+    <fieldset class="full"><legend>Dernier remplacement (point zéro de l'usure)</legend>
+      <label class="full">Date<input type="date" name="rdate" value="${esc(d.ref.date)}"></label>
+      <label>Compteur heures à ce moment<input type="number" name="rh" min="0" step="any" value="${d.ref.heures}"></label>
+      <label>Compteur tonnes à ce moment<input type="number" name="rt" min="0" step="any" value="${d.ref.tonnes}"></label>
+      <div class="full hint">Compteurs actuels de l'équipement : ${fmt(e.compteurs.heures)} h · ${fmt(e.compteurs.tonnes)} t. Pour une pièce neuve, laissez les compteurs actuels.</div>
+    </fieldset></div>`,
+          {
+            ok: isNew ? "Ajouter" : "Enregistrer",
+            extra: isNew
+              ? ""
+              : '<button class="btn danger" data-extra="del">🗑 Supprimer</button>',
+            onExtra: () => {
+              if (
+                confirm(
+                  "Supprimer « " +
+                    d.nom +
+                    " » ? L'historique du journal est conservé.",
+                )
+              ) {
+                e.organes = e.organes.filter((x) => x !== o);
+                log({
+                  type: "config",
+                  date: today(),
+                  eqId: e.id,
+                  eqNom: e.nom,
+                  orgId: o.id,
+                  orgNom: o.nom,
+                  commentaire: "Organe supprimé",
+                  heures: e.compteurs.heures,
+                  tonnes: e.compteurs.tonnes,
+                });
+                closeModal();
+                commit();
+              }
+            },
+            onOk: (fd) => {
+              const v = +fd.get("seuilVigilance"),
+                r = +fd.get("seuilRemplacement");
+              if (v > r) {
+                alert(
+                  "Le seuil de vigilance doit être inférieur ou égal au seuil de remplacement.",
+                );
+                return false;
+              }
+              const t = o || { id: uid(e.id) };
+              Object.assign(t, {
+                nom: fd.get("nom").trim(),
+                slot: fd.get("slot"),
+                mode: fd.get("mode"),
+                seuilVigilance: v,
+                seuilRemplacement: r,
+                ref: {
+                  date: fd.get("rdate"),
+                  heures: +fd.get("rh") || 0,
+                  tonnes: +fd.get("rt") || 0,
+                },
+              });
+              if (isNew) {
+                e.organes.push(t);
+                log({
+                  type: "config",
+                  date: today(),
+                  eqId: e.id,
+                  eqNom: e.nom,
+                  orgId: t.id,
+                  orgNom: t.nom,
+                  commentaire: "Organe ajouté",
+                  heures: e.compteurs.heures,
+                  tonnes: e.compteurs.tonnes,
+                });
+              }
+              commit();
+            },
+          },
+        );
+        $("#mform")
+          .querySelectorAll("input[name=mode]")
+          .forEach(
+            (r) =>
+              (r.onchange = () =>
+                $("#mform")
+                  .querySelectorAll("[data-un]")
+                  .forEach((s) => (s.textContent = UNIT[r.value]))),
+          );
+      }
+
+      function editEquip(e) {
+        const isNew = !e,
+          d = e || {
+            nom: "",
+            zone: "",
+            type: "generique",
+            compteurs: { heures: 0, tonnes: 0 },
+          };
+        modal(
+          isNew ? "Nouvel équipement" : "Modifier — " + esc(d.nom),
+          `<div class="form">
+    <label class="full">Nom<input name="nom" value="${esc(d.nom)}" required></label>
+    <label>Zone<input name="zone" value="${esc(d.zone)}" placeholder="ex. Enfournement"></label>
+    <label>Dessin<select name="type">${Object.entries(TYPES)
+      .map(
+        ([k, v]) =>
+          `<option value="${k}"${k === d.type ? " selected" : ""}>${esc(v.label)}</option>`,
+      )
+      .join("")}</select></label>
+    ${
+      isNew
+        ? `<label>Compteur heures actuel<input type="number" name="h" min="0" step="any" value="0"></label>
+    <label>Compteur tonnes actuel<input type="number" name="t" min="0" step="any" value="0"></label>`
+        : ""
+    }</div>`,
+          {
+            ok: isNew ? "Créer" : "Enregistrer",
+            extra: isNew
+              ? ""
+              : '<button class="btn danger" data-extra="del">🗑 Supprimer l\'équipement</button>',
+            onExtra: () => {
+              if (
+                confirm("Supprimer « " + d.nom + " » et tous ses organes ?")
+              ) {
+                db.equipements = db.equipements.filter((x) => x !== e);
+                closeModal();
+                go("dash");
+                commit();
+              }
+            },
+            onOk: (fd) => {
+              if (isNew) {
+                const n = {
+                  id: uid("eq"),
+                  nom: fd.get("nom").trim(),
+                  zone: fd.get("zone").trim(),
+                  type: fd.get("type"),
+                  compteurs: {
+                    heures: +fd.get("h") || 0,
+                    tonnes: +fd.get("t") || 0,
+                    date: today(),
+                  },
+                  organes: [],
+                };
+                db.equipements.push(n);
+                commit();
+                go("eq=" + n.id);
+              } else {
+                Object.assign(e, {
+                  nom: fd.get("nom").trim(),
+                  zone: fd.get("zone").trim(),
+                  type: fd.get("type"),
+                });
+                commit();
+              }
+            },
+          },
+        );
+      }
+
+      function releve(e) {
+        modal(
+          "Relevé compteurs — " + esc(e.nom),
+          `<div class="form">
+    <p class="full hint">Saisissez les valeurs <b>totales</b> lues sur l'équipement. Valeurs actuelles : ${fmt(e.compteurs.heures)} h · ${fmt(e.compteurs.tonnes)} t.</p>
+    <label>Heures<input type="number" name="h" min="0" step="any" value="${e.compteurs.heures}" required></label>
+    <label>Tonnes<input type="number" name="t" min="0" step="any" value="${e.compteurs.tonnes}" required></label>
+    <label>Date<input type="date" name="date" value="${today()}" required></label>
+    <label>Relevé par<input name="intervenant" autocomplete="off"></label></div>`,
+          {
+            ok: "Valider",
+            onOk: (fd) => {
+              const h = +fd.get("h"),
+                t = +fd.get("t");
+              if (
+                (h < e.compteurs.heures || t < e.compteurs.tonnes) &&
+                !confirm(
+                  "Une valeur est inférieure au relevé précédent. Confirmer ?",
+                )
+              )
+                return false;
+              applyReleve(
+                e,
+                h,
+                t,
+                fd.get("date"),
+                fd.get("intervenant").trim(),
+              );
+              commit();
+              toast("Relevé enregistré");
+            },
+          },
+        );
+      }
+      function applyReleve(e, h, t, date, who) {
+        if (h === +e.compteurs.heures && t === +e.compteurs.tonnes)
+          return false;
+        const before = e.organes.map((o) => status(e, o));
+        e.compteurs = { heures: h, tonnes: t, date };
+        log({
+          type: "releve",
+          date,
+          eqId: e.id,
+          eqNom: e.nom,
+          intervenant: who,
+          heures: h,
+          tonnes: t,
+        });
+        const newly = e.organes.filter(
+          (o, i) =>
+            RANK[status(e, o)] > RANK[before[i]] && status(e, o) !== "ok",
+        );
+        if (newly.length)
+          setTimeout(
+            () =>
+              toast(
+                "⚠ " +
+                  e.nom +
+                  " : " +
+                  newly
+                    .map((o) => o.nom + " → " + STATUS_TXT[status(e, o)])
+                    .join(", "),
+              ),
+            300,
+          );
+        return true;
+      }
+      function releveLigne() {
+        modal(
+          "Relevé compteurs — tous les équipements",
+          `<div class="form">
+    <label>Date<input type="date" name="date" value="${today()}" required></label>
+    <label>Relevé par<input name="intervenant" autocomplete="off"></label>
+    <div class="full tablewrap"><table><thead><tr><th>Équipement</th><th class="num">Heures</th><th class="num">Tonnes</th></tr></thead><tbody>
+    ${db.equipements
+      .map(
+        (e) => `<tr><td>${esc(e.nom)}</td>
+      <td class="num"><input class="inline-in" style="width:110px" type="number" min="0" step="any" name="h_${e.id}" value="${e.compteurs.heures}"></td>
+      <td class="num"><input class="inline-in" style="width:120px" type="number" min="0" step="any" name="t_${e.id}" value="${e.compteurs.tonnes}"></td></tr>`,
+      )
+      .join("")}
+    </tbody></table></div>
+    <p class="full hint">Astuce : « Appliquer la 1re ligne à tous » recopie les compteurs du premier équipement (compteur ligne commun).</p></div>`,
+          {
+            wide: true,
+            ok: "Valider le relevé",
+            extra:
+              '<button class="btn" data-extra="copy">⇣ Appliquer la 1re ligne à tous</button>',
+            onExtra: (k, f) => {
+              const [h, t] = [
+                f.querySelector("[name^=h_]").value,
+                f.querySelector("[name^=t_]").value,
+              ];
+              f.querySelectorAll("[name^=h_]").forEach((i) => (i.value = h));
+              f.querySelectorAll("[name^=t_]").forEach((i) => (i.value = t));
+            },
+            onOk: (fd) => {
+              const down = db.equipements.filter(
+                (e) =>
+                  +fd.get("h_" + e.id) < e.compteurs.heures ||
+                  +fd.get("t_" + e.id) < e.compteurs.tonnes,
+              );
+              if (
+                down.length &&
+                !confirm(
+                  "Valeurs inférieures au relevé précédent pour : " +
+                    down.map((e) => e.nom).join(", ") +
+                    ". Confirmer ?",
+                )
+              )
+                return false;
+              let n = 0;
+              db.equipements.forEach((e) => {
+                if (
+                  applyReleve(
+                    e,
+                    +fd.get("h_" + e.id),
+                    +fd.get("t_" + e.id),
+                    fd.get("date"),
+                    fd.get("intervenant").trim(),
+                  )
+                )
+                  n++;
+              });
+              commit();
+              toast(n + " équipement(s) mis à jour");
+            },
+          },
+        );
+      }
+      $("#btnReleveLigne").onclick = releveLigne;
+
+      function exportCsv() {
+        const cols = [
+          "date",
+          "type",
+          "eqNom",
+          "orgNom",
+          "intervenant",
+          "heures",
+          "tonnes",
+          "usage",
+          "mode",
+          "commentaire",
+        ];
+        const q = (v) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+        const csv =
+          "﻿" +
+          cols.join(";") +
+          "\n" +
+          db.journal.map((j) => cols.map((c) => q(j[c])).join(";")).join("\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+        a.download = "gmao-journal-" + today() + ".csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      /* ---------- démarrage ---------- */
+      (async function init() {
+        try {
+          const s = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+          if (s && s.db) {
+            db = normalize(s.db);
+            fileName = s.fileName || "";
+          }
+        } catch (e) {}
+        if (!db && location.protocol !== "file:") {
+          try {
+            const r = await fetch("gmao-data.json", { cache: "no-store" });
+            if (r.ok) {
+              db = normalize(await r.json());
+              fileName = "gmao-data.json";
+            }
+          } catch (e) {}
+        }
+        if (!db) db = normalize(JSON.parse(JSON.stringify(DEFAULT_DB)));
+        render();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,501 @@
+{
+  "version": 1,
+  "nom": "GMAO Ligne",
+  "maj": "2026-11-03T08:00:00.000Z",
+  "equipements": [
+    {
+      "id": "ch-enf",
+      "nom": "Centrale hydraulique enfournement",
+      "zone": "Enfournement",
+      "type": "hydraulique",
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "heures",
+          "seuilVigilance": 1800,
+          "seuilRemplacement": 2000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 12400,
+            "tonnes": 793600
+          }
+        },
+        {
+          "id": "ch-pompe",
+          "nom": "Pompe",
+          "slot": "pompe",
+          "mode": "heures",
+          "seuilVigilance": 18000,
+          "seuilRemplacement": 20000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 0
+          }
+        },
+        {
+          "id": "ch-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "heures",
+          "seuilVigilance": 4500,
+          "seuilRemplacement": 5000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 9100,
+            "tonnes": 582400
+          }
+        }
+      ]
+    },
+    {
+      "id": "vr-chg",
+      "nom": "Voie rouleaux chargement",
+      "zone": "Chargement",
+      "type": "rouleaux",
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "vrc-r1",
+          "nom": "Rouleau R1",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 14062,
+            "tonnes": 900000
+          }
+        },
+        {
+          "id": "vrc-r2",
+          "nom": "Rouleau R2",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13773,
+            "tonnes": 881500
+          }
+        },
+        {
+          "id": "vrc-r3",
+          "nom": "Rouleau R3",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13523,
+            "tonnes": 865500
+          }
+        },
+        {
+          "id": "vrc-r4",
+          "nom": "Rouleau R4",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 14125,
+            "tonnes": 904000
+          }
+        },
+        {
+          "id": "vrc-r5",
+          "nom": "Rouleau R5",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13906,
+            "tonnes": 890000
+          }
+        },
+        {
+          "id": "vrc-r6",
+          "nom": "Rouleau R6",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13453,
+            "tonnes": 861000
+          }
+        },
+        {
+          "id": "vrc-r7",
+          "nom": "Rouleau R7",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 14016,
+            "tonnes": 897000
+          }
+        },
+        {
+          "id": "vrc-r8",
+          "nom": "Rouleau R8",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13641,
+            "tonnes": 873000
+          }
+        }
+      ]
+    },
+    {
+      "id": "vr-enf",
+      "nom": "Voie rouleaux enfournement",
+      "zone": "Enfournement",
+      "type": "rouleaux",
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "vre-r1",
+          "nom": "Rouleau R1",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 14172,
+            "tonnes": 907000
+          }
+        },
+        {
+          "id": "vre-r2",
+          "nom": "Rouleau R2",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13969,
+            "tonnes": 894000
+          }
+        },
+        {
+          "id": "vre-r3",
+          "nom": "Rouleau R3",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13844,
+            "tonnes": 886000
+          }
+        },
+        {
+          "id": "vre-r4",
+          "nom": "Rouleau R4",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13516,
+            "tonnes": 865000
+          }
+        },
+        {
+          "id": "vre-r5",
+          "nom": "Rouleau R5",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13734,
+            "tonnes": 879000
+          }
+        },
+        {
+          "id": "vre-r6",
+          "nom": "Rouleau R6",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 14109,
+            "tonnes": 903000
+          }
+        },
+        {
+          "id": "vre-r7",
+          "nom": "Rouleau R7",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 14062,
+            "tonnes": 900000
+          }
+        },
+        {
+          "id": "vre-r8",
+          "nom": "Rouleau R8",
+          "slot": "rouleau",
+          "mode": "tonnes",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13609,
+            "tonnes": 871000
+          }
+        }
+      ]
+    },
+    {
+      "id": "pous",
+      "nom": "Pousseuse",
+      "zone": "Enfournement",
+      "type": "pousseuse",
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "pous-bg",
+          "nom": "Bras gauche",
+          "slot": "bras1",
+          "mode": "tonnes",
+          "seuilVigilance": 90000,
+          "seuilRemplacement": 100000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13281,
+            "tonnes": 850000
+          }
+        },
+        {
+          "id": "pous-bd",
+          "nom": "Bras droit",
+          "slot": "bras2",
+          "mode": "tonnes",
+          "seuilVigilance": 90000,
+          "seuilRemplacement": 100000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 12797,
+            "tonnes": 819000
+          }
+        }
+      ]
+    },
+    {
+      "id": "defo",
+      "nom": "Défourneuse",
+      "zone": "Défournement",
+      "type": "defourneuse",
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": []
+    },
+    {
+      "id": "tro0",
+      "nom": "TRO-0",
+      "zone": "Ligne",
+      "type": "tro0",
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tro-galet",
+          "nom": "Galets",
+          "slot": "galet",
+          "mode": "heures",
+          "seuilVigilance": 2700,
+          "seuilRemplacement": 3000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13050,
+            "tonnes": 835200
+          }
+        },
+        {
+          "id": "tro-verin",
+          "nom": "Vérin pneumatique",
+          "slot": "verin",
+          "mode": "heures",
+          "seuilVigilance": 7000,
+          "seuilRemplacement": 8000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 6950,
+            "tonnes": 444800
+          }
+        },
+        {
+          "id": "tro-flex",
+          "nom": "Flexibles",
+          "slot": "flexible",
+          "mode": "heures",
+          "seuilVigilance": 4000,
+          "seuilRemplacement": 4500,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 12150,
+            "tonnes": 777600
+          }
+        }
+      ]
+    },
+    {
+      "id": "soud",
+      "nom": "Soudeuse",
+      "zone": "Ligne",
+      "type": "soudeuse",
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "sd-mors",
+          "nom": "Mors",
+          "slot": "mors",
+          "mode": "heures",
+          "seuilVigilance": 900,
+          "seuilRemplacement": 1000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13800,
+            "tonnes": 883200
+          }
+        },
+        {
+          "id": "sd-transfo",
+          "nom": "Transformateurs",
+          "slot": "transfo",
+          "mode": "heures",
+          "seuilVigilance": 18000,
+          "seuilRemplacement": 20000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 0
+          }
+        },
+        {
+          "id": "sd-vmors",
+          "nom": "Vérins de mors",
+          "slot": "verin_mors",
+          "mode": "heures",
+          "seuilVigilance": 7000,
+          "seuilRemplacement": 8000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 11050,
+            "tonnes": 707200
+          }
+        },
+        {
+          "id": "sd-offsup",
+          "nom": "Vérin offsetting supérieur",
+          "slot": "offset_sup",
+          "mode": "heures",
+          "seuilVigilance": 7000,
+          "seuilRemplacement": 8000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 9150,
+            "tonnes": 585600
+          }
+        },
+        {
+          "id": "sd-offinf",
+          "nom": "Vérin offsetting inférieur",
+          "slot": "offset_inf",
+          "mode": "heures",
+          "seuilVigilance": 7000,
+          "seuilRemplacement": 8000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 6150,
+            "tonnes": 393600
+          }
+        },
+        {
+          "id": "sd-bacier",
+          "nom": "Bagues d'usure acier",
+          "slot": "bague_acier",
+          "mode": "heures",
+          "seuilVigilance": 2700,
+          "seuilRemplacement": 3000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 11500,
+            "tonnes": 736000
+          }
+        },
+        {
+          "id": "sd-bteflon",
+          "nom": "Bagues d'usure téflon",
+          "slot": "bague_teflon",
+          "mode": "heures",
+          "seuilVigilance": 1300,
+          "seuilRemplacement": 1500,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13650,
+            "tonnes": 873600
+          }
+        }
+      ]
+    }
+  ],
+  "journal": []
+}
