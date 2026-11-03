@@ -1030,6 +1030,58 @@
             "heures": 12150,
             "tonnes": 733500
           }
+        },
+        {
+          "id": "tro-allonge_sup",
+          "nom": "Allonge galet supérieur",
+          "slot": "allonge_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "tro-allonge_inf",
+          "nom": "Allonge galet inférieur",
+          "slot": "allonge_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "tro-reducteur",
+          "nom": "Réducteur",
+          "slot": "reducteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 312000
+          }
+        },
+        {
+          "id": "tro-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 312000
+          }
         }
       ]
     },
@@ -1379,5 +1431,5 @@
     }
   ],
   "journal": [],
-  "schema": 10
+  "schema": 11
 }

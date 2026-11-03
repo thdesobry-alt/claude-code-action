@@ -90,3 +90,7 @@ Le choix se fait dans la fiche de l'organe (✏️) ou sur la page 🎚 Seuils. 
 - **Centrale hydraulique curseur** : même dessin que la centrale d'enfournement (réservoir, filtre, pompes). Le nombre de pompes (1 à 3) se règle dans « Modifier l'équipement » ; il est à 1 par défaut.
 
 Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi qui démarre à zéro.
+
+## TRO-0 : entraînement
+
+À gauche des galets : un moteur, un réducteur, et deux allonges qui relient le réducteur au galet supérieur et au galet inférieur. Ces 4 pièces sont suivies ; une base existante les reçoit à l'ouverture, avec un suivi qui démarre à zéro.
