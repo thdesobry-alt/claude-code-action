@@ -458,7 +458,86 @@
         "tonnes": 912000,
         "date": "2026-11-03"
       },
-      "organes": []
+      "organes": [
+        {
+          "id": "defo-galet_sup",
+          "nom": "Galet supérieur",
+          "slot": "galet_sup",
+          "mode": "heures",
+          "seuilVigilance": 2700,
+          "seuilRemplacement": 3000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 12750,
+            "tonnes": 816000
+          }
+        },
+        {
+          "id": "defo-galet_inf",
+          "nom": "Galet inférieur",
+          "slot": "galet_inf",
+          "mode": "heures",
+          "seuilVigilance": 2700,
+          "seuilRemplacement": 3000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 13350,
+            "tonnes": 854400
+          }
+        },
+        {
+          "id": "defo-verin_1",
+          "nom": "Vérin pneumatique côté piste",
+          "slot": "verin_1",
+          "mode": "heures",
+          "seuilVigilance": 7000,
+          "seuilRemplacement": 8000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 11250,
+            "tonnes": 720000
+          }
+        },
+        {
+          "id": "defo-verin_2",
+          "nom": "Vérin pneumatique côté moteur",
+          "slot": "verin_2",
+          "mode": "heures",
+          "seuilVigilance": 7000,
+          "seuilRemplacement": 8000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 11250,
+            "tonnes": 720000
+          }
+        },
+        {
+          "id": "defo-moteur_sup",
+          "nom": "Moteur hydraulique galet supérieur",
+          "slot": "moteur_sup",
+          "mode": "heures",
+          "seuilVigilance": 18000,
+          "seuilRemplacement": 20000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 6250,
+            "tonnes": 400000
+          }
+        },
+        {
+          "id": "defo-moteur_inf",
+          "nom": "Moteur hydraulique galet inférieur",
+          "slot": "moteur_inf",
+          "mode": "heures",
+          "seuilVigilance": 18000,
+          "seuilRemplacement": 20000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 6250,
+            "tonnes": 400000
+          }
+        }
+      ]
     },
     {
       "id": "tro0",
@@ -761,5 +840,5 @@
     }
   ],
   "journal": [],
-  "schema": 5
+  "schema": 6
 }

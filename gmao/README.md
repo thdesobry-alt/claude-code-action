@@ -46,3 +46,7 @@ La voie rouleaux enfournement est dessinée avec un palier à chaque bout de cha
 ## Pousseuse
 
 Chaque bras a son propre moteur, son propre réducteur et une noix mécanique au milieu du bras sur le dessin. Ils apparaissent en gris (« non suivi ») tant qu'aucun organe ne leur est rattaché : pour les suivre, « Ajouter un organe » et choisir l'emplacement « Moteur bras gauche », « Réducteur bras droit », « Noix mécanique bras gauche », etc.
+
+## Défourneuse
+
+Galet supérieur et galet inférieur, deux vérins pneumatiques (côté piste / côté moteur) qui pressent le galet supérieur sur la billette, et un moteur hydraulique par galet. Une base existante reçoit ces 6 organes à l'ouverture, avec un suivi qui démarre à zéro.
