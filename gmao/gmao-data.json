@@ -597,10 +597,49 @@
             "heures": 5050,
             "tonnes": 323200
           }
+        },
+        {
+          "id": "sd-rail-piste",
+          "nom": "Rail côté piste",
+          "slot": "rail_piste",
+          "mode": "heures",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 0
+          }
+        },
+        {
+          "id": "sd-rail-moteur",
+          "nom": "Rail côté moteur",
+          "slot": "rail_moteur",
+          "mode": "heures",
+          "seuilVigilance": 45000,
+          "seuilRemplacement": 50000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 0
+          }
+        },
+        {
+          "id": "sd-cremaillere",
+          "nom": "Crémaillère (rail côté moteur)",
+          "slot": "cremaillere",
+          "mode": "heures",
+          "seuilVigilance": 27000,
+          "seuilRemplacement": 30000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 0
+          }
         }
       ]
     }
   ],
   "journal": [],
-  "schema": 2
+  "schema": 3
 }

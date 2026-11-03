@@ -29,6 +29,8 @@ Les seuils et compteurs livrés dans `gmao-data.json` sont des **exemples** : re
 
 Une base créée avec l'ancien modèle est convertie automatiquement à l'ouverture : les organes dédoublés gardent l'usure de l'organe d'origine, et les galets porteurs démarrent à zéro. Enregistrez ensuite le fichier.
 
-## Vue 3D (essai)
+## Soudeuse en 3D
 
-Sur la soudeuse, le bouton 2D / 3D au-dessus du dessin affiche une maquette en volume. « Vue côté piste » et « Vue côté moteur » orientent la machine, ⟲ / ⟳ la font tourner, et on peut aussi glisser sur le dessin. Les couleurs d'état et le clic sur une pièce fonctionnent comme en 2D. Le choix 2D / 3D est mémorisé dans le navigateur.
+La soudeuse est dessinée uniquement en 3D. « Vue côté piste » et « Vue côté moteur » orientent la machine, ⟲ / ⟳ la font tourner, et on peut aussi glisser sur le dessin. Les couleurs d'état et le clic sur une pièce fonctionnent comme sur les autres dessins.
+
+Organes suivis en plus : rail côté piste, rail côté moteur, crémaillère (le long du rail côté moteur, elle fait avancer la soudeuse). Une base existante les reçoit automatiquement à l'ouverture, avec un suivi qui démarre à zéro.
