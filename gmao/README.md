@@ -108,6 +108,6 @@ Centrale hydraulique à 2 pompes, sans cuve (option « Centrale sans cuve » dan
 
 Onglet « ⚙️ Moteurs de cage » : les moteurs des cages 1 à 16, dessinés en deux rangées, chacun suivi comme un organe (seuils, remplacement, arrêts techniques). Le tableau « Diamètres travaillés par cage » permet de cocher, pour chaque cage, les diamètres dans lesquels elle travaille : son moteur ne compte que les tonnes produites dans ces diamètres (sans case cochée : tous les diamètres). Une base existante reçoit ces 16 moteurs à l'ouverture, avec un suivi qui démarre à zéro.
 
-## Brûleurs du four
+## Four : brûleurs et sole
 
-Onglet « 🔥 Brûleurs du four » : 60 brûleurs répartis en 4 zones de l'enfournement vers le défournement (zone 1 : 12, zone 2 : 12, zone 3 : 24, zone 4 : 12), nommés « Zone z – Brûleur k » ; dans chaque zone, la première moitié est dessinée côté piste et la seconde côté moteur, chacun suivi comme un organe (tonnage ou arrêts techniques). Une base existante les reçoit à l'ouverture, avec un suivi qui démarre à zéro.
+Onglet « 🔥 Four : brûleurs et sole » : la sole Magmalox (bande de passage des billettes) et, suivie à part, sa rangée de défournement ; et 60 brûleurs répartis en 4 zones de l'enfournement vers le défournement (zone 1 : 12, zone 2 : 12, zone 3 : 24, zone 4 : 12), nommés « Zone z – Brûleur k » ; dans chaque zone, la première moitié est dessinée côté piste et la seconde côté moteur, chacun suivi comme un organe (tonnage ou arrêts techniques). Une base existante les reçoit à l'ouverture, avec un suivi qui démarre à zéro.

@@ -1990,7 +1990,7 @@
     },
     {
       "id": "bruleurs",
-      "nom": "Brûleurs du four",
+      "nom": "Four (brûleurs et sole)",
       "zone": "Four",
       "type": "bruleurs",
       "options": {},
@@ -2001,6 +2001,32 @@
         "date": "2026-11-03"
       },
       "organes": [
+        {
+          "id": "bruleurs-sole",
+          "nom": "Sole Magmalox",
+          "slot": "sole",
+          "mode": "tonnes",
+          "seuilVigilance": 4250000,
+          "seuilRemplacement": 5000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 12000
+          }
+        },
+        {
+          "id": "bruleurs-sole_def",
+          "nom": "Sole Magmalox – rangée de défournement",
+          "slot": "sole_def",
+          "mode": "tonnes",
+          "seuilVigilance": 1700000,
+          "seuilRemplacement": 2000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 12000
+          }
+        },
         {
           "id": "bruleurs-1",
           "nom": "Zone 1 – Brûleur 1",
@@ -2785,5 +2811,5 @@
     }
   ],
   "journal": [],
-  "schema": 19
+  "schema": 20
 }
