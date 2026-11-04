@@ -702,8 +702,115 @@
             "heures": 13641,
             "tonnes": 873000
           }
+        },
+        {
+          "id": "vr-chg-moteur_r1",
+          "nom": "Moteur R1",
+          "slot": "moteur_r1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "vr-chg-moteur_r2",
+          "nom": "Moteur R2",
+          "slot": "moteur_r2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 672000
+          }
+        },
+        {
+          "id": "vr-chg-moteur_r3",
+          "nom": "Moteur R3",
+          "slot": "moteur_r3",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "vr-chg-moteur_r4",
+          "nom": "Moteur R4",
+          "slot": "moteur_r4",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 592000
+          }
+        },
+        {
+          "id": "vr-chg-moteur_r5",
+          "nom": "Moteur R5",
+          "slot": "moteur_r5",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 552000
+          }
+        },
+        {
+          "id": "vr-chg-moteur_r6",
+          "nom": "Moteur R6",
+          "slot": "moteur_r6",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "vr-chg-moteur_r7",
+          "nom": "Moteur R7",
+          "slot": "moteur_r7",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 472000
+          }
+        },
+        {
+          "id": "vr-chg-moteur_r8",
+          "nom": "Moteur R8",
+          "slot": "moteur_r8",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 432000
+          }
         }
-      ]
+      ],
+      "options": {
+        "motorise": true
+      }
     },
     {
       "id": "vr-enf",
@@ -818,6 +925,110 @@
             "date": "2026-01-05",
             "heures": 13609,
             "tonnes": 871000
+          }
+        },
+        {
+          "id": "vr-enf-moteur_r1",
+          "nom": "Moteur R1",
+          "slot": "moteur_r1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "vr-enf-moteur_r2",
+          "nom": "Moteur R2",
+          "slot": "moteur_r2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 672000
+          }
+        },
+        {
+          "id": "vr-enf-moteur_r3",
+          "nom": "Moteur R3",
+          "slot": "moteur_r3",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "vr-enf-moteur_r4",
+          "nom": "Moteur R4",
+          "slot": "moteur_r4",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 592000
+          }
+        },
+        {
+          "id": "vr-enf-moteur_r5",
+          "nom": "Moteur R5",
+          "slot": "moteur_r5",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 552000
+          }
+        },
+        {
+          "id": "vr-enf-moteur_r6",
+          "nom": "Moteur R6",
+          "slot": "moteur_r6",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "vr-enf-moteur_r7",
+          "nom": "Moteur R7",
+          "slot": "moteur_r7",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 472000
+          }
+        },
+        {
+          "id": "vr-enf-moteur_r8",
+          "nom": "Moteur R8",
+          "slot": "moteur_r8",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 432000
           }
         }
       ],
@@ -1779,5 +1990,5 @@
     }
   ],
   "journal": [],
-  "schema": 16
+  "schema": 17
 }
