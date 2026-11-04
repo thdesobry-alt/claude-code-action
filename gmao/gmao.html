@@ -979,6 +979,9 @@
       const bruleurNom = (n) => { const b = bruleurZone(n); return "Zone " + b.zone + " – Brûleur " + b.k; };
       const BRULEUR_SLOTS = Object.fromEntries(Array.from({ length: NB_BRULEURS }, (_, i) => ["bruleur_" + (i + 1), bruleurNom(i + 1)]));
       // équipements qui ont leur propre onglet dans le menu (hors liste des équipements)
+      // types regroupés sur la page « Centrales »
+      const TYPES_CENTRALES = ["hydraulique", "nortek"];
+      const estCentrale = (e) => TYPES_CENTRALES.includes(e.type);
       const PAGES_DEDIEES = { cages: "⚙️ Moteurs de cage", bruleurs: "🔥 Four" };
       // portes du four : porte, chaînes de porte et vérin de porte pour chacune
       const PORTES_FOUR = [["enf", "porte d'enfournement"], ["secu", "porte sécurité four"], ["defo", "porte défourneuse"], ["defour", "porte de défournement"]];
@@ -2579,11 +2582,15 @@
     <a href="#journal" class="${r.page === "journal" ? "on" : ""}">📒 Journal</a>
     <a href="#arrets" class="${r.page === "arrets" ? "on" : ""}">🛠 Arrêts techniques</a>
     <a href="#production" class="${r.page === "production" ? "on" : ""}">🏭 Production</a>
+    ${(() => { const cs = db.equipements.filter(estCentrale); if (!cs.length) return "";
+      const c = counts(cs.flatMap((e) => e.organes.map((o) => [e, o])));
+      const on = r.page === "centrales" || (r.page === "eq" && cs.some((e) => e.id === r.id));
+      return `<a href="#centrales" class="${on ? "on" : ""}">💧 Centrales <span class="cnt">${c.crit ? '<b style="background:var(--crit)">' + c.crit + "</b>" : ""}${c.warn ? '<b style="background:var(--warn)">' + c.warn + "</b>" : ""}</span></a>`; })()}
     ${db.equipements.filter((e) => PAGES_DEDIEES[e.type]).map((e) => { const c = counts(e.organes.map((o) => [e, o]));
       return `<a href="#eq=${e.id}" class="${r.page === "eq" && r.id === e.id ? "on" : ""}">${PAGES_DEDIEES[e.type]} <span class="cnt">${c.crit ? '<b style="background:var(--crit)">' + c.crit + "</b>" : ""}${c.warn ? '<b style="background:var(--warn)">' + c.warn + "</b>" : ""}${c.crit || c.warn ? "" : `<span class="dot ${eqStatus(e)}"></span>`}</span></a>`; }).join("")}
     <div class="grp">Équipements</div>
     ${db.equipements
-      .filter((e) => !PAGES_DEDIEES[e.type])
+      .filter((e) => !PAGES_DEDIEES[e.type] && !estCentrale(e))
       .map((e) => {
         const c = counts(e.organes.map((o) => [e, o]));
         return `<a href="#eq=${e.id}" class="${r.page === "eq" && r.id === e.id ? "on" : ""}"><span class="dot ${eqStatus(e)}"></span>${esc(e.nom)}
@@ -2602,6 +2609,7 @@
         else if (r.page === "journal") m.innerHTML = viewJournal();
         else if (r.page === "production") m.innerHTML = viewProduction();
         else if (r.page === "arrets") m.innerHTML = viewArrets();
+        else if (r.page === "centrales") m.innerHTML = viewCentrales();
         else m.innerHTML = viewDash();
         bindMain();
       }
@@ -2733,6 +2741,20 @@
           <label>Fin<input type="date" name="fin" value="${a.fin || ""}"></label>
           <label class="full">Libellé<input name="libelle" value="${esc(a.libelle || "")}"></label></div>`,
           { onOk: (fd) => { Object.assign(a, { date: fd.get("date"), fin: fd.get("fin") || "", libelle: fd.get("libelle").trim() }); commit(); } });
+      }
+
+      function viewCentrales() {
+        const cs = db.equipements.filter(estCentrale);
+        return `<h2>Centrales</h2><p class="sub">${cs.length} centrales · cliquez une pièce pour sa fiche, ou « Ouvrir » pour le détail de la centrale (organes, relevés, images supplémentaires).</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(420px,1fr))">${cs.map((e) => { const cc = counts(e.organes.map((o) => [e, o]));
+    return `<div class="card" style="padding:12px;display:flex;flex-direction:column;gap:8px;border-top:4px solid var(--${eqStatus(e) === "none" ? "none" : eqStatus(e)})">
+      <div style="display:flex;align-items:center;gap:8px"><span class="dot ${eqStatus(e)}"></span><b style="flex:1">${esc(e.nom)}</b>${badge(eqStatus(e))}
+        <a class="btn sm" href="#eq=${e.id}">Ouvrir</a></div>
+      ${drawing(e)}
+      <div class="meta" style="font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"><span>${e.organes.length} organe(s)</span>
+        ${cc.warn ? `<span style="color:var(--warn)">${cc.warn} vigilance</span>` : ""}${cc.crit ? `<span style="color:var(--crit)">${cc.crit} à remplacer</span>` : ""}
+        ${(DRAW_EXTRA[e.type] || []).map((v) => `<a href="#eq=${e.id}">+ ${esc(v.titre)}</a>`).join("")}</div>
+    </div>`; }).join("")}</div>${legend}`;
       }
 
       function viewDash() {
@@ -2963,6 +2985,12 @@
                 })[el.dataset.act]();
               }),
           );
+        }
+        if (r.page === "centrales") {
+          m.querySelectorAll(".draw[data-eq]").forEach((d) => (d.onclick = (ev) => {
+            const t = ev.target.closest("[data-org]");
+            if (t) ficheOrgane(findEq(d.dataset.eq), t.dataset.org);
+          }));
         }
         if (r.page === "arrets") {
           $("#atForm").onsubmit = (ev) => {

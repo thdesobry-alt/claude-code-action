@@ -111,3 +111,7 @@ Onglet « ⚙️ Moteurs de cage » : les moteurs des cages 1 à 16, dessinés e
 ## Four
 
 Onglet « 🔥 Four » : une deuxième image montre les 4 portes (enfournement, sécurité four, défourneuse, défournement), chacune avec sa porte, ses chaînes de porte et son vérin, tous suivis ; puis la sole Magmalox (bande de passage des billettes) et, suivie à part, sa rangée de défournement ; les plaques de glissement (remplacées tous les 2 arrêts techniques) ; et 60 brûleurs répartis en 4 zones de l'enfournement vers le défournement (zone 1 : 12, zone 2 : 12, zone 3 : 24, zone 4 : 12), nommés « Zone z – Brûleur k » ; dans chaque zone, la première moitié est dessinée côté piste et la seconde côté moteur, chacun suivi comme un organe (tonnage ou arrêts techniques). Une base existante les reçoit à l'ouverture, avec un suivi qui démarre à zéro.
+
+## Page Centrales
+
+Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5, et toute centrale ajoutée avec le dessin « Centrale hydraulique » ou « Centrale Nortek ») sont regroupées dans l'onglet « 💧 Centrales » au lieu d'apparaître chacune dans le menu. Un clic sur une pièce ouvre sa fiche ; « Ouvrir » affiche le détail de la centrale.
