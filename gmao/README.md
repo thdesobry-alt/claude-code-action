@@ -107,3 +107,7 @@ Centrale hydraulique à 2 pompes, sans cuve (option « Centrale sans cuve » dan
 ## Moteurs de cage
 
 Onglet « ⚙️ Moteurs de cage » : les moteurs des cages 1 à 16, dessinés en deux rangées, chacun suivi comme un organe (seuils, remplacement, arrêts techniques). Le tableau « Diamètres travaillés par cage » permet de cocher, pour chaque cage, les diamètres dans lesquels elle travaille : son moteur ne compte que les tonnes produites dans ces diamètres (sans case cochée : tous les diamètres). Une base existante reçoit ces 16 moteurs à l'ouverture, avec un suivi qui démarre à zéro.
+
+## Brûleurs du four
+
+Onglet « 🔥 Brûleurs du four » : 60 brûleurs, dessinés sur le four vu de dessus (1 à 30 côté piste, 31 à 60 côté moteur), chacun suivi comme un organe (tonnage ou arrêts techniques). Une base existante les reçoit à l'ouverture, avec un suivi qui démarre à zéro.

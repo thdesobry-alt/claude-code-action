@@ -1987,8 +1987,803 @@
           }
         }
       ]
+    },
+    {
+      "id": "bruleurs",
+      "nom": "Brûleurs du four",
+      "zone": "Four",
+      "type": "bruleurs",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "bruleurs-1",
+          "nom": "Brûleur 1",
+          "slot": "bruleur_1",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "bruleurs-2",
+          "nom": "Brûleur 2",
+          "slot": "bruleur_2",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 602000
+          }
+        },
+        {
+          "id": "bruleurs-3",
+          "nom": "Brûleur 3",
+          "slot": "bruleur_3",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 572000
+          }
+        },
+        {
+          "id": "bruleurs-4",
+          "nom": "Brûleur 4",
+          "slot": "bruleur_4",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 542000
+          }
+        },
+        {
+          "id": "bruleurs-5",
+          "nom": "Brûleur 5",
+          "slot": "bruleur_5",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "bruleurs-6",
+          "nom": "Brûleur 6",
+          "slot": "bruleur_6",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 482000
+          }
+        },
+        {
+          "id": "bruleurs-7",
+          "nom": "Brûleur 7",
+          "slot": "bruleur_7",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 32000
+          }
+        },
+        {
+          "id": "bruleurs-8",
+          "nom": "Brûleur 8",
+          "slot": "bruleur_8",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 422000
+          }
+        },
+        {
+          "id": "bruleurs-9",
+          "nom": "Brûleur 9",
+          "slot": "bruleur_9",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 662000
+          }
+        },
+        {
+          "id": "bruleurs-10",
+          "nom": "Brûleur 10",
+          "slot": "bruleur_10",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "bruleurs-11",
+          "nom": "Brûleur 11",
+          "slot": "bruleur_11",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 602000
+          }
+        },
+        {
+          "id": "bruleurs-12",
+          "nom": "Brûleur 12",
+          "slot": "bruleur_12",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 572000
+          }
+        },
+        {
+          "id": "bruleurs-13",
+          "nom": "Brûleur 13",
+          "slot": "bruleur_13",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 542000
+          }
+        },
+        {
+          "id": "bruleurs-14",
+          "nom": "Brûleur 14",
+          "slot": "bruleur_14",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "bruleurs-15",
+          "nom": "Brûleur 15",
+          "slot": "bruleur_15",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 482000
+          }
+        },
+        {
+          "id": "bruleurs-16",
+          "nom": "Brûleur 16",
+          "slot": "bruleur_16",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 452000
+          }
+        },
+        {
+          "id": "bruleurs-17",
+          "nom": "Brûleur 17",
+          "slot": "bruleur_17",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 422000
+          }
+        },
+        {
+          "id": "bruleurs-18",
+          "nom": "Brûleur 18",
+          "slot": "bruleur_18",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 662000
+          }
+        },
+        {
+          "id": "bruleurs-19",
+          "nom": "Brûleur 19",
+          "slot": "bruleur_19",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "bruleurs-20",
+          "nom": "Brûleur 20",
+          "slot": "bruleur_20",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 602000
+          }
+        },
+        {
+          "id": "bruleurs-21",
+          "nom": "Brûleur 21",
+          "slot": "bruleur_21",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 572000
+          }
+        },
+        {
+          "id": "bruleurs-22",
+          "nom": "Brûleur 22",
+          "slot": "bruleur_22",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 542000
+          }
+        },
+        {
+          "id": "bruleurs-23",
+          "nom": "Brûleur 23",
+          "slot": "bruleur_23",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "bruleurs-24",
+          "nom": "Brûleur 24",
+          "slot": "bruleur_24",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 482000
+          }
+        },
+        {
+          "id": "bruleurs-25",
+          "nom": "Brûleur 25",
+          "slot": "bruleur_25",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 452000
+          }
+        },
+        {
+          "id": "bruleurs-26",
+          "nom": "Brûleur 26",
+          "slot": "bruleur_26",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 422000
+          }
+        },
+        {
+          "id": "bruleurs-27",
+          "nom": "Brûleur 27",
+          "slot": "bruleur_27",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 662000
+          }
+        },
+        {
+          "id": "bruleurs-28",
+          "nom": "Brûleur 28",
+          "slot": "bruleur_28",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "bruleurs-29",
+          "nom": "Brûleur 29",
+          "slot": "bruleur_29",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 602000
+          }
+        },
+        {
+          "id": "bruleurs-30",
+          "nom": "Brûleur 30",
+          "slot": "bruleur_30",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 572000
+          }
+        },
+        {
+          "id": "bruleurs-31",
+          "nom": "Brûleur 31",
+          "slot": "bruleur_31",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 542000
+          }
+        },
+        {
+          "id": "bruleurs-32",
+          "nom": "Brûleur 32",
+          "slot": "bruleur_32",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "bruleurs-33",
+          "nom": "Brûleur 33",
+          "slot": "bruleur_33",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 482000
+          }
+        },
+        {
+          "id": "bruleurs-34",
+          "nom": "Brûleur 34",
+          "slot": "bruleur_34",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 452000
+          }
+        },
+        {
+          "id": "bruleurs-35",
+          "nom": "Brûleur 35",
+          "slot": "bruleur_35",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 422000
+          }
+        },
+        {
+          "id": "bruleurs-36",
+          "nom": "Brûleur 36",
+          "slot": "bruleur_36",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 662000
+          }
+        },
+        {
+          "id": "bruleurs-37",
+          "nom": "Brûleur 37",
+          "slot": "bruleur_37",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "bruleurs-38",
+          "nom": "Brûleur 38",
+          "slot": "bruleur_38",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 602000
+          }
+        },
+        {
+          "id": "bruleurs-39",
+          "nom": "Brûleur 39",
+          "slot": "bruleur_39",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 572000
+          }
+        },
+        {
+          "id": "bruleurs-40",
+          "nom": "Brûleur 40",
+          "slot": "bruleur_40",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 542000
+          }
+        },
+        {
+          "id": "bruleurs-41",
+          "nom": "Brûleur 41",
+          "slot": "bruleur_41",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "bruleurs-42",
+          "nom": "Brûleur 42",
+          "slot": "bruleur_42",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 32000
+          }
+        },
+        {
+          "id": "bruleurs-43",
+          "nom": "Brûleur 43",
+          "slot": "bruleur_43",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 452000
+          }
+        },
+        {
+          "id": "bruleurs-44",
+          "nom": "Brûleur 44",
+          "slot": "bruleur_44",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 422000
+          }
+        },
+        {
+          "id": "bruleurs-45",
+          "nom": "Brûleur 45",
+          "slot": "bruleur_45",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 662000
+          }
+        },
+        {
+          "id": "bruleurs-46",
+          "nom": "Brûleur 46",
+          "slot": "bruleur_46",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "bruleurs-47",
+          "nom": "Brûleur 47",
+          "slot": "bruleur_47",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 602000
+          }
+        },
+        {
+          "id": "bruleurs-48",
+          "nom": "Brûleur 48",
+          "slot": "bruleur_48",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 572000
+          }
+        },
+        {
+          "id": "bruleurs-49",
+          "nom": "Brûleur 49",
+          "slot": "bruleur_49",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 542000
+          }
+        },
+        {
+          "id": "bruleurs-50",
+          "nom": "Brûleur 50",
+          "slot": "bruleur_50",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "bruleurs-51",
+          "nom": "Brûleur 51",
+          "slot": "bruleur_51",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 482000
+          }
+        },
+        {
+          "id": "bruleurs-52",
+          "nom": "Brûleur 52",
+          "slot": "bruleur_52",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 452000
+          }
+        },
+        {
+          "id": "bruleurs-53",
+          "nom": "Brûleur 53",
+          "slot": "bruleur_53",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 422000
+          }
+        },
+        {
+          "id": "bruleurs-54",
+          "nom": "Brûleur 54",
+          "slot": "bruleur_54",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 662000
+          }
+        },
+        {
+          "id": "bruleurs-55",
+          "nom": "Brûleur 55",
+          "slot": "bruleur_55",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 632000
+          }
+        },
+        {
+          "id": "bruleurs-56",
+          "nom": "Brûleur 56",
+          "slot": "bruleur_56",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 602000
+          }
+        },
+        {
+          "id": "bruleurs-57",
+          "nom": "Brûleur 57",
+          "slot": "bruleur_57",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 572000
+          }
+        },
+        {
+          "id": "bruleurs-58",
+          "nom": "Brûleur 58",
+          "slot": "bruleur_58",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 542000
+          }
+        },
+        {
+          "id": "bruleurs-59",
+          "nom": "Brûleur 59",
+          "slot": "bruleur_59",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 512000
+          }
+        },
+        {
+          "id": "bruleurs-60",
+          "nom": "Brûleur 60",
+          "slot": "bruleur_60",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 482000
+          }
+        }
+      ]
     }
   ],
   "journal": [],
-  "schema": 17
+  "schema": 18
 }
