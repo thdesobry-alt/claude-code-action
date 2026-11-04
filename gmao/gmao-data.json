@@ -1537,8 +1537,247 @@
           }
         }
       ]
+    },
+    {
+      "id": "cages",
+      "nom": "Moteurs de cage",
+      "zone": "Train",
+      "type": "cages",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "cages-moteur_c1",
+          "nom": "Moteur cage 1",
+          "slot": "moteur_c1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c2",
+          "nom": "Moteur cage 2",
+          "slot": "moteur_c2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c3",
+          "nom": "Moteur cage 3",
+          "slot": "moteur_c3",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c4",
+          "nom": "Moteur cage 4",
+          "slot": "moteur_c4",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c5",
+          "nom": "Moteur cage 5",
+          "slot": "moteur_c5",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c6",
+          "nom": "Moteur cage 6",
+          "slot": "moteur_c6",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c7",
+          "nom": "Moteur cage 7",
+          "slot": "moteur_c7",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c8",
+          "nom": "Moteur cage 8",
+          "slot": "moteur_c8",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c9",
+          "nom": "Moteur cage 9",
+          "slot": "moteur_c9",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c10",
+          "nom": "Moteur cage 10",
+          "slot": "moteur_c10",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c11",
+          "nom": "Moteur cage 11",
+          "slot": "moteur_c11",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c12",
+          "nom": "Moteur cage 12",
+          "slot": "moteur_c12",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c13",
+          "nom": "Moteur cage 13",
+          "slot": "moteur_c13",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c14",
+          "nom": "Moteur cage 14",
+          "slot": "moteur_c14",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c15",
+          "nom": "Moteur cage 15",
+          "slot": "moteur_c15",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        },
+        {
+          "id": "cages-moteur_c16",
+          "nom": "Moteur cage 16",
+          "slot": "moteur_c16",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "diametres": [],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 612000
+          }
+        }
+      ]
     }
   ],
   "journal": [],
-  "schema": 15
+  "schema": 16
 }

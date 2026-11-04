@@ -103,3 +103,7 @@ Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi q
 ## Centrale TRO-7 CV5
 
 Centrale hydraulique à 2 pompes, sans cuve (option « Centrale sans cuve » dans « Modifier l'équipement »). Le filtre est dessiné mais n'est pas suivi tant qu'aucun organe ne lui est rattaché. Une base existante reçoit cette centrale à l'ouverture, avec un suivi qui démarre à zéro.
+
+## Moteurs de cage
+
+Onglet « ⚙️ Moteurs de cage » : les moteurs des cages 1 à 16, dessinés en deux rangées, chacun suivi comme un organe (seuils, remplacement, arrêts techniques). Le tableau « Diamètres travaillés par cage » permet de cocher, pour chaque cage, les diamètres dans lesquels elle travaille : son moteur ne compte que les tonnes produites dans ces diamètres (sans case cochée : tous les diamètres). Une base existante reçoit ces 16 moteurs à l'ouverture, avec un suivi qui démarre à zéro.
