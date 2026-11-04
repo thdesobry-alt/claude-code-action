@@ -2028,6 +2028,19 @@
           }
         },
         {
+          "id": "bruleurs-glissement",
+          "nom": "Plaques de glissement",
+          "slot": "glissement",
+          "mode": "arrets",
+          "seuilVigilance": 1,
+          "seuilRemplacement": 2,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 912000
+          }
+        },
+        {
           "id": "bruleurs-1",
           "nom": "Zone 1 – Brûleur 1",
           "slot": "bruleur_1",
@@ -2811,5 +2824,5 @@
     }
   ],
   "journal": [],
-  "schema": 20
+  "schema": 21
 }
