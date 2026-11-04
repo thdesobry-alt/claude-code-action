@@ -110,4 +110,4 @@ Onglet « ⚙️ Moteurs de cage » : les moteurs des cages 1 à 16, dessinés e
 
 ## Brûleurs du four
 
-Onglet « 🔥 Brûleurs du four » : 60 brûleurs, dessinés sur le four vu de dessus (1 à 30 côté piste, 31 à 60 côté moteur), chacun suivi comme un organe (tonnage ou arrêts techniques). Une base existante les reçoit à l'ouverture, avec un suivi qui démarre à zéro.
+Onglet « 🔥 Brûleurs du four » : 60 brûleurs répartis en 4 zones de l'enfournement vers le défournement (zone 1 : 12, zone 2 : 12, zone 3 : 24, zone 4 : 12), nommés « Zone z – Brûleur k » ; dans chaque zone, la première moitié est dessinée côté piste et la seconde côté moteur, chacun suivi comme un organe (tonnage ou arrêts techniques). Une base existante les reçoit à l'ouverture, avec un suivi qui démarre à zéro.
