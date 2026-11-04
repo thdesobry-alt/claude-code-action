@@ -1990,7 +1990,7 @@
     },
     {
       "id": "bruleurs",
-      "nom": "Four (brûleurs et sole)",
+      "nom": "Four",
       "zone": "Four",
       "type": "bruleurs",
       "options": {},
@@ -2819,10 +2819,166 @@
             "heures": 0,
             "tonnes": 482000
           }
+        },
+        {
+          "id": "bruleurs-porte_enf",
+          "nom": "Porte d'enfournement",
+          "slot": "porte_enf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-chaines_enf",
+          "nom": "Chaînes – porte d'enfournement",
+          "slot": "chaines_enf",
+          "mode": "tonnes",
+          "seuilVigilance": 425000,
+          "seuilRemplacement": 500000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 452000
+          }
+        },
+        {
+          "id": "bruleurs-verin_enf",
+          "nom": "Vérin – porte d'enfournement",
+          "slot": "verin_enf",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-porte_secu",
+          "nom": "Porte sécurité four",
+          "slot": "porte_secu",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-chaines_secu",
+          "nom": "Chaînes – porte sécurité four",
+          "slot": "chaines_secu",
+          "mode": "tonnes",
+          "seuilVigilance": 425000,
+          "seuilRemplacement": 500000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-verin_secu",
+          "nom": "Vérin – porte sécurité four",
+          "slot": "verin_secu",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-porte_defo",
+          "nom": "Porte défourneuse",
+          "slot": "porte_defo",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-chaines_defo",
+          "nom": "Chaînes – porte défourneuse",
+          "slot": "chaines_defo",
+          "mode": "tonnes",
+          "seuilVigilance": 425000,
+          "seuilRemplacement": 500000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-verin_defo",
+          "nom": "Vérin – porte défourneuse",
+          "slot": "verin_defo",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-porte_defour",
+          "nom": "Porte de défournement",
+          "slot": "porte_defour",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-chaines_defour",
+          "nom": "Chaînes – porte de défournement",
+          "slot": "chaines_defour",
+          "mode": "tonnes",
+          "seuilVigilance": 425000,
+          "seuilRemplacement": 500000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "bruleurs-verin_defour",
+          "nom": "Vérin – porte de défournement",
+          "slot": "verin_defour",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
         }
       ]
     }
   ],
   "journal": [],
-  "schema": 21
+  "schema": 22
 }
