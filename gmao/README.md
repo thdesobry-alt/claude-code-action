@@ -123,4 +123,4 @@ Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5,
 
 ## Tempcore
 
-Équipement « Tempcore » avec 3 ranges : range 2 (petits diamètres, Ø 8 à 16 par défaut), range 3 (Ø 18 à 28), range 4 (Ø 32 et 40). Pour chaque range sont suivis les tubes de trempe, les buses et la vanne d'eau. Chaque organe ne compte que les tonnes des diamètres de sa range ; ces diamètres se modifient dans le tableau « Diamètres par organe » de la page Tempcore.
+Équipement « Tempcore » avec 3 ranges : range 2 (petits diamètres, Ø 8 à 16 par défaut), range 3 (Ø 18 à 28), range 4 (Ø 32 et 40). Chaque range est suivie comme un organe et ne compte que les tonnes de ses diamètres ; ces diamètres se modifient dans le tableau « Diamètres par organe » de la page Tempcore.
