@@ -115,3 +115,8 @@ Onglet « 🔥 Four » : une deuxième image montre les 4 portes (enfournement, 
 ## Page Centrales
 
 Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5, et toute centrale ajoutée avec le dessin « Centrale hydraulique » ou « Centrale Nortek ») sont regroupées dans l'onglet « 💧 Centrales » au lieu d'apparaître chacune dans le menu. Un clic sur une pièce ouvre sa fiche ; « Ouvrir » affiche le détail de la centrale.
+
+## Centrales supplémentaires et cisaille CV1
+
+- Centrales ajoutées (page 💧 Centrales) : soudeuse, hydraulique 1 à 6, lubrif 1 à 6, lubrif 7 à 10, lubrif 11 à 14, lubrif 15-16, CV4 + FQ, CV1. Composition par défaut : cuve, 2 pompes, filtre (nombre de pompes et « sans cuve » réglables dans « Modifier l'équipement »).
+- Cisaille CV1 : moteur, courroie, EV frein et EV embrayage suivis ; le dessin est animé (le moteur tourne et la courroie entraîne le volant d'inertie). L'animation s'arrête si le poste demande de réduire les animations.

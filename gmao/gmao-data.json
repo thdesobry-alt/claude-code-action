@@ -2977,8 +2977,627 @@
           }
         }
       ]
+    },
+    {
+      "id": "ch-soudeuse",
+      "nom": "Centrale soudeuse",
+      "zone": "Soudeuse",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-soudeuse-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-soudeuse-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-soudeuse-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-soudeuse-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-h1-6",
+      "nom": "Centrale hydraulique 1 à 6",
+      "zone": "Train",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-h1-6-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-h1-6-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-h1-6-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-h1-6-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-lub1-6",
+      "nom": "Centrale lubrif 1 à 6",
+      "zone": "Train",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-lub1-6-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 752000
+          }
+        },
+        {
+          "id": "ch-lub1-6-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub1-6-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub1-6-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-lub7-10",
+      "nom": "Centrale lubrif 7 à 10",
+      "zone": "Train",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-lub7-10-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub7-10-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub7-10-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub7-10-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-lub11-14",
+      "nom": "Centrale lubrif 11 à 14",
+      "zone": "Train",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-lub11-14-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub11-14-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub11-14-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub11-14-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-lub15-16",
+      "nom": "Centrale lubrif 15-16",
+      "zone": "Train",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-lub15-16-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub15-16-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub15-16-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-lub15-16-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-cv4fq",
+      "nom": "Centrale CV4 + FQ",
+      "zone": "Cisailles",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-cv4fq-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-cv4fq-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-cv4fq-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-cv4fq-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-cv1",
+      "nom": "Centrale CV1",
+      "zone": "Cisailles",
+      "type": "hydraulique",
+      "options": {
+        "nbPompes": 2
+      },
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "ch-cv1-filtre",
+          "nom": "Filtre",
+          "slot": "filtre",
+          "mode": "tonnes",
+          "seuilVigilance": 153000,
+          "seuilRemplacement": 170000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-cv1-pompe_1",
+          "nom": "Pompe 1",
+          "slot": "pompe_1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-cv1-pompe_2",
+          "nom": "Pompe 2",
+          "slot": "pompe_2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "ch-cv1-vidange",
+          "nom": "Vidange centrale",
+          "slot": "vidange",
+          "mode": "tonnes",
+          "seuilVigilance": 382500,
+          "seuilRemplacement": 425000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
+    },
+    {
+      "id": "cisaille-cv1",
+      "nom": "Cisaille CV1",
+      "zone": "Cisailles",
+      "type": "cisaille",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "cisaille-cv1-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "cisaille-cv1-courroie",
+          "nom": "Courroie",
+          "slot": "courroie",
+          "mode": "tonnes",
+          "seuilVigilance": 255000,
+          "seuilRemplacement": 300000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 642000
+          }
+        },
+        {
+          "id": "cisaille-cv1-ev_frein",
+          "nom": "EV frein",
+          "slot": "ev_frein",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        },
+        {
+          "id": "cisaille-cv1-ev_embrayage",
+          "nom": "EV embrayage",
+          "slot": "ev_embrayage",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 832000
+          }
+        }
+      ]
     }
   ],
   "journal": [],
-  "schema": 22
+  "schema": 23
 }
