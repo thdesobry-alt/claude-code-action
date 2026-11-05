@@ -3596,8 +3596,194 @@
           }
         }
       ]
+    },
+    {
+      "id": "tempcore",
+      "nom": "Tempcore",
+      "zone": "Train",
+      "type": "tempcore",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tempcore-tubes_r2",
+          "nom": "Range 2 – Tubes de trempe",
+          "slot": "tubes_r2",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "diametres": [
+            8,
+            10,
+            12,
+            14,
+            16
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tempcore-buses_r2",
+          "nom": "Range 2 – Buses",
+          "slot": "buses_r2",
+          "mode": "tonnes",
+          "seuilVigilance": 425000,
+          "seuilRemplacement": 500000,
+          "diametres": [
+            8,
+            10,
+            12,
+            14,
+            16
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tempcore-vanne_r2",
+          "nom": "Range 2 – Vanne d'eau",
+          "slot": "vanne_r2",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "diametres": [
+            8,
+            10,
+            12,
+            14,
+            16
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tempcore-tubes_r3",
+          "nom": "Range 3 – Tubes de trempe",
+          "slot": "tubes_r3",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "diametres": [
+            18,
+            20,
+            22,
+            25,
+            28
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tempcore-buses_r3",
+          "nom": "Range 3 – Buses",
+          "slot": "buses_r3",
+          "mode": "tonnes",
+          "seuilVigilance": 425000,
+          "seuilRemplacement": 500000,
+          "diametres": [
+            18,
+            20,
+            22,
+            25,
+            28
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 452000
+          }
+        },
+        {
+          "id": "tempcore-vanne_r3",
+          "nom": "Range 3 – Vanne d'eau",
+          "slot": "vanne_r3",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "diametres": [
+            18,
+            20,
+            22,
+            25,
+            28
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tempcore-tubes_r4",
+          "nom": "Range 4 – Tubes de trempe",
+          "slot": "tubes_r4",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "diametres": [
+            32,
+            40
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tempcore-buses_r4",
+          "nom": "Range 4 – Buses",
+          "slot": "buses_r4",
+          "mode": "tonnes",
+          "seuilVigilance": 425000,
+          "seuilRemplacement": 500000,
+          "diametres": [
+            32,
+            40
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tempcore-vanne_r4",
+          "nom": "Range 4 – Vanne d'eau",
+          "slot": "vanne_r4",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "diametres": [
+            32,
+            40
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
     }
   ],
   "journal": [],
-  "schema": 23
+  "schema": 24
 }

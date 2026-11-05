@@ -120,3 +120,7 @@ Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5,
 
 - Centrales ajoutées (page 💧 Centrales) : soudeuse, hydraulique 1 à 6, lubrif 1 à 6, lubrif 7 à 10, lubrif 11 à 14, lubrif 15-16, CV4 + FQ, CV1. Composition par défaut : cuve, 2 pompes, filtre (nombre de pompes et « sans cuve » réglables dans « Modifier l'équipement »).
 - Cisaille CV1 : moteur, courroie, EV frein et EV embrayage suivis ; le dessin est animé (le moteur tourne et la courroie entraîne le volant d'inertie). L'animation s'arrête si le poste demande de réduire les animations.
+
+## Tempcore
+
+Équipement « Tempcore » avec 3 ranges : range 2 (petits diamètres, Ø 8 à 16 par défaut), range 3 (Ø 18 à 28), range 4 (Ø 32 et 40). Pour chaque range sont suivis les tubes de trempe, les buses et la vanne d'eau. Chaque organe ne compte que les tonnes des diamètres de sa range ; ces diamètres se modifient dans le tableau « Diamètres par organe » de la page Tempcore.
