@@ -124,3 +124,7 @@ Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5,
 ## Tempcore
 
 Équipement « Tempcore » avec 3 ranges : range 2 (petits diamètres, Ø 8 à 16 par défaut), range 3 (Ø 18 à 28), range 4 (Ø 32 et 40). Chaque range est suivie comme un organe et ne compte que les tonnes de ses diamètres ; ces diamètres se modifient dans le tableau « Diamètres par organe » de la page Tempcore.
+
+## Lasers de vitesse
+
+Équipement « Lasers de vitesse » : 2 lasers pour les petits diamètres (Ø 8 à 20 par défaut) et 1 laser pour les gros diamètres (Ø 25 à 40 par défaut). Chaque laser ne compte que les tonnes de ses diamètres, modifiables dans le tableau « Diamètres par organe » de sa page.

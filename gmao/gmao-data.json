@@ -3668,8 +3668,84 @@
           }
         }
       ]
+    },
+    {
+      "id": "lasers",
+      "nom": "Lasers de vitesse",
+      "zone": "Train",
+      "type": "lasers",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "lasers-laser_p1",
+          "nom": "Laser petit diamètre 1",
+          "slot": "laser_p1",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "diametres": [
+            8,
+            10,
+            12,
+            14,
+            16,
+            20
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "lasers-laser_p2",
+          "nom": "Laser petit diamètre 2",
+          "slot": "laser_p2",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "diametres": [
+            8,
+            10,
+            12,
+            14,
+            16,
+            20
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "lasers-laser_g",
+          "nom": "Laser gros diamètre",
+          "slot": "laser_g",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "diametres": [
+            25,
+            28,
+            32,
+            40
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        }
+      ]
     }
   ],
   "journal": [],
-  "schema": 25
+  "schema": 26
 }
