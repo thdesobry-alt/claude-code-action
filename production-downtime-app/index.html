@@ -755,6 +755,49 @@
   .pd-low {
     color: var(--danger);
   }
+  .kpi-ok {
+    color: var(--ok);
+    font-weight: 700;
+  }
+  .kpi-warn {
+    color: #c77800;
+    font-weight: 700;
+  }
+  .kpi-bad {
+    color: var(--danger);
+    font-weight: 700;
+  }
+  .kpi.kpi-ok,
+  .kpi.kpi-warn,
+  .kpi.kpi-bad {
+    font-weight: inherit;
+  }
+  .kpi.kpi-ok {
+    border-top: 4px solid var(--ok);
+  }
+  .kpi.kpi-warn {
+    border-top: 4px solid #e08e0b;
+  }
+  .kpi.kpi-bad {
+    border-top: 4px solid var(--danger);
+  }
+  .kpi.kpi-ok .v {
+    color: var(--ok);
+  }
+  .kpi.kpi-warn .v {
+    color: #c77800;
+  }
+  .kpi.kpi-bad .v {
+    color: var(--danger);
+  }
+  .kpi .kt {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .kpi-cfg input {
+    width: 90px;
+  }
   .ed-table input {
     font-size: 12px;
     padding: 4px 6px;
@@ -1173,6 +1216,7 @@
     </button>
     <button role="tab" data-tab="prog" aria-selected="false">Programme de laminage</button>
     <button role="tab" data-tab="prod" aria-selected="false">Production</button>
+    <button role="tab" data-tab="energie" aria-selected="false">Énergie</button>
     <button role="tab" data-tab="cr" aria-selected="false">CR journalier</button>
     <button role="tab" data-tab="machine" aria-selected="true">
       Analyse Pareto Machine
@@ -1561,6 +1605,46 @@
         <div class="row"><button class="btn" id="pdPasteAdd" disabled>Enregistrer ces jours</button><span class="muted" id="pdPasteInfo"></span></div>
       </details>
       <div class="scroll" id="pdTable"></div>
+    </div>
+  </section>
+
+  <section data-panel="energie" class="stack" hidden>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between">
+        <div>
+          <h2>Énergie</h2>
+          <p class="hint">
+            Une ligne par journée de production (8h à 8h le lendemain). Les ratios
+            par tonne utilisent la production saisie dans l'onglet Production.
+          </p>
+        </div>
+        <div class="row">
+          <button class="btn" id="enPrev" aria-label="Mois précédent">◀</button>
+          <strong id="enMonth" style="min-width: 140px; text-align: center"></strong>
+          <button class="btn" id="enNext" aria-label="Mois suivant">▶</button>
+          <button class="btn" id="enCopy">Copier pour Excel</button>
+        </div>
+      </div>
+      <div class="kpis" id="enKpis"></div>
+      <details>
+        <summary class="muted">Coller plusieurs jours depuis Excel (date, gaz maintien, gaz production, élec maintien, élec production)</summary>
+        <textarea class="paste" id="enPaste" style="min-height: 100px" placeholder="09/10/2026&#9;1200&#9;48000&#9;3500&#9;95000"></textarea>
+        <div class="row"><button class="btn" id="enPasteAdd" disabled>Enregistrer ces jours</button><span class="muted" id="enPasteInfo"></span></div>
+      </details>
+      <div class="scroll" id="enTable"></div>
+    </div>
+    <div class="panel stack">
+      <div>
+        <h2>Objectifs des indicateurs</h2>
+        <p class="hint">
+          Pour chaque indicateur : <span class="kpi-ok">vert</span> si l'objectif est atteint,
+          <span class="kpi-warn">orange</span> entre l'objectif et le seuil d'alerte,
+          <span class="kpi-bad">rouge</span> au-delà du seuil. Au-delà de la valeur limite,
+          la valeur est signalée « ⚠ limite ». Les couleurs s'appliquent au CR journalier
+          et aux onglets Production et Énergie.
+        </p>
+      </div>
+      <div id="kpiCfg"></div>
     </div>
   </section>
 
@@ -1966,7 +2050,7 @@
     // ---------- Storage adapter ----------
     var attQuotaWarned = false;
     function saveLocal() {
-      var base = { days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones };
+      var base = { days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, energy: energy, kpi: kpi };
       try {
         localStorage.setItem(LOCAL_KEY, JSON.stringify(Object.assign({ attach: attach }, base)));
       } catch (e) {
@@ -2010,16 +2094,18 @@
       return clone(o); // conflit sur une même valeur : la modification de ce poste l'emporte
     }
     function snapshot() {
-      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, attach: attach, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
+      return clone({ days: days, acts: acts, closes: closes, plan: plan, program: program, production: production, safety: safety, zones: zones, attach: attach, energy: energy, kpi: kpi, codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null });
     }
     function applyState(s) {
-      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {}; zones = s.zones || {}; attach = s.attach || {};
+      days = s.days || {}; acts = s.acts || {}; closes = s.closes || {}; plan = s.plan || {}; program = s.program || {}; production = s.production || {}; safety = s.safety || {}; zones = s.zones || {}; attach = s.attach || {}; energy = s.energy || {}; kpi = s.kpi || {};
       if (s.codes && (s.codes.fer || s.codes.macc)) { codes = { fer: s.codes.fer || DEFAULT_CODES.fer, macc: s.codes.macc || DEFAULT_CODES.macc }; codesCustom = true; }
       else { codes = DEFAULT_CODES; codesCustom = false; }
     }
     // fichier exporté (version 2, liste « arrets ») -> structure de la base
     function fromExport(data) {
-      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, attach: {}, codes: null }, groups = {}, order = [];
+      var st = { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, attach: {}, energy: {}, kpi: {}, codes: null }, groups = {}, order = [];
+      (data.energie || []).forEach(function (en) { var k = pdKeyFromFr(en.jour); if (k) st.energy[k] = { gm: en.gazMaintien, gp: en.gazProduction, em: en.elecMaintien, ep: en.elecProduction }; });
+      if (data.kpi && typeof data.kpi === "object") st.kpi = JSON.parse(JSON.stringify(data.kpi));
       if (data.zones && typeof data.zones === "object") Object.keys(data.zones).forEach(function (c) { st.zones[c] = String(data.zones[c] || ""); });
       (data.securite || []).forEach(function (x, i) {
         var k = pdKeyFromFr(x.jour);
@@ -2063,15 +2149,15 @@
     async function readFileState() {
       var f = await fileHandle.getFile(), text = await f.text();
       fileLastMod = f.lastModified;
-      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, attach: {}, codes: null };
+      if (!text.trim()) return { days: {}, acts: {}, closes: {}, plan: {}, program: {}, production: {}, safety: {}, zones: {}, attach: {}, energy: {}, kpi: {}, codes: null };
       var d = JSON.parse(text);
-      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, zones: d.zones || {}, attach: d.attach || {}, codes: d.codes || null };
+      if (d && d.version === 3) return { days: d.days || {}, acts: d.acts || {}, closes: d.closes || {}, plan: d.plan || {}, program: d.program || {}, production: d.production || {}, safety: d.safety || {}, zones: d.zones || {}, attach: d.attach || {}, energy: d.energy || {}, kpi: d.kpi || {}, codes: d.codes || null };
       if (d && Array.isArray(d.arrets)) return fromExport(d);
       throw new Error("format");
     }
     async function writeFileState(s) {
       var w = await fileHandle.createWritable();
-      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, zones: s.zones || {}, attach: s.attach || {}, codes: s.codes }));
+      await w.write(JSON.stringify({ format: "arrets-production", version: 3, savedAt: new Date().toISOString(), days: s.days, acts: s.acts, closes: s.closes, plan: s.plan, program: s.program || {}, production: s.production || {}, safety: s.safety || {}, zones: s.zones || {}, attach: s.attach || {}, energy: s.energy || {}, kpi: s.kpi || {}, codes: s.codes }));
       await w.close();
       fileLastMod = (await fileHandle.getFile()).lastModified;
     }
@@ -2227,6 +2313,8 @@
           safety = d.safety || {};
           zones = d.zones || {};
           attach = d.attach || {};
+          energy = d.energy || {};
+          kpi = d.kpi || {};
         }
       } catch (e) {}
     }
@@ -2268,6 +2356,30 @@
         .catch(function (e) { toast(dbErrorMessage(e)); });
       return chains[ck];
     }
+    // énergie par journée : config/energy = {items: {jour: {gm, gp, em, ep}}} ; objectifs : config/kpi = {items: {taux|prod|gaz|elec: {obj, seuil, lim}, units: {gaz, elec}}}
+    var energy = {}, kpi = {};
+    function writeConfigItem(docName, obj, key, body) {
+      if (mode === "local") {
+        obj[key] = Object.assign({}, obj[key] || {}, body);
+        saveLocal();
+        refresh();
+        return Promise.resolve();
+      }
+      var ref = db.doc("config/" + docName), patch = {}, ck = "config/" + docName;
+      patch[key] = body;
+      chains[ck] = (chains[ck] || Promise.resolve())
+        .then(async function () {
+          try { await ref.update({ items: patch }); }
+          catch (e) {
+            if (e && e.code === "invalid_argument") { var sn = await ref.get(); if (!sn.exists) { await ref.set({ items: patch }); return; } }
+            throw e;
+          }
+        })
+        .catch(function (e) { toast(dbErrorMessage(e)); });
+      return chains[ck];
+    }
+    function writeEnergy(day, body) { return writeConfigItem("energy", energy, day, Object.assign({}, body, { by: myId, at: Date.now() })); }
+    function writeKpi(key, body) { return writeConfigItem("kpi", kpi, key, body); }
     // production par journée : config/production = {items: {"AAAA-MM-JJ" (jour de démarrage 8h): {tonnes, ouverture (min)}}}
     var production = {};
     function writeProduction(day, fields) {
@@ -2875,6 +2987,7 @@
         !isAdmin();
       document.querySelector('nav.tabs [data-tab="prog"]').hidden = !isAdmin();
       document.querySelector('nav.tabs [data-tab="prod"]').hidden = !isAdmin();
+      document.querySelector('nav.tabs [data-tab="energie"]').hidden = !isAdmin();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent = unlocked === "user" ? "Passer en Admin" : "Se connecter";
       $("btnLogout").hidden = mode === "pending" || unlocked === "viewer";
@@ -3257,8 +3370,8 @@
             '<td class="num"><input data-pd="tonnes" inputmode="decimal" value="' + (r.tons == null ? "" : String(r.tons).replace(".", ",")) + '" placeholder="t" /></td>' +
             '<td class="num"><input data-pd="ouverture" value="' + fmtOpening(r.open) + '" placeholder="hh:mm" /></td>' +
             '<td class="num">' + fmtHM(r.stopMs) + '</td><td class="num">' + (r.run == null ? "—" : fmtHM(r.run)) + "</td>" +
-            '<td class="num">' + (r.taux == null ? "—" : '<strong class="' + (r.taux < 0.8 ? "pd-low" : "") + '">' + pct(r.taux) + "</strong>") + "</td>" +
-            '<td class="num">' + fmtNum(r.prod, 1) + "</td></tr>";
+            '<td class="num">' + (r.taux == null ? "—" : kpiState("taux", r.taux * 100) ? "<strong>" + kpiSpan("taux", r.taux * 100, pct(r.taux)) + "</strong>" : '<strong class="' + (r.taux < 0.8 ? "pd-low" : "") + '">' + pct(r.taux) + "</strong>") + "</td>" +
+            '<td class="num">' + (r.prod == null ? "—" : kpiSpan("prod", r.prod, fmtNum(r.prod, 1))) + "</td></tr>";
         }).join("") +
         '</tbody><tfoot><tr><th>Total du mois</th><th class="num">' + fmtNum(T, 0) + '</th><th class="num">' + fmtHM(O) + '</th><th class="num">' + fmtHM(S) + '</th><th class="num">' + fmtHM(R) + '</th><th class="num">' + (O ? pct(R / O) : "—") + '</th><th class="num">' + (O ? fmtNum(T / (O / 3600000), 1) : "—") + "</th></tr></tfoot></table>" +
         '<p class="hint">Les totaux portent sur les journées dont le temps d\'ouverture est saisi.</p>';
@@ -3317,6 +3430,192 @@
       pdRows().forEach(function (r) {
         lines.push([fmtDate(r.a).slice(0, 10), r.tons == null ? "" : String(r.tons).replace(".", ","), fmtOpening(r.open), fmtHM(r.stopMs), r.run == null ? "" : fmtHM(r.run),
           r.taux == null ? "" : (r.taux * 100).toFixed(1).replace(".", ",") + " %", r.prod == null ? "" : r.prod.toFixed(1).replace(".", ",")].join("\t"));
+      });
+      try { navigator.clipboard.writeText(lines.join("\n")).then(function () { toast("Mois copié : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); }); }
+      catch (e) { toast("Copie refusée par le navigateur"); }
+    });
+
+    // ---------- Indicateurs : objectif / seuil / limite ----------
+    var KPI_DEF = [
+      { k: "taux", label: "Taux de marche", unit: function () { return "%"; }, dir: 1, d: 1 },
+      { k: "prod", label: "Productivité", unit: function () { return "t/h"; }, dir: 1, d: 1 },
+      { k: "gaz", label: "Gaz production / tonne", unit: function () { return enUnit("gaz") + "/t"; }, dir: -1, d: 2 },
+      { k: "elec", label: "Élec production / tonne", unit: function () { return enUnit("elec") + "/t"; }, dir: -1, d: 2 },
+    ];
+    function enUnit(t) { var u = kpi.units && kpi.units[t]; return u || (t === "gaz" ? "Nm³" : "kWh"); }
+    function kpiNum(v) { return v === "" || v == null || isNaN(+v) ? null : +v; }
+    // v : valeur affichée (taux en %, productivité en t/h, ratios énergie)
+    function kpiState(k, v) {
+      var c = kpi[k] || {}, def = KPI_DEF.find(function (x) { return x.k === k; });
+      if (v == null || isNaN(v) || !def) return null;
+      var o = kpiNum(c.obj), se = kpiNum(c.seuil), li = kpiNum(c.lim), dir = def.dir;
+      if (o == null && se == null && li == null) return null;
+      function worse(a, b) { return dir > 0 ? a < b : a > b; } // a moins bon que b
+      var st = o == null || !worse(v, o) ? "ok" : se == null || !worse(v, se) ? "warn" : "bad";
+      if (o == null && se != null) st = worse(v, se) ? "bad" : "ok";
+      return { cls: "kpi-" + st, limit: li != null && worse(v, li), obj: o };
+    }
+    function kpiSpan(k, v, txt) {
+      var st = kpiState(k, v);
+      if (!st) return txt;
+      return '<span class="' + st.cls + '">' + txt + (st.limit ? " ⚠" : "") + "</span>";
+    }
+    // tuile KPI colorée (CR)
+    function kpiTile(k, label, v, txt) {
+      var st = kpiState(k, v);
+      return '<div class="kpi' + (st ? " " + st.cls : "") + '"><div class="l">' + label + '</div><div class="v">' + txt + "</div>" +
+        (st ? '<div class="kt">' + (st.obj != null ? "Objectif " + fmtNum(st.obj, 2) : "") + (st.limit ? ' · <strong class="kpi-bad">⚠ limite dépassée</strong>' : "") + "</div>" : "") + "</div>";
+    }
+    function enRatios(day) {
+      var e = energy[day] || {}, t = (production[day] || {}).tonnes;
+      return { gp: e.gp == null ? null : e.gp, ep: e.ep == null ? null : e.ep, t: t == null ? null : t,
+        gaz: e.gp != null && t ? e.gp / t : null, elec: e.ep != null && t ? e.ep / t : null };
+    }
+    var kpiEditing = false;
+    function renderKpiCfg() {
+      var box = $("kpiCfg"), ae = document.activeElement;
+      if (kpiEditing || (ae && ae.matches && ae.matches("#kpiCfg input"))) return; // saisie en cours : redessiné à la sortie
+      var adm = isAdmin(), dis = adm ? "" : " disabled";
+      box.innerHTML = '<table class="ed-table kpi-cfg"><thead><tr><th>Indicateur</th><th>Sens</th><th class="num">Objectif</th><th class="num">Seuil d\'alerte</th><th class="num">Valeur limite</th><th>Unité</th></tr></thead><tbody>' +
+        KPI_DEF.map(function (d) {
+          var c = kpi[d.k] || {};
+          function inp(f) { return '<input data-kpi="' + d.k + '" data-f="' + f + '" inputmode="decimal" value="' + (kpiNum(c[f]) == null ? "" : String(c[f]).replace(".", ",")) + '"' + dis + " />"; }
+          return "<tr><td><strong>" + d.label + "</strong></td><td class=\"muted\">" + (d.dir > 0 ? "plus haut = mieux" : "plus bas = mieux") + '</td><td class="num">' + inp("obj") + '</td><td class="num">' + inp("seuil") + '</td><td class="num">' + inp("lim") + "</td><td>" + d.unit() + "</td></tr>";
+        }).join("") + "</tbody></table>" +
+        '<div class="row" style="margin-top: 10px"><label class="f">Unité du gaz<input data-unit="gaz" value="' + esc(enUnit("gaz")) + '" style="width: 90px"' + dis + ' /></label>' +
+        '<label class="f">Unité de l\'électricité<input data-unit="elec" value="' + esc(enUnit("elec")) + '" style="width: 90px"' + dis + " /></label></div>" +
+        '<p class="hint">Exemple « plus bas = mieux » : objectif 60, seuil 70, limite 80 → vert jusqu\'à 60, orange de 60 à 70, rouge au-delà de 70, « ⚠ limite » au-delà de 80. Le taux de marche se saisit en % (ex. 85).</p>';
+    }
+    $("kpiCfg").addEventListener("focusin", function () { kpiEditing = true; });
+    $("kpiCfg").addEventListener("focusout", function () {
+      setTimeout(function () {
+        var ae = document.activeElement;
+        if (!(ae && ae.matches && ae.matches("#kpiCfg input"))) { kpiEditing = false; renderEnergy(); }
+      }, 0);
+    });
+    $("kpiCfg").addEventListener("change", function (e) {
+      if (!isAdmin()) return;
+      var el = e.target;
+      if (el.dataset.unit) {
+        var u = Object.assign({}, kpi.units || {});
+        u[el.dataset.unit] = el.value.trim();
+        writeKpi("units", u).then(function () { renderEnergy(); });
+        return;
+      }
+      if (!el.dataset.kpi) return;
+      var v = parseTonnes(el.value);
+      if (isNaN(v)) { toast("Saisissez un nombre."); return; }
+      var body = {};
+      body[el.dataset.f] = v;
+      writeKpi(el.dataset.kpi, body).then(function () { toast("Objectif enregistré"); });
+    });
+
+    // ---------- Onglet Énergie ----------
+    function enMonthStart() {
+      if (ui.enMonth == null) { var t = prodDay(Date.now()); ui.enMonth = new Date(t.getFullYear(), t.getMonth(), 1).getTime(); }
+      return new Date(ui.enMonth);
+    }
+    var EN_FIELDS = [["gm", "Gaz maintien", "gaz"], ["gp", "Gaz production", "gaz"], ["em", "Élec maintien", "elec"], ["ep", "Élec production", "elec"]];
+    function enRows() {
+      var m0 = enMonthStart(), y = m0.getFullYear(), mo = m0.getMonth(), n = new Date(y, mo + 1, 0).getDate(), rows = [];
+      for (var d = 1; d <= n; d++) {
+        var key = y + "-" + pad(mo + 1) + "-" + pad(d);
+        rows.push(Object.assign({ key: key, a: new Date(y, mo, d, DAY_START_HOUR).getTime(), e: energy[key] || {} }, enRatios(key)));
+      }
+      return rows;
+    }
+    var enEditing = false;
+    function renderEnergy() {
+      renderKpiCfg();
+      if (enEditing) return;
+      var ae = document.activeElement;
+      if (ae && ae.matches && ae.matches("#enTable input")) return;
+      var m0 = enMonthStart();
+      $("enMonth").textContent = MONTHS[m0.getMonth()].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + m0.getFullYear();
+      var rows = enRows(), sum = { gm: 0, gp: 0, em: 0, ep: 0 }, tg = 0, te = 0, gpT = 0, epT = 0;
+      rows.forEach(function (r) {
+        EN_FIELDS.forEach(function (f) { if (r.e[f[0]] != null) sum[f[0]] += +r.e[f[0]]; });
+        if (r.gaz != null) { gpT += r.gp; tg += r.t; }
+        if (r.elec != null) { epT += r.ep; te += r.t; }
+      });
+      var mg = tg ? gpT / tg : null, me = te ? epT / te : null, ug = enUnit("gaz"), ue = enUnit("elec");
+      $("enKpis").innerHTML =
+        '<div class="kpi"><div class="l">Gaz du mois</div><div class="v">' + fmtNum(sum.gm + sum.gp, 0) + " " + esc(ug) + "</div></div>" +
+        '<div class="kpi"><div class="l">Élec du mois</div><div class="v">' + fmtNum(sum.em + sum.ep, 0) + " " + esc(ue) + "</div></div>" +
+        kpiTile("gaz", "Gaz production / t (mois)", mg, mg == null ? "—" : fmtNum(mg, 2) + " " + esc(ug) + "/t") +
+        kpiTile("elec", "Élec production / t (mois)", me, me == null ? "—" : fmtNum(me, 2) + " " + esc(ue) + "/t");
+      var wd = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
+      function inp(r, f) { var v = r.e[f]; return '<input data-en="' + f + '" inputmode="decimal" value="' + (v == null ? "" : String(v).replace(".", ",")) + '" />'; }
+      $("enTable").innerHTML = '<table class="ed-table pd-table"><thead><tr><th>Journée (8h → 8h)</th>' +
+        EN_FIELDS.map(function (f) { return '<th class="num">' + f[1] + " (" + esc(enUnit(f[2])) + ")</th>"; }).join("") +
+        '<th class="num">Production (t)</th><th class="num">Gaz prod. / t</th><th class="num">Élec prod. / t</th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          return '<tr data-day="' + r.key + '"><td class="mono">' + wd[new Date(r.a).getDay()] + " " + fmtDate(r.a).slice(0, 10) + "</td>" +
+            EN_FIELDS.map(function (f) { return '<td class="num">' + inp(r, f[0]) + "</td>"; }).join("") +
+            '<td class="num muted">' + fmtNum(r.t, 1) + '</td><td class="num">' + (r.gaz == null ? "—" : kpiSpan("gaz", r.gaz, fmtNum(r.gaz, 2))) + '</td><td class="num">' + (r.elec == null ? "—" : kpiSpan("elec", r.elec, fmtNum(r.elec, 2))) + "</td></tr>";
+        }).join("") +
+        '</tbody><tfoot><tr><th>Total du mois</th>' + EN_FIELDS.map(function (f) { return '<th class="num">' + fmtNum(sum[f[0]], 0) + "</th>"; }).join("") +
+        '<th></th><th class="num">' + (mg == null ? "—" : kpiSpan("gaz", mg, fmtNum(mg, 2))) + '</th><th class="num">' + (me == null ? "—" : kpiSpan("elec", me, fmtNum(me, 2))) + "</th></tr></tfoot></table>" +
+        '<p class="hint">Ratios du mois calculés sur les journées où la consommation et la production sont saisies.</p>';
+    }
+    function saveEnRow(tr) {
+      var body = {}, cur = energy[tr.dataset.day] || {}, changed = false, bad = false;
+      tr.querySelectorAll("[data-en]").forEach(function (el) {
+        var v = parseTonnes(el.value);
+        if (isNaN(v)) { bad = true; return; }
+        body[el.dataset.en] = v;
+        if ((cur[el.dataset.en] == null ? null : cur[el.dataset.en]) !== v) changed = true;
+      });
+      if (bad) { toast("Énergie : saisissez des nombres."); return; }
+      if (changed) writeEnergy(tr.dataset.day, body);
+    }
+    $("enTable").addEventListener("change", function (e) {
+      var tr = e.target.closest("tr[data-day]");
+      if (tr && isAdmin()) saveEnRow(tr);
+    });
+    $("enTable").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && e.target.matches("[data-en]")) {
+        e.preventDefault();
+        var inputs = Array.prototype.slice.call(document.querySelectorAll("#enTable [data-en]")), i = inputs.indexOf(e.target);
+        var next = inputs[i + 4] || inputs[i + 1];
+        if (next) next.focus(); else e.target.blur();
+      }
+    });
+    $("enTable").addEventListener("focusin", function () { enEditing = true; });
+    $("enTable").addEventListener("focusout", function () {
+      setTimeout(function () {
+        var ae = document.activeElement;
+        if (!(ae && ae.matches && ae.matches("#enTable input"))) { enEditing = false; renderEnergy(); }
+      }, 0);
+    });
+    $("enPrev").addEventListener("click", function () { var d = enMonthStart(); d.setMonth(d.getMonth() - 1); ui.enMonth = d.getTime(); renderEnergy(); });
+    $("enNext").addEventListener("click", function () { var d = enMonthStart(); d.setMonth(d.getMonth() + 1); ui.enMonth = d.getTime(); renderEnergy(); });
+    var enParsed = [];
+    $("enPaste").addEventListener("input", function () {
+      var ok = [], bad = 0;
+      parseTSV(this.value).forEach(function (c, i) {
+        var k = pdKeyFromFr(c[0]);
+        if (!k) { if (i) bad++; return; }
+        var v = [1, 2, 3, 4].map(function (j) { return parseTonnes(c[j]); });
+        if (v.some(function (x) { return isNaN(x); })) { bad++; return; }
+        ok.push({ k: k, b: { gm: v[0], gp: v[1], em: v[2], ep: v[3] } });
+      });
+      enParsed = ok;
+      $("enPasteInfo").textContent = this.value.trim() ? ok.length + " jour(s) valides" + (bad ? " · " + bad + " ligne(s) invalide(s) ignorée(s)" : "") : "";
+      $("enPasteAdd").disabled = !ok.length;
+    });
+    $("enPasteAdd").addEventListener("click", function () {
+      if (!isAdmin()) return;
+      enParsed.forEach(function (r) { writeEnergy(r.k, r.b); });
+      toast(enParsed.length + " jour(s) enregistré(s)");
+      $("enPaste").value = ""; $("enPaste").dispatchEvent(new Event("input"));
+      if (mode !== "local") renderEnergy();
+    });
+    $("enCopy").addEventListener("click", function () {
+      var lines = [["Journée"].concat(EN_FIELDS.map(function (f) { return f[1] + " (" + enUnit(f[2]) + ")"; }), ["Production (t)", "Gaz prod / t", "Élec prod / t"]).join("\t")];
+      function n(v, d) { return v == null ? "" : (+v).toFixed(d).replace(".", ","); }
+      enRows().forEach(function (r) {
+        lines.push([fmtDate(r.a).slice(0, 10)].concat(EN_FIELDS.map(function (f) { return r.e[f[0]] == null ? "" : String(r.e[f[0]]).replace(".", ","); }), [n(r.t, 1), n(r.gaz, 2), n(r.elec, 2)]).join("\t"));
       });
       try { navigator.clipboard.writeText(lines.join("\n")).then(function () { toast("Mois copié : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); }); }
       catch (e) { toast("Copie refusée par le navigateur"); }
@@ -3407,11 +3706,16 @@
       var stopMs = stopTimeIn(r.a, r.b), mb = stopTimeIn(r.a, r.b, true), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
       var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
       var taux = openMs ? run / openMs : null, prod = openMs && tons != null ? tons / (openMs / 3600000) : null;
+      var er = enRatios(r.key);
       box.innerHTML = '<div class="kpis">' +
-        '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>" +
-        '<div class="kpi"><div class="l">Productivité</div><div class="v">' + (prod == null ? "—" : fmtNum(prod, 1) + " t/h") + "</div></div>" +
+        (kpiState("taux", taux == null ? null : taux * 100) ? kpiTile("taux", "Taux de marche", taux * 100, pct(taux)) : '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>") +
+        kpiTile("prod", "Productivité", prod, prod == null ? "—" : fmtNum(prod, 1) + " t/h") +
         '<div class="kpi"><div class="l">Production</div><div class="v">' + (tons == null ? "—" : fmtNum(tons, 1) + " t") + "</div></div>" +
-        '<div class="kpi"><div class="l">Temps d\'arrêt</div><div class="v">' + fmtHM(stopMs) + "</div></div></div>" +
+        '<div class="kpi"><div class="l">Temps d\'arrêt</div><div class="v">' + fmtHM(stopMs) + "</div></div>" +
+        kpiTile("gaz", "Gaz production / t", er.gaz, er.gaz == null ? "—" : fmtNum(er.gaz, 2) + " " + esc(enUnit("gaz")) + "/t") +
+        kpiTile("elec", "Élec production / t", er.elec, er.elec == null ? "—" : fmtNum(er.elec, 2) + " " + esc(enUnit("elec")) + "/t") +
+        "</div>" +
+        (er.gp == null && er.ep == null ? '<p class="muted" style="margin-top: 6px">Énergie de la journée non saisie (onglet Énergie).</p>' : "") +
         '<p class="hint" style="margin-top: 8px">Ouverture ' + (open == null ? "non saisie" : fmtOpening(open)) + " · marche " + (run == null ? "—" : fmtHM(run)) +
         " · manque billettes (26) non pris en compte : " + fmtHM(mb) + " · les arrêts 51 cycle sont exclus.</p>" +
         (adm ? '<div class="row" style="margin-top: 8px"><label class="f">Production (t)<input data-crpd="tonnes" inputmode="decimal" value="' + (tons == null ? "" : String(tons).replace(".", ",")) + '" style="width: 120px" /></label>' +
@@ -3580,6 +3884,8 @@
             actions: incActions(x).map(function (a) { return { action: a.action, pilote: a.pilote, delai: a.delai, fait: !!a.done }; }) };
         }),
         zones: Object.assign({}, zones),
+        energie: Object.keys(energy).sort().map(function (k) { var v = energy[k] || {}; return { jour: k.split("-").reverse().join("/"), gazMaintien: v.gm == null ? null : v.gm, gazProduction: v.gp == null ? null : v.gp, elecMaintien: v.em == null ? null : v.em, elecProduction: v.ep == null ? null : v.ep }; }),
+        kpi: JSON.parse(JSON.stringify(kpi)),
         production: Object.keys(production).sort().map(function (k) { var v = production[k] || {}; return { jour: k.split("-").reverse().join("/"), tonnes: v.tonnes == null ? "" : v.tonnes, ouvertureMin: v.ouverture == null ? null : v.ouverture }; }),
         arrets: stops.map(function (s) {
           return {
@@ -3666,6 +3972,11 @@
         writeSafety(k.slice(0, 7), "x" + uid(), { day: k, heure: x.heure || "", type: x.type || "", lieu: x.lieu || "", description: x.description || "", actions: acts0, created: Date.now() });
       });
       if (data.zones && typeof data.zones === "object") Object.keys(data.zones).forEach(function (c) { if (zones[c] === undefined) writeZone(c, String(data.zones[c] || "")); });
+      (data.energie || []).forEach(function (en) {
+        var k = pdKeyFromFr(en.jour);
+        if (k && !energy[k]) writeEnergy(k, { gm: en.gazMaintien, gp: en.gazProduction, em: en.elecMaintien, ep: en.elecProduction });
+      });
+      if (data.kpi && typeof data.kpi === "object" && !Object.keys(kpi).length) Object.keys(data.kpi).forEach(function (k) { writeKpi(k, data.kpi[k]); });
       (data.production || []).forEach(function (pr) {
         var k = pdKeyFromFr(pr.jour);
         if (k && !production[k]) writeProduction(k, { tonnes: pr.tonnes === "" || pr.tonnes == null ? null : +pr.tonnes, ouverture: pr.ouvertureMin == null ? null : +pr.ouvertureMin });
@@ -4799,7 +5110,7 @@
       );
     }
     function renderAll() {
-      var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod" || ui.tab === "energie") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
       curTab = tab;
       renderHeader();
@@ -4813,13 +5124,14 @@
       document.querySelectorAll("[data-panel]").forEach(function (p) {
         p.hidden = p.dataset.panel !== tab;
       });
-      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "cr";
+      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "energie" || tab === "cr";
       $("btnExportTop").hidden = mode === "pending" || !canExport();
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
       if (tab === "rex") renderRex();
       if (tab === "prog") renderProgram();
       if (tab === "prod") renderProduction();
+      if (tab === "energie") renderEnergy();
       if (tab === "cr") renderCR();
       if (tab === "schema") renderSchema();
       if (tab === "actview") {
@@ -5435,7 +5747,7 @@
       } catch (e) {}
       if (
         location.hash &&
-        /^#(saisie|prog|prod|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
+        /^#(saisie|prog|prod|energie|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
       )
         ui.tab = location.hash.slice(1);
       renderAll();
@@ -5523,6 +5835,16 @@
       db.doc("config/zones").onSnapshot(function (snap) {
         var d = snap.exists ? snap.data() : null;
         zones = (d && d.items) || {};
+        refresh();
+      }, onErr);
+      db.doc("config/energy").onSnapshot(function (snap) {
+        var d = snap.exists ? snap.data() : null;
+        energy = (d && d.items) || {};
+        refresh();
+      }, onErr);
+      db.doc("config/kpi").onSnapshot(function (snap) {
+        var d = snap.exists ? snap.data() : null;
+        kpi = (d && d.items) || {};
         refresh();
       }, onErr);
       db.doc("config/production").onSnapshot(function (snap) {
