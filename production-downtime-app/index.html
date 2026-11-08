@@ -5188,20 +5188,17 @@
       );
     }
     function renderAll() {
-      if (isAdmin() && ui.startHome) { ui.startHome = false; ui.tab = "home"; }
+      if (ui.startHome) { ui.startHome = false; ui.tab = "home"; }
       var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod" || ui.tab === "energie") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
-      if (tab === "home" && !isAdmin()) tab = "machine";
-      // Admin : page Menu à la place de la barre d'onglets
-      document.querySelector("nav.tabs").hidden = isAdmin();
-      $("adminBar").hidden = !isAdmin() || tab === "home";
-      if (isAdmin()) {
-        var tb = document.querySelector('nav.tabs [data-tab="' + tab + '"]');
-        $("adminTitle").textContent = tb ? tb.textContent.trim() : "";
-        if (tab === "home") renderHome();
-      }
+      // page Menu à la place de la barre d'onglets (tous les profils)
+      document.querySelector("nav.tabs").hidden = true;
+      $("adminBar").hidden = tab === "home";
+      var tb = document.querySelector('nav.tabs [data-tab="' + tab + '"]');
+      $("adminTitle").textContent = tb ? tb.textContent.trim() : "";
       curTab = tab;
       renderHeader();
+      if (tab === "home") renderHome(); // après renderHeader : menus visibles selon le profil
       renderChips();
       renderBatches();
       if (tab === "saisie") renderEditor();
@@ -5264,7 +5261,9 @@
     ];
     function renderHome() {
       $("homeMenu").innerHTML = HOME_MENU.map(function (g) {
-        return "<h3>" + g[0] + '</h3><div class="home-grid">' + g[1].map(function (it) {
+        var items = g[1].filter(function (it) { var tb = document.querySelector('nav.tabs [data-tab="' + it[0] + '"]'); return tb && !tb.hidden; });
+        if (!items.length) return "";
+        return "<h3>" + g[0] + '</h3><div class="home-grid">' + items.map(function (it) {
           var tb = document.querySelector('nav.tabs [data-tab="' + it[0] + '"]');
           return '<button class="home-card" data-go="' + it[0] + '"><strong>' + esc(tb ? tb.textContent.trim() : it[0]) + "</strong><span>" + esc(it[1]) + "</span></button>";
         }).join("") + "</div>";
@@ -5864,7 +5863,7 @@
       try {
         ui.tab = localStorage.getItem(LOCAL_KEY + "-tab") || "machine";
       } catch (e) {}
-      ui.startHome = true; // l'Admin arrive sur la page Menu
+      ui.startHome = true; // l'application s'ouvre sur la page Menu
       if (
         location.hash &&
         /^#(home|saisie|prog|prod|energie|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
