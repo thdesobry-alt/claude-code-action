@@ -217,6 +217,74 @@
     border-bottom: 2px solid var(--line);
     margin-bottom: 16px;
   }
+  .adminbar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 0 10px;
+    border-bottom: 2px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .adminbar[hidden],
+  nav.tabs[hidden] {
+    display: none;
+  }
+  .adminbar strong {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--bar);
+  }
+  .home {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 24px;
+  }
+  .home h2 {
+    margin: 0 0 8px;
+  }
+  .home h3 {
+    margin: 22px 0 10px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+  }
+  .home-card {
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--bar);
+    border-radius: 4px;
+    padding: 14px 16px;
+    cursor: pointer;
+    color: var(--fg);
+    font: inherit;
+  }
+  .home-card:hover,
+  .home-card:focus-visible {
+    background: var(--surface-2);
+    border-color: var(--bar);
+  }
+  .home-card strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .home-card span {
+    font-size: 12px;
+    color: var(--muted);
+  }
   nav.tabs button {
     font-family: var(--font-display);
     font-size: 15px;
@@ -1226,6 +1294,16 @@
     <button role="tab" data-tab="actview" aria-selected="false">Actions</button>
     <button role="tab" data-tab="rex" aria-selected="false">REX</button>
   </nav>
+  <div class="adminbar" id="adminBar" hidden>
+    <button class="btn" id="btnHome">← Menu</button>
+    <strong id="adminTitle"></strong>
+  </div>
+  <section data-panel="home" class="stack" hidden>
+    <div class="home">
+      <h2>Menu</h2>
+      <div id="homeMenu"></div>
+    </div>
+  </section>
 
   <!-- Filtres partagés par les onglets d'analyse -->
   <section class="panel filters" id="filters" hidden>
@@ -5110,8 +5188,18 @@
       );
     }
     function renderAll() {
+      if (isAdmin() && ui.startHome) { ui.startHome = false; ui.tab = "home"; }
       var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod" || ui.tab === "energie") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
+      if (tab === "home" && !isAdmin()) tab = "machine";
+      // Admin : page Menu à la place de la barre d'onglets
+      document.querySelector("nav.tabs").hidden = isAdmin();
+      $("adminBar").hidden = !isAdmin() || tab === "home";
+      if (isAdmin()) {
+        var tb = document.querySelector('nav.tabs [data-tab="' + tab + '"]');
+        $("adminTitle").textContent = tb ? tb.textContent.trim() : "";
+        if (tab === "home") renderHome();
+      }
       curTab = tab;
       renderHeader();
       renderChips();
@@ -5124,7 +5212,7 @@
       document.querySelectorAll("[data-panel]").forEach(function (p) {
         p.hidden = p.dataset.panel !== tab;
       });
-      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "energie" || tab === "cr";
+      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "energie" || tab === "cr" || tab === "home";
       $("btnExportTop").hidden = mode === "pending" || !canExport();
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
@@ -5156,6 +5244,37 @@
       }
       renderAll();
     }
+    var HOME_MENU = [
+      ["Saisie", [
+        ["saisie", "Coller l'extraction des arrêts, modifier un arrêt, historique des imports, tables de codes"],
+        ["prog", "Diamètre laminé par période"],
+        ["prod", "Tonnes et temps d'ouverture par jour, taux de marche, productivité"],
+        ["energie", "Gaz et électricité par jour, ratios par tonne, objectifs des indicateurs"],
+        ["actions", "Créer et modifier les actions et les REX par arrêt"],
+      ]],
+      ["Analyse", [
+        ["cr", "Compte rendu du jour : sécurité, indicateurs, frise, Pareto"],
+        ["machine", "Pareto des arrêts par machine sur la période choisie"],
+        ["schema", "Arrêts par zone du laminoir, Pareto de chaque zone"],
+      ]],
+      ["Suivi", [
+        ["actview", "Toutes les actions : retards, pilotes, clôture"],
+        ["rex", "Retours d'expérience"],
+      ]],
+    ];
+    function renderHome() {
+      $("homeMenu").innerHTML = HOME_MENU.map(function (g) {
+        return "<h3>" + g[0] + '</h3><div class="home-grid">' + g[1].map(function (it) {
+          var tb = document.querySelector('nav.tabs [data-tab="' + it[0] + '"]');
+          return '<button class="home-card" data-go="' + it[0] + '"><strong>' + esc(tb ? tb.textContent.trim() : it[0]) + "</strong><span>" + esc(it[1]) + "</span></button>";
+        }).join("") + "</div>";
+      }).join("");
+    }
+    $("homeMenu").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-go]");
+      if (b) { setTab(b.dataset.go); window.scrollTo(0, 0); }
+    });
+    $("btnHome").addEventListener("click", function () { setTab("home"); window.scrollTo(0, 0); });
     function setTab(t) {
       ui.tab = t;
       try {
@@ -5745,11 +5864,15 @@
       try {
         ui.tab = localStorage.getItem(LOCAL_KEY + "-tab") || "machine";
       } catch (e) {}
+      ui.startHome = true; // l'Admin arrive sur la page Menu
       if (
         location.hash &&
-        /^#(saisie|prog|prod|energie|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
+        /^#(home|saisie|prog|prod|energie|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
       )
+      {
         ui.tab = location.hash.slice(1);
+        ui.startHome = false;
+      }
       renderAll();
       var c = window.claude;
       if (!c || !c.use) {
