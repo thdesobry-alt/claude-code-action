@@ -1827,7 +1827,7 @@
           <span class="kpi-warn">orange</span> entre l'objectif et le seuil d'alerte,
           <span class="kpi-bad">rouge</span> au-delà du seuil. Au-delà de la valeur limite,
           la valeur est signalée « ⚠ limite ». Les couleurs s'appliquent au CR journalier
-          et aux onglets Production et Énergie.
+          et aux onglets Production et Énergie. Le % de non conformes se saisit en % (ex. 0,5).
         </p>
       </div>
       <div id="kpiCfg"></div>
@@ -3675,6 +3675,7 @@
       { k: "prod", label: "Productivité", unit: function () { return "t/h"; }, dir: 1, d: 1 },
       { k: "gaz", label: "Gaz production / tonne", unit: function () { return enUnit("gaz") + "/t"; }, dir: -1, d: 2 },
       { k: "elec", label: "Élec production / tonne", unit: function () { return enUnit("elec") + "/t"; }, dir: -1, d: 2 },
+      { k: "nc", label: "Non conformes (t NC / t produites)", unit: function () { return "%"; }, dir: -1, d: 2 },
     ];
     function enUnit(t) { var u = kpi.units && kpi.units[t]; return u || (t === "gaz" ? "Nm³" : "kWh"); }
     function kpiNum(v) { return v === "" || v == null || isNaN(+v) ? null : +v; }
@@ -3871,6 +3872,15 @@
     function ncTime(v) {
       var m = String(v || "").trim().match(/^(\d{1,2})[:hH](\d{2})(?::\d{2})?$/);
       return m && +m[1] < 24 && +m[2] < 60 ? pad(+m[1]) + ":" + m[2] : null;
+    }
+    // journée de production d'un fardeau : avant 8h, il appartient à la journée de la veille
+    function ncProdDay(x) {
+      if (x.heure && x.heure < pad(DAY_START_HOUR) + ":00") { var d = new Date(x.date + "T12:00:00"); d.setDate(d.getDate() - 1); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+      return x.date;
+    }
+    function ncOfDay(key) {
+      var l = ncList().filter(function (x) { return ncProdDay(x) === key; });
+      return { n: l.length, t: l.reduce(function (t, x) { return t + (+x.tonnage || 0); }, 0) };
     }
     function ncCan() { return canClose(); } // Utilisateur et Admin saisissent ; seul l'Admin supprime
     function ncMonthStart() {
@@ -4175,7 +4185,7 @@
       var stopMs = stopTimeIn(r.a, r.b), mb = stopTimeIn(r.a, r.b, true), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
       var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
       var taux = openMs ? run / openMs : null, prod = openMs && tons != null ? tons / (openMs / 3600000) : null;
-      var er = enRatios(r.key);
+      var er = enRatios(r.key), nq = ncOfDay(r.key), ncPct = nq.n && tons ? (nq.t / tons) * 100 : nq.n ? null : tons ? 0 : null;
       box.innerHTML = '<div class="kpis">' +
         (kpiState("taux", taux == null ? null : taux * 100) ? kpiTile("taux", "Taux de marche", taux * 100, pct(taux)) : '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>") +
         kpiTile("prod", "Productivité", prod, prod == null ? "—" : fmtNum(prod, 1) + " t/h") +
@@ -4183,7 +4193,9 @@
         '<div class="kpi"><div class="l">Temps d\'arrêt</div><div class="v">' + fmtHM(stopMs) + "</div></div>" +
         kpiTile("gaz", "Gaz production / t", er.gaz, er.gaz == null ? "—" : fmtNum(er.gaz, 2) + " " + esc(enUnit("gaz")) + "/t") +
         kpiTile("elec", "Élec production / t", er.elec, er.elec == null ? "—" : fmtNum(er.elec, 2) + " " + esc(enUnit("elec")) + "/t") +
+        kpiTile("nc", "Non conformes", ncPct, ncPct == null ? "—" : fmtNum(ncPct, 2) + " %") +
         "</div>" +
+        '<p class="hint" style="margin-top: 6px">Non conformes : ' + nq.n + " fardeau" + (nq.n > 1 ? "x" : "") + " · " + fmtNum(nq.t, 3) + " t" + (tons ? " sur " + fmtNum(tons, 1) + " t produites" : " (production non saisie)") + ".</p>" +
         (er.gp == null && er.ep == null ? '<p class="muted" style="margin-top: 6px">Énergie de la journée non saisie (onglet Énergie).</p>' : "") +
         '<p class="hint" style="margin-top: 8px">Ouverture ' + (open == null ? "non saisie" : fmtOpening(open)) + " · marche " + (run == null ? "—" : fmtHM(run)) +
         " · manque billettes (26) non pris en compte : " + fmtHM(mb) + " · les arrêts 51 cycle sont exclus.</p>" +
