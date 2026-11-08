@@ -1453,6 +1453,7 @@
     <button role="tab" data-tab="actview" aria-selected="false">Actions</button>
     <button role="tab" data-tab="rex" aria-selected="false">REX</button>
     <button role="tab" data-tab="nc" aria-selected="false">Non conformes</button>
+    <button role="tab" data-tab="secu" aria-selected="false">Sécurité</button>
   </nav>
   <div class="adminbar" id="adminBar" hidden>
     <button class="btn" id="btnHome">← Menu</button>
@@ -1887,6 +1888,40 @@
         </p>
       </div>
       <div id="kpiCfg"></div>
+    </div>
+  </section>
+
+  <section data-panel="secu" class="stack" hidden>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between; align-items: flex-end">
+        <div>
+          <h2>Sécurité</h2>
+          <p class="hint">Toutes les remontées déclarées dans le point sécurité du CR journalier, et leurs actions correctives.</p>
+        </div>
+        <div class="row">
+          <label class="f">Du<input type="date" id="scFrom" /></label>
+          <label class="f">Au<input type="date" id="scTo" /></label>
+          <label class="f">Type<select id="scType"></select></label>
+          <label class="f">Recherche<input id="scQ" placeholder="Lieu, description, pilote…" style="width: 200px" /></label>
+          <button class="btn" id="scAll">Toute la période</button>
+        </div>
+      </div>
+      <div class="kpis" id="scKpis"></div>
+    </div>
+    <div class="panel stack">
+      <h2>Remontées</h2>
+      <div class="scroll" id="scIncs"></div>
+    </div>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between; align-items: flex-end">
+        <h2>Actions sécurité</h2>
+        <div class="row">
+          <label class="f">Statut<select id="scStatus"><option value="open">À faire et en retard</option><option value="late">En retard</option><option value="done">Faites</option><option value="all">Toutes</option></select></label>
+          <label class="f">Pilote<select id="scPilote"></select></label>
+          <button class="btn" id="scCopy">Copier pour Excel</button>
+        </div>
+      </div>
+      <div class="scroll" id="scActs"></div>
     </div>
   </section>
 
@@ -3912,6 +3947,110 @@
       catch (e) { toast("Copie refusée par le navigateur"); }
     });
 
+    // ---------- Menu Sécurité (remontées et actions de tous les CR) ----------
+    function scFiltered() {
+      var a = ui.scFrom || "", b = ui.scTo || "", t = ui.scType || "", q = (ui.scQ || "").toLowerCase();
+      return incidents().filter(function (x) {
+        if (a && x.day < a) return false;
+        if (b && x.day > b) return false;
+        if (t && x.type !== t) return false;
+        if (q) {
+          var hay = [x.lieu, x.description, x.type].concat(incActions(x).map(function (y) { return y.action + " " + (y.pilote || ""); })).join(" ").toLowerCase();
+          if (hay.indexOf(q) < 0) return false;
+        }
+        return true;
+      });
+    }
+    function saStatus(a) { return a.done ? "done" : safetyLate(a) ? "late" : "open"; }
+    function saPill(a) { var s2 = saStatus(a); return s2 === "done" ? '<span class="pill ok">Fait</span>' : s2 === "late" ? '<span class="pill late">En retard</span>' : '<span class="pill neutral">À faire</span>'; }
+    function scActions(incs) {
+      var out = [], st = ui.scStatus || "open", pil = ui.scPilote || "";
+      incs.forEach(function (x) { incActions(x).forEach(function (a) { out.push({ x: x, a: a }); }); });
+      return out.filter(function (o) {
+        var s2 = saStatus(o.a);
+        if (st === "open" && s2 === "done") return false;
+        if (st === "late" && s2 !== "late") return false;
+        if (st === "done" && s2 !== "done") return false;
+        if (pil && (o.a.pilote || "") !== pil) return false;
+        return true;
+      }).sort(function (p, q) { return (p.a.delai || "9999").localeCompare(q.a.delai || "9999") || p.x.day.localeCompare(q.x.day); });
+    }
+    function renderSecu() {
+      var ae = document.activeElement;
+      if (!(ae && ae.id === "scFrom")) $("scFrom").value = ui.scFrom || "";
+      if (!(ae && ae.id === "scTo")) $("scTo").value = ui.scTo || "";
+      if (!(ae && ae.id === "scQ")) $("scQ").value = ui.scQ || "";
+      $("scStatus").value = ui.scStatus || "open";
+      var all = incidents(), types = INC_TYPES.concat(all.map(function (x) { return x.type; }).filter(function (t, i, arr) { return t && INC_TYPES.indexOf(t) < 0 && arr.indexOf(t) === i; }));
+      $("scType").innerHTML = '<option value="">Tous</option>' + types.map(function (t) { return '<option' + (t === ui.scType ? " selected" : "") + ">" + esc(t) + "</option>"; }).join("");
+      var pilotes = [];
+      all.forEach(function (x) { incActions(x).forEach(function (a) { if (a.pilote && pilotes.indexOf(a.pilote) < 0) pilotes.push(a.pilote); }); });
+      pilotes.sort(function (a, b) { return a.localeCompare(b, "fr"); });
+      $("scPilote").innerHTML = '<option value="">Tous</option>' + pilotes.map(function (t) { return '<option' + (t === ui.scPilote ? " selected" : "") + ">" + esc(t) + "</option>"; }).join("");
+      var incs = scFiltered(), allActs = [];
+      incs.forEach(function (x) { incActions(x).forEach(function (a) { allActs.push(a); }); });
+      var nLate = allActs.filter(function (a) { return saStatus(a) === "late"; }).length, nOpen = allActs.filter(function (a) { return !a.done; }).length;
+      var byType = {};
+      incs.forEach(function (x) { var k = x.type || "Incident"; byType[k] = (byType[k] || 0) + 1; });
+      $("scKpis").innerHTML = '<div class="kpi"><div class="l">Remontées</div><div class="v">' + incs.length + '</div><div class="kt">' +
+        Object.keys(byType).sort(function (a, b) { return byType[b] - byType[a]; }).map(function (k) { return esc(k) + " : " + byType[k]; }).join(" · ") + "</div></div>" +
+        '<div class="kpi"><div class="l">Actions sécurité ouvertes</div><div class="v">' + nOpen + "</div></div>" +
+        '<div class="kpi' + (nLate ? " kpi-bad" : "") + '"><div class="l">Dont en retard</div><div class="v">' + nLate + "</div></div>" +
+        '<div class="kpi"><div class="l">Actions faites</div><div class="v">' + (allActs.length - nOpen) + " / " + allActs.length + "</div></div>";
+      $("scIncs").innerHTML = incs.length
+        ? '<table class="ed-table"><thead><tr><th>Date</th><th>Heure</th><th>Type</th><th>Lieu</th><th>Description</th><th>Actions</th><th></th></tr></thead><tbody>' +
+          incs.slice().reverse().map(function (x) {
+            var al = incActions(x), done = al.filter(function (a) { return a.done; }).length, late = al.filter(function (a) { return saStatus(a) === "late"; }).length;
+            return '<tr><td class="mono">' + frDay(x.day) + '</td><td class="mono">' + esc(x.heure || "") + '</td><td><span class="pill late">' + esc(x.type || "Incident") + "</span></td><td>" + esc(x.lieu || "") + "</td><td>" + esc(x.description || "") + "</td><td>" +
+              (al.length ? done + " / " + al.length + " faite" + (al.length > 1 ? "s" : "") + (late ? ' <span class="pill late">' + late + " en retard</span>" : "") : '<span class="muted">Aucune</span>') +
+              '</td><td><button class="btn sm" data-sc-cr="' + esc(x.day) + '">Voir le CR</button></td></tr>';
+          }).join("") + "</tbody></table>"
+        : '<div class="empty">Aucune remontée sécurité' + (all.length ? " avec ces filtres." : " : elles se déclarent dans le point sécurité du CR journalier.") + "</div>";
+      var acts = scActions(incs), adm = isAdmin();
+      $("scActs").innerHTML = acts.length
+        ? '<table class="ed-table"><thead><tr><th>Remontée</th><th>Action corrective</th><th>Pilote</th><th>Délai</th><th>Statut</th>' + (adm ? "<th></th>" : "") + "</tr></thead><tbody>" +
+          acts.map(function (o) {
+            return '<tr data-sc-inc="' + esc(o.x.id) + '" data-sc-month="' + esc(o.x.month) + '" data-sc-sa="' + esc(o.a.id) + '"><td><span class="mono">' + frDay(o.x.day) + "</span> · " + esc(o.x.type || "") + (o.x.lieu ? " · " + esc(o.x.lieu) : "") + "</td><td>" + esc(o.a.action) + "</td><td>" + esc(o.a.pilote || "—") +
+              '</td><td class="mono">' + (o.a.delai ? frDay(o.a.delai) : "—") + "</td><td>" + saPill(o.a) + (o.a.done && o.a.doneAt ? '<div class="muted" style="font-size: 11px">le ' + fmtDate(o.a.doneAt).slice(0, 10) + "</div>" : "") + "</td>" +
+              (adm ? '<td><button class="btn sm" data-sc-toggle>' + (o.a.done ? "Rouvrir" : "Fait") + "</button></td>" : "") + "</tr>";
+          }).join("") + "</tbody></table>"
+        : '<div class="empty">Aucune action sécurité avec ces filtres.</div>';
+    }
+    $("scFrom").addEventListener("change", function () { ui.scFrom = this.value; renderSecu(); });
+    $("scTo").addEventListener("change", function () { ui.scTo = this.value; renderSecu(); });
+    $("scType").addEventListener("change", function () { ui.scType = this.value; renderSecu(); });
+    $("scQ").addEventListener("input", function () { ui.scQ = this.value; renderSecu(); });
+    $("scStatus").addEventListener("change", function () { ui.scStatus = this.value; renderSecu(); });
+    $("scPilote").addEventListener("change", function () { ui.scPilote = this.value; renderSecu(); });
+    $("scAll").addEventListener("click", function () { ui.scFrom = ""; ui.scTo = ""; ui.scType = ""; ui.scQ = ""; renderSecu(); });
+    $("scIncs").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-sc-cr]");
+      if (!b) return;
+      var p2 = b.dataset.scCr.split("-");
+      ui.crDay = new Date(+p2[0], +p2[1] - 1, +p2[2], DAY_START_HOUR).getTime();
+      setTab("cr"); window.scrollTo(0, 0);
+    });
+    $("scActs").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-sc-toggle]"), tr = e.target.closest("tr[data-sc-sa]");
+      if (!b || !tr || !isAdmin()) return;
+      var inc = incidents().find(function (x) { return x.id === tr.dataset.scInc; }), a = inc && incActions(inc).find(function (y) { return y.id === tr.dataset.scSa; });
+      if (!a) return;
+      var p2 = {};
+      p2[a.id] = a.done ? { done: false, doneAt: null } : { done: true, doneAt: Date.now() };
+      writeSafety(tr.dataset.scMonth, inc.id, { actions: p2 });
+      toast(a.done ? "Action rouverte" : "Action faite");
+      if (mode === "local") refresh(); else renderSecu();
+    });
+    $("scCopy").addEventListener("click", function () {
+      var lines = [["Date remontée", "Type", "Lieu", "Description", "Action corrective", "Pilote", "Délai", "Statut"].join("\t")];
+      scActions(scFiltered()).forEach(function (o) {
+        lines.push([frDay(o.x.day), o.x.type, o.x.lieu, o.x.description, o.a.action, o.a.pilote, o.a.delai ? frDay(o.a.delai) : "", { done: "Fait", late: "En retard", open: "À faire" }[saStatus(o.a)]]
+          .map(function (v) { v = String(v || ""); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join("\t"));
+      });
+      try { navigator.clipboard.writeText(lines.join("\n")).then(function () { toast("Actions copiées : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); }); }
+      catch (e) { toast("Copie refusée par le navigateur"); }
+    });
+
     // ---------- Non conformes ----------
     // nc/{AAAA-MM} = {items: {id: {date "AAAA-MM-JJ", fardeau, code, equipe, desc, created, by, deleted}}} ; fiche PDF : attach/nc-AAAA-MM
     var nc = {}, ncEdit = null;
@@ -4360,7 +4499,7 @@
       var tr = b.closest("tr[data-sa]");
       if (!tr) return;
       var p2 = {}, sid = tr.dataset.sa, inc = incidents().find(function (x) { return x.id === incId; }), a = inc && incActions(inc).find(function (y) { return y.id === sid; });
-      if (b.hasAttribute("data-sa-toggle")) p2[sid] = { done: !(a && a.done) };
+      if (b.hasAttribute("data-sa-toggle")) p2[sid] = a && a.done ? { done: false, doneAt: null } : { done: true, doneAt: Date.now() };
       else if (b.hasAttribute("data-sa-del")) p2[sid] = { deleted: true };
       else return;
       writeSafety(month, incId, { actions: p2 });
@@ -5715,7 +5854,7 @@
       document.querySelectorAll("[data-panel]").forEach(function (p) {
         p.hidden = p.dataset.panel !== tab;
       });
-      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "energie" || tab === "cr" || tab === "home" || tab === "nc";
+      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "energie" || tab === "cr" || tab === "home" || tab === "nc" || tab === "secu";
       $("btnExportTop").hidden = mode === "pending" || !canExport();
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
@@ -5724,6 +5863,7 @@
       if (tab === "prod") renderProduction();
       if (tab === "energie") renderEnergy();
       if (tab === "nc") renderNC();
+      if (tab === "secu") renderSecu();
       if (tab === "cr") renderCR();
       if (tab === "schema") renderSchema();
       if (tab === "actview") {
@@ -5762,6 +5902,7 @@
         ["schema", "Arrêts par zone du laminoir, Pareto de chaque zone"],
       ]],
       ["Suivi", [
+        ["secu", "Toutes les remontées sécurité et leurs actions correctives"],
         ["actview", "Toutes les actions : retards, pilotes, clôture"],
         ["rex", "Retours d'expérience"],
         ["nc", "Fardeaux non conformes : saisie, fiches PDF, statistiques"],
@@ -6374,7 +6515,7 @@
       ui.startHome = true; // l'application s'ouvre sur la page Menu
       if (
         location.hash &&
-        /^#(home|nc|saisie|prog|prod|energie|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
+        /^#(home|nc|secu|saisie|prog|prod|energie|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
       )
       {
         ui.tab = location.hash.slice(1);
