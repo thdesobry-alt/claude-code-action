@@ -1752,15 +1752,19 @@
       <div id="crSafety"></div>
     </div>
     <div class="panel stack">
-      <h2 class="cr-h">2. Taux de marche et productivité</h2>
+      <h2 class="cr-h">2. Qualité, environnement</h2>
+      <div id="crQE"></div>
+    </div>
+    <div class="panel stack">
+      <h2 class="cr-h">3. Production</h2>
       <div id="crPerf"></div>
     </div>
     <div class="panel stack">
-      <h2 class="cr-h">3. Frise chronologique (8h → 8h)</h2>
+      <h2 class="cr-h">4. Frise chronologique (8h → 8h)</h2>
       <div id="crTimeline"></div>
     </div>
     <div class="cr-pareto-wrap">
-      <div class="panel row" style="margin-bottom: 0; justify-content: space-between; align-items: center"><h2 class="cr-h">4. Pareto du jour</h2><label class="chk"><input type="checkbox" id="crNoFour" /> Exclure le four du Pareto</label></div>
+      <div class="panel row" style="margin-bottom: 0; justify-content: space-between; align-items: center"><h2 class="cr-h">5. Pareto du jour</h2><label class="chk"><input type="checkbox" id="crNoFour" /> Exclure le four du Pareto</label></div>
       <div id="crPareto" class="stack"></div>
     </div>
   </section>
@@ -4186,17 +4190,22 @@
       var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
       var taux = openMs ? run / openMs : null, prod = openMs && tons != null ? tons / (openMs / 3600000) : null;
       var er = enRatios(r.key), nq = ncOfDay(r.key), ncPct = nq.n && tons ? (nq.t / tons) * 100 : nq.n ? null : tons ? 0 : null;
+      // 2. Qualité, environnement : non conformes, gaz, électricité
+      $("crQE").innerHTML = '<div class="kpis">' +
+        kpiTile("nc", "Non conformes", ncPct, ncPct == null ? "—" : fmtNum(ncPct, 2) + " %") +
+        kpiTile("gaz", "Gaz production / t", er.gaz, er.gaz == null ? "—" : fmtNum(er.gaz, 2) + " " + esc(enUnit("gaz")) + "/t") +
+        kpiTile("elec", "Élec production / t", er.elec, er.elec == null ? "—" : fmtNum(er.elec, 2) + " " + esc(enUnit("elec")) + "/t") +
+        "</div>" +
+        '<p class="hint" style="margin-top: 6px">Non conformes : ' + nq.n + " fardeau" + (nq.n > 1 ? "x" : "") + " · " + fmtNum(nq.t, 3) + " t" + (tons ? " sur " + fmtNum(tons, 1) + " t produites" : " (production non saisie)") + "." +
+        (er.gp != null || er.ep != null ? " Énergie production : gaz " + fmtNum(er.gp, 0) + " " + esc(enUnit("gaz")) + " · élec " + fmtNum(er.ep, 0) + " " + esc(enUnit("elec")) + "." : "") + "</p>" +
+        (er.gp == null && er.ep == null ? '<p class="muted" style="margin-top: 6px">Énergie de la journée non saisie (menu Énergie).</p>' : "");
+      // 3. Production
       box.innerHTML = '<div class="kpis">' +
         (kpiState("taux", taux == null ? null : taux * 100) ? kpiTile("taux", "Taux de marche", taux * 100, pct(taux)) : '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>") +
         kpiTile("prod", "Productivité", prod, prod == null ? "—" : fmtNum(prod, 1) + " t/h") +
         '<div class="kpi"><div class="l">Production</div><div class="v">' + (tons == null ? "—" : fmtNum(tons, 1) + " t") + "</div></div>" +
         '<div class="kpi"><div class="l">Temps d\'arrêt</div><div class="v">' + fmtHM(stopMs) + "</div></div>" +
-        kpiTile("gaz", "Gaz production / t", er.gaz, er.gaz == null ? "—" : fmtNum(er.gaz, 2) + " " + esc(enUnit("gaz")) + "/t") +
-        kpiTile("elec", "Élec production / t", er.elec, er.elec == null ? "—" : fmtNum(er.elec, 2) + " " + esc(enUnit("elec")) + "/t") +
-        kpiTile("nc", "Non conformes", ncPct, ncPct == null ? "—" : fmtNum(ncPct, 2) + " %") +
         "</div>" +
-        '<p class="hint" style="margin-top: 6px">Non conformes : ' + nq.n + " fardeau" + (nq.n > 1 ? "x" : "") + " · " + fmtNum(nq.t, 3) + " t" + (tons ? " sur " + fmtNum(tons, 1) + " t produites" : " (production non saisie)") + ".</p>" +
-        (er.gp == null && er.ep == null ? '<p class="muted" style="margin-top: 6px">Énergie de la journée non saisie (onglet Énergie).</p>' : "") +
         '<p class="hint" style="margin-top: 8px">Ouverture ' + (open == null ? "non saisie" : fmtOpening(open)) + " · marche " + (run == null ? "—" : fmtHM(run)) +
         " · manque billettes (26) non pris en compte : " + fmtHM(mb) + " · les arrêts 51 cycle sont exclus.</p>" +
         (adm ? '<div class="row" style="margin-top: 8px"><label class="f">Production (t)<input data-crpd="tonnes" inputmode="decimal" value="' + (tons == null ? "" : String(tons).replace(".", ",")) + '" style="width: 120px" /></label>' +
