@@ -1320,6 +1320,58 @@
     border: 0;
     color: var(--muted);
   }
+  .nc-hover {
+    cursor: help;
+  }
+  .nc-hover:hover,
+  .nc-hover:focus-visible {
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    outline: none;
+  }
+  .nc-pop {
+    position: fixed;
+    z-index: 400;
+    max-width: 440px;
+    background: var(--surface);
+    color: var(--fg);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--bar);
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .nc-pop[hidden] {
+    display: none;
+  }
+  .nc-pop-h {
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .nc-pop table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  .nc-pop th,
+  .nc-pop td {
+    padding: 3px 6px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    white-space: nowrap;
+  }
+  .nc-pop th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .nc-pop .num {
+    text-align: right;
+  }
+  .nc-pop-l {
+    margin-top: 6px;
+    color: var(--muted);
+    max-height: 120px;
+    overflow: auto;
+  }
   .nc-bar {
     display: inline-block;
     height: 10px;
@@ -3884,8 +3936,44 @@
     }
     function ncOfDay(key) {
       var l = ncList().filter(function (x) { return ncProdDay(x) === key; });
-      return { n: l.length, t: l.reduce(function (t, x) { return t + (+x.tonnage || 0); }, 0) };
+      return { n: l.length, t: l.reduce(function (t, x) { return t + (+x.tonnage || 0); }, 0), list: l };
     }
+    // détail des non conformes d'une journée (popup au survol de la tuile du CR)
+    function ncPopHTML(key) {
+      var q = ncOfDay(key), tons = (production[key] || {}).tonnes;
+      if (!q.n) return '<div class="nc-pop-h">Aucun fardeau non conforme sur la journée.</div>';
+      var by = {};
+      q.list.forEach(function (x) { var k = x.code || "—"; by[k] = by[k] || { n: 0, t: 0 }; by[k].n++; by[k].t += +x.tonnage || 0; });
+      var rows = Object.keys(by).map(function (k) { return { k: k, n: by[k].n, t: by[k].t }; }).sort(function (a, b) { return b.t - a.t || b.n - a.n; });
+      var mx = rows[0].t || 1;
+      return '<div class="nc-pop-h">Non conformes du ' + frDay(key) + " · " + q.n + " fardeau" + (q.n > 1 ? "x" : "") + " · " + fmtNum(q.t, 3) + " t</div>" +
+        '<table><thead><tr><th>Code défaut</th><th class="num">Fardeaux</th><th class="num">Tonnage</th><th class="num">% des t produites</th></tr></thead><tbody>' +
+        rows.map(function (x) {
+          return "<tr><td><strong>" + esc(x.k) + '</strong></td><td class="num">' + x.n + '</td><td class="num"><span class="nc-bar" style="width: ' + Math.max(2, (x.t / mx) * 50) + 'px"></span>' + fmtNum(x.t, 3) + ' t</td><td class="num">' + (tons ? fmtNum((x.t / tons) * 100, 2) + " %" : "—") + "</td></tr>";
+        }).join("") + "</tbody></table>" +
+        '<div class="nc-pop-l">' + q.list.map(function (x) { return esc(x.heure || "") + " · " + esc(x.fardeau) + " · " + esc(x.code || "—") + " · éq. " + esc(x.equipe || "—") + (x.tonnage != null ? " · " + fmtNum(+x.tonnage, 3) + " t" : ""); }).join("<br>") + "</div>";
+    }
+    var ncPop = document.createElement("div");
+    ncPop.className = "nc-pop"; ncPop.hidden = true; ncPop.setAttribute("role", "tooltip");
+    document.body.appendChild(ncPop);
+    function ncPopShow(el) {
+      ncPop.innerHTML = ncPopHTML(el.dataset.ncPop);
+      ncPop.hidden = false;
+      var r = el.getBoundingClientRect(), w = ncPop.offsetWidth, h = ncPop.offsetHeight;
+      var x = Math.min(Math.max(8, r.left), window.innerWidth - w - 8), y = r.bottom + 6;
+      if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
+      ncPop.style.left = x + "px"; ncPop.style.top = y + "px";
+    }
+    function ncPopHide() { ncPop.hidden = true; }
+    document.addEventListener("mouseover", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop]"); if (t) ncPopShow(t); });
+    document.addEventListener("mouseout", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop]"); if (t && !t.contains(e.relatedTarget)) ncPopHide(); });
+    document.addEventListener("focusin", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop]"); if (t) ncPopShow(t); });
+    document.addEventListener("focusout", function (e) { if (e.target.closest && e.target.closest("[data-nc-pop]")) ncPopHide(); });
+    document.addEventListener("click", function (e) {
+      var t = e.target.closest && e.target.closest("[data-nc-pop]");
+      if (t) { if (ncPop.hidden) ncPopShow(t); else ncPopHide(); } else ncPopHide();
+    });
+    window.addEventListener("scroll", ncPopHide, { passive: true });
     function ncCan() { return canClose(); } // Utilisateur et Admin saisissent ; seul l'Admin supprime
     function ncMonthStart() {
       if (ui.ncMonth == null) { var t = new Date(); ui.ncMonth = new Date(t.getFullYear(), t.getMonth(), 1).getTime(); }
@@ -4192,7 +4280,7 @@
       var er = enRatios(r.key), nq = ncOfDay(r.key), ncPct = nq.n && tons ? (nq.t / tons) * 100 : nq.n ? null : tons ? 0 : null;
       // 2. Qualité, environnement : non conformes, gaz, électricité
       $("crQE").innerHTML = '<div class="kpis">' +
-        kpiTile("nc", "Non conformes", ncPct, ncPct == null ? "—" : fmtNum(ncPct, 2) + " %") +
+        kpiTile("nc", "Non conformes", ncPct, ncPct == null ? "—" : fmtNum(ncPct, 2) + " %").replace('<div class="kpi', '<div tabindex="0" data-nc-pop="' + r.key + '" class="nc-hover kpi') +
         kpiTile("gaz", "Gaz production / t", er.gaz, er.gaz == null ? "—" : fmtNum(er.gaz, 2) + " " + esc(enUnit("gaz")) + "/t") +
         kpiTile("elec", "Élec production / t", er.elec, er.elec == null ? "—" : fmtNum(er.elec, 2) + " " + esc(enUnit("elec")) + "/t") +
         "</div>" +
