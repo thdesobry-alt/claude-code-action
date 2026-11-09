@@ -26,7 +26,7 @@
           0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
       }
       @media (prefers-color-scheme: dark) {
-        :root {
+        :root:not([data-theme="light"]) {
           --bg: #11151b;
           --card: #1a2029;
           --ink: #e6eaf0;
@@ -38,7 +38,22 @@
           --warn: #5c4214;
           --bad: #6b2727;
           --shadow: none;
+          color-scheme: dark;
         }
+      }
+      :root[data-theme="dark"] {
+        --bg: #11151b;
+        --card: #1a2029;
+        --ink: #e6eaf0;
+        --muted: #98a2b3;
+        --line: #2b3340;
+        --weekend: #202733;
+        --ok: #1d3b2b;
+        --ok2: #23613f;
+        --warn: #5c4214;
+        --bad: #6b2727;
+        --shadow: none;
+        color-scheme: dark;
       }
       * {
         box-sizing: border-box;
@@ -772,6 +787,12 @@
         color: #b42318;
         font-weight: 600;
       }
+      dialog.dlg-msg {
+        width: min(520px, 94vw);
+      }
+      #msg-b {
+        white-space: pre-wrap;
+      }
       dialog.dlg-ar {
         width: min(1000px, 98vw);
       }
@@ -1265,13 +1286,7 @@
     <dialog id="dlg-ar" class="dlg-ar">
       <div class="dlg-h">
         <span id="ar-t"></span
-        ><button
-          class="btn small"
-          type="button"
-          onclick="this.closest('dialog').close()"
-        >
-          ✕
-        </button>
+        ><button class="btn small" type="button" id="ar-x">✕</button>
       </div>
       <div class="dlg-b" id="ar-b"></div>
       <div class="dlg-f">
@@ -1280,6 +1295,10 @@
       </div>
     </dialog>
     <div id="print-zone"></div>
+    <dialog id="dlg-msg" class="dlg-msg">
+      <div class="dlg-b" id="msg-b"></div>
+      <div class="dlg-f" id="msg-f"></div>
+    </dialog>
     <dialog id="dlg">
       <form method="dialog" id="dlg-form">
         <div class="dlg-h">
@@ -1402,6 +1421,72 @@
         return d;
       }
 
+      // ---------- Messages et confirmations ----------
+      // Boîtes intégrées à la page : alert() et confirm() ne s'affichent pas dans un artefact claude.ai.
+      function boiteMessage(texte, boutons) {
+        return new Promise((ok) => {
+          const d = $("#dlg-msg");
+          $("#msg-b").textContent = texte;
+          $("#msg-f").innerHTML = "";
+          for (const [lab, cls, val] of boutons) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "btn " + cls;
+            b.textContent = lab;
+            b.onclick = () => {
+              d.onclose = null;
+              d.close();
+              ok(val);
+            };
+            $("#msg-f").append(b);
+          }
+          d.onclose = () => ok(false);
+          d.showModal();
+          $("#msg-f").lastChild.focus();
+        });
+      }
+      const informer = (texte) =>
+        boiteMessage(texte, [["OK", "primary", true]]);
+      const demander = (texte) =>
+        boiteMessage(texte, [
+          ["Annuler", "", false],
+          ["Confirmer", "primary", true],
+        ]);
+      // Pour un bouton de dialogue : confirme, puis applique et ferme le dialogue.
+      function demanderPuis(texte, appliquer) {
+        demander(texte).then((ok) => ok && appliquer());
+        return false;
+      }
+      // Dans un artefact claude.ai, fichiers et impressions passent par le téléchargement.
+      const EN_ARTEFACT = typeof window.claude?.use === "function";
+      async function telecharger(filename, data) {
+        const dl = EN_ARTEFACT ? await window.claude.use("downloads") : null;
+        if (dl) {
+          try {
+            await dl.save({ filename, data });
+            return true;
+          } catch (e) {
+            if (e?.code !== "declined")
+              informer(
+                "Téléchargement impossible : " + (e?.message || e?.code),
+              );
+            return false;
+          }
+        }
+        if (EN_ARTEFACT) {
+          informer("Le téléchargement n'est pas disponible dans cette vue.");
+          return false;
+        }
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(
+          data instanceof Blob ? data : new Blob([data]),
+        );
+        a.download = filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        return true;
+      }
+
       // ---------- Persistance ----------
       // Copie de travail dans IndexedDB (photos et PDF dépassent vite les ~5 Mo de localStorage).
       let tSauve = null;
@@ -1465,6 +1550,13 @@
       }
       async function enregistrer() {
         const txt = JSON.stringify(DB, null, 1);
+        if (EN_ARTEFACT) {
+          if (await telecharger("data.json", txt)) {
+            dirty = false;
+            renderEtat();
+          }
+          return;
+        }
         try {
           if (
             fileHandle?.requestPermission &&
@@ -1488,24 +1580,16 @@
             await w.write(txt);
             await w.close();
             idb("put", fileHandle);
-          } else {
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(
-              new Blob([txt], { type: "application/json" }),
-            );
-            a.download = "data.json";
-            a.click();
-            URL.revokeObjectURL(a.href);
-          }
+          } else await telecharger("data.json", txt);
           dirty = false;
           renderEtat();
         } catch (e) {
           if (e.name !== "AbortError")
-            alert("Enregistrement impossible : " + e.message);
+            informer("Enregistrement impossible : " + e.message);
         }
       }
       async function ouvrir() {
-        if (window.showOpenFilePicker) {
+        if (window.showOpenFilePicker && !EN_ARTEFACT) {
           try {
             const [hd] = await showOpenFilePicker({
               types: [
@@ -1518,7 +1602,7 @@
             charger(JSON.parse(await (await hd.getFile()).text()), hd);
           } catch (e) {
             if (e.name !== "AbortError")
-              alert("Fichier illisible : " + e.message);
+              informer("Fichier illisible : " + e.message);
           }
         } else $("#file-in").click();
       }
@@ -1526,18 +1610,14 @@
         try {
           charger(JSON.parse(await file.text()), null);
         } catch (e) {
-          alert("Fichier illisible : " + e.message);
+          informer("Fichier illisible : " + e.message);
         }
       }
-      function charger(data, handle) {
-        if (
-          dirty &&
-          DB &&
-          !confirm(
+      function charger(data, handle, force = false) {
+        if (dirty && DB && !force)
+          return demander(
             "Des modifications ne sont pas enregistrées dans le fichier. Les remplacer ?",
-          )
-        )
-          return;
+          ).then((ok) => ok && charger(data, handle, true));
         normaliser(data);
         DB = data;
         fileHandle = handle;
@@ -1831,12 +1911,14 @@
                     "Supprimer",
                     "danger",
                     () => {
-                      if (!confirm("Supprimer cette activité ?")) return false;
-                      DB.activites = DB.activites.filter((x) => x.id !== id);
-                      DB.reservations.forEach(
-                        (r) => r.activite === id && (r.activite = ""),
-                      );
-                      changed();
+                      return demanderPuis("Supprimer cette activité ?", () => {
+                        DB.activites = DB.activites.filter((x) => x.id !== id);
+                        DB.reservations.forEach(
+                          (r) => r.activite === id && (r.activite = ""),
+                        );
+                        changed();
+                        $("#dlg").close();
+                      });
                     },
                   ],
                 ]
@@ -1865,7 +1947,7 @@
               () => {
                 const des = $("#e-des").value.trim();
                 if (!des)
-                  return (alert("La désignation est obligatoire."), false);
+                  return (informer("La désignation est obligatoire."), false);
                 const manque = manquesExterne({
                   ...a,
                   intervenants: inter,
@@ -1875,7 +1957,7 @@
                 });
                 if (manque.length)
                   return (
-                    alert(
+                    informer(
                       `Une entreprise extérieure intervient : ${manque.join(" et ")} obligatoire(s).`,
                     ),
                     false
@@ -1950,24 +2032,25 @@
           let p = DB.personnel.find(
             (x) => persNom(x).toUpperCase() === v.toUpperCase(),
           );
-          if (!p) {
-            if (
-              !confirm(
-                `« ${v} » n'existe pas dans la liste du personnel. L'ajouter comme intervenant externe ?`,
-              )
-            )
-              return;
-            p = {
-              id: uid("x"),
-              matricule: null,
-              nom: v.toUpperCase(),
-              prenom: "",
-              poste: "",
-              equipe: "ext",
-              absences: [],
-            };
-            DB.personnel.push(p);
-          }
+          if (!p)
+            return demander(
+              `« ${v} » n'existe pas dans la liste du personnel. L'ajouter comme intervenant externe ?`,
+            ).then((ok) => {
+              if (!ok) return;
+              const x = {
+                id: uid("x"),
+                matricule: null,
+                nom: v.toUpperCase(),
+                prenom: "",
+                poste: "",
+                equipe: "ext",
+                absences: [],
+              };
+              DB.personnel.push(x);
+              inter.push(x.id);
+              $("#e-pin").value = "";
+              chips();
+            });
           if (!inter.includes(p.id)) inter.push(p.id);
           $("#e-pin").value = "";
           chips();
@@ -2357,7 +2440,7 @@
                   libelle: $("#r-lib").value.trim(),
                 };
                 if (!v.date || !v.pont)
-                  return (alert("Pont et date obligatoires."), false);
+                  return (informer("Pont et date obligatoires."), false);
                 if (id) Object.assign(r, v);
                 else {
                   const nb = Math.max(1, Number($("#r-nb").value) || 1);
@@ -2389,16 +2472,20 @@
                     "Supprimer",
                     "danger",
                     () => {
-                      if (!confirm("Supprimer ce pont et ses réservations ?"))
-                        return false;
-                      DB.ponts = DB.ponts.filter((x) => x.id !== id);
-                      DB.reservations = DB.reservations.filter(
-                        (r) => r.pont !== id,
+                      return demanderPuis(
+                        "Supprimer ce pont et ses réservations ?",
+                        () => {
+                          DB.ponts = DB.ponts.filter((x) => x.id !== id);
+                          DB.reservations = DB.reservations.filter(
+                            (r) => r.pont !== id,
+                          );
+                          DB.activites.forEach(
+                            (a) => a.pont === id && (a.pont = ""),
+                          );
+                          changed();
+                          $("#dlg").close();
+                        },
                       );
-                      DB.activites.forEach(
-                        (a) => a.pont === id && (a.pont = ""),
-                      );
-                      changed();
                     },
                   ],
                 ]
@@ -2609,21 +2696,23 @@
                       const n = DB.activites.filter((a) =>
                         a.intervenants.includes(id),
                       ).length;
-                      if (
-                        !confirm(
-                          `Supprimer ${persNom(p)} ?${n ? ` Il/elle sera retiré(e) de ${n} activité(s).` : ""}`,
-                        )
-                      )
-                        return false;
-                      DB.personnel = DB.personnel.filter((x) => x.id !== id);
-                      DB.activites.forEach(
-                        (a) =>
-                          (a.intervenants = a.intervenants.filter(
-                            (i) => i !== id,
-                          )),
+                      return demanderPuis(
+                        `Supprimer ${persNom(p)} ?${n ? ` Il/elle sera retiré(e) de ${n} activité(s).` : ""}`,
+                        () => {
+                          DB.personnel = DB.personnel.filter(
+                            (x) => x.id !== id,
+                          );
+                          DB.activites.forEach(
+                            (a) =>
+                              (a.intervenants = a.intervenants.filter(
+                                (i) => i !== id,
+                              )),
+                          );
+                          remplirFiltres();
+                          changed();
+                          $("#dlg").close();
+                        },
                       );
-                      remplirFiltres();
-                      changed();
                     },
                   ],
                   [
@@ -2692,7 +2781,7 @@
                 const deb = $("#m-deb").value,
                   fin = $("#m-fin").value;
                 if (!deb || !fin || fin < deb)
-                  return (alert("Dates incohérentes."), false);
+                  return (informer("Dates incohérentes."), false);
                 m.titre = $("#m-titre").value.trim();
                 m.debut = deb;
                 m.fin = fin;
@@ -2748,7 +2837,7 @@
       }
       function connexion(ensuite) {
         if (!window.crypto?.subtle)
-          return alert(
+          return informer(
             "Ce navigateur ne permet pas la connexion administrateur.",
           );
         const compte = DB.meta.admin;
@@ -2757,11 +2846,11 @@
             mdp = $("#ad-mdp").value;
           if (!compte) {
             if (!login || mdp.length < 6)
-              return alert(
+              return informer(
                 "Identifiant obligatoire et mot de passe d'au moins 6 caractères.",
               );
             if (mdp !== $("#ad-mdp2").value)
-              return alert("Les deux mots de passe sont différents.");
+              return informer("Les deux mots de passe sont différents.");
             const sel = uid("s");
             DB.meta.admin = { login, sel, hash: await hacher(sel, mdp) };
             changed();
@@ -2769,7 +2858,7 @@
             login !== compte.login ||
             (await hacher(compte.sel, mdp)) !== compte.hash
           )
-            return alert("Identifiant ou mot de passe incorrect.");
+            return informer("Identifiant ou mot de passe incorrect.");
           ui.admin = true;
           try {
             sessionStorage.setItem("arret-admin", DB.meta.admin.hash);
@@ -2823,15 +2912,16 @@
               () => {
                 const login = $("#ad-login").value.trim(),
                   mdp = $("#ad-mdp").value;
-                if (!login) return (alert("Identifiant obligatoire."), false);
+                if (!login)
+                  return (informer("Identifiant obligatoire."), false);
                 if (mdp && mdp.length < 6)
                   return (
-                    alert("Mot de passe trop court (6 caractères minimum)."),
+                    informer("Mot de passe trop court (6 caractères minimum)."),
                     false
                   );
                 if (mdp !== $("#ad-mdp2").value)
                   return (
-                    alert("Les deux mots de passe sont différents."),
+                    informer("Les deux mots de passe sont différents."),
                     false
                   );
                 (async () => {
@@ -2972,22 +3062,23 @@
                     "danger",
                     () => {
                       const cible = $("#ad-repl")?.value;
-                      if (
-                        !confirm(
-                          `Supprimer la zone « ${z.nom} » ?${n ? ` Ses ${n} activité(s) iront dans « ${zoneNom(cible)} ».` : ""}`,
-                        )
-                      )
-                        return false;
-                      DB.activites.forEach(
-                        (a) =>
-                          a.zone === id && ((a.zone = cible), (a.machine = "")),
+                      return demanderPuis(
+                        `Supprimer la zone « ${z.nom} » ?${n ? ` Ses ${n} activité(s) iront dans « ${zoneNom(cible)} ».` : ""}`,
+                        () => {
+                          DB.activites.forEach(
+                            (a) =>
+                              a.zone === id &&
+                              ((a.zone = cible), (a.machine = "")),
+                          );
+                          DB.zones = DB.zones.filter((x) => x.id !== id);
+                          DB.flux = DB.flux.filter((x) => x !== id);
+                          DB.liens = DB.liens.filter((l) => !l.includes(id));
+                          if (ui.zone === id) ui.zone = null;
+                          remplirFiltres();
+                          changed();
+                          $("#dlg").close();
+                        },
                       );
-                      DB.zones = DB.zones.filter((x) => x.id !== id);
-                      DB.flux = DB.flux.filter((x) => x !== id);
-                      DB.liens = DB.liens.filter((l) => !l.includes(id));
-                      if (ui.zone === id) ui.zone = null;
-                      remplirFiltres();
-                      changed();
                     },
                   ],
                 ]
@@ -2998,7 +3089,7 @@
               "primary",
               () => {
                 const nom = $("#z-nom").value.trim();
-                if (!nom) return (alert("Nom obligatoire."), false);
+                if (!nom) return (informer("Nom obligatoire."), false);
                 if (
                   DB.zones.some(
                     (x) =>
@@ -3006,7 +3097,7 @@
                       x.nom.toUpperCase() === nom.toUpperCase(),
                   )
                 )
-                  return (alert("Une zone porte déjà ce nom."), false);
+                  return (informer("Une zone porte déjà ce nom."), false);
                 const num = (sel, def) =>
                   Number.isFinite(Number($(sel).value)) && $(sel).value !== ""
                     ? Number($(sel).value)
@@ -3104,24 +3195,26 @@
                     () => {
                       if (items.length < 2)
                         return (
-                          alert("Il faut garder au moins un élément."),
+                          informer("Il faut garder au moins un élément."),
                           false
                         );
                       const cible = $("#ad-repl")?.value;
-                      if (!confirm(`Supprimer « ${it.nom} » ?`)) return false;
-                      if (estSvc) {
-                        DB.activites.forEach(
-                          (a) => a.service === it.id && (a.service = cible),
-                        );
-                        DB.services = DB.services.filter((s) => s !== it.id);
-                      } else {
-                        DB.personnel.forEach(
-                          (p) => p.equipe === it.id && (p.equipe = cible),
-                        );
-                        DB.equipes = DB.equipes.filter((e) => e.id !== it.id);
-                      }
-                      remplirFiltres();
-                      changed();
+                      return demanderPuis(`Supprimer « ${it.nom} » ?`, () => {
+                        if (estSvc) {
+                          DB.activites.forEach(
+                            (a) => a.service === it.id && (a.service = cible),
+                          );
+                          DB.services = DB.services.filter((s) => s !== it.id);
+                        } else {
+                          DB.personnel.forEach(
+                            (p) => p.equipe === it.id && (p.equipe = cible),
+                          );
+                          DB.equipes = DB.equipes.filter((e) => e.id !== it.id);
+                        }
+                        remplirFiltres();
+                        changed();
+                        $("#dlg").close();
+                      });
                     },
                   ],
                 ]
@@ -3139,7 +3232,7 @@
                       x !== it && x.nom.toUpperCase() === nom.toUpperCase(),
                   )
                 )
-                  return (alert("Ce nom existe déjà."), false);
+                  return (informer("Ce nom existe déjà."), false);
                 if (estSvc) {
                   if (it) {
                     DB.services[DB.services.indexOf(it.id)] = nom;
@@ -3178,7 +3271,7 @@
                 try {
                   d = JSON.parse($("#j-txt").value);
                 } catch (e) {
-                  return (alert("JSON invalide : " + e.message), false);
+                  return (informer("JSON invalide : " + e.message), false);
                 }
                 if (
                   !d.meta?.debut ||
@@ -3186,7 +3279,7 @@
                   !Array.isArray(d.activites)
                 )
                   return (
-                    alert(
+                    informer(
                       "Il manque meta.debut, meta.fin ou la liste activites.",
                     ),
                     false
@@ -3212,13 +3305,7 @@
         );
       }
       function exporterJson() {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(
-          new Blob([JSON.stringify(DB, null, 1)], { type: "application/json" }),
-        );
-        a.download = "data-" + D.today() + ".json";
-        a.click();
-        URL.revokeObjectURL(a.href);
+        telecharger("data-" + D.today() + ".json", JSON.stringify(DB, null, 1));
       }
 
       // Déplacement des zones sur le schéma (mode édition administrateur).
@@ -4108,7 +4195,7 @@
         sauverLocal();
         setTimeout(
           () =>
-            alert(
+            informer(
               `Retour au découpage détaillé des zones : ${b.reclassees} activité(s) replacées dans leur zone. Pensez à enregistrer.`,
             ),
           300,
@@ -4384,6 +4471,7 @@
           lire();
           imprimerAR([{ a, ar, docs: {} }]);
         };
+        $("#ar-x").onclick = () => d.close();
         $("#ar-ok").onclick = () => {
           lire();
           d.close();
@@ -4427,10 +4515,38 @@
           date: D.today(),
         };
       }
-      function ouvrirPieceJointe(dataUrl) {
+      function ouvrirPieceJointe(dataUrl, nom = "document.pdf") {
         fetch(dataUrl)
           .then((r) => r.blob())
-          .then((b) => window.open(URL.createObjectURL(b), "_blank"));
+          .then((b) =>
+            EN_ARTEFACT
+              ? telecharger(nom, b)
+              : window.open(URL.createObjectURL(b), "_blank"),
+          );
+      }
+      // Photo en grand, dans la page.
+      function voirPhoto(ph) {
+        const d = $("#dlg-msg");
+        $("#msg-b").innerHTML =
+          `<img src="${ph.data}" alt="" style="max-width:100%;max-height:70vh;display:block;margin:auto">`;
+        $("#msg-f").innerHTML = "";
+        const dl = document.createElement("button");
+        dl.type = "button";
+        dl.className = "btn";
+        dl.textContent = "Télécharger";
+        dl.onclick = () =>
+          ouvrirPieceJointe(
+            ph.data,
+            (ph.nom || "photo").replace(/\.\w+$/, "") + ".jpg",
+          );
+        const f = document.createElement("button");
+        f.type = "button";
+        f.className = "btn primary";
+        f.textContent = "Fermer";
+        f.onclick = () => d.close();
+        $("#msg-f").append(dl, f);
+        d.onclose = null;
+        d.showModal();
       }
       // Zone de dépôt : glisser-déposer ou clic pour choisir.
       function zoneDepot(el, accept, multiple, surFichiers) {
@@ -4505,7 +4621,7 @@
                 w.docs[cle] = await lirePdf(f);
                 rendre();
               } catch (e) {
-                alert("Fichier refusé : " + e.message);
+                informer("Fichier refusé : " + e.message);
               }
             });
           pdfDans("#e-ar-pdf", "ar");
@@ -4522,7 +4638,7 @@
                     date: D.today(),
                   });
                 } catch (e) {
-                  alert(f.name + " : " + e.message);
+                  informer(f.name + " : " + e.message);
                 }
               }
               rendre();
@@ -4537,13 +4653,19 @@
             k.slice(0, k.indexOf("-")),
             k.slice(k.indexOf("-") + 1),
           ];
-          if (act === "open") ouvrirPieceJointe(w.docs[cle].data);
-          if (act === "del" && confirm("Retirer ce document ?"))
-            (delete w.docs[cle], rendre());
-          if (act === "voir")
-            ouvrirPieceJointe(w.photos.find((p) => p.id === cle).data);
-          if (act === "delph" && confirm("Supprimer cette photo ?"))
-            ((w.photos = w.photos.filter((p) => p.id !== cle)), rendre());
+          if (act === "open")
+            ouvrirPieceJointe(w.docs[cle].data, w.docs[cle].nom);
+          if (act === "del")
+            demander("Retirer ce document ?").then(
+              (ok) => ok && (delete w.docs[cle], rendre()),
+            );
+          if (act === "voir") voirPhoto(w.photos.find((p) => p.id === cle));
+          if (act === "delph")
+            demander("Supprimer cette photo ?").then(
+              (ok) =>
+                ok &&
+                ((w.photos = w.photos.filter((p) => p.id !== cle)), rendre()),
+            );
         };
         rendre();
         return rendre;
@@ -4612,10 +4734,20 @@
         }
         zone.innerHTML = html;
         if (echecs.length)
-          alert(
+          informer(
             "PDF signés non imprimables, remplacés par le formulaire pré-rempli :\n" +
               echecs.join("\n"),
           );
+        if (EN_ARTEFACT) {
+          // L'impression est bloquée dans un artefact : on télécharge une page prête à imprimer.
+          const css = [...document.querySelectorAll("style")]
+            .map((x) => x.textContent)
+            .join("\n");
+          const doc = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Analyses des risques</title><style>${css}</style></head><body class="impression"><div id="print-zone" style="display:block">${zone.innerHTML}</div><script>window.onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`;
+          zone.innerHTML = "";
+          telecharger(`analyses-de-risque${jour ? "-" + jour : ""}.html`, doc);
+          return;
+        }
         document.body.classList.add("impression");
         await Promise.all(
           [...zone.querySelectorAll("img")].map((i) =>
@@ -4628,16 +4760,13 @@
         document.body.classList.remove("impression");
         $("#print-zone").innerHTML = "";
       });
-      function imprimerARFiltre() {
+      function imprimerARFiltre(force = false) {
         const list = filtrer().filter((a) => a.statut !== "nonnecessaire");
-        if (!list.length) return alert("Aucune activité dans le filtre.");
-        if (
-          !ui.f.jour &&
-          !confirm(
+        if (!list.length) return informer("Aucune activité dans le filtre.");
+        if (!ui.f.jour && !force)
+          return demander(
             `Aucun jour choisi : imprimer les ${list.length} analyses de risque du filtre ?`,
-          )
-        )
-          return;
+          ).then((ok) => ok && imprimerARFiltre(true));
         const zo = zoneOrder();
         list.sort(
           (x, y) => zo[x.zone] - zo[y.zone] || x.id.localeCompare(y.id),
@@ -4787,7 +4916,9 @@
       $("#b-admin").onclick = () => {
         if (!ui.admin) return connexion(() => ouvrirOnglet("admin"));
         if (ui.tab !== "admin") return ouvrirOnglet("admin");
-        if (confirm("Se déconnecter du compte administrateur ?")) deconnexion();
+        demander("Se déconnecter du compte administrateur ?").then(
+          (ok) => ok && deconnexion(),
+        );
       };
       function deconnexion() {
         ui.admin = false;
@@ -4804,11 +4935,11 @@
       $("#ad-arret-edit").onclick = () => siAdmin(editerCapacite);
       $("#ad-json").onclick = () => siAdmin(editeurJson);
       $("#ad-export").onclick = exporterJson;
-      $("#ad-purge").onclick = () => {
+      $("#ad-purge").onclick = async () => {
         if (
-          !confirm(
+          !(await demander(
             "Effacer la copie de travail gardée dans ce navigateur ? Les modifications non enregistrées dans data.json seront perdues.",
-          )
+          ))
         )
           return;
         try {
@@ -4819,17 +4950,17 @@
         idb("del", null, "db").then(() => location.reload());
       };
       $("#ad-zone-add").onclick = () => editerZone(null);
-      $("#ad-pareto").onclick = () => {
+      $("#ad-pareto").onclick = async () => {
         if (
-          !confirm(
+          !(await demander(
             "Ranger les machines de l'application « Arrêts de production » (codes Macc) dans les zones détaillées et rattacher les activités à leur machine ?\n\nLes machines saisies à la main sans code sont conservées.",
-          )
+          ))
         )
           return;
         const b = decoupageDetaille(DB);
         remplirFiltres();
         changed();
-        alert(`${b.machines} activité(s) rattachée(s) à une machine.`);
+        informer(`${b.machines} activité(s) rattachée(s) à une machine.`);
       };
       $("#ad-zones").onclick = (e) => {
         if (e.target.closest("details")) return;
