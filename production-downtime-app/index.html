@@ -1911,6 +1911,7 @@
           <label class="f">Du<input type="date" id="coFrom" /></label>
           <label class="f">Au<input type="date" id="coTo" /></label>
           <button class="btn" id="coCopy">Copier pour Excel</button>
+          <button class="btn primary" id="coRiva">Compte Rendu RIVA</button>
         </div>
       </div>
       <div class="kpis" id="coKpis"></div>
@@ -4031,6 +4032,10 @@
       R.autres = R.stop - R.cat.meca.ms - R.cat.elec.ms;
       return R;
     }
+    // arrêt principal : durée, (machine), détail — sans date ni heure
+    function coStopTxt(t, withMachine) {
+      return fmtHM(t.end - t.start) + (withMachine ? " · <strong>" + esc(machineOf(t)) + "</strong>" : "") + (t.detail ? " · " + esc(t.detail) : "");
+    }
     function coRate(ms, R) { return R.ouv ? ms / R.ouv : null; }
     function coMachTable(R, cat) {
       var by = {};
@@ -4043,10 +4048,10 @@
       var rows = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.ms - a.ms; });
       if (!rows.length) return '<div class="empty">Aucun arrêt sur la période.</div>';
       var tot = rows.reduce(function (t, x) { return t + x.ms; }, 0), nTot = rows.reduce(function (t, x) { return t + x.n; }, 0), shown = rows.slice(0, 10);
-      return '<table class="ed-table"><thead><tr><th>Machine</th><th class="num">Arrêts</th><th class="num">Durée</th><th class="num">Taux d\'arrêt</th><th>Arrêt le plus long</th></tr></thead><tbody>' +
+      return '<table class="ed-table"><thead><tr><th>Machine</th><th class="num">Arrêts</th><th class="num">Durée</th><th class="num">Taux d\'arrêt</th><th>Arrêt principal</th></tr></thead><tbody>' +
         shown.map(function (x) {
           return "<tr><td><strong>" + esc(x.k) + '</strong></td><td class="num">' + x.n + '</td><td class="num">' + fmtHM(x.ms) + '</td><td class="num"><strong>' + pct(coRate(x.ms, R) || 0) + "</strong></td><td>" +
-            '<span class="mono">' + fmtDate(x.top.s.start).slice(0, 16) + "</span> · " + fmtHM(x.top.s.end - x.top.s.start) + (x.top.s.detail ? " · " + esc(x.top.s.detail) : "") + "</td></tr>";
+            coStopTxt(x.top.s, false) + "</td></tr>";
         }).join("") +
         (rows.length > shown.length ? '<tr><td class="muted">' + (rows.length - shown.length) + " autre(s) machine(s)</td><td class=\"num muted\">" + rows.slice(10).reduce(function (t, x) { return t + x.n; }, 0) + '</td><td class="num muted">' + fmtHM(rows.slice(10).reduce(function (t, x) { return t + x.ms; }, 0)) + '</td><td class="num muted">' + pct(coRate(rows.slice(10).reduce(function (t, x) { return t + x.ms; }, 0), R) || 0) + "</td><td></td></tr>" : "") +
         '</tbody><tfoot><tr><th>Total</th><th class="num">' + nTot + '</th><th class="num">' + fmtHM(tot) + '</th><th class="num">' + pct(coRate(tot, R) || 0) + "</th><th></th></tr></tfoot></table>";
@@ -4057,7 +4062,7 @@
         items.map(function (it) {
           var c = R.cat[it[0]], t = c.top; tot += c.ms; nTot += c.n;
           return "<tr><td><strong>" + it[1] + '</strong></td><td class="num">' + c.n + '</td><td class="num">' + fmtHM(c.ms) + '</td><td class="num"><strong>' + pct(coRate(c.ms, R) || 0) + "</strong></td><td>" +
-            (t ? '<span class="mono">' + fmtDate(t.start).slice(0, 16) + "</span> · " + fmtHM(t.end - t.start) + " · <strong>" + esc(machineOf(t)) + "</strong>" + (t.detail ? " · " + esc(t.detail) : "") : '<span class="muted">—</span>') + "</td></tr>";
+            (t ? coStopTxt(t, true) : '<span class="muted">—</span>') + "</td></tr>";
         }).join("") + '</tbody><tfoot><tr><th>Total</th><th class="num">' + nTot + '</th><th class="num">' + fmtHM(tot) + '</th><th class="num">' + pct(coRate(tot, R) || 0) + "</th><th></th></tr></tfoot></table>";
     }
     var CO_RBT = [["rbtTrain", "Raboulotage train"], ["rbtPlaque", "Raboulotage plaque (curseur + canal)"]];
@@ -4100,6 +4105,170 @@
           "</tbody></table>" + '<p class="hint">Ouverture et tonnes de chaque journée réparties entre diamètres au prorata de la durée de chaque campagne du programme de laminage.</p>'
         : '<div class="empty">Aucun résultat par diamètre.</div>';
     }
+    // ---------- Compte Rendu RIVA : rapport modifiable puis export PDF ----------
+    var RIVA_CSS = [
+      "@page{size:A4;margin:12mm}",
+      "*{box-sizing:border-box}",
+      "body{margin:0;background:#e9eceb;font-family:Roboto,Arial,Helvetica,sans-serif;color:#333}",
+      ".bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:#333;color:#fff;font-size:13px}",
+      ".bar button{font:inherit;padding:6px 12px;border-radius:3px;border:1px solid #888;background:#fff;color:#333;cursor:pointer}",
+      ".bar button.p{background:#157c79;border-color:#157c79;color:#fff}",
+      ".bar .tip{opacity:.75;margin-left:auto}",
+      ".riva-doc{width:210mm;min-height:297mm;margin:16px auto;background:#fff;padding:14mm 14mm 18mm;box-shadow:0 2px 12px rgba(0,0,0,.15)}",
+      ".riva-doc:focus{outline:none}",
+      ".hd{background:#157c79;color:#fff;padding:14px 18px 18px;clip-path:polygon(0 0,100% 0,100% 78%,0 100%);margin:-14mm -14mm 10px}",
+      ".hd .brand{font-size:12px;letter-spacing:.2em;color:#d9cfa8;font-weight:700}",
+      ".hd h1{margin:4px 0 2px;font-size:24px;font-weight:400}",
+      ".hd .per{font-size:13px;opacity:.9}",
+      ".blk{position:relative;margin:14px 0;break-inside:avoid;page-break-inside:avoid}",
+      ".blk h2{font-size:15px;color:#157c79;border-bottom:2px solid #9a8a5c;padding-bottom:3px;margin:0 0 8px}",
+      ".kp{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}",
+      ".kp>div{border:1px solid #dcdfdd;border-top:4px solid #157c79;padding:6px 8px;border-radius:3px}",
+      ".kp .l{font-size:10px;text-transform:uppercase;color:#65706f;letter-spacing:.04em}",
+      ".kp .v{font-size:20px;font-weight:700;margin-top:2px}",
+      ".kp .s{font-size:10px;color:#65706f}",
+      ".ok{color:#2b7a50}.warn{color:#c77800}.bad{color:#b3362c}",
+      ".kp>div.ok{border-top-color:#2b7a50}.kp>div.warn{border-top-color:#e08e0b}.kp>div.bad{border-top-color:#b3362c}",
+      "table{width:100%;border-collapse:collapse;font-size:11.5px}",
+      "th{background:#f0f2f1;color:#555;text-align:left;font-weight:600;padding:4px 6px;border-bottom:1px solid #ccc}",
+      "td{padding:4px 6px;border-bottom:1px solid #e3e5e4;vertical-align:top}",
+      "td.n,th.n{text-align:right;white-space:nowrap}",
+      "tfoot td{font-weight:700;border-top:1px solid #aaa}",
+      ".note{min-height:40px;border:1px dashed #ccc;padding:6px;font-size:12px}",
+      ".ctl{position:absolute;top:-2px;right:0;display:flex;gap:3px}",
+      ".ctl button,.rx{font:12px Arial;border:1px solid #ccc;background:#fff;border-radius:3px;cursor:pointer;padding:1px 6px;color:#555}",
+      ".rx{border:0;background:none;color:#b3362c;padding:0 2px}",
+      "td.x{width:16px;border:0}",
+      ".foot{margin-top:18px;font-size:10px;color:#888;border-top:1px solid #ddd;padding-top:4px}",
+      ".pdf .ctl,.pdf .x,.pdf .rx{display:none!important}",
+      "@media print{body.riva-open>*:not(.riva-ov){display:none!important}body.riva-open .riva-ov{position:static;overflow:visible;background:#fff}}",
+      ".pdf.riva-doc{margin:0;box-shadow:none;width:194mm;min-height:0;padding:0 2mm 2mm}",
+      ".pdf .hd{margin:0 -2mm 10px}",
+      "@media print{body{background:#fff}.bar,.ctl,.x,.rx{display:none!important}.riva-doc{margin:0;width:auto;min-height:0;box-shadow:none;padding:0}.hd{margin:0 0 10px}}",
+    ].join("\n");
+    function rivaCls(k, v) { var st = kpiState(k, v); return st ? st.cls.replace("kpi-", "") : ""; }
+    function rivaRows(rows) { return rows.map(function (r) { return "<tr>" + r + '<td class="x" contenteditable="false"><button class="rx" title="Retirer la ligne">✕</button></td></tr>'; }).join(""); }
+    function rivaReportHTML() {
+      var r = coRange(), R = coCompute();
+      if (!R.ouv) return null;
+      var taux = Math.max(0, R.ouv - R.stop) / R.ouv, prod = R.tons / (R.ouv / 3600000);
+      function blk(title, inner) {
+        return '<section class="blk"><div class="ctl" contenteditable="false"><button data-up title="Monter">↑</button><button data-down title="Descendre">↓</button><button data-del title="Retirer la section">✕</button></div><h2>' + title + "</h2>" + inner + "</section>";
+      }
+      function mach(cat) {
+        var by = {};
+        R.list.forEach(function (x) { if (!coIs(x.s, cat)) return; var k = machineOf(x.s), e = (by[k] = by[k] || { k: k, ms: 0, n: 0, top: null }); e.ms += x.ms; e.n++; if (!e.top || x.ms > e.top.ms) e.top = x; });
+        var rows = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.ms - a.ms; }).slice(0, 10);
+        if (!rows.length) return '<p class="note">Aucun arrêt sur la période.</p>';
+        var tot = R.cat[cat].ms;
+        return '<table><thead><tr><th>Machine</th><th class="n">Arrêts</th><th class="n">Durée</th><th class="n">Taux d\'arrêt</th><th>Arrêt principal</th><th class="x"></th></tr></thead><tbody>' +
+          rivaRows(rows.map(function (x) { return "<td><b>" + esc(x.k) + '</b></td><td class="n">' + x.n + '</td><td class="n">' + fmtHM(x.ms) + '</td><td class="n"><b>' + pct(coRate(x.ms, R)) + "</b></td><td>" + coStopTxt(x.top.s, false) + "</td>"; })) +
+          '</tbody><tfoot><tr><td>Total</td><td class="n">' + R.cat[cat].n + '</td><td class="n">' + fmtHM(tot) + '</td><td class="n">' + pct(coRate(tot, R)) + "</td><td></td><td class=\"x\"></td></tr></tfoot></table>";
+      }
+      function rate(items) {
+        return '<table><thead><tr><th></th><th class="n">Arrêts</th><th class="n">Durée</th><th class="n">Taux d\'arrêt</th><th>Arrêt principal</th><th class="x"></th></tr></thead><tbody>' +
+          rivaRows(items.map(function (it) { var c = R.cat[it[0]]; return "<td><b>" + it[1] + '</b></td><td class="n">' + c.n + '</td><td class="n">' + fmtHM(c.ms) + '</td><td class="n"><b>' + pct(coRate(c.ms, R)) + "</b></td><td>" + (c.top ? coStopTxt(c.top, true) : "—") + "</td>"; })) + "</tbody></table>";
+      }
+      var dr = coDiamRows(R);
+      var body =
+        '<div class="hd" contenteditable="true"><div class="brand">RIVA</div><h1>Compte rendu — Réunion des coûts</h1><div class="per">Période du ' + frDay(r.a) + " au " + frDay(r.b) + " · " + R.days + " journée(s) · " + fmtNum(R.tons, 0) + " t produites</div></div>" +
+        blk("Indicateurs", '<div class="kp">' +
+          '<div class="' + rivaCls("taux", taux * 100) + '"><div class="l">Taux de marche</div><div class="v">' + pct(taux) + "</div></div>" +
+          '<div class="' + rivaCls("prod", prod) + '"><div class="l">Productivité</div><div class="v">' + fmtNum(prod, 1) + ' t/h</div></div>' +
+          '<div><div class="l">Taux d\'arrêt élec</div><div class="v">' + pct(coRate(R.cat.elec.ms, R)) + '</div><div class="s">' + fmtHM(R.cat.elec.ms) + "</div></div>" +
+          '<div><div class="l">Taux d\'arrêt méca</div><div class="v">' + pct(coRate(R.cat.meca.ms, R)) + '</div><div class="s">' + fmtHM(R.cat.meca.ms) + "</div></div>" +
+          '<div><div class="l">Taux d\'arrêt autres</div><div class="v">' + pct(coRate(R.autres, R)) + '</div><div class="s">dont chauffe four ' + pct(coRate(R.cat.four.ms, R)) + "</div></div></div>") +
+        blk("Mécanique · arrêts principaux", mach("meca")) +
+        blk("Électrique · arrêts principaux", mach("elec")) +
+        blk("Raboulotage", rate(CO_RBT)) +
+        blk("Changements et divers", rate(CO_CHG)) +
+        blk("Résultats par diamètre", '<table><thead><tr><th>Diamètre</th><th class="n">Productivité</th><th class="n">Taux de marche</th><th class="x"></th></tr></thead><tbody>' +
+          rivaRows(dr.map(function (x) { return "<td><b>" + (x.k === "—" ? "Hors programme" : "Ø " + esc(x.k)) + '</b></td><td class="n ' + rivaCls("prod", x.prod) + '">' + fmtNum(x.prod, 1) + ' t/h</td><td class="n ' + rivaCls("taux", x.taux * 100) + '">' + pct(x.taux) + "</td>"; })) + "</tbody></table>") +
+        blk("Commentaires et plan d'actions", '<div class="note">Saisissez ici vos commentaires…</div>') +
+        '<div class="foot">Document établi le ' + new Date().toLocaleDateString("fr-FR") + " · Arrêts de production RIVA</div>";
+      return { body: body, name: "Compte-rendu-RIVA_" + r.a + "_" + r.b + ".pdf" };
+    }
+    function rivaToolbarHTML() {
+      return '<div class="bar"><b>Compte Rendu RIVA</b><button class="p" data-act="pdf">Télécharger en PDF</button><button data-act="print">Imprimer</button><button data-act="add">+ Ajouter une section</button>' +
+        '<button data-act="close">Fermer</button><span class="tip">Cliquez dans le document pour modifier le texte · ✕ retire une ligne ou une section · ↑↓ déplacent une section</span></div>';
+    }
+    function loadHtml2pdf(win) {
+      if (win.html2pdf) return Promise.resolve(win.html2pdf);
+      return new Promise(function (res, rej) {
+        var sc = win.document.createElement("script");
+        sc.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+        sc.onload = function () { win.html2pdf ? res(win.html2pdf) : rej(new Error("html2pdf")); };
+        sc.onerror = rej;
+        win.document.head.appendChild(sc);
+      });
+    }
+    // branche les commandes de l'éditeur sur un document (page séparée ou fenêtre intégrée)
+    // le PDF est toujours produit dans la page principale (fiable, et téléchargement via l'application)
+    function rivaMakePdf(html, name) {
+      var host = document.createElement("div");
+      host.style.cssText = "position:absolute;left:0;top:0;z-index:-1;width:194mm;background:#fff";
+      host.innerHTML = "<style>" + RIVA_CSS.split("\n").filter(function (l) { return !/^(body|\*)\{/.test(l) && !/^@media print/.test(l); }).join("\n") + '</style><div class="riva-doc pdf">' + html + "</div>";
+      document.body.appendChild(host);
+      return loadHtml2pdf(window).then(function (h2p) {
+        return h2p().set({ margin: [8, 8, 10, 8], filename: name, image: { type: "jpeg", quality: 0.95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, pagebreak: { mode: ["css", "legacy"], avoid: [".blk", "tr"] } })
+          .from(host.querySelector(".riva-doc")).outputPdf("blob");
+      }).then(function (bl) { return rivaSaveBlob(bl, name); })
+        .finally(function () { host.remove(); });
+    }
+    function rivaWire(doc, win, name, onClose) {
+      var root = doc.querySelector(".riva-doc");
+      doc.addEventListener("click", function (e) {
+        var b = e.target.closest("button");
+        if (!b) return;
+        var sec = b.closest(".blk");
+        if (b.classList.contains("rx")) { e.preventDefault(); b.closest("tr").remove(); return; }
+        if (b.hasAttribute("data-del") && sec) { sec.remove(); return; }
+        if (b.hasAttribute("data-up") && sec && sec.previousElementSibling && sec.previousElementSibling.classList.contains("blk")) { sec.parentNode.insertBefore(sec, sec.previousElementSibling); return; }
+        if (b.hasAttribute("data-down") && sec && sec.nextElementSibling && sec.nextElementSibling.classList.contains("blk")) { sec.parentNode.insertBefore(sec.nextElementSibling, sec); return; }
+        var act = b.dataset.act;
+        if (act === "add") {
+          var foot = root.querySelector(".foot"), n = (doc.ownerDocument || doc).createElement("section");
+          n.className = "blk";
+          n.innerHTML = '<div class="ctl" contenteditable="false"><button data-up>↑</button><button data-down>↓</button><button data-del>✕</button></div><h2>Nouvelle section</h2><div class="note">Texte…</div>';
+          root.insertBefore(n, foot);
+          n.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else if (act === "print") win.print();
+        else if (act === "close") onClose();
+        else if (act === "pdf") {
+          b.disabled = true; b.textContent = "Préparation du PDF…";
+          rivaMakePdf(root.innerHTML, name).catch(function () {
+            win.alert("Le PDF n'a pas pu être généré automatiquement. Utilisez « Imprimer » puis choisissez « Enregistrer au format PDF ».");
+          }).then(function () { b.disabled = false; b.textContent = "Télécharger en PDF"; });
+        }
+      });
+    }
+    async function rivaSaveBlob(blob, name) {
+      var dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+      if (dl) { try { await dl.save({ filename: name, data: blob }); } catch (e) { if (e && e.code !== "declined") toast("Téléchargement impossible ici : utilisez « Imprimer »."); } return; }
+      var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    }
+    function openRiva() {
+      var rep = rivaReportHTML();
+      if (!rep) { toast("Aucune ouverture saisie sur la période : rien à présenter."); return; }
+      var w = null;
+      try { w = window.open("", "_blank"); } catch (e) { w = null; }
+      if (w && w.document) {
+        w.document.open();
+        w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Compte Rendu RIVA</title><style>' + RIVA_CSS + "</style></head><body>" +
+          rivaToolbarHTML() + '<div class="riva-doc" contenteditable="true" spellcheck="true">' + rep.body + "</div></body></html>");
+        w.document.close();
+        rivaWire(w.document, w, rep.name, function () { w.close(); });
+        return;
+      }
+      // fenêtre bloquée : éditeur affiché dans la page
+      var ov = document.createElement("div");
+      ov.className = "riva-ov";
+      ov.innerHTML = "<style>" + RIVA_CSS.replace(/(^|\n)body\{[^}]*\}/, "").replace(/(^|\n)\*\{[^}]*\}/, "") + ".riva-ov{position:fixed;inset:0;z-index:500;overflow:auto;background:#e9eceb}</style>" + rivaToolbarHTML() + '<div class="riva-doc" contenteditable="true" spellcheck="true">' + rep.body + "</div>";
+      document.body.appendChild(ov);
+      document.body.classList.add("riva-open");
+      rivaWire(ov, window, rep.name, function () { ov.remove(); document.body.classList.remove("riva-open"); });
+    }
+    $("coRiva").addEventListener("click", openRiva);
     function coSet(a, b) { ui.coFrom = a; ui.coTo = b; renderCouts(); }
     $("coCurM").addEventListener("click", function () { var t = prodDay(Date.now()); coSet(dayKeyOf(new Date(t.getFullYear(), t.getMonth(), 1)), dayKeyOf(t)); });
     $("coPrevM").addEventListener("click", function () { var t = prodDay(Date.now()); coSet(dayKeyOf(new Date(t.getFullYear(), t.getMonth() - 1, 1)), dayKeyOf(new Date(t.getFullYear(), t.getMonth(), 0))); });
@@ -4117,7 +4286,7 @@
       L.push(["Taux d'arrêt méca", n(coRate(R.cat.meca.ms, R))].join("\t"));
       L.push(["Taux d'arrêt autres", n(coRate(R.autres, R)), "dont chauffe four", n(coRate(R.cat.four.ms, R))].join("\t"));
       L.push("");
-      CO_RBT.concat(CO_CHG).forEach(function (it) { var t = R.cat[it[0]].top; L.push([it[1], n(coRate(R.cat[it[0]].ms, R)), fmtHM(R.cat[it[0]].ms), t ? fmtDate(t.start).slice(0, 16) + " · " + fmtHM(t.end - t.start) + " · " + machineOf(t) + (t.detail ? " · " + t.detail : "") : ""].join("\t")); });
+      CO_RBT.concat(CO_CHG).forEach(function (it) { var t = R.cat[it[0]].top; L.push([it[1], n(coRate(R.cat[it[0]].ms, R)), fmtHM(R.cat[it[0]].ms), t ? fmtHM(t.end - t.start) + " · " + machineOf(t) + (t.detail ? " · " + t.detail : "") : ""].join("\t")); });
       L.push(""); L.push(["Diamètre", "Productivité (t/h)", "Taux de marche"].join("\t"));
       coDiamRows(R).forEach(function (x) { L.push([x.k === "—" ? "Hors programme" : x.k, x.prod.toFixed(1).replace(".", ","), n(x.taux)].join("\t")); });
       try { navigator.clipboard.writeText(L.join("\n")).then(function () { toast("Copié : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); }); }
