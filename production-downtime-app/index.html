@@ -1455,6 +1455,7 @@
     <button role="tab" data-tab="rex" aria-selected="false">REX</button>
     <button role="tab" data-tab="nc" aria-selected="false">Non conformes</button>
     <button role="tab" data-tab="secu" aria-selected="false">Sécurité</button>
+    <button role="tab" data-tab="couts" aria-selected="false">Réunion des coûts</button>
   </nav>
   <div class="adminbar" id="adminBar" hidden>
     <button class="btn" id="btnHome">← Menu</button>
@@ -1894,6 +1895,33 @@
       </div>
       <div id="kpiCfg"></div>
     </div>
+  </section>
+
+  <section data-panel="couts" class="stack" hidden>
+    <div class="panel stack">
+      <div class="row" style="justify-content: space-between; align-items: flex-end">
+        <div>
+          <h2>Réunion des coûts</h2>
+          <p class="hint" id="coSub"></p>
+        </div>
+        <div class="row">
+          <button class="btn" id="coPrevM">Mois précédent</button>
+          <button class="btn" id="coCurM">Mois en cours</button>
+          <button class="btn" id="coYear">Année</button>
+          <label class="f">Du<input type="date" id="coFrom" /></label>
+          <label class="f">Au<input type="date" id="coTo" /></label>
+          <button class="btn" id="coCopy">Copier pour Excel</button>
+        </div>
+      </div>
+      <div class="kpis" id="coKpis"></div>
+    </div>
+    <div class="panel stack"><h2 class="cr-h">Mécanique · arrêts principaux</h2><div class="scroll" id="coMeca"></div></div>
+    <div class="panel stack"><h2 class="cr-h">Électrique · arrêts principaux</h2><div class="scroll" id="coElec"></div></div>
+    <div class="nc-grid" style="align-items: start">
+      <div class="panel stack"><h2 class="cr-h">Raboulotage</h2><div class="scroll" id="coRbt"></div></div>
+      <div class="panel stack"><h2 class="cr-h">Changements et divers</h2><div class="scroll" id="coChg"></div></div>
+    </div>
+    <div class="panel stack"><h2 class="cr-h">Résultats par diamètre</h2><div class="scroll" id="coDiam"></div></div>
   </section>
 
   <section data-panel="secu" class="stack" hidden>
@@ -3952,6 +3980,146 @@
       catch (e) { toast("Copie refusée par le navigateur"); }
     });
 
+    // ---------- Réunion des coûts ----------
+    // Taux d'arrêt = durée des arrêts ÷ temps d'ouverture, sur les journées dont l'ouverture est saisie
+    // (mêmes règles que le taux de marche : hors 51 cycle et hors 26 manque billettes).
+    var CO_CAT = {
+      meca: ["meca"], elec: ["elec"], four: ["four"],
+      rbtTrain: ["rbt train"], rbtPlaque: ["rbt canal", "rbt curs"],
+      xcnl: ["x cnl"], xcage: ["x cage"], xequip: ["x equipmt"], xdiam: ["x ø", "x o", "x diam"], divers: ["divers"],
+    };
+    function coName(s) { return String(codeName("fer", s.fer) || "").trim().toLowerCase(); }
+    function coIs(s, cat) { return CO_CAT[cat].indexOf(coName(s)) >= 0; }
+    function dayKeyOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+    function coRange() {
+      if (!ui.coFrom) { var t = prodDay(Date.now()); ui.coFrom = dayKeyOf(new Date(t.getFullYear(), t.getMonth(), 1)); ui.coTo = dayKeyOf(t); }
+      return { a: ui.coFrom, b: ui.coTo < ui.coFrom ? ui.coFrom : ui.coTo };
+    }
+    function coCompute() {
+      var r = coRange(), d = new Date(r.a + "T12:00:00"), end = new Date(r.b + "T12:00:00");
+      var R = { ouv: 0, tons: 0, days: 0, stop: 0, cat: {}, list: [], diam: {} };
+      Object.keys(CO_CAT).forEach(function (k) { R.cat[k] = { ms: 0, n: 0 }; });
+      function dBucket(k) { return (R.diam[k] = R.diam[k] || { ouv: 0, tons: 0, stop: 0 }); }
+      for (; d <= end; d.setDate(d.getDate() + 1)) {
+        var key = dayKeyOf(d), v = production[key] || {};
+        if (v.ouverture == null) continue;
+        var a = new Date(d.getFullYear(), d.getMonth(), d.getDate(), DAY_START_HOUR).getTime(), b = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, DAY_START_HOUR).getTime();
+        var ouv = v.ouverture * 60000, tons = +v.tonnes || 0;
+        R.days++; R.ouv += ouv; R.tons += tons;
+        // ouverture et tonnes réparties entre diamètres au prorata du temps de chaque campagne du programme
+        var covered = 0;
+        programList.forEach(function (p) {
+          var o = Math.min(p.end, b) - Math.max(p.start, a);
+          if (o <= 0) return;
+          var f = o / (b - a), bk = dBucket(p.diam);
+          bk.ouv += ouv * f; bk.tons += tons * f; covered += f;
+        });
+        if (covered < 0.999) { var bk0 = dBucket("—"); bk0.ouv += ouv * (1 - covered); bk0.tons += tons * (1 - covered); }
+        stops.forEach(function (s) {
+          if (isMissingBillet(s)) return;
+          var o = Math.min(s.end, b) - Math.max(s.start, a);
+          if (o <= 0) return;
+          R.stop += o;
+          R.list.push({ s: s, ms: o });
+          Object.keys(CO_CAT).forEach(function (k) { if (coIs(s, k)) { R.cat[k].ms += o; R.cat[k].n++; } });
+          dBucket(programDiam(Math.max(s.start, a)) || "—").stop += o;
+        });
+      }
+      R.autres = R.stop - R.cat.meca.ms - R.cat.elec.ms;
+      return R;
+    }
+    function coRate(ms, R) { return R.ouv ? ms / R.ouv : null; }
+    function coMachTable(R, cat) {
+      var by = {};
+      R.list.forEach(function (x) {
+        if (!coIs(x.s, cat)) return;
+        var k = machineOf(x.s), e = (by[k] = by[k] || { k: k, ms: 0, n: 0, top: null });
+        e.ms += x.ms; e.n++;
+        if (!e.top || x.ms > e.top.ms) e.top = x;
+      });
+      var rows = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.ms - a.ms; });
+      if (!rows.length) return '<div class="empty">Aucun arrêt sur la période.</div>';
+      var tot = rows.reduce(function (t, x) { return t + x.ms; }, 0), nTot = rows.reduce(function (t, x) { return t + x.n; }, 0), shown = rows.slice(0, 10);
+      return '<table class="ed-table"><thead><tr><th>Machine</th><th class="num">Arrêts</th><th class="num">Durée</th><th class="num">Taux d\'arrêt</th><th>Arrêt le plus long</th></tr></thead><tbody>' +
+        shown.map(function (x) {
+          return "<tr><td><strong>" + esc(x.k) + '</strong></td><td class="num">' + x.n + '</td><td class="num">' + fmtHM(x.ms) + '</td><td class="num"><strong>' + pct(coRate(x.ms, R) || 0) + "</strong></td><td>" +
+            '<span class="mono">' + fmtDate(x.top.s.start).slice(0, 16) + "</span> · " + fmtHM(x.top.s.end - x.top.s.start) + (x.top.s.detail ? " · " + esc(x.top.s.detail) : "") + "</td></tr>";
+        }).join("") +
+        (rows.length > shown.length ? '<tr><td class="muted">' + (rows.length - shown.length) + " autre(s) machine(s)</td><td class=\"num muted\">" + rows.slice(10).reduce(function (t, x) { return t + x.n; }, 0) + '</td><td class="num muted">' + fmtHM(rows.slice(10).reduce(function (t, x) { return t + x.ms; }, 0)) + '</td><td class="num muted">' + pct(coRate(rows.slice(10).reduce(function (t, x) { return t + x.ms; }, 0), R) || 0) + "</td><td></td></tr>" : "") +
+        '</tbody><tfoot><tr><th>Total</th><th class="num">' + nTot + '</th><th class="num">' + fmtHM(tot) + '</th><th class="num">' + pct(coRate(tot, R) || 0) + "</th><th></th></tr></tfoot></table>";
+    }
+    function coRateTable(R, items) {
+      var tot = 0, nTot = 0;
+      return '<table class="ed-table"><thead><tr><th></th><th class="num">Arrêts</th><th class="num">Durée</th><th class="num">Taux d\'arrêt</th></tr></thead><tbody>' +
+        items.map(function (it) {
+          var c = R.cat[it[0]]; tot += c.ms; nTot += c.n;
+          return "<tr><td><strong>" + it[1] + '</strong></td><td class="num">' + c.n + '</td><td class="num">' + fmtHM(c.ms) + '</td><td class="num"><strong>' + pct(coRate(c.ms, R) || 0) + "</strong></td></tr>";
+        }).join("") + '</tbody><tfoot><tr><th>Total</th><th class="num">' + nTot + '</th><th class="num">' + fmtHM(tot) + '</th><th class="num">' + pct(coRate(tot, R) || 0) + "</th></tr></tfoot></table>";
+    }
+    var CO_RBT = [["rbtTrain", "Raboulotage train"], ["rbtPlaque", "Raboulotage plaque (curseur + canal)"]];
+    var CO_CHG = [["xcnl", "Change. cnl"], ["xcage", "Change cage"], ["xequip", "Change équip."], ["xdiam", "Change diam."], ["divers", "Divers"]];
+    function coDiamRows(R) {
+      return Object.keys(R.diam).filter(function (k) { return R.diam[k].ouv > 0; }).sort(function (a, b) {
+        if (a === "—") return 1; if (b === "—") return -1;
+        return (parseFloat(a) || 0) - (parseFloat(b) || 0) || a.localeCompare(b);
+      }).map(function (k) {
+        var x = R.diam[k];
+        return { k: k, prod: x.tons / (x.ouv / 3600000), taux: Math.max(0, x.ouv - x.stop) / x.ouv, tons: x.tons, ouv: x.ouv };
+      });
+    }
+    function renderCouts() {
+      var r = coRange(), ae = document.activeElement;
+      if (!(ae && ae.id === "coFrom")) $("coFrom").value = r.a;
+      if (!(ae && ae.id === "coTo")) $("coTo").value = r.b;
+      var R = coCompute();
+      $("coSub").textContent = "Du " + frDay(r.a) + " 08:00 au " + frDay(dayKeyOf(new Date(new Date(r.b + "T12:00:00").getTime() + 86400000))) + " 08:00 · " + R.days + " journée(s) avec ouverture saisie" + (R.ouv ? " · ouverture " + fmtHM(R.ouv) + " · " + fmtNum(R.tons, 0) + " t" : "") + ".";
+      if (!R.ouv) {
+        $("coKpis").innerHTML = '<div class="empty" style="grid-column: 1 / -1">Aucune journée de la période n\'a de temps d\'ouverture saisi (menu Production) : les taux ne peuvent pas être calculés.</div>';
+        ["coMeca", "coElec", "coRbt", "coChg", "coDiam"].forEach(function (id) { $(id).innerHTML = ""; });
+        return;
+      }
+      var taux = Math.max(0, R.ouv - R.stop) / R.ouv, prod = R.tons / (R.ouv / 3600000);
+      $("coKpis").innerHTML =
+        kpiTile("taux", "Taux de marche", taux * 100, pct(taux)) +
+        kpiTile("prod", "Productivité", prod, fmtNum(prod, 1) + " t/h") +
+        '<div class="kpi"><div class="l">Taux d\'arrêt élec</div><div class="v">' + pct(coRate(R.cat.elec.ms, R)) + '</div><div class="kt">' + fmtHM(R.cat.elec.ms) + "</div></div>" +
+        '<div class="kpi"><div class="l">Taux d\'arrêt méca</div><div class="v">' + pct(coRate(R.cat.meca.ms, R)) + '</div><div class="kt">' + fmtHM(R.cat.meca.ms) + "</div></div>" +
+        '<div class="kpi"><div class="l">Taux d\'arrêt autres</div><div class="v">' + pct(coRate(R.autres, R)) + ' <span style="font-size: 0.55em; font-weight: 500">(four ' + pct(coRate(R.cat.four.ms, R)) + ')</span></div><div class="kt">' + fmtHM(R.autres) + " · dont chauffe four " + fmtHM(R.cat.four.ms) + "</div></div>";
+      $("coMeca").innerHTML = coMachTable(R, "meca");
+      $("coElec").innerHTML = coMachTable(R, "elec");
+      $("coRbt").innerHTML = coRateTable(R, CO_RBT);
+      $("coChg").innerHTML = coRateTable(R, CO_CHG);
+      var dr = coDiamRows(R);
+      $("coDiam").innerHTML = dr.length
+        ? '<table class="ed-table"><thead><tr><th>Diamètre</th><th class="num">Productivité</th><th class="num">Taux de marche</th></tr></thead><tbody>' +
+          dr.map(function (x) { return "<tr><td><strong>" + (x.k === "—" ? "Hors programme" : "Ø " + esc(x.k)) + '</strong></td><td class="num">' + kpiSpan("prod", x.prod, fmtNum(x.prod, 1) + " t/h") + '</td><td class="num">' + kpiSpan("taux", x.taux * 100, pct(x.taux)) + "</td></tr>"; }).join("") +
+          "</tbody></table>" + '<p class="hint">Ouverture et tonnes de chaque journée réparties entre diamètres au prorata de la durée de chaque campagne du programme de laminage.</p>'
+        : '<div class="empty">Aucun résultat par diamètre.</div>';
+    }
+    function coSet(a, b) { ui.coFrom = a; ui.coTo = b; renderCouts(); }
+    $("coCurM").addEventListener("click", function () { var t = prodDay(Date.now()); coSet(dayKeyOf(new Date(t.getFullYear(), t.getMonth(), 1)), dayKeyOf(t)); });
+    $("coPrevM").addEventListener("click", function () { var t = prodDay(Date.now()); coSet(dayKeyOf(new Date(t.getFullYear(), t.getMonth() - 1, 1)), dayKeyOf(new Date(t.getFullYear(), t.getMonth(), 0))); });
+    $("coYear").addEventListener("click", function () { var t = prodDay(Date.now()); coSet(dayKeyOf(new Date(t.getFullYear(), 0, 1)), dayKeyOf(t)); });
+    $("coFrom").addEventListener("change", function () { if (this.value) { ui.coFrom = this.value; renderCouts(); } });
+    $("coTo").addEventListener("change", function () { if (this.value) { ui.coTo = this.value; renderCouts(); } });
+    $("coCopy").addEventListener("click", function () {
+      var R = coCompute(), r = coRange(), L = [];
+      function n(x, d) { return x == null ? "" : (x * 100).toFixed(d == null ? 1 : d).replace(".", ",") + " %"; }
+      if (!R.ouv) { toast("Aucune ouverture saisie sur la période."); return; }
+      L.push(["Réunion des coûts", frDay(r.a) + " au " + frDay(r.b)].join("\t"));
+      L.push(["Taux de marche", n(Math.max(0, R.ouv - R.stop) / R.ouv)].join("\t"));
+      L.push(["Productivité (t/h)", (R.tons / (R.ouv / 3600000)).toFixed(1).replace(".", ",")].join("\t"));
+      L.push(["Taux d'arrêt élec", n(coRate(R.cat.elec.ms, R))].join("\t"));
+      L.push(["Taux d'arrêt méca", n(coRate(R.cat.meca.ms, R))].join("\t"));
+      L.push(["Taux d'arrêt autres", n(coRate(R.autres, R)), "dont chauffe four", n(coRate(R.cat.four.ms, R))].join("\t"));
+      L.push("");
+      CO_RBT.concat(CO_CHG).forEach(function (it) { L.push([it[1], n(coRate(R.cat[it[0]].ms, R)), fmtHM(R.cat[it[0]].ms)].join("\t")); });
+      L.push(""); L.push(["Diamètre", "Productivité (t/h)", "Taux de marche"].join("\t"));
+      coDiamRows(R).forEach(function (x) { L.push([x.k === "—" ? "Hors programme" : x.k, x.prod.toFixed(1).replace(".", ","), n(x.taux)].join("\t")); });
+      try { navigator.clipboard.writeText(L.join("\n")).then(function () { toast("Copié : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); }); }
+      catch (e) { toast("Copie refusée par le navigateur"); }
+    });
+
     // ---------- Menu Sécurité (remontées et actions de tous les CR) ----------
     function scFiltered() {
       var a = ui.scFrom || "", b = ui.scTo || "", t = ui.scType || "", q = (ui.scQ || "").toLowerCase();
@@ -5876,7 +6044,7 @@
       document.querySelectorAll("[data-panel]").forEach(function (p) {
         p.hidden = p.dataset.panel !== tab;
       });
-      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "energie" || tab === "cr" || tab === "home" || tab === "nc" || tab === "secu" || tab === "kpi";
+      $("filters").hidden = tab === "saisie" || tab === "prog" || tab === "prod" || tab === "energie" || tab === "cr" || tab === "home" || tab === "nc" || tab === "secu" || tab === "kpi" || tab === "couts";
       $("btnExportTop").hidden = mode === "pending" || !canExport();
       if (tab === "machine") renderPareto("machine");
       if (tab === "type") renderPareto("type");
@@ -5887,6 +6055,7 @@
       if (tab === "kpi") renderKpiCfg();
       if (tab === "nc") renderNC();
       if (tab === "secu") renderSecu();
+      if (tab === "couts") renderCouts();
       if (tab === "cr") renderCR();
       if (tab === "schema") renderSchema();
       if (tab === "actview") {
@@ -5923,6 +6092,7 @@
         ["cr", "Compte rendu du jour : sécurité, indicateurs, frise, Pareto"],
         ["machine", "Pareto des arrêts par machine sur la période choisie"],
         ["schema", "Arrêts par zone du laminoir, Pareto de chaque zone"],
+        ["couts", "Taux de marche, productivité, taux d'arrêt méca / élec / autres, résultats par diamètre"],
       ]],
       ["Suivi", [
         ["secu", "Toutes les remontées sécurité et leurs actions correctives"],
@@ -6545,7 +6715,7 @@
       ui.startHome = true; // l'application s'ouvre sur la page Menu
       if (
         location.hash &&
-        /^#(home|kpi|nc|secu|saisie|prog|prod|energie|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
+        /^#(home|couts|kpi|nc|secu|saisie|prog|prod|energie|cr|schema|machine|type|actions|actview|rex)$/.test(location.hash)
       )
       {
         ui.tab = location.hash.slice(1);
