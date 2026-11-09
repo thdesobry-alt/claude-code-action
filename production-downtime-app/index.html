@@ -1444,7 +1444,7 @@
     <button role="tab" data-tab="prog" aria-selected="false">Programme de laminage</button>
     <button role="tab" data-tab="prod" aria-selected="false">Production</button>
     <button role="tab" data-tab="energie" aria-selected="false">Énergie</button>
-    <button role="tab" data-tab="kpi" aria-selected="false">Objectifs KPI</button>
+    <button role="tab" data-tab="kpi" aria-selected="false">KPI - Objectifs</button>
     <button role="tab" data-tab="cr" aria-selected="false">CR journalier</button>
     <button role="tab" data-tab="machine" aria-selected="true">
       Analyse Pareto Machine
@@ -1860,7 +1860,7 @@
           <p class="hint">
             Une ligne par journée de production (8h à 8h le lendemain). Les ratios
             par tonne utilisent la production saisie dans l'onglet Production.
-            Les objectifs se règlent dans le menu <a href="#" data-go-tab="kpi">Objectifs KPI</a>.
+            Les objectifs se règlent dans le menu <a href="#" data-go-tab="kpi">KPI - Objectifs</a>.
           </p>
         </div>
         <div class="row">
@@ -5917,7 +5917,6 @@
         ["prog", "Diamètre laminé par période"],
         ["prod", "Tonnes et temps d'ouverture par jour, taux de marche, productivité"],
         ["energie", "Gaz et électricité par jour, ratios par tonne"],
-        ["kpi", "Objectif, seuil d'alerte et valeur limite des indicateurs (couleurs vert / orange / rouge)"],
         ["actions", "Créer et modifier les actions et les REX par arrêt"],
       ]],
       ["Analyse", [
@@ -5930,6 +5929,9 @@
         ["actview", "Toutes les actions : retards, pilotes, clôture"],
         ["rex", "Retours d'expérience"],
         ["nc", "Fardeaux non conformes : saisie, fiches PDF, statistiques"],
+      ]],
+      ["Administration", [
+        ["kpi", "Objectif, seuil d'alerte et valeur limite des indicateurs (couleurs vert / orange / rouge)"],
       ]],
     ];
     function renderHome() {
