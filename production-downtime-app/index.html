@@ -1917,10 +1917,8 @@
     </div>
     <div class="panel stack"><h2 class="cr-h">Mécanique · arrêts principaux</h2><div class="scroll" id="coMeca"></div></div>
     <div class="panel stack"><h2 class="cr-h">Électrique · arrêts principaux</h2><div class="scroll" id="coElec"></div></div>
-    <div class="nc-grid" style="align-items: start">
-      <div class="panel stack"><h2 class="cr-h">Raboulotage</h2><div class="scroll" id="coRbt"></div></div>
-      <div class="panel stack"><h2 class="cr-h">Changements et divers</h2><div class="scroll" id="coChg"></div></div>
-    </div>
+    <div class="panel stack"><h2 class="cr-h">Raboulotage</h2><div class="scroll" id="coRbt"></div></div>
+    <div class="panel stack"><h2 class="cr-h">Changements et divers</h2><div class="scroll" id="coChg"></div></div>
     <div class="panel stack"><h2 class="cr-h">Résultats par diamètre</h2><div class="scroll" id="coDiam"></div></div>
   </section>
 
@@ -4021,7 +4019,12 @@
           if (o <= 0) return;
           R.stop += o;
           R.list.push({ s: s, ms: o });
-          Object.keys(CO_CAT).forEach(function (k) { if (coIs(s, k)) { R.cat[k].ms += o; R.cat[k].n++; } });
+          Object.keys(CO_CAT).forEach(function (k) {
+            if (!coIs(s, k)) return;
+            var c = R.cat[k];
+            c.ms += o; c.n++;
+            if (!c.top || s.end - s.start > c.top.end - c.top.start) c.top = s;
+          });
           dBucket(programDiam(Math.max(s.start, a)) || "—").stop += o;
         });
       }
@@ -4050,11 +4053,12 @@
     }
     function coRateTable(R, items) {
       var tot = 0, nTot = 0;
-      return '<table class="ed-table"><thead><tr><th></th><th class="num">Arrêts</th><th class="num">Durée</th><th class="num">Taux d\'arrêt</th></tr></thead><tbody>' +
+      return '<table class="ed-table"><thead><tr><th></th><th class="num">Arrêts</th><th class="num">Durée</th><th class="num">Taux d\'arrêt</th><th>Arrêt principal</th></tr></thead><tbody>' +
         items.map(function (it) {
-          var c = R.cat[it[0]]; tot += c.ms; nTot += c.n;
-          return "<tr><td><strong>" + it[1] + '</strong></td><td class="num">' + c.n + '</td><td class="num">' + fmtHM(c.ms) + '</td><td class="num"><strong>' + pct(coRate(c.ms, R) || 0) + "</strong></td></tr>";
-        }).join("") + '</tbody><tfoot><tr><th>Total</th><th class="num">' + nTot + '</th><th class="num">' + fmtHM(tot) + '</th><th class="num">' + pct(coRate(tot, R) || 0) + "</th></tr></tfoot></table>";
+          var c = R.cat[it[0]], t = c.top; tot += c.ms; nTot += c.n;
+          return "<tr><td><strong>" + it[1] + '</strong></td><td class="num">' + c.n + '</td><td class="num">' + fmtHM(c.ms) + '</td><td class="num"><strong>' + pct(coRate(c.ms, R) || 0) + "</strong></td><td>" +
+            (t ? '<span class="mono">' + fmtDate(t.start).slice(0, 16) + "</span> · " + fmtHM(t.end - t.start) + " · <strong>" + esc(machineOf(t)) + "</strong>" + (t.detail ? " · " + esc(t.detail) : "") : '<span class="muted">—</span>') + "</td></tr>";
+        }).join("") + '</tbody><tfoot><tr><th>Total</th><th class="num">' + nTot + '</th><th class="num">' + fmtHM(tot) + '</th><th class="num">' + pct(coRate(tot, R) || 0) + "</th><th></th></tr></tfoot></table>";
     }
     var CO_RBT = [["rbtTrain", "Raboulotage train"], ["rbtPlaque", "Raboulotage plaque (curseur + canal)"]];
     var CO_CHG = [["xcnl", "Change. cnl"], ["xcage", "Change cage"], ["xequip", "Change équip."], ["xdiam", "Change diam."], ["divers", "Divers"]];
@@ -4113,7 +4117,7 @@
       L.push(["Taux d'arrêt méca", n(coRate(R.cat.meca.ms, R))].join("\t"));
       L.push(["Taux d'arrêt autres", n(coRate(R.autres, R)), "dont chauffe four", n(coRate(R.cat.four.ms, R))].join("\t"));
       L.push("");
-      CO_RBT.concat(CO_CHG).forEach(function (it) { L.push([it[1], n(coRate(R.cat[it[0]].ms, R)), fmtHM(R.cat[it[0]].ms)].join("\t")); });
+      CO_RBT.concat(CO_CHG).forEach(function (it) { var t = R.cat[it[0]].top; L.push([it[1], n(coRate(R.cat[it[0]].ms, R)), fmtHM(R.cat[it[0]].ms), t ? fmtDate(t.start).slice(0, 16) + " · " + fmtHM(t.end - t.start) + " · " + machineOf(t) + (t.detail ? " · " + t.detail : "") : ""].join("\t")); });
       L.push(""); L.push(["Diamètre", "Productivité (t/h)", "Taux de marche"].join("\t"));
       coDiamRows(R).forEach(function (x) { L.push([x.k === "—" ? "Hors programme" : x.k, x.prod.toFixed(1).replace(".", ","), n(x.taux)].join("\t")); });
       try { navigator.clipboard.writeText(L.join("\n")).then(function () { toast("Copié : collez dans Excel"); }, function () { toast("Copie refusée par le navigateur"); }); }
