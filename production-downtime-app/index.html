@@ -4089,8 +4089,8 @@
       }
       var taux = Math.max(0, R.ouv - R.stop) / R.ouv, prod = R.tons / (R.ouv / 3600000);
       $("coKpis").innerHTML =
-        kpiTile("taux", "Taux de marche", taux * 100, pct(taux)) +
-        kpiTile("prod", "Productivité", prod, fmtNum(prod, 1) + " t/h") +
+        '<div class="kpi"><div class="l">Taux de marche</div><div class="v">' + pct(taux) + "</div></div>" +
+        '<div class="kpi"><div class="l">Productivité</div><div class="v">' + fmtNum(prod, 1) + " t/h</div></div>" +
         '<div class="kpi"><div class="l">Taux d\'arrêt élec</div><div class="v">' + pct(coRate(R.cat.elec.ms, R)) + '</div><div class="kt">' + fmtHM(R.cat.elec.ms) + "</div></div>" +
         '<div class="kpi"><div class="l">Taux d\'arrêt méca</div><div class="v">' + pct(coRate(R.cat.meca.ms, R)) + '</div><div class="kt">' + fmtHM(R.cat.meca.ms) + "</div></div>" +
         '<div class="kpi"><div class="l">Taux d\'arrêt autres</div><div class="v">' + pct(coRate(R.autres, R)) + ' <span style="font-size: 0.55em; font-weight: 500">(four ' + pct(coRate(R.cat.four.ms, R)) + ')</span></div><div class="kt">' + fmtHM(R.autres) + " · dont chauffe four " + fmtHM(R.cat.four.ms) + "</div></div>";
@@ -4101,7 +4101,7 @@
       var dr = coDiamRows(R);
       $("coDiam").innerHTML = dr.length
         ? '<table class="ed-table"><thead><tr><th>Diamètre</th><th class="num">Productivité</th><th class="num">Taux de marche</th></tr></thead><tbody>' +
-          dr.map(function (x) { return "<tr><td><strong>" + (x.k === "—" ? "Hors programme" : "Ø " + esc(x.k)) + '</strong></td><td class="num">' + kpiSpan("prod", x.prod, fmtNum(x.prod, 1) + " t/h") + '</td><td class="num">' + kpiSpan("taux", x.taux * 100, pct(x.taux)) + "</td></tr>"; }).join("") +
+          dr.map(function (x) { return "<tr><td><strong>" + (x.k === "—" ? "Hors programme" : "Ø " + esc(x.k)) + '</strong></td><td class="num">' + fmtNum(x.prod, 1) + ' t/h</td><td class="num">' + pct(x.taux) + "</td></tr>"; }).join("") +
           "</tbody></table>" + '<p class="hint">Ouverture et tonnes de chaque journée réparties entre diamètres au prorata de la durée de chaque campagne du programme de laminage.</p>'
         : '<div class="empty">Aucun résultat par diamètre.</div>';
     }
@@ -4146,7 +4146,7 @@
       ".pdf .hd{margin:0 -2mm 10px}",
       "@media print{body{background:#fff}.bar,.ctl,.x,.rx{display:none!important}.riva-doc{margin:0;width:auto;min-height:0;box-shadow:none;padding:0}.hd{margin:0 0 10px}}",
     ].join("\n");
-    function rivaCls(k, v) { var st = kpiState(k, v); return st ? st.cls.replace("kpi-", "") : ""; }
+    function rivaCls() { return ""; } // pas de couleurs d'objectifs dans le compte rendu
     function rivaRows(rows) { return rows.map(function (r) { return "<tr>" + r + '<td class="x" contenteditable="false"><button class="rx" title="Retirer la ligne">✕</button></td></tr>'; }).join(""); }
     function rivaReportHTML() {
       var r = coRange(), R = coCompute();
