@@ -5314,6 +5314,21 @@
       try { renderPareto("cr"); }
       finally { ui.from = sv.from; ui.to = sv.to; ui.gran = sv.gran; skipChips = false; crRendering = false; }
     }
+    // tri du détail des arrêts : par durée (défaut) ou chronologique, mémorisé par Pareto
+    function detSortOf(kind) {
+      ui.detSort = ui.detSort || {};
+      if (ui.detSort[kind] == null) { try { ui.detSort[kind] = localStorage.getItem(LOCAL_KEY + "-detsort-" + kind) || "dur"; } catch (e) { ui.detSort[kind] = "dur"; } }
+      return ui.detSort[kind];
+    }
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-detsort]");
+      if (!b) return;
+      var kind = b.dataset.detsort;
+      ui.detSort = ui.detSort || {};
+      ui.detSort[kind] = b.dataset.v;
+      try { localStorage.setItem(LOCAL_KEY + "-detsort-" + kind, b.dataset.v); } catch (err) {}
+      renderPareto(kind);
+    });
     function renderPareto(kind) {
       if (kind === "cr" && !crRendering) { renderCRPareto(); return; }
       var el = kind === "cr" ? $("crPareto") : kind === "schema" ? $("zonePareto") : document.querySelector('[data-panel="' + kind + '"]');
@@ -5408,7 +5423,7 @@
           return keyFn(x.s) === focus;
         })
         .sort(function (a, b) {
-          return b.dur - a.dur;
+          return detSortOf(kind) === "time" ? a.s.start - b.s.start : b.dur - a.dur;
         });
       var sub = {};
       det.forEach(function (x) {
@@ -5418,10 +5433,12 @@
       var subRows = Object.keys(sub).sort(function (a, b) {
         return sub[b] - sub[a];
       });
+      var ds = detSortOf(kind);
       var detail =
-        "<h3>Détail : " +
+        '<div class="row" style="justify-content: space-between; align-items: center"><h3 style="margin: 0">Détail : ' +
         esc(focus) +
-        '</h3><p class="hint" style="margin-bottom: 8px">Répartition par ' +
+        '</h3><div class="seg" role="group" aria-label="Tri des arrêts"><button data-detsort="' + kind + '" data-v="dur" aria-pressed="' + (ds === "dur") + '">Par durée</button><button data-detsort="' + kind + '" data-v="time" aria-pressed="' + (ds === "time") + '">Chronologique</button></div></div>' +
+        '<p class="hint" style="margin-bottom: 8px">Répartition par ' +
         otherName.toLowerCase() +
         " : " +
         subRows
