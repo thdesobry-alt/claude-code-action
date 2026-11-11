@@ -24,7 +24,7 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 
 ## Icône
 
-`icone-planning.ico` (raccourci Windows), `icone-planning.png` et `icone-planning.svg` : calendrier jour/nuit aux couleurs de l'application, aussi utilisé comme icône d'onglet.
+`creer-raccourci.vbs` crée le raccourci PLANNING sur le Bureau avec une copie locale de l'icône (à lancer depuis le dossier partagé). `icone-planning.ico` (raccourci Windows, format BMP), `icone-planning.png` et `icone-planning.svg` : calendrier jour/nuit aux couleurs de l'application, aussi utilisé comme icône d'onglet.
 
 ## Utilisation à plusieurs avec un fichier JSON partagé
 
