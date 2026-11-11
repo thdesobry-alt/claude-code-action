@@ -22,6 +22,10 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 - **Effectifs** : nombre d'agents en jour et en nuit pour chaque date, comparé à l'effectif cible. Lignes « Heures jour » et « Heures nuit » : heures réalisées chaque jour par les agents en poste (absences partielles déduites), avec le total du mois.
 - **Heures** : heures réalisées (jusqu'à la veille incluse ; les jours à venir ne sont pas comptés, les heures prévues apparaissent au survol) par agent et par semaine calendaire (lundi–dimanche), total du mois, nuits comptées en entier le jour de prise de poste (option : réparties à minuit, 4 h + 8 h), export vers Excel par copier-coller.
 
+## Icône
+
+`icone-planning.ico` (raccourci Windows), `icone-planning.png` et `icone-planning.svg` : calendrier jour/nuit aux couleurs de l'application, aussi utilisé comme icône d'onglet.
+
 ## Utilisation à plusieurs avec un fichier JSON partagé
 
 1. Placez `index.html` et `planning-data.json` dans un dossier partagé (lecteur réseau, OneDrive ou SharePoint synchronisé…).
