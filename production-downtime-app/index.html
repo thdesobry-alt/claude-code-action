@@ -2606,8 +2606,14 @@
     }
     async function pickFile() {
       try {
-        var hs = await window.showOpenFilePicker({ multiple: false, types: [{ description: "Base des arrêts (JSON)", accept: { "application/json": [".json"] } }] });
-        if (hs && hs[0]) await connectFile(hs[0], true);
+        // id : le navigateur rouvre directement le dernier dossier utilisé (le dossier partagé)
+        var opts = { id: "arrets-base", multiple: false, types: [{ description: "Base des arrêts (JSON)", accept: { "application/json": [".json"] } }] };
+        if (storedHandle) opts.startIn = storedHandle;
+        var hs = await window.showOpenFilePicker(opts);
+        if (hs && hs[0]) {
+          if (hs[0].name !== BASE_FILE_NAME && !confirm("Le fichier choisi s'appelle « " + hs[0].name + " » et non « " + BASE_FILE_NAME + " ». L'utiliser quand même comme base commune ?")) return;
+          if (await connectFile(hs[0], true)) storedHandle = hs[0];
+        }
       } catch (e) {}
     }
     async function createFile() {
@@ -2635,9 +2641,12 @@
           '<button class="btn sm" data-file-open>Changer de fichier</button>';
         return;
       }
-      bar.innerHTML = '<span class="pill late">Base non connectée</span> Ouvrez le fichier de la base commune (JSON) enregistré dans le dossier partagé.' +
-        (fileStoredName ? ' <button class="btn sm primary" data-file-reconnect>Reconnecter « ' + esc(fileStoredName) + " »</button>" : "") +
-        ' <button class="btn sm' + (fileStoredName ? "" : " primary") + '" data-file-open>Ouvrir la base commune…</button>' +
+      bar.innerHTML = fileStoredName
+        ? '<span class="pill a">Base commune</span> <strong>' + esc(fileStoredName) + "</strong> : <strong>cliquez n'importe où dans la page</strong> pour la reconnecter (le navigateur demande l'accès une fois ; choisissez « Autoriser à chaque visite » pour que la connexion soit ensuite automatique)." +
+          ' <button class="btn sm primary" data-file-reconnect>Reconnecter</button> <button class="btn sm" data-file-open>Autre fichier…</button>'
+        : '<span class="pill late">Base non connectée</span> Première utilisation sur ce poste : ouvrez le fichier <strong>' + BASE_FILE_NAME + "</strong> situé dans le même dossier que cette page. Ce sera ensuite automatique." +
+          ' <button class="btn sm primary" data-file-open>Ouvrir ' + BASE_FILE_NAME + "…</button>";
+      bar.innerHTML +=
         (isAdmin() ? ' <button class="btn sm" data-file-create>Créer une nouvelle base…</button>' : "");
     }
     async function initFileBase() {
@@ -2649,9 +2658,18 @@
       fileStoredName = hd.name;
       storedHandle = hd;
       if (await ensurePerm(hd, false)) await connectFile(hd, false);
-      else renderFileBar();
+      else {
+        renderFileBar();
+        // reconnexion au premier clic dans la page (le navigateur exige un geste de l'utilisateur)
+        var once = function (e) {
+          if (fileHandle || (e.target.closest && e.target.closest("#fileBar"))) { if (fileHandle) document.removeEventListener("click", once, true); return; }
+          document.removeEventListener("click", once, true);
+          connectFile(hd, true);
+        };
+        document.addEventListener("click", once, true);
+      }
     }
-    var storedHandle = null;
+    var storedHandle = null, BASE_FILE_NAME = "arrets-production-base.json";
     function loadLocal() {
       try {
         var d = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null");
