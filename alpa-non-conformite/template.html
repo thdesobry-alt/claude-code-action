@@ -1,906 +1,1818 @@
 <!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Non-conformité ALPA</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-<style>
-  :root {
-    --bg: #e9ebef; --card: #ffffff; --text: #1d2330; --muted: #5f6b7a;
-    --border: #d5dae1; --accent: #1f5fae; --accent-text: #ffffff; --strike: #b42318;
-    --ink: rgb(10, 41, 107);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #14171c; --card: #1d2128; --text: #e6e9ee; --muted: #9aa4b2;
-      --border: #343a45; --accent: #5b9bf0; --accent-text: #0d1117; --strike: #f07167;
-    }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  .toolbar { position: sticky; top: 0; z-index: 10; background: var(--card); border-bottom: 1px solid var(--border);
-             padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .toolbar strong { margin-right: auto; }
-  .msgs { max-width: 1000px; margin: 8px auto 0; padding: 0 16px; min-height: 22px; font-size: 14px; }
-  #err { color: var(--strike); }
-  #status { color: var(--muted); }
-  button { font: inherit; border: 1px solid var(--border); background: var(--card); color: var(--text);
-           border-radius: 6px; padding: 6px 12px; cursor: pointer; }
-  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Non-conformité ALPA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+      :root {
+        --bg: #e9ebef;
+        --card: #ffffff;
+        --text: #1d2330;
+        --muted: #5f6b7a;
+        --border: #d5dae1;
+        --accent: #1f5fae;
+        --accent-text: #ffffff;
+        --strike: #b42318;
+        --ink: rgb(10, 41, 107);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #14171c;
+          --card: #1d2128;
+          --text: #e6e9ee;
+          --muted: #9aa4b2;
+          --border: #343a45;
+          --accent: #5b9bf0;
+          --accent-text: #0d1117;
+          --strike: #f07167;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.45 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .toolbar strong {
+        margin-right: auto;
+      }
+      .msgs {
+        max-width: 1000px;
+        margin: 8px auto 0;
+        padding: 0 16px;
+        min-height: 22px;
+        font-size: 14px;
+      }
+      #err {
+        color: var(--strike);
+      }
+      #status {
+        color: var(--muted);
+      }
+      button {
+        font: inherit;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        color: var(--accent-text);
+        border-color: var(--accent);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .hint {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 8px 0 0;
+      }
 
-  /* ---------- Page PDF éditable ---------- */
-  #viewport { margin: 8px auto 32px; position: relative; box-shadow: 0 2px 12px rgba(0,0,0,.18); background: #fff; }
-  #page { position: absolute; left: 0; top: 0; width: 595.2px; height: 841.68px; transform-origin: 0 0; }
-  #page > img.bg { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; pointer-events: none; }
-  #page svg.overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .f { position: absolute; border: 0; margin: 0; padding: 0; border-radius: 1px; outline: none;
-       font-family: Helvetica, Arial, sans-serif; color: var(--ink); background: rgba(255, 214, 0, .22); }
-  .f::placeholder { color: rgba(10, 41, 107, .3); }
-  .f:focus { background: rgba(31, 95, 174, .14); box-shadow: 0 0 0 .6px var(--accent); }
-  .f.bold { font-weight: bold; }
-  .f:disabled, .box:disabled { visibility: hidden; }
-  select.f { appearance: none; -webkit-appearance: none; cursor: pointer; text-indent: 0; }
-  select.f option { font-size: 14px; color: #000; background: #fff; }
-  .box { position: absolute; width: 9px; height: 9px; padding: 0; border: 0; border-radius: 1px;
-         background: rgba(255, 214, 0, .3); cursor: pointer; }
-  .box:focus { outline: none; box-shadow: 0 0 0 .8px var(--accent); background: rgba(31, 95, 174, .18); }
-  .box svg { display: none; width: 100%; height: 100%; }
-  .box[aria-pressed="true"] svg { display: block; }
-  .box[aria-pressed="true"] { background: transparent; }
-  .para-hit { position: absolute; background: rgba(255, 214, 0, .16); cursor: text; }
-  .para-hit.active { background: rgba(31, 95, 174, .10); }
-  .para-line { position: absolute; white-space: pre; color: var(--ink); font-family: Helvetica, Arial, sans-serif;
-               pointer-events: none; }
-  textarea.para-editor { position: absolute; left: 92px; top: 343px; width: 414px; height: 36px; z-index: 5;
-       font: 8px/1.3 Helvetica, Arial, sans-serif; color: #000; background: #fff; border: .6px solid var(--accent);
-       border-radius: 2px; padding: 2px 3px; resize: none; opacity: 0; pointer-events: none; outline: none; }
-  textarea.para-editor:focus { opacity: 1; pointer-events: auto; box-shadow: 0 1px 6px rgba(0,0,0,.25); }
-  .sig { position: absolute; pointer-events: none; }
-  .sig span { position: absolute; font: bold 8px Helvetica, Arial, sans-serif; color: var(--ink); }
-  .sig img { position: absolute; }
-  .legend { max-width: 1000px; margin: 0 auto; padding: 0 16px; font-size: 13px; color: var(--muted); }
-  .legend i { display: inline-block; width: 12px; height: 10px; vertical-align: -1px; background: rgba(255, 214, 0, .45); }
+      /* ---------- Page PDF éditable ---------- */
+      #viewport {
+        margin: 8px auto 32px;
+        position: relative;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+        background: #fff;
+      }
+      #page {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 595.2px;
+        height: 841.68px;
+        transform-origin: 0 0;
+      }
+      #page > img.bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        user-select: none;
+        pointer-events: none;
+      }
+      #page svg.overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .f {
+        position: absolute;
+        border: 0;
+        margin: 0;
+        padding: 0;
+        border-radius: 1px;
+        outline: none;
+        font-family: Helvetica, Arial, sans-serif;
+        color: var(--ink);
+        background: rgba(255, 214, 0, 0.22);
+      }
+      .f::placeholder {
+        color: rgba(10, 41, 107, 0.3);
+      }
+      .f:focus {
+        background: rgba(31, 95, 174, 0.14);
+        box-shadow: 0 0 0 0.6px var(--accent);
+      }
+      .f.bold {
+        font-weight: bold;
+      }
+      .f:disabled,
+      .box:disabled {
+        visibility: hidden;
+      }
+      select.f {
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        text-indent: 0;
+      }
+      select.f option {
+        font-size: 14px;
+        color: #000;
+        background: #fff;
+      }
+      .box {
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        padding: 0;
+        border: 0;
+        border-radius: 1px;
+        background: rgba(255, 214, 0, 0.3);
+        cursor: pointer;
+      }
+      .box:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.8px var(--accent);
+        background: rgba(31, 95, 174, 0.18);
+      }
+      .box svg {
+        display: none;
+        width: 100%;
+        height: 100%;
+      }
+      .box[aria-pressed="true"] svg {
+        display: block;
+      }
+      .box[aria-pressed="true"] {
+        background: transparent;
+      }
+      .para-hit {
+        position: absolute;
+        background: rgba(255, 214, 0, 0.16);
+        cursor: text;
+      }
+      .para-hit.active {
+        background: rgba(31, 95, 174, 0.1);
+      }
+      .para-line {
+        position: absolute;
+        white-space: pre;
+        color: var(--ink);
+        font-family: Helvetica, Arial, sans-serif;
+        pointer-events: none;
+      }
+      textarea.para-editor {
+        position: absolute;
+        left: 92px;
+        top: 343px;
+        width: 414px;
+        height: 36px;
+        z-index: 5;
+        font:
+          8px/1.3 Helvetica,
+          Arial,
+          sans-serif;
+        color: #000;
+        background: #fff;
+        border: 0.6px solid var(--accent);
+        border-radius: 2px;
+        padding: 2px 3px;
+        resize: none;
+        opacity: 0;
+        pointer-events: none;
+        outline: none;
+      }
+      textarea.para-editor:focus {
+        opacity: 1;
+        pointer-events: auto;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+      }
+      .sig {
+        position: absolute;
+        pointer-events: none;
+      }
+      .sig span {
+        position: absolute;
+        font:
+          bold 8px Helvetica,
+          Arial,
+          sans-serif;
+        color: var(--ink);
+      }
+      .sig img {
+        position: absolute;
+      }
+      .legend {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 16px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 12px;
+        height: 10px;
+        vertical-align: -1px;
+        background: rgba(255, 214, 0, 0.45);
+      }
 
-  /* ---------- Dialogues ---------- */
-  dialog { max-width: 720px; width: calc(100% - 32px); border: 1px solid var(--border); border-radius: 10px;
-           background: var(--card); color: var(--text); padding: 16px; }
-  dialog::backdrop { background: rgba(0,0,0,.4); }
-  dialog#previewDialog { max-width: 1000px; height: calc(100% - 32px); }
-  #preview { width: 100%; height: calc(100% - 52px); border: 1px solid var(--border); background: #fff; }
-  section.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-                 padding: 16px; margin-bottom: 16px; }
-  section.card h2 { font-size: 16px; margin: 0 0 12px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
-  dialog input, dialog select { font: inherit; color: var(--text); background: var(--bg);
-         border: 1px solid var(--border); border-radius: 6px; padding: 8px; width: 100%; }
-  .sigbox { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-  .sigbox canvas { background: #fff; border: 1px dashed var(--border); border-radius: 6px; touch-action: none;
-                   width: 100%; max-width: 420px; height: 160px; }
-  .sigpreview { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px;
-                min-width: 160px; min-height: 60px; }
-  .sigpreview img { max-width: 200px; max-height: 70px; display: block; }
-  .list-editor ul { list-style: none; padding: 0; margin: 0 0 8px; }
-  .list-editor li { display: flex; justify-content: space-between; align-items: center; gap: 8px;
-                    padding: 4px 0; border-bottom: 1px solid var(--border); }
-  .list-editor .row { display: flex; gap: 8px; }
-  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px;
-           border: 1px solid var(--border); color: var(--muted); }
-</style>
-</head>
-<body>
-<div class="toolbar">
-  <strong>Non-conformité AQA.QUAL.03</strong>
-  <button type="button" class="primary" id="btnDownload">Enregistrer le PDF</button>
-  <button type="button" id="btnShare">✉ Partager</button>
-  <button type="button" id="btnPreview">Aperçu PDF</button>
-  <button type="button" id="btnFolder">📂 Ouvrir le dossier d'enregistrement</button>
-  <button type="button" id="btnReset">Nouveau rapport</button>
-  <button type="button" id="openSettings">⚙ Paramètres</button>
-</div>
-<div class="msgs"><span id="err" role="alert"></span> <span id="status" role="status"></span></div>
-<p class="legend"><i></i> zones à compléter — <kbd>Tab</kbd> / <kbd>Maj+Tab</kbd> pour passer d'une zone à l'autre,
-  <kbd>Espace</kbd> pour cocher une case. Les parties 3 à 7 restent vides (service QSE).</p>
+      /* ---------- Dialogues ---------- */
+      dialog {
+        max-width: 720px;
+        width: calc(100% - 32px);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--card);
+        color: var(--text);
+        padding: 16px;
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.4);
+      }
+      dialog#previewDialog {
+        max-width: 1000px;
+        height: calc(100% - 32px);
+      }
+      dialog#pasteDialog {
+        max-width: 980px;
+      }
+      table.fdx {
+        border-collapse: collapse;
+        font-size: 13px;
+        width: 100%;
+      }
+      table.fdx th,
+      table.fdx td {
+        border-bottom: 1px solid var(--border);
+        padding: 4px 6px;
+        text-align: left;
+        white-space: nowrap;
+      }
+      table.fdx th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      #preview {
+        width: 100%;
+        height: calc(100% - 52px);
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+      section.card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      section.card h2 {
+        font-size: 16px;
+        margin: 0 0 12px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      dialog input,
+      dialog select {
+        font: inherit;
+        color: var(--text);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px;
+        width: 100%;
+      }
+      .sigbox {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .sigbox canvas {
+        background: #fff;
+        border: 1px dashed var(--border);
+        border-radius: 6px;
+        touch-action: none;
+        width: 100%;
+        max-width: 420px;
+        height: 160px;
+      }
+      .sigpreview {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px;
+        min-width: 160px;
+        min-height: 60px;
+      }
+      .sigpreview img {
+        max-width: 200px;
+        max-height: 70px;
+        display: block;
+      }
+      .list-editor ul {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 8px;
+      }
+      .list-editor li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .list-editor .row {
+        display: flex;
+        gap: 8px;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <strong>Non-conformité AQA.QUAL.03</strong>
+      <button type="button" class="primary" id="btnDownload">
+        Enregistrer le PDF
+      </button>
+      <button type="button" id="btnShare">✉ Partager</button>
+      <button type="button" id="btnPreview">Aperçu PDF</button>
+      <button type="button" id="btnFolder">
+        📂 Ouvrir le dossier d'enregistrement
+      </button>
+      <button type="button" id="btnPaste">📋 Coller des données</button>
+      <button type="button" id="btnReset">Nouveau rapport</button>
+      <button type="button" id="openSettings">⚙ Paramètres</button>
+    </div>
+    <div class="msgs">
+      <span id="err" role="alert"></span>
+      <span id="status" role="status"></span>
+    </div>
+    <p class="legend">
+      <i></i> zones à compléter — <kbd>Tab</kbd> / <kbd>Maj+Tab</kbd> pour
+      passer d'une zone à l'autre, <kbd>Espace</kbd> pour cocher une case. Les
+      parties 3 à 7 restent vides (service QSE).
+    </p>
 
-<div id="viewport"><div id="page">
-  <img class="bg" alt="Formulaire AQA.QUAL.03" src="data:image/png;base64,__BG_BASE64__">
-  <svg class="overlay" id="strikes" viewBox="0 0 595.2 841.68"></svg>
-</div></div>
-
-<dialog id="settings">
-  <h2 style="margin-top:0">Paramètres</h2>
-  <section class="card list-editor">
-    <h2>Rédacteurs</h2>
-    <ul id="listRedacteurs"></ul>
-    <div class="row"><input id="addRedacteur" placeholder="Nom"><button type="button" data-add="redacteurs">Ajouter</button></div>
-  </section>
-  <section class="card list-editor">
-    <h2>Chefs de poste</h2>
-    <ul id="listChefs"></ul>
-    <div class="row"><input id="addChef" placeholder="Nom"><button type="button" data-add="chefs">Ajouter</button></div>
-  </section>
-  <section class="card">
-    <h2>Signature</h2>
-    <label>Nom du titulaire de la signature (signe sans « PO » quand il est chef de poste)
-      <input id="ownerName">
-    </label>
-    <p class="hint">Dessinez votre signature ou importez une image (PNG/JPG, fond blanc).</p>
-    <div class="sigbox">
-      <canvas id="pad" width="840" height="320"></canvas>
-      <div>
-        <div class="sigpreview" id="sigPreview"></div>
-        <p class="hint">Aperçu « PO » :</p>
-        <div class="sigpreview" id="sigPreviewPO"></div>
+    <div id="viewport">
+      <div id="page">
+        <img
+          class="bg"
+          alt="Formulaire AQA.QUAL.03"
+          src="data:image/png;base64,__BG_BASE64__"
+        />
+        <svg class="overlay" id="strikes" viewBox="0 0 595.2 841.68"></svg>
       </div>
     </div>
-    <div class="actions" style="margin-top:8px">
-      <button type="button" id="padClear">Effacer</button>
-      <button type="button" id="padSave" class="primary">Enregistrer le dessin</button>
-      <label style="flex-direction:row;align-items:center"><span class="badge">Importer</span>
-        <input type="file" id="sigFile" accept="image/*" style="width:auto"></label>
-    </div>
-  </section>
-  <section class="card">
-    <h2>Dossier d'enregistrement</h2>
-    <p>Dossier actuel : <strong id="folderName">aucun (téléchargements du navigateur)</strong></p>
-    <div class="actions">
-      <button type="button" id="pickFolder" class="primary">Choisir le dossier…</button>
-      <button type="button" id="clearFolder">Ne plus utiliser de dossier</button>
-    </div>
-    <p class="hint" id="folderHint">Les PDF sont enregistrés directement dans ce dossier (Chrome ou Edge).
-      Le navigateur peut redemander l'autorisation d'accès au premier enregistrement de la session.</p>
-  </section>
-  <section class="card">
-    <h2>Partage par mail</h2>
-    <div class="grid">
-      <label>Destinataires (séparés par des virgules, facultatif)
-        <input id="mailTo" placeholder="qse@exemple.fr, rqse@exemple.fr">
-      </label>
-      <label>Méthode
-        <select id="shareMode">
-          <option value="eml">Brouillon Outlook (fichier .eml)</option>
-          <option value="system">Partage Windows / téléphone</option>
-        </select>
-      </label>
-    </div>
-    <p class="hint">« Brouillon Outlook » télécharge un mail prêt à envoyer (objet + PDF joint) :
-      cliquez dessus pour l'ouvrir dans Outlook. « Partage » ouvre le menu de partage du système.</p>
-  </section>
-  <div class="actions" style="justify-content:flex-end">
-    <button type="button" id="closeSettings" class="primary">Fermer</button>
-  </div>
-</dialog>
 
-<dialog id="folderDialog">
-  <h2 style="margin-top:0">📂 <span id="folderTitle"></span></h2>
-  <div class="list-editor"><ul id="folderFiles"></ul></div>
-  <div class="actions" style="justify-content:flex-end">
-    <button type="button" id="closeFolder" class="primary">Fermer</button>
-  </div>
-</dialog>
+    <dialog id="settings">
+      <h2 style="margin-top: 0">Paramètres</h2>
+      <section class="card list-editor">
+        <h2>Rédacteurs</h2>
+        <ul id="listRedacteurs"></ul>
+        <div class="row">
+          <input id="addRedacteur" placeholder="Nom" /><button
+            type="button"
+            data-add="redacteurs"
+          >
+            Ajouter
+          </button>
+        </div>
+      </section>
+      <section class="card list-editor">
+        <h2>Chefs de poste</h2>
+        <ul id="listChefs"></ul>
+        <div class="row">
+          <input id="addChef" placeholder="Nom" /><button
+            type="button"
+            data-add="chefs"
+          >
+            Ajouter
+          </button>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Signature</h2>
+        <label
+          >Nom du titulaire de la signature (signe sans « PO » quand il est chef
+          de poste)
+          <input id="ownerName" />
+        </label>
+        <p class="hint">
+          Dessinez votre signature ou importez une image (PNG/JPG, fond blanc).
+        </p>
+        <div class="sigbox">
+          <canvas id="pad" width="840" height="320"></canvas>
+          <div>
+            <div class="sigpreview" id="sigPreview"></div>
+            <p class="hint">Aperçu « PO » :</p>
+            <div class="sigpreview" id="sigPreviewPO"></div>
+          </div>
+        </div>
+        <div class="actions" style="margin-top: 8px">
+          <button type="button" id="padClear">Effacer</button>
+          <button type="button" id="padSave" class="primary">
+            Enregistrer le dessin
+          </button>
+          <label style="flex-direction: row; align-items: center"
+            ><span class="badge">Importer</span>
+            <input
+              type="file"
+              id="sigFile"
+              accept="image/*"
+              style="width: auto"
+          /></label>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Dossier d'enregistrement</h2>
+        <p>
+          Dossier actuel :
+          <strong id="folderName">aucun (téléchargements du navigateur)</strong>
+        </p>
+        <div class="actions">
+          <button type="button" id="pickFolder" class="primary">
+            Choisir le dossier…
+          </button>
+          <button type="button" id="clearFolder">
+            Ne plus utiliser de dossier
+          </button>
+        </div>
+        <p class="hint" id="folderHint">
+          Les PDF sont enregistrés directement dans ce dossier (Chrome ou Edge).
+          Le navigateur peut redemander l'autorisation d'accès au premier
+          enregistrement de la session.
+        </p>
+      </section>
+      <section class="card">
+        <h2>Partage par mail</h2>
+        <div class="grid">
+          <label
+            >Destinataires (séparés par des virgules, facultatif)
+            <input id="mailTo" placeholder="qse@exemple.fr, rqse@exemple.fr" />
+          </label>
+          <label
+            >Méthode
+            <select id="shareMode">
+              <option value="eml">Brouillon Outlook (fichier .eml)</option>
+              <option value="system">Partage Windows / téléphone</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint">
+          « Brouillon Outlook » télécharge un mail prêt à envoyer (objet + PDF
+          joint) : cliquez dessus pour l'ouvrir dans Outlook. « Partage » ouvre
+          le menu de partage du système.
+        </p>
+      </section>
+      <div class="actions" style="justify-content: flex-end">
+        <button type="button" id="closeSettings" class="primary">Fermer</button>
+      </div>
+    </dialog>
 
-<dialog id="previewDialog">
-  <iframe id="preview" title="Aperçu du PDF"></iframe>
-  <div class="actions" style="justify-content:flex-end;margin-top:8px">
-    <button type="button" id="closePreview" class="primary">Fermer</button>
-  </div>
-</dialog>
+    <dialog id="folderDialog">
+      <h2 style="margin-top: 0">📂 <span id="folderTitle"></span></h2>
+      <div class="list-editor"><ul id="folderFiles"></ul></div>
+      <div class="actions" style="justify-content: flex-end">
+        <button type="button" id="closeFolder" class="primary">Fermer</button>
+      </div>
+    </dialog>
 
-<script id="pdf-template" type="text/plain">__PDF_BASE64__</script>
-<script>
-"use strict";
+    <dialog id="pasteDialog">
+      <h2 style="margin-top: 0">📋 Coller des données fardeau</h2>
+      <p class="hint" style="margin-top: 0">
+        Collez l'en-tête « Jour … » et une ou plusieurs lignes, ou une seule
+        ligne du type :<br />
+        <code
+          >06 5198852 10 16,00 12,000 211 B 235 C 2050 30574 15:00:00 1</code
+        >
+      </p>
+      <textarea
+        id="pasteText"
+        rows="6"
+        spellcheck="false"
+        style="
+          width: 100%;
+          font:
+            13px/1.4 ui-monospace,
+            Consolas,
+            monospace;
+          padding: 8px;
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          background: var(--bg);
+          color: var(--text);
+        "
+      ></textarea>
+      <div id="pasteResult" style="overflow-x: auto; margin-top: 8px"></div>
+      <div class="actions" style="justify-content: flex-end; margin-top: 8px">
+        <button type="button" id="closePaste">Fermer</button>
+      </div>
+    </dialog>
 
-// ---------- Stockage local (paramètres par poste de travail) ----------
-const STORE_KEY = "alpa-nc-settings-v1";
-const DEFAULTS = {
-  redacteurs: ["DESOBRY"],
-  chefs: ["DESOBRY"],
-  ownerName: "DESOBRY",
-  signature: null, // data URL PNG, fond transparent
-  mailTo: "",
-  shareMode: "eml",
-};
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return Object.assign({}, DEFAULTS, JSON.parse(raw));
-  } catch (e) { /* stockage indisponible */ }
-  return structuredClone(DEFAULTS);
-}
-function saveSettings() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
-}
-let settings = loadSettings();
-const $ = (s) => document.querySelector(s);
+    <dialog id="previewDialog">
+      <iframe id="preview" title="Aperçu du PDF"></iframe>
+      <div class="actions" style="justify-content: flex-end; margin-top: 8px">
+        <button type="button" id="closePreview" class="primary">Fermer</button>
+      </div>
+    </dialog>
 
-// ---------- Description des zones du formulaire ----------
-// Coordonnées en points PDF, origine en haut à gauche ; y = ligne de base du texte.
-// L'ordre du tableau est l'ordre de la touche Tab.
-const PAGE_W = 595.2, PAGE_H = 841.68;
-const INK = [0.04, 0.16, 0.42];
-const FIELDS = [
-  { k: "origine", t: "radio", opts: [["acierie", 116.9, 68.6], ["laminoir", 116.9, 80.5], ["expedition", 116.9, 92.4]] },
-  { k: "equipe", t: "select", list: () => ["A", "B", "C", "D"], x: 300, y: 71, w: 70, s: 10, b: true },
-  { k: "date", t: "date", xs: [458, 477, 498.5], y: 71 },
-  { k: "redacteur", t: "select", list: () => settings.redacteurs, x: 426, y: 95, w: 94 },
-  // 1.1 Billettes
-  { k: "b_long", sec: "11", t: "text", x: 111, y: 148, w: 82, def: "10.5 m" },
-  { k: "b_qual", sec: "11", t: "select", list: () => ["200S", "200SG", "240S", "160S"], x: 224, y: 148, w: 60 },
-  { k: "b_coulee", sec: "11", t: "text", x: 146, y: 168, w: 130 },
-  { k: "b_nombre", sec: "11", t: "text", x: 160, y: 198.5, w: 52 },
-  { k: "b_poids", sec: "11", t: "text", x: 240, y: 198.5, w: 44 },
-  { k: "b_lieu", sec: "11", t: "text", x: 160, y: 215, w: 124 },
-  { k: "b_datefab", sec: "11", t: "date", xs: [166, 197, 226], y: 231 },
-  { k: "b_identifie", sec: "11", t: "radio", opts: [["oui", 184.8, 244.4], ["non", 224.2, 244.4]] },
-  // 1.2 Ronds
-  { k: "r_diam", sec: "12", t: "text", x: 323, y: 148, w: 35 },
-  { k: "r_long", sec: "12", t: "text", x: 388, y: 148, w: 50 },
-  { k: "r_qual", sec: "12", t: "text", x: 469, y: 148, w: 50 },
-  { k: "r_coulee", sec: "12", t: "text", x: 381, y: 168, w: 95 },
-  { k: "r_fardeau", sec: "12", t: "text", x: 381, y: 182.5, w: 95 },
-  { k: "r_quantite", sec: "12", t: "text", x: 398, y: 198.5, w: 42 },
-  { k: "r_nbfardeaux", sec: "12", t: "text", x: 496, y: 198.5, w: 24 },
-  { k: "r_lieu", sec: "12", t: "text", x: 398, y: 215, w: 108 },
-  { k: "r_datefab", sec: "12", t: "date", xs: [384, 414, 441], y: 231 },
-  { k: "r_rose", sec: "12", t: "radio", opts: [["oui", 432.2, 244.4], ["non", 466.0, 244.4]] },
-  // 2. Défaut constaté
-  { k: "defaut", t: "para", lines: [{ x: 236, y: 272, w: 270 }, { x: 94, y: 283.5, w: 412 }] },
-  { k: "analyse", t: "para", lines: [{ x: 284, y: 295.5, w: 222 }, { x: 94, y: 307, w: 412 }, { x: 94, y: 318, w: 412 }] },
-  { k: "chef", t: "select", list: () => settings.chefs, x: 178, y: 329, w: 105, b: true },
-];
-const DATE_W = [14, 14, 22];
-const SIG_BOX = { x: 362, top: 320, w: 140, h: 22 }; // à droite de « Visa chef de poste : »
-const STRIKE = { "11": [73, 118, 289, 253], "12": [292, 118, 521, 253] };
+    <script id="pdf-template" type="text/plain">
+      __PDF_BASE64__
+    </script>
+    <script>
+      "use strict";
 
-// ---------- Mise en page commune écran / PDF ----------
-// Les largeurs de texte viennent des métriques Helvetica de pdf-lib : l'écran et le PDF
-// coupent et réduisent le texte exactement de la même façon.
-let FONT = null, BOLD = null;
-async function initMetrics() {
-  const { PDFDocument, StandardFonts } = PDFLib;
-  const d = await PDFDocument.create();
-  FONT = await d.embedFont(StandardFonts.Helvetica);
-  BOLD = await d.embedFont(StandardFonts.HelveticaBold);
-}
-// Remplace les caractères absents de l'encodage WinAnsi des polices standard
-function safe(s) {
-  return (s || "").replace(/[’‘]/g, "'").replace(/[“”«»]/g, '"').replace(/[–—]/g, "-")
-    .replace(/ /g, " ").replace(/[^\x20-\x7e -ÿŒœ€]/g, "?");
-}
-function fitSize(str, maxW, size = 9, bold = false) {
-  const f = bold ? BOLD : FONT;
-  str = safe(str).trim();
-  while (size > 5 && f.widthOfTextAtSize(str, size) > maxW) size -= 0.25;
-  return size;
-}
-function wrap(str, lines, size, force) {
-  const out = lines.map(() => "");
-  let li = 0;
-  for (const w of str.split(" ")) {
-    const cand = out[li] ? out[li] + " " + w : w;
-    if (FONT.widthOfTextAtSize(cand, size) <= lines[li].w) { out[li] = cand; continue; }
-    if (li + 1 >= lines.length) { if (!force) return null; out[li] = cand; continue; }
-    li++; out[li] = w;
-  }
-  return out;
-}
-function layoutPara(str, lines) {
-  str = safe(str).replace(/\s+/g, " ").trim();
-  if (!str) return { size: 9, out: lines.map(() => "") };
-  for (let size = 9; size >= 5; size -= 0.25) {
-    const out = wrap(str, lines, size, false);
-    if (out) return { size, out };
-  }
-  return { size: 5, out: wrap(str, lines, 5, true) };
-}
-// Position d'une ligne de texte HTML pour que sa ligne de base tombe sur y
-function placeText(el, x, y, w, size) {
-  Object.assign(el.style, {
-    left: x + "px", top: (y - 0.946 * size) + "px", width: w + "px",
-    height: (1.2 * size) + "px", fontSize: size + "px", lineHeight: (1.2 * size) + "px",
-  });
-}
-const svgNS = "http://www.w3.org/2000/svg";
-function crossSvg() {
-  const s = document.createElementNS(svgNS, "svg");
-  s.setAttribute("viewBox", "0 0 9 9");
-  s.innerHTML = '<path d="M1.3 1.3 L7.7 7.7 M1.3 7.7 L7.7 1.3" stroke="rgb(10,41,107)" stroke-width="1.3"/>';
-  return s;
-}
+      // ---------- Stockage local (paramètres par poste de travail) ----------
+      const STORE_KEY = "alpa-nc-settings-v1";
+      const DEFAULTS = {
+        redacteurs: ["DESOBRY"],
+        chefs: ["DESOBRY"],
+        ownerName: "DESOBRY",
+        signature: null, // data URL PNG, fond transparent
+        mailTo: "",
+        shareMode: "eml",
+      };
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          if (raw) return Object.assign({}, DEFAULTS, JSON.parse(raw));
+        } catch (e) {
+          /* stockage indisponible */
+        }
+        return structuredClone(DEFAULTS);
+      }
+      function saveSettings() {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(settings));
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      let settings = loadSettings();
+      const $ = (s) => document.querySelector(s);
 
-// ---------- Construction de la page éditable ----------
-const page = $("#page");
-const ui = {}; // k -> { get(), set(v), els[] }
+      // ---------- Description des zones du formulaire ----------
+      // Coordonnées en points PDF, origine en haut à gauche ; y = ligne de base du texte.
+      // L'ordre du tableau est l'ordre de la touche Tab.
+      const PAGE_W = 595.2,
+        PAGE_H = 841.68;
+      const INK = [0.04, 0.16, 0.42];
+      const FIELDS = [
+        {
+          k: "origine",
+          t: "radio",
+          opts: [
+            ["acierie", 116.9, 68.6],
+            ["laminoir", 116.9, 80.5],
+            ["expedition", 116.9, 92.4],
+          ],
+        },
+        {
+          k: "equipe",
+          t: "select",
+          list: () => ["A", "B", "C", "D"],
+          x: 300,
+          y: 71,
+          w: 70,
+          s: 10,
+          b: true,
+        },
+        { k: "date", t: "date", xs: [458, 477, 498.5], y: 71 },
+        {
+          k: "redacteur",
+          t: "select",
+          list: () => settings.redacteurs,
+          x: 426,
+          y: 95,
+          w: 94,
+        },
+        // 1.1 Billettes
+        {
+          k: "b_long",
+          sec: "11",
+          t: "text",
+          x: 111,
+          y: 148,
+          w: 82,
+          def: "10.5 m",
+        },
+        {
+          k: "b_qual",
+          sec: "11",
+          t: "select",
+          list: () => ["200S", "200SG", "240S", "160S"],
+          x: 224,
+          y: 148,
+          w: 60,
+        },
+        { k: "b_coulee", sec: "11", t: "text", x: 146, y: 168, w: 130 },
+        { k: "b_nombre", sec: "11", t: "text", x: 160, y: 198.5, w: 52 },
+        { k: "b_poids", sec: "11", t: "text", x: 240, y: 198.5, w: 44 },
+        { k: "b_lieu", sec: "11", t: "text", x: 160, y: 215, w: 124 },
+        { k: "b_datefab", sec: "11", t: "date", xs: [166, 197, 226], y: 231 },
+        {
+          k: "b_identifie",
+          sec: "11",
+          t: "radio",
+          opts: [
+            ["oui", 184.8, 244.4],
+            ["non", 224.2, 244.4],
+          ],
+        },
+        // 1.2 Ronds
+        { k: "r_diam", sec: "12", t: "text", x: 323, y: 148, w: 35 },
+        { k: "r_long", sec: "12", t: "text", x: 388, y: 148, w: 50 },
+        { k: "r_qual", sec: "12", t: "text", x: 469, y: 148, w: 50 },
+        { k: "r_coulee", sec: "12", t: "text", x: 381, y: 168, w: 95 },
+        { k: "r_fardeau", sec: "12", t: "text", x: 381, y: 182.5, w: 95 },
+        { k: "r_quantite", sec: "12", t: "text", x: 398, y: 198.5, w: 42 },
+        { k: "r_nbfardeaux", sec: "12", t: "text", x: 496, y: 198.5, w: 24 },
+        {
+          k: "r_lieu",
+          sec: "12",
+          t: "text",
+          x: 398,
+          y: 215,
+          w: 108,
+          def: "Zone NC",
+        },
+        { k: "r_datefab", sec: "12", t: "date", xs: [384, 414, 441], y: 231 },
+        {
+          k: "r_rose",
+          sec: "12",
+          t: "radio",
+          opts: [
+            ["oui", 432.2, 244.4],
+            ["non", 466.0, 244.4],
+          ],
+          def: "non",
+        },
+        // 2. Défaut constaté
+        {
+          k: "defaut",
+          t: "para",
+          lines: [
+            { x: 236, y: 272, w: 270 },
+            { x: 94, y: 283.5, w: 412 },
+          ],
+        },
+        {
+          k: "analyse",
+          t: "para",
+          lines: [
+            { x: 284, y: 295.5, w: 222 },
+            { x: 94, y: 307, w: 412 },
+            { x: 94, y: 318, w: 412 },
+          ],
+        },
+        {
+          k: "chef",
+          t: "select",
+          list: () => settings.chefs,
+          x: 178,
+          y: 329,
+          w: 105,
+          b: true,
+        },
+      ];
+      const DATE_W = [14, 14, 22];
+      const SIG_BOX = { x: 362, top: 320, w: 140, h: 22 }; // à droite de « Visa chef de poste : »
+      const STRIKE = { 11: [73, 118, 289, 253], 12: [292, 118, 521, 253] };
 
-function buildPage() {
-  for (const f of FIELDS) {
-    if (f.t === "text" || f.t === "select") {
-      const el = document.createElement(f.t === "text" ? "input" : "select");
-      el.className = "f" + (f.b ? " bold" : "");
-      el.name = f.k; el.autocomplete = "off";
-      el.setAttribute("aria-label", f.k);
-      const refit = () => placeText(el, f.x, f.y, f.w, fitSize(el.value, f.w, f.s || 9, f.b));
-      el.addEventListener("input", refit);
-      el.addEventListener("change", refit);
-      page.appendChild(el);
-      ui[f.k] = { els: [el], get: () => el.value, set: (v) => { el.value = v || ""; refit(); }, refit };
-      if (f.t === "select") fillOptions(f);
-      refit();
-    } else if (f.t === "date") {
-      const ph = ["jj", "mm", "aaaa"];
-      const els = f.xs.map((x, i) => {
-        const el = document.createElement("input");
-        el.className = "f"; el.name = f.k + "_" + ph[i]; el.inputMode = "numeric";
-        el.maxLength = i === 2 ? 4 : 2; el.placeholder = ph[i]; el.autocomplete = "off";
-        el.setAttribute("aria-label", f.k + " " + ph[i]);
-        placeText(el, x - 1, f.y, DATE_W[i], 9);
-        el.addEventListener("focus", () => el.select()); // la frappe remplace la valeur
-        el.addEventListener("input", () => {
-          el.value = el.value.replace(/\D/g, "");
-          if (el.value.length === el.maxLength) focusNext(el);
+      // ---------- Mise en page commune écran / PDF ----------
+      // Les largeurs de texte viennent des métriques Helvetica de pdf-lib : l'écran et le PDF
+      // coupent et réduisent le texte exactement de la même façon.
+      let FONT = null,
+        BOLD = null;
+      async function initMetrics() {
+        const { PDFDocument, StandardFonts } = PDFLib;
+        const d = await PDFDocument.create();
+        FONT = await d.embedFont(StandardFonts.Helvetica);
+        BOLD = await d.embedFont(StandardFonts.HelveticaBold);
+      }
+      // Remplace les caractères absents de l'encodage WinAnsi des polices standard
+      function safe(s) {
+        return (s || "")
+          .replace(/[’‘]/g, "'")
+          .replace(/[“”«»]/g, '"')
+          .replace(/[–—]/g, "-")
+          .replace(/ /g, " ")
+          .replace(/[^\x20-\x7e -ÿŒœ€]/g, "?");
+      }
+      function fitSize(str, maxW, size = 9, bold = false) {
+        const f = bold ? BOLD : FONT;
+        str = safe(str).trim();
+        while (size > 5 && f.widthOfTextAtSize(str, size) > maxW) size -= 0.25;
+        return size;
+      }
+      function wrap(str, lines, size, force) {
+        const out = lines.map(() => "");
+        let li = 0;
+        for (const w of str.split(" ")) {
+          const cand = out[li] ? out[li] + " " + w : w;
+          if (FONT.widthOfTextAtSize(cand, size) <= lines[li].w) {
+            out[li] = cand;
+            continue;
+          }
+          if (li + 1 >= lines.length) {
+            if (!force) return null;
+            out[li] = cand;
+            continue;
+          }
+          li++;
+          out[li] = w;
+        }
+        return out;
+      }
+      function layoutPara(str, lines) {
+        str = safe(str).replace(/\s+/g, " ").trim();
+        if (!str) return { size: 9, out: lines.map(() => "") };
+        for (let size = 9; size >= 5; size -= 0.25) {
+          const out = wrap(str, lines, size, false);
+          if (out) return { size, out };
+        }
+        return { size: 5, out: wrap(str, lines, 5, true) };
+      }
+      // Position d'une ligne de texte HTML pour que sa ligne de base tombe sur y
+      function placeText(el, x, y, w, size) {
+        Object.assign(el.style, {
+          left: x + "px",
+          top: y - 0.946 * size + "px",
+          width: w + "px",
+          height: 1.2 * size + "px",
+          fontSize: size + "px",
+          lineHeight: 1.2 * size + "px",
         });
-        page.appendChild(el);
-        return el;
-      });
-      ui[f.k] = {
-        els,
-        get: () => {
-          const [d, m, y] = els.map((e) => e.value);
-          if (!d || !m || !y) return "";
-          const yy = y.length === 2 ? "20" + y : y;
-          return `${yy}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-        },
-        set: (iso) => {
-          const [y, m, d] = (iso || "--").split("-");
-          els[0].value = d || ""; els[1].value = m || ""; els[2].value = y || "";
-        },
-      };
-    } else if (f.t === "radio") {
-      let value = "";
-      const els = f.opts.map(([val, cx, cy]) => {
-        const el = document.createElement("button");
-        el.type = "button"; el.className = "box";
-        el.style.left = (cx - 4.5) + "px"; el.style.top = (cy - 4.5) + "px";
-        el.setAttribute("aria-pressed", "false");
-        el.setAttribute("aria-label", f.k + " " + val);
-        el.appendChild(crossSvg());
-        el.addEventListener("click", () => { set(value === val ? "" : val); onChange(f.k); });
-        page.appendChild(el);
-        return el;
-      });
-      const set = (v) => {
-        value = v || "";
-        f.opts.forEach(([val], i) => els[i].setAttribute("aria-pressed", String(val === value)));
-      };
-      ui[f.k] = { els, get: () => value, set };
-    } else if (f.t === "para") {
-      const xs = f.lines.map((l) => l.x), ys = f.lines.map((l) => l.y);
-      const hit = document.createElement("div");
-      hit.className = "para-hit";
-      Object.assign(hit.style, {
-        left: Math.min(...xs) + "px", top: (Math.min(...ys) - 9) + "px",
-        width: (Math.max(...f.lines.map((l) => l.x + l.w)) - Math.min(...xs)) + "px",
-        height: (Math.max(...ys) - Math.min(...ys) + 11) + "px",
-        clipPath: paraClip(f.lines),
-      });
-      const lineEls = f.lines.map(() => {
-        const s = document.createElement("div");
-        s.className = "para-line";
-        page.appendChild(s);
+      }
+      const svgNS = "http://www.w3.org/2000/svg";
+      function crossSvg() {
+        const s = document.createElementNS(svgNS, "svg");
+        s.setAttribute("viewBox", "0 0 9 9");
+        s.innerHTML =
+          '<path d="M1.3 1.3 L7.7 7.7 M1.3 7.7 L7.7 1.3" stroke="rgb(10,41,107)" stroke-width="1.3"/>';
         return s;
+      }
+
+      // ---------- Construction de la page éditable ----------
+      const page = $("#page");
+      const ui = {}; // k -> { get(), set(v), els[] }
+
+      function buildPage() {
+        for (const f of FIELDS) {
+          if (f.t === "text" || f.t === "select") {
+            const el = document.createElement(
+              f.t === "text" ? "input" : "select",
+            );
+            el.className = "f" + (f.b ? " bold" : "");
+            el.name = f.k;
+            el.autocomplete = "off";
+            el.setAttribute("aria-label", f.k);
+            const refit = () =>
+              placeText(
+                el,
+                f.x,
+                f.y,
+                f.w,
+                fitSize(el.value, f.w, f.s || 9, f.b),
+              );
+            el.addEventListener("input", refit);
+            el.addEventListener("change", refit);
+            page.appendChild(el);
+            ui[f.k] = {
+              els: [el],
+              get: () => el.value,
+              set: (v) => {
+                el.value = v || "";
+                refit();
+              },
+              refit,
+            };
+            if (f.t === "select") fillOptions(f);
+            refit();
+          } else if (f.t === "date") {
+            const ph = ["jj", "mm", "aaaa"];
+            const els = f.xs.map((x, i) => {
+              const el = document.createElement("input");
+              el.className = "f";
+              el.name = f.k + "_" + ph[i];
+              el.inputMode = "numeric";
+              el.maxLength = i === 2 ? 4 : 2;
+              el.placeholder = ph[i];
+              el.autocomplete = "off";
+              el.setAttribute("aria-label", f.k + " " + ph[i]);
+              placeText(el, x - 1, f.y, DATE_W[i], 9);
+              el.addEventListener("focus", () => el.select()); // la frappe remplace la valeur
+              el.addEventListener("input", () => {
+                el.value = el.value.replace(/\D/g, "");
+                if (el.value.length === el.maxLength) focusNext(el);
+              });
+              page.appendChild(el);
+              return el;
+            });
+            ui[f.k] = {
+              els,
+              get: () => {
+                const [d, m, y] = els.map((e) => e.value);
+                if (!d || !m || !y) return "";
+                const yy = y.length === 2 ? "20" + y : y;
+                return `${yy}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+              },
+              set: (iso) => {
+                const [y, m, d] = (iso || "--").split("-");
+                els[0].value = d || "";
+                els[1].value = m || "";
+                els[2].value = y || "";
+              },
+            };
+          } else if (f.t === "radio") {
+            let value = "";
+            const els = f.opts.map(([val, cx, cy]) => {
+              const el = document.createElement("button");
+              el.type = "button";
+              el.className = "box";
+              el.style.left = cx - 4.5 + "px";
+              el.style.top = cy - 4.5 + "px";
+              el.setAttribute("aria-pressed", "false");
+              el.setAttribute("aria-label", f.k + " " + val);
+              el.appendChild(crossSvg());
+              el.addEventListener("click", () => {
+                set(value === val ? "" : val);
+                onChange(f.k);
+              });
+              page.appendChild(el);
+              return el;
+            });
+            const set = (v) => {
+              value = v || "";
+              f.opts.forEach(([val], i) =>
+                els[i].setAttribute("aria-pressed", String(val === value)),
+              );
+            };
+            ui[f.k] = { els, get: () => value, set };
+          } else if (f.t === "para") {
+            const xs = f.lines.map((l) => l.x),
+              ys = f.lines.map((l) => l.y);
+            const hit = document.createElement("div");
+            hit.className = "para-hit";
+            Object.assign(hit.style, {
+              left: Math.min(...xs) + "px",
+              top: Math.min(...ys) - 9 + "px",
+              width:
+                Math.max(...f.lines.map((l) => l.x + l.w)) -
+                Math.min(...xs) +
+                "px",
+              height: Math.max(...ys) - Math.min(...ys) + 11 + "px",
+              clipPath: paraClip(f.lines),
+            });
+            const lineEls = f.lines.map(() => {
+              const s = document.createElement("div");
+              s.className = "para-line";
+              page.appendChild(s);
+              return s;
+            });
+            const ta = document.createElement("textarea");
+            ta.className = "para-editor";
+            ta.name = f.k;
+            ta.setAttribute("aria-label", f.k);
+            ta.placeholder =
+              f.k === "defaut"
+                ? "Défaut constaté…"
+                : "1ère analyse par le chef de poste…";
+            hit.addEventListener("mousedown", (e) => {
+              e.preventDefault();
+              ta.focus();
+            });
+            ta.addEventListener("focus", () => hit.classList.add("active"));
+            ta.addEventListener("blur", () => hit.classList.remove("active"));
+            const render = () => {
+              const { size, out } = layoutPara(ta.value, f.lines);
+              f.lines.forEach((l, i) => {
+                placeText(lineEls[i], l.x, l.y, l.w, size);
+                lineEls[i].textContent = out[i];
+              });
+            };
+            ta.addEventListener("input", render);
+            page.insertBefore(hit, lineEls[0]);
+            page.appendChild(ta);
+            ui[f.k] = {
+              els: [ta],
+              get: () => ta.value,
+              set: (v) => {
+                ta.value = v || "";
+                render();
+              },
+            };
+            render();
+          }
+        }
+        // Visa chef de poste (calculé, non saisi)
+        const sig = document.createElement("div");
+        sig.className = "sig";
+        sig.id = "sig";
+        page.appendChild(sig);
+        page.addEventListener("change", (e) => onChange(e.target.name));
+        page.addEventListener("input", (e) => onChange(e.target.name));
+      }
+      // Zone cliquable d'un paragraphe : uniquement les lignes pointillées
+      function paraClip(lines) {
+        const x0 = Math.min(...lines.map((l) => l.x)),
+          y0 = Math.min(...lines.map((l) => l.y)) - 9;
+        const rects = lines
+          .map((l) => `M${l.x - x0} ${l.y - 9 - y0} h${l.w} v11 h${-l.w} Z`)
+          .join(" ");
+        return `path('${rects}')`;
+      }
+      function fillOptions(f) {
+        const el = ui[f.k].els[0];
+        const cur = el.value;
+        el.innerHTML =
+          '<option value=""></option>' +
+          f
+            .list()
+            .map((n) => `<option>${escapeHtml(n)}</option>`)
+            .join("");
+        el.value = f.list().includes(cur) ? cur : "";
+        ui[f.k].refit();
+      }
+      function escapeHtml(s) {
+        return s.replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      }
+      function focusables() {
+        return [
+          ...page.querySelectorAll("input, select, textarea, button"),
+        ].filter((e) => !e.disabled);
+      }
+      function focusNext(el) {
+        const list = focusables();
+        const i = list.indexOf(el);
+        if (i >= 0 && list[i + 1]) list[i + 1].focus();
+      }
+
+      // Partie barrée : 1.2 si Aciérie, 1.1 si Laminoir ou Expédition
+      function barredSection() {
+        const o = ui.origine.get();
+        return o === "acierie"
+          ? "12"
+          : o === "laminoir" || o === "expedition"
+            ? "11"
+            : null;
+      }
+      function onChange(name) {
+        if (name === "origine") updateSections();
+        if (name === "chef") updateSig();
+        $("#err").textContent = "";
+      }
+      function updateSections() {
+        const barred = barredSection();
+        for (const f of FIELDS)
+          if (f.sec)
+            ui[f.k].els.forEach((e) => {
+              e.disabled = f.sec === barred;
+            });
+        const svg = $("#strikes");
+        svg.innerHTML = "";
+        if (barred) {
+          const [x0, y0, x1, y1] = STRIKE[barred];
+          svg.innerHTML = `<path d="M${x0} ${y0} L${x1} ${y1} M${x0} ${y1} L${x1} ${y0}" stroke="#000" stroke-width="1.5"/>`;
+        }
+      }
+
+      // ---------- Listes configurables ----------
+      function renderLists() {
+        for (const f of FIELDS)
+          if (f.k === "redacteur" || f.k === "chef") fillOptions(f);
+        for (const [key, ul] of [
+          ["redacteurs", $("#listRedacteurs")],
+          ["chefs", $("#listChefs")],
+        ]) {
+          ul.innerHTML = "";
+          settings[key].forEach((name, i) => {
+            const li = document.createElement("li");
+            li.textContent = name;
+            const del = document.createElement("button");
+            del.type = "button";
+            del.textContent = "Supprimer";
+            del.onclick = () => {
+              settings[key].splice(i, 1);
+              saveSettings();
+              renderLists();
+            };
+            li.appendChild(del);
+            ul.appendChild(li);
+          });
+        }
+        updateSig();
+      }
+      document.querySelectorAll("[data-add]").forEach((btn) => {
+        btn.onclick = () => {
+          const key = btn.dataset.add;
+          const input =
+            key === "redacteurs" ? $("#addRedacteur") : $("#addChef");
+          const name = input.value.trim().toUpperCase();
+          if (name && !settings[key].includes(name)) {
+            settings[key].push(name);
+            saveSettings();
+            renderLists();
+          }
+          input.value = "";
+        };
       });
-      const ta = document.createElement("textarea");
-      ta.className = "para-editor"; ta.name = f.k;
-      ta.setAttribute("aria-label", f.k);
-      ta.placeholder = f.k === "defaut" ? "Défaut constaté…" : "1ère analyse par le chef de poste…";
-      hit.addEventListener("mousedown", (e) => { e.preventDefault(); ta.focus(); });
-      ta.addEventListener("focus", () => hit.classList.add("active"));
-      ta.addEventListener("blur", () => hit.classList.remove("active"));
-      const render = () => {
-        const { size, out } = layoutPara(ta.value, f.lines);
-        f.lines.forEach((l, i) => { placeText(lineEls[i], l.x, l.y, l.w, size); lineEls[i].textContent = out[i]; });
+
+      // ---------- Signature ----------
+      const pad = $("#pad");
+      const ctx = pad.getContext("2d");
+      let drawing = false,
+        drawn = false;
+      function padPos(e) {
+        const r = pad.getBoundingClientRect();
+        return [
+          ((e.clientX - r.left) * pad.width) / r.width,
+          ((e.clientY - r.top) * pad.height) / r.height,
+        ];
+      }
+      pad.addEventListener("pointerdown", (e) => {
+        drawing = true;
+        drawn = true;
+        pad.setPointerCapture(e.pointerId);
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "#0b2a6b";
+        ctx.beginPath();
+        ctx.moveTo(...padPos(e));
+      });
+      pad.addEventListener("pointermove", (e) => {
+        if (drawing) {
+          ctx.lineTo(...padPos(e));
+          ctx.stroke();
+        }
+      });
+      pad.addEventListener("pointerup", () => {
+        drawing = false;
+      });
+      $("#padClear").onclick = () => {
+        ctx.clearRect(0, 0, pad.width, pad.height);
+        drawn = false;
       };
-      ta.addEventListener("input", render);
-      page.insertBefore(hit, lineEls[0]);
-      page.appendChild(ta);
-      ui[f.k] = { els: [ta], get: () => ta.value, set: (v) => { ta.value = v || ""; render(); } };
-      render();
-    }
-  }
-  // Visa chef de poste (calculé, non saisi)
-  const sig = document.createElement("div");
-  sig.className = "sig"; sig.id = "sig";
-  page.appendChild(sig);
-  page.addEventListener("change", (e) => onChange(e.target.name));
-  page.addEventListener("input", (e) => onChange(e.target.name));
-}
-// Zone cliquable d'un paragraphe : uniquement les lignes pointillées
-function paraClip(lines) {
-  const x0 = Math.min(...lines.map((l) => l.x)), y0 = Math.min(...lines.map((l) => l.y)) - 9;
-  const rects = lines.map((l) => `M${l.x - x0} ${l.y - 9 - y0} h${l.w} v11 h${-l.w} Z`).join(" ");
-  return `path('${rects}')`;
-}
-function fillOptions(f) {
-  const el = ui[f.k].els[0];
-  const cur = el.value;
-  el.innerHTML = '<option value=""></option>' + f.list().map((n) => `<option>${escapeHtml(n)}</option>`).join("");
-  el.value = f.list().includes(cur) ? cur : "";
-  ui[f.k].refit();
-}
-function escapeHtml(s) {
-  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-}
-function focusables() {
-  return [...page.querySelectorAll("input, select, textarea, button")].filter((e) => !e.disabled);
-}
-function focusNext(el) {
-  const list = focusables();
-  const i = list.indexOf(el);
-  if (i >= 0 && list[i + 1]) list[i + 1].focus();
-}
+      $("#padSave").onclick = () => {
+        if (!drawn) return;
+        settings.signature = trimToPng(pad);
+        saveSettings();
+        renderSignaturePreviews();
+      };
+      $("#sigFile").onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement("canvas");
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          const cx = c.getContext("2d");
+          cx.drawImage(img, 0, 0);
+          // Fond blanc -> transparent pour ne pas masquer les pointillés du formulaire
+          const d = cx.getImageData(0, 0, c.width, c.height);
+          for (let i = 0; i < d.data.length; i += 4) {
+            const lum = (d.data[i] + d.data[i + 1] + d.data[i + 2]) / 3;
+            if (lum > 200) d.data[i + 3] = 0;
+          }
+          cx.putImageData(d, 0, 0);
+          settings.signature = trimToPng(c);
+          saveSettings();
+          renderSignaturePreviews();
+          URL.revokeObjectURL(img.src);
+        };
+        img.src = URL.createObjectURL(file);
+      };
+      // Recadre sur les pixels non transparents
+      function trimToPng(canvas) {
+        const cx = canvas.getContext("2d");
+        const { width: w, height: h } = canvas;
+        const d = cx.getImageData(0, 0, w, h).data;
+        let x0 = w,
+          y0 = h,
+          x1 = -1,
+          y1 = -1;
+        for (let y = 0; y < h; y++)
+          for (let x = 0; x < w; x++) {
+            if (d[(y * w + x) * 4 + 3] > 10) {
+              if (x < x0) x0 = x;
+              if (x > x1) x1 = x;
+              if (y < y0) y0 = y;
+              if (y > y1) y1 = y;
+            }
+          }
+        if (x1 < 0) return null;
+        const out = document.createElement("canvas");
+        out.width = x1 - x0 + 1;
+        out.height = y1 - y0 + 1;
+        out
+          .getContext("2d")
+          .drawImage(
+            canvas,
+            x0,
+            y0,
+            out.width,
+            out.height,
+            0,
+            0,
+            out.width,
+            out.height,
+          );
+        return out.toDataURL("image/png");
+      }
+      // Signature « PO » : la signature avec « PO » écrit au-dessus à gauche
+      function htmlSignature(withPO) {
+        if (!settings.signature)
+          return '<span class="hint">Aucune signature enregistrée</span>';
+        return (
+          (withPO
+            ? '<div style="font:bold 14px Helvetica,Arial,sans-serif;color:#0b2a6b">PO</div>'
+            : "") + `<img src="${settings.signature}" alt="Signature">`
+        );
+      }
+      function renderSignaturePreviews() {
+        $("#sigPreview").innerHTML = htmlSignature(false);
+        $("#sigPreviewPO").innerHTML = htmlSignature(true);
+        updateSig();
+      }
+      function isOwner(chef) {
+        return (
+          chef.trim().toUpperCase() === settings.ownerName.trim().toUpperCase()
+        );
+      }
+      // Placement de la signature, partagé entre l'écran et le PDF
+      function sigLayout(imgW, imgH, po) {
+        let sx = SIG_BOX.x,
+          top = SIG_BOX.top;
+        if (po) {
+          sx += 9;
+          top += 3;
+        }
+        const scale = Math.min(
+          (SIG_BOX.w - (sx - SIG_BOX.x)) / imgW,
+          (SIG_BOX.top + SIG_BOX.h - top) / imgH,
+        );
+        return { x: sx, top, w: imgW * scale, h: imgH * scale };
+      }
+      function updateSig() {
+        const box = $("#sig");
+        if (!box) return;
+        box.innerHTML = "";
+        const chef = ui.chef ? ui.chef.get() : "";
+        if (!chef || !settings.signature) return;
+        const po = !isOwner(chef);
+        const img = new Image();
+        img.onload = () => {
+          const l = sigLayout(img.naturalWidth, img.naturalHeight, po);
+          Object.assign(img.style, {
+            left: l.x + "px",
+            top: l.top + "px",
+            width: l.w + "px",
+            height: l.h + "px",
+          });
+          if (po) {
+            const t = document.createElement("span");
+            t.textContent = "PO";
+            Object.assign(t.style, {
+              left: SIG_BOX.x + "px",
+              top: SIG_BOX.top + 6.5 - 8 * 0.946 + "px",
+              lineHeight: "9.6px",
+            });
+            box.appendChild(t);
+          }
+          box.appendChild(img);
+        };
+        img.src = settings.signature;
+      }
+      $("#ownerName").oninput = (e) => {
+        settings.ownerName = e.target.value;
+        saveSettings();
+        updateSig();
+      };
 
-// Partie barrée : 1.2 si Aciérie, 1.1 si Laminoir ou Expédition
-function barredSection() {
-  const o = ui.origine.get();
-  return o === "acierie" ? "12" : (o === "laminoir" || o === "expedition") ? "11" : null;
-}
-function onChange(name) {
-  if (name === "origine") updateSections();
-  if (name === "chef") updateSig();
-  $("#err").textContent = "";
-}
-function updateSections() {
-  const barred = barredSection();
-  for (const f of FIELDS) if (f.sec) ui[f.k].els.forEach((e) => { e.disabled = f.sec === barred; });
-  const svg = $("#strikes");
-  svg.innerHTML = "";
-  if (barred) {
-    const [x0, y0, x1, y1] = STRIKE[barred];
-    svg.innerHTML = `<path d="M${x0} ${y0} L${x1} ${y1} M${x0} ${y1} L${x1} ${y0}" stroke="#000" stroke-width="1.5"/>`;
-  }
-}
+      // ---------- Dialogue paramètres ----------
+      $("#openSettings").onclick = () => {
+        $("#ownerName").value = settings.ownerName;
+        $("#mailTo").value = settings.mailTo;
+        $("#shareMode").value = settings.shareMode;
+        $("#settings").showModal();
+      };
+      $("#closeSettings").onclick = () => $("#settings").close();
+      $("#mailTo").oninput = (e) => {
+        settings.mailTo = e.target.value;
+        saveSettings();
+      };
+      $("#shareMode").onchange = (e) => {
+        settings.shareMode = e.target.value;
+        saveSettings();
+      };
 
-// ---------- Listes configurables ----------
-function renderLists() {
-  for (const f of FIELDS) if (f.k === "redacteur" || f.k === "chef") fillOptions(f);
-  for (const [key, ul] of [["redacteurs", $("#listRedacteurs")], ["chefs", $("#listChefs")]]) {
-    ul.innerHTML = "";
-    settings[key].forEach((name, i) => {
-      const li = document.createElement("li");
-      li.textContent = name;
-      const del = document.createElement("button");
-      del.type = "button"; del.textContent = "Supprimer";
-      del.onclick = () => { settings[key].splice(i, 1); saveSettings(); renderLists(); };
-      li.appendChild(del);
-      ul.appendChild(li);
-    });
-  }
-  updateSig();
-}
-document.querySelectorAll("[data-add]").forEach((btn) => {
-  btn.onclick = () => {
-    const key = btn.dataset.add;
-    const input = key === "redacteurs" ? $("#addRedacteur") : $("#addChef");
-    const name = input.value.trim().toUpperCase();
-    if (name && !settings[key].includes(name)) { settings[key].push(name); saveSettings(); renderLists(); }
-    input.value = "";
-  };
-});
+      // ---------- Dossier d'enregistrement ----------
+      // Le « handle » du dossier ne peut pas aller dans localStorage : il est gardé dans IndexedDB.
+      const HAS_FS = "showDirectoryPicker" in window;
+      function idb(mode, fn) {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open("alpa-nc", 1);
+          req.onupgradeneeded = () => req.result.createObjectStore("kv");
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const tx = req.result.transaction("kv", mode);
+            const r = fn(tx.objectStore("kv"));
+            tx.oncomplete = () => resolve(r && r.result);
+            tx.onerror = () => reject(tx.error);
+          };
+        });
+      }
+      let folder = null;
+      async function loadFolder() {
+        try {
+          folder = (await idb("readonly", (s) => s.get("folder"))) || null;
+        } catch (e) {
+          folder = null;
+        }
+        renderFolder();
+      }
+      function renderFolder() {
+        $("#folderName").textContent = folder
+          ? folder.name
+          : "aucun (téléchargements du navigateur)";
+        if (!HAS_FS) {
+          $("#pickFolder").disabled = true;
+          $("#folderHint").textContent =
+            "Ce navigateur ne permet pas de choisir un dossier : utilisez Chrome ou Edge sur ordinateur.";
+        }
+      }
+      async function folderAccess() {
+        if (!folder) return false;
+        const opts = { mode: "readwrite" };
+        if ((await folder.queryPermission(opts)) === "granted") return true;
+        return (await folder.requestPermission(opts)) === "granted";
+      }
+      $("#pickFolder").onclick = async () => {
+        try {
+          folder = await window.showDirectoryPicker({
+            id: "alpa-nc",
+            mode: "readwrite",
+          });
+          await idb("readwrite", (s) => s.put(folder, "folder"));
+          renderFolder();
+        } catch (e) {
+          /* choix annulé */
+        }
+      };
+      $("#clearFolder").onclick = async () => {
+        folder = null;
+        try {
+          await idb("readwrite", (s) => s.delete("folder"));
+        } catch (e) {
+          /* ignore */
+        }
+        renderFolder();
+      };
+      async function saveToFolder(blob, name) {
+        if (!(await folderAccess())) return false;
+        const fh = await folder.getFileHandle(name, { create: true });
+        const w = await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+        return true;
+      }
+      // « Ouvrir le dossier » : un navigateur ne peut pas lancer l'Explorateur Windows,
+      // on affiche donc le contenu du dossier et chaque PDF s'ouvre d'un clic.
+      $("#btnFolder").onclick = async () => {
+        if (!folder) {
+          $("#status").textContent =
+            "Aucun dossier configuré : choisissez-le dans ⚙ Paramètres.";
+          return;
+        }
+        if (!(await folderAccess())) {
+          $("#status").textContent = "Accès au dossier refusé.";
+          return;
+        }
+        const files = [];
+        for await (const [name, h] of folder.entries()) {
+          if (h.kind === "file" && name.toLowerCase().endsWith(".pdf"))
+            files.push(await h.getFile());
+        }
+        files.sort((a, b) => b.lastModified - a.lastModified);
+        $("#folderTitle").textContent = folder.name;
+        const ul = $("#folderFiles");
+        ul.innerHTML = files.length
+          ? ""
+          : '<li class="hint">Aucun PDF dans ce dossier.</li>';
+        for (const f of files) {
+          const li = document.createElement("li");
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(f);
+          a.target = "_blank";
+          a.textContent = f.name;
+          const when = document.createElement("span");
+          when.className = "hint";
+          when.style.margin = "0";
+          when.textContent = new Date(f.lastModified).toLocaleString("fr-FR");
+          li.append(a, when);
+          ul.appendChild(li);
+        }
+        $("#folderDialog").showModal();
+      };
+      $("#closeFolder").onclick = () => $("#folderDialog").close();
 
-// ---------- Signature ----------
-const pad = $("#pad");
-const ctx = pad.getContext("2d");
-let drawing = false, drawn = false;
-function padPos(e) {
-  const r = pad.getBoundingClientRect();
-  return [(e.clientX - r.left) * pad.width / r.width, (e.clientY - r.top) * pad.height / r.height];
-}
-pad.addEventListener("pointerdown", (e) => {
-  drawing = true; drawn = true; pad.setPointerCapture(e.pointerId);
-  ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#0b2a6b";
-  ctx.beginPath(); ctx.moveTo(...padPos(e));
-});
-pad.addEventListener("pointermove", (e) => { if (drawing) { ctx.lineTo(...padPos(e)); ctx.stroke(); } });
-pad.addEventListener("pointerup", () => { drawing = false; });
-$("#padClear").onclick = () => { ctx.clearRect(0, 0, pad.width, pad.height); drawn = false; };
-$("#padSave").onclick = () => {
-  if (!drawn) return;
-  settings.signature = trimToPng(pad);
-  saveSettings(); renderSignaturePreviews();
-};
-$("#sigFile").onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const img = new Image();
-  img.onload = () => {
-    const c = document.createElement("canvas");
-    c.width = img.naturalWidth; c.height = img.naturalHeight;
-    const cx = c.getContext("2d");
-    cx.drawImage(img, 0, 0);
-    // Fond blanc -> transparent pour ne pas masquer les pointillés du formulaire
-    const d = cx.getImageData(0, 0, c.width, c.height);
-    for (let i = 0; i < d.data.length; i += 4) {
-      const lum = (d.data[i] + d.data[i + 1] + d.data[i + 2]) / 3;
-      if (lum > 200) d.data[i + 3] = 0;
-    }
-    cx.putImageData(d, 0, 0);
-    settings.signature = trimToPng(c);
-    saveSettings(); renderSignaturePreviews();
-    URL.revokeObjectURL(img.src);
-  };
-  img.src = URL.createObjectURL(file);
-};
-// Recadre sur les pixels non transparents
-function trimToPng(canvas) {
-  const cx = canvas.getContext("2d");
-  const { width: w, height: h } = canvas;
-  const d = cx.getImageData(0, 0, w, h).data;
-  let x0 = w, y0 = h, x1 = -1, y1 = -1;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (d[(y * w + x) * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-  }
-  if (x1 < 0) return null;
-  const out = document.createElement("canvas");
-  out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
-  out.getContext("2d").drawImage(canvas, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
-  return out.toDataURL("image/png");
-}
-// Signature « PO » : la signature avec « PO » écrit au-dessus à gauche
-function htmlSignature(withPO) {
-  if (!settings.signature) return '<span class="hint">Aucune signature enregistrée</span>';
-  return (withPO ? '<div style="font:bold 14px Helvetica,Arial,sans-serif;color:#0b2a6b">PO</div>' : "") +
-    `<img src="${settings.signature}" alt="Signature">`;
-}
-function renderSignaturePreviews() {
-  $("#sigPreview").innerHTML = htmlSignature(false);
-  $("#sigPreviewPO").innerHTML = htmlSignature(true);
-  updateSig();
-}
-function isOwner(chef) {
-  return chef.trim().toUpperCase() === settings.ownerName.trim().toUpperCase();
-}
-// Placement de la signature, partagé entre l'écran et le PDF
-function sigLayout(imgW, imgH, po) {
-  let sx = SIG_BOX.x, top = SIG_BOX.top;
-  if (po) { sx += 9; top += 3; }
-  const scale = Math.min((SIG_BOX.w - (sx - SIG_BOX.x)) / imgW, (SIG_BOX.top + SIG_BOX.h - top) / imgH);
-  return { x: sx, top, w: imgW * scale, h: imgH * scale };
-}
-function updateSig() {
-  const box = $("#sig");
-  if (!box) return;
-  box.innerHTML = "";
-  const chef = ui.chef ? ui.chef.get() : "";
-  if (!chef || !settings.signature) return;
-  const po = !isOwner(chef);
-  const img = new Image();
-  img.onload = () => {
-    const l = sigLayout(img.naturalWidth, img.naturalHeight, po);
-    Object.assign(img.style, { left: l.x + "px", top: l.top + "px", width: l.w + "px", height: l.h + "px" });
-    if (po) {
-      const t = document.createElement("span");
-      t.textContent = "PO";
-      Object.assign(t.style, { left: SIG_BOX.x + "px", top: (SIG_BOX.top + 6.5 - 8 * 0.946) + "px", lineHeight: "9.6px" });
-      box.appendChild(t);
-    }
-    box.appendChild(img);
-  };
-  img.src = settings.signature;
-}
-$("#ownerName").oninput = (e) => { settings.ownerName = e.target.value; saveSettings(); updateSig(); };
+      // ---------- Génération du PDF ----------
+      function frDate(iso) {
+        if (!iso) return null;
+        const [y, m, d] = iso.split("-");
+        return { d, m, y };
+      }
+      async function buildPdf(v) {
+        const { PDFDocument, StandardFonts, rgb } = PDFLib;
+        const b64 = document.getElementById("pdf-template").textContent.trim();
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        const doc = await PDFDocument.load(bytes);
+        const pg = doc.getPage(0);
+        const font = await doc.embedFont(StandardFonts.Helvetica);
+        const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+        const ink = rgb(...INK);
 
-// ---------- Dialogue paramètres ----------
-$("#openSettings").onclick = () => {
-  $("#ownerName").value = settings.ownerName;
-  $("#mailTo").value = settings.mailTo;
-  $("#shareMode").value = settings.shareMode;
-  $("#settings").showModal();
-};
-$("#closeSettings").onclick = () => $("#settings").close();
-$("#mailTo").oninput = (e) => { settings.mailTo = e.target.value; saveSettings(); };
-$("#shareMode").onchange = (e) => { settings.shareMode = e.target.value; saveSettings(); };
+        function text(str, x, baseline, maxW, size = 9, isBold = false) {
+          str = safe(str).trim();
+          if (!str) return;
+          size = fitSize(str, maxW, size, isBold);
+          pg.drawText(str, {
+            x,
+            y: PAGE_H - baseline,
+            size,
+            font: isBold ? bold : font,
+            color: ink,
+          });
+        }
+        function cross(cx, cy, s = 3.2) {
+          const o = { thickness: 1.3, color: ink };
+          pg.drawLine({
+            start: { x: cx - s, y: PAGE_H - cy - s },
+            end: { x: cx + s, y: PAGE_H - cy + s },
+            ...o,
+          });
+          pg.drawLine({
+            start: { x: cx - s, y: PAGE_H - cy + s },
+            end: { x: cx + s, y: PAGE_H - cy - s },
+            ...o,
+          });
+        }
 
-// ---------- Dossier d'enregistrement ----------
-// Le « handle » du dossier ne peut pas aller dans localStorage : il est gardé dans IndexedDB.
-const HAS_FS = "showDirectoryPicker" in window;
-function idb(mode, fn) {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open("alpa-nc", 1);
-    req.onupgradeneeded = () => req.result.createObjectStore("kv");
-    req.onerror = () => reject(req.error);
-    req.onsuccess = () => {
-      const tx = req.result.transaction("kv", mode);
-      const r = fn(tx.objectStore("kv"));
-      tx.oncomplete = () => resolve(r && r.result);
-      tx.onerror = () => reject(tx.error);
-    };
-  });
-}
-let folder = null;
-async function loadFolder() {
-  try { folder = (await idb("readonly", (s) => s.get("folder"))) || null; } catch (e) { folder = null; }
-  renderFolder();
-}
-function renderFolder() {
-  $("#folderName").textContent = folder ? folder.name : "aucun (téléchargements du navigateur)";
-  if (!HAS_FS) {
-    $("#pickFolder").disabled = true;
-    $("#folderHint").textContent = "Ce navigateur ne permet pas de choisir un dossier : utilisez Chrome ou Edge sur ordinateur.";
-  }
-}
-async function folderAccess() {
-  if (!folder) return false;
-  const opts = { mode: "readwrite" };
-  if ((await folder.queryPermission(opts)) === "granted") return true;
-  return (await folder.requestPermission(opts)) === "granted";
-}
-$("#pickFolder").onclick = async () => {
-  try {
-    folder = await window.showDirectoryPicker({ id: "alpa-nc", mode: "readwrite" });
-    await idb("readwrite", (s) => s.put(folder, "folder"));
-    renderFolder();
-  } catch (e) { /* choix annulé */ }
-};
-$("#clearFolder").onclick = async () => {
-  folder = null;
-  try { await idb("readwrite", (s) => s.delete("folder")); } catch (e) { /* ignore */ }
-  renderFolder();
-};
-async function saveToFolder(blob, name) {
-  if (!(await folderAccess())) return false;
-  const fh = await folder.getFileHandle(name, { create: true });
-  const w = await fh.createWritable();
-  await w.write(blob);
-  await w.close();
-  return true;
-}
-// « Ouvrir le dossier » : un navigateur ne peut pas lancer l'Explorateur Windows,
-// on affiche donc le contenu du dossier et chaque PDF s'ouvre d'un clic.
-$("#btnFolder").onclick = async () => {
-  if (!folder) { $("#status").textContent = "Aucun dossier configuré : choisissez-le dans ⚙ Paramètres."; return; }
-  if (!(await folderAccess())) { $("#status").textContent = "Accès au dossier refusé."; return; }
-  const files = [];
-  for await (const [name, h] of folder.entries()) {
-    if (h.kind === "file" && name.toLowerCase().endsWith(".pdf")) files.push(await h.getFile());
-  }
-  files.sort((a, b) => b.lastModified - a.lastModified);
-  $("#folderTitle").textContent = folder.name;
-  const ul = $("#folderFiles");
-  ul.innerHTML = files.length ? "" : '<li class="hint">Aucun PDF dans ce dossier.</li>';
-  for (const f of files) {
-    const li = document.createElement("li");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(f); a.target = "_blank"; a.textContent = f.name;
-    const when = document.createElement("span");
-    when.className = "hint"; when.style.margin = "0";
-    when.textContent = new Date(f.lastModified).toLocaleString("fr-FR");
-    li.append(a, when);
-    ul.appendChild(li);
-  }
-  $("#folderDialog").showModal();
-};
-$("#closeFolder").onclick = () => $("#folderDialog").close();
+        const barred = barredSection();
+        for (const f of FIELDS) {
+          if (f.sec && f.sec === barred) continue;
+          const val = v[f.k];
+          if (f.t === "text" || f.t === "select")
+            text(val, f.x, f.y, f.w, f.s || 9, f.b);
+          else if (f.t === "date") {
+            const d = frDate(val);
+            if (d)
+              [d.d, d.m, d.y].forEach((p, i) =>
+                text(p, f.xs[i], f.y, DATE_W[i]),
+              );
+          } else if (f.t === "radio") {
+            const opt = f.opts.find(([o]) => o === val);
+            if (opt) cross(opt[1], opt[2]);
+          } else if (f.t === "para") {
+            const { size, out } = layoutPara(val, f.lines);
+            out.forEach(
+              (t, i) =>
+                t && text(t, f.lines[i].x, f.lines[i].y, f.lines[i].w, size),
+            );
+          }
+        }
+        if (barred) {
+          const [x0, y0, x1, y1] = STRIKE[barred];
+          const o = { thickness: 1.5, color: rgb(0, 0, 0) };
+          pg.drawLine({
+            start: { x: x0, y: PAGE_H - y0 },
+            end: { x: x1, y: PAGE_H - y1 },
+            ...o,
+          });
+          pg.drawLine({
+            start: { x: x0, y: PAGE_H - y1 },
+            end: { x: x1, y: PAGE_H - y0 },
+            ...o,
+          });
+        }
 
-// ---------- Génération du PDF ----------
-function frDate(iso) {
-  if (!iso) return null;
-  const [y, m, d] = iso.split("-");
-  return { d, m, y };
-}
-async function buildPdf(v) {
-  const { PDFDocument, StandardFonts, rgb } = PDFLib;
-  const b64 = document.getElementById("pdf-template").textContent.trim();
-  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-  const doc = await PDFDocument.load(bytes);
-  const pg = doc.getPage(0);
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const ink = rgb(...INK);
+        // Visa chef de poste
+        if (settings.signature && v.chef) {
+          const png = await doc.embedPng(settings.signature);
+          const po = !isOwner(v.chef);
+          if (po)
+            pg.drawText("PO", {
+              x: SIG_BOX.x,
+              y: PAGE_H - (SIG_BOX.top + 6.5),
+              size: 8,
+              font: bold,
+              color: ink,
+            });
+          const l = sigLayout(png.width, png.height, po);
+          pg.drawImage(png, {
+            x: l.x,
+            y: PAGE_H - l.top - l.h,
+            width: l.w,
+            height: l.h,
+          });
+        }
 
-  function text(str, x, baseline, maxW, size = 9, isBold = false) {
-    str = safe(str).trim();
-    if (!str) return;
-    size = fitSize(str, maxW, size, isBold);
-    pg.drawText(str, { x, y: PAGE_H - baseline, size, font: isBold ? bold : font, color: ink });
-  }
-  function cross(cx, cy, s = 3.2) {
-    const o = { thickness: 1.3, color: ink };
-    pg.drawLine({ start: { x: cx - s, y: PAGE_H - cy - s }, end: { x: cx + s, y: PAGE_H - cy + s }, ...o });
-    pg.drawLine({ start: { x: cx - s, y: PAGE_H - cy + s }, end: { x: cx + s, y: PAGE_H - cy - s }, ...o });
-  }
+        doc.setTitle("Rapport de non-conformite AQA.QUAL.03");
+        return doc.save();
+      }
 
-  const barred = barredSection();
-  for (const f of FIELDS) {
-    if (f.sec && f.sec === barred) continue;
-    const val = v[f.k];
-    if (f.t === "text" || f.t === "select") text(val, f.x, f.y, f.w, f.s || 9, f.b);
-    else if (f.t === "date") {
-      const d = frDate(val);
-      if (d) [d.d, d.m, d.y].forEach((p, i) => text(p, f.xs[i], f.y, DATE_W[i]));
-    } else if (f.t === "radio") {
-      const opt = f.opts.find(([o]) => o === val);
-      if (opt) cross(opt[1], opt[2]);
-    } else if (f.t === "para") {
-      const { size, out } = layoutPara(val, f.lines);
-      out.forEach((t, i) => t && text(t, f.lines[i].x, f.lines[i].y, f.lines[i].w, size));
-    }
-  }
-  if (barred) {
-    const [x0, y0, x1, y1] = STRIKE[barred];
-    const o = { thickness: 1.5, color: rgb(0, 0, 0) };
-    pg.drawLine({ start: { x: x0, y: PAGE_H - y0 }, end: { x: x1, y: PAGE_H - y1 }, ...o });
-    pg.drawLine({ start: { x: x0, y: PAGE_H - y1 }, end: { x: x1, y: PAGE_H - y0 }, ...o });
-  }
+      function readValues() {
+        const v = {};
+        for (const f of FIELDS) v[f.k] = ui[f.k].get();
+        return v;
+      }
+      function validate(v) {
+        const miss = [];
+        if (!v.origine) miss.push("Aciérie / Laminoir / Expédition");
+        if (!v.equipe) miss.push("Équipe");
+        if (!v.redacteur) miss.push("Rédacteur");
+        if (!v.date) miss.push("Date");
+        if (!v.chef) miss.push("Chef de poste");
+        if (!settings.signature) miss.push("Signature (Paramètres)");
+        return miss;
+      }
+      // Aciérie : « AAAA.MM.JJ AQA.QUAL.03 Coulée <qualité> N° <coulée> »
+      // Laminoir / Expédition : « AAAA.MM.JJ AQA.QUAL.03 Fdx <fardeau> Coulée <coulée> »
+      function fileName(v) {
+        const parts = [v.date.replace(/-/g, "."), "AQA.QUAL.03"];
+        if (v.origine === "acierie")
+          parts.push("Coulée", v.b_qual, "N°", v.b_coulee);
+        else parts.push("Fdx", v.r_fardeau, "Coulée", v.r_coulee);
+        const name = parts
+          .map((p) => (p || "").trim())
+          .filter(Boolean)
+          .join(" ");
+        return name.replace(/[\\/:*?"<>|]+/g, "-") + ".pdf";
+      }
+      async function generate() {
+        const v = readValues();
+        const miss = validate(v);
+        $("#err").textContent = miss.length
+          ? "À compléter : " + miss.join(", ")
+          : "";
+        if (miss.length) return null;
+        try {
+          const bytes = await buildPdf(v);
+          const blob = new Blob([bytes], { type: "application/pdf" });
+          return {
+            v,
+            bytes,
+            blob,
+            url: URL.createObjectURL(blob),
+            name: fileName(v),
+          };
+        } catch (e) {
+          $("#err").textContent = "Erreur lors de la génération : " + e.message;
+          return null;
+        }
+      }
+      function download(url, name) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.click();
+      }
+      // Enregistre dans le dossier configuré, sinon dans les téléchargements
+      async function save(r) {
+        try {
+          if (folder && (await saveToFolder(r.blob, r.name))) {
+            $("#status").textContent =
+              `Enregistré dans « ${folder.name} » : ${r.name}`;
+            return;
+          }
+        } catch (e) {
+          $("#err").textContent =
+            "Enregistrement dans le dossier impossible (" +
+            e.message +
+            "), téléchargement à la place.";
+        }
+        download(r.url, r.name);
+        $("#status").textContent = "Téléchargé : " + r.name;
+      }
+      $("#btnDownload").onclick = async () => {
+        const r = await generate();
+        if (r) await save(r);
+      };
+      $("#btnPreview").onclick = async () => {
+        const r = await generate();
+        if (!r) return;
+        $("#preview").src = r.url;
+        $("#previewDialog").showModal();
+      };
+      $("#closePreview").onclick = () => $("#previewDialog").close();
 
-  // Visa chef de poste
-  if (settings.signature && v.chef) {
-    const png = await doc.embedPng(settings.signature);
-    const po = !isOwner(v.chef);
-    if (po) pg.drawText("PO", { x: SIG_BOX.x, y: PAGE_H - (SIG_BOX.top + 6.5), size: 8, font: bold, color: ink });
-    const l = sigLayout(png.width, png.height, po);
-    pg.drawImage(png, { x: l.x, y: PAGE_H - l.top - l.h, width: l.w, height: l.h });
-  }
+      // ---------- Partage par mail ----------
+      function mailSubject(v) {
+        const d = frDate(v.date);
+        return `Fdx NC du ${d.d}/${d.m}/${d.y}`;
+      }
+      function b64(bytes) {
+        let s = "";
+        for (let i = 0; i < bytes.length; i += 0x8000)
+          s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        return btoa(s);
+      }
+      const utf8b64 = (s) => b64(new TextEncoder().encode(s));
+      // Brouillon .eml : « X-Unsent: 1 » fait ouvrir le mail par Outlook en mode rédaction
+      function buildEml(subject, to, name, bytes) {
+        const boundary = "----=_NC_" + Date.now().toString(36);
+        const body =
+          "Bonjour,\r\n\r\nVeuillez trouver ci-joint le rapport de non-conformité.\r\n\r\nCordialement,\r\n";
+        return [
+          "MIME-Version: 1.0",
+          "X-Unsent: 1",
+          to ? "To: " + to : null,
+          `Subject: =?UTF-8?B?${utf8b64(subject)}?=`,
+          `Content-Type: multipart/mixed; boundary="${boundary}"`,
+          "",
+          "--" + boundary,
+          "Content-Type: text/plain; charset=UTF-8",
+          "Content-Transfer-Encoding: base64",
+          "",
+          utf8b64(body).replace(/.{76}/g, "$&\r\n"),
+          "--" + boundary,
+          `Content-Type: application/pdf; name="=?UTF-8?B?${utf8b64(name)}?="`,
+          "Content-Transfer-Encoding: base64",
+          `Content-Disposition: attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
+          "",
+          b64(bytes).replace(/.{76}/g, "$&\r\n"),
+          "--" + boundary + "--",
+          "",
+        ]
+          .filter((l) => l !== null)
+          .join("\r\n");
+      }
+      $("#btnShare").onclick = async () => {
+        const r = await generate();
+        if (!r) return;
+        const subject = mailSubject(r.v);
+        if (settings.shareMode === "system") {
+          const file = new File([r.blob], r.name, { type: "application/pdf" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: subject,
+                text: subject,
+              });
+            } catch (e) {
+              /* annulé */
+            }
+            return;
+          }
+          $("#err").textContent =
+            "Le partage système n'est pas disponible ici : brouillon Outlook utilisé.";
+        }
+        const eml = buildEml(subject, settings.mailTo.trim(), r.name, r.bytes);
+        const url = URL.createObjectURL(
+          new Blob([eml], { type: "message/rfc822" }),
+        );
+        download(url, subject.replace(/\//g, "-") + ".eml");
+        $("#status").textContent =
+          "Brouillon de mail téléchargé : ouvrez-le pour l'envoyer depuis Outlook.";
+      };
 
-  doc.setTitle("Rapport de non-conformite AQA.QUAL.03");
-  return doc.save();
-}
+      // ---------- Nouveau rapport / mise à l'échelle ----------
+      function today() {
+        const d = new Date();
+        return [
+          d.getFullYear(),
+          String(d.getMonth() + 1).padStart(2, "0"),
+          String(d.getDate()).padStart(2, "0"),
+        ].join("-");
+      }
+      function resetForm() {
+        for (const f of FIELDS) ui[f.k].set(f.def || "");
+        ui.date.set(today());
+        $("#err").textContent = "";
+        $("#status").textContent = "";
+        updateSections();
+        updateSig();
+      }
+      $("#btnReset").onclick = () => {
+        resetForm();
+        ui.origine.els[0].focus();
+      };
 
-function readValues() {
-  const v = {};
-  for (const f of FIELDS) v[f.k] = ui[f.k].get();
-  return v;
-}
-function validate(v) {
-  const miss = [];
-  if (!v.origine) miss.push("Aciérie / Laminoir / Expédition");
-  if (!v.equipe) miss.push("Équipe");
-  if (!v.redacteur) miss.push("Rédacteur");
-  if (!v.date) miss.push("Date");
-  if (!v.chef) miss.push("Chef de poste");
-  if (!settings.signature) miss.push("Signature (Paramètres)");
-  return miss;
-}
-// Aciérie : « AAAA.MM.JJ AQA.QUAL.03 Coulée <qualité> N° <coulée> »
-// Laminoir / Expédition : « AAAA.MM.JJ AQA.QUAL.03 Fdx <fardeau> Coulée <coulée> »
-function fileName(v) {
-  const parts = [v.date.replace(/-/g, "."), "AQA.QUAL.03"];
-  if (v.origine === "acierie") parts.push("Coulée", v.b_qual, "N°", v.b_coulee);
-  else parts.push("Fdx", v.r_fardeau, "Coulée", v.r_coulee);
-  const name = parts.map((p) => (p || "").trim()).filter(Boolean).join(" ");
-  return name.replace(/[\\/:*?"<>|]+/g, "-") + ".pdf";
-}
-async function generate() {
-  const v = readValues();
-  const miss = validate(v);
-  $("#err").textContent = miss.length ? "À compléter : " + miss.join(", ") : "";
-  if (miss.length) return null;
-  try {
-    const bytes = await buildPdf(v);
-    const blob = new Blob([bytes], { type: "application/pdf" });
-    return { v, bytes, blob, url: URL.createObjectURL(blob), name: fileName(v) };
-  } catch (e) {
-    $("#err").textContent = "Erreur lors de la génération : " + e.message;
-    return null;
-  }
-}
-function download(url, name) {
-  const a = document.createElement("a");
-  a.href = url; a.download = name; a.click();
-}
-// Enregistre dans le dossier configuré, sinon dans les téléchargements
-async function save(r) {
-  try {
-    if (folder && (await saveToFolder(r.blob, r.name))) {
-      $("#status").textContent = `Enregistré dans « ${folder.name} » : ${r.name}`;
-      return;
-    }
-  } catch (e) {
-    $("#err").textContent = "Enregistrement dans le dossier impossible (" + e.message + "), téléchargement à la place.";
-  }
-  download(r.url, r.name);
-  $("#status").textContent = "Téléchargé : " + r.name;
-}
-$("#btnDownload").onclick = async () => {
-  const r = await generate();
-  if (r) await save(r);
-};
-$("#btnPreview").onclick = async () => {
-  const r = await generate();
-  if (!r) return;
-  $("#preview").src = r.url;
-  $("#previewDialog").showModal();
-};
-$("#closePreview").onclick = () => $("#previewDialog").close();
+      // ---------- Coller des données fardeau (export laminoir) ----------
+      const CODES_NC = {
+        "01": "Paille collée au cylindre",
+        "02": "Plat sur barre",
+        "03": "Caract. méca non conforme",
+        "04": "Rond versé",
+        "05": "Pailles sur barres",
+        "06": "Fardeau tordu",
+        "07": "Fausse coupe",
+        "08": "Erreur étiquetage",
+        "09": "Billette de démarrage",
+        10: "Barres courtes dans le fardeau",
+        11: "Manque de nervure",
+        12: "Géométrie non conforme",
+        13: "Plat sur les soudures",
+        14: "Défaut de profil",
+      };
+      // En-tête : « Jour  11 11 2026   Magasin  01 »
+      // Ligne   : code NC, fardeau, Pr, Mes.1 (diamètre), Mes.2 (longueur), qualité, KG, coulée, heure, T
+      const RE_JOUR = /Jour\s+(\d{1,2})[\s\/.-]+(\d{1,2})[\s\/.-]+(\d{4})/i;
+      const RE_FDX =
+        /^\s*(\d{1,2})\s+(\d{4,})\s+(\S+)\s+([\d.,]+)\s+([\d.,]+)\s+(.+?)\s+(\d+)\s+(\d{3,})\s+(\d{1,2}:\d{2}(?::\d{2})?)(?:\s+(\S+))?\s*$/;
+      function num(s) {
+        const n = parseFloat(s.replace(",", "."));
+        return isNaN(n) ? s : String(n).replace(".", ",");
+      }
+      function parseFardeaux(text) {
+        const jour = text.match(RE_JOUR);
+        const date = jour
+          ? `${jour[3]}-${jour[2].padStart(2, "0")}-${jour[1].padStart(2, "0")}`
+          : "";
+        const rows = [];
+        for (const line of text.split(/\r?\n/)) {
+          const m = line.match(RE_FDX);
+          if (!m) continue;
+          const code = m[1].padStart(2, "0");
+          rows.push({
+            code,
+            defaut: CODES_NC[code] || "Code NC " + code,
+            fardeau: m[2],
+            diam: num(m[4]),
+            long: num(m[5]) + " m",
+            qual: m[6].replace(/\s+/g, " ").trim(),
+            kg: m[7],
+            coulee: m[8],
+            date,
+          });
+        }
+        return rows;
+      }
+      function applyFardeau(r) {
+        ui.origine.set("laminoir");
+        updateSections();
+        ui.r_diam.set(r.diam);
+        ui.r_long.set(r.long);
+        ui.r_qual.set(r.qual);
+        ui.r_coulee.set(r.coulee);
+        ui.r_fardeau.set(r.fardeau);
+        ui.r_quantite.set(r.kg + " kg");
+        ui.r_nbfardeaux.set("1");
+        if (!ui.r_lieu.get()) ui.r_lieu.set("Zone NC");
+        if (!ui.r_rose.get()) ui.r_rose.set("non");
+        if (r.date) ui.r_datefab.set(r.date);
+        ui.defaut.set(r.defaut);
+        $("#err").textContent = "";
+        $("#status").textContent =
+          `Pré-rempli : fardeau ${r.fardeau}, coulée ${r.coulee}, ${r.defaut}.`;
+      }
+      function renderPaste() {
+        const text = $("#pasteText").value;
+        const rows = parseFardeaux(text);
+        const out = $("#pasteResult");
+        if (!text.trim()) {
+          out.innerHTML = "";
+        } else if (!rows.length) {
+          out.innerHTML =
+            '<p style="color:var(--strike)">Aucune ligne fardeau reconnue.</p>';
+        } else {
+          out.innerHTML =
+            '<table class="fdx"><tr><th>Défaut</th><th>Fardeau</th><th>Diam.</th><th>Long.</th>' +
+            "<th>Qualité</th><th>Poids</th><th>Coulée</th><th>Date fab.</th><th></th></tr>" +
+            rows
+              .map(
+                (r, i) =>
+                  `<tr><td>${r.code} – ${escapeHtml(r.defaut)}</td><td>${r.fardeau}</td>` +
+                  `<td>${r.diam}</td><td>${r.long}</td><td>${escapeHtml(r.qual)}</td>` +
+                  `<td>${r.kg} kg</td><td>${r.coulee}</td>` +
+                  `<td>${r.date ? r.date.split("-").reverse().join("/") : "—"}</td>` +
+                  `<td><button type="button" class="primary" data-row="${i}">Pré-remplir</button></td></tr>`,
+              )
+              .join("") +
+            "</table>";
+          out.querySelectorAll("[data-row]").forEach((b) => {
+            b.onclick = () => {
+              applyFardeau(rows[+b.dataset.row]);
+              $("#pasteDialog").close();
+            };
+          });
+        }
+        return rows;
+      }
+      $("#btnPaste").onclick = () => {
+        $("#pasteDialog").showModal();
+        $("#pasteText").select();
+      };
+      $("#closePaste").onclick = () => $("#pasteDialog").close();
+      $("#pasteText").addEventListener("input", renderPaste);
+      // Ctrl+V hors d'une zone de saisie : une seule ligne -> pré-remplissage direct,
+      // plusieurs lignes -> choix du fardeau
+      document.addEventListener("paste", (e) => {
+        if (
+          e.target.closest &&
+          e.target.closest("input, textarea, select, dialog")
+        )
+          return;
+        const text = e.clipboardData.getData("text");
+        const rows = parseFardeaux(text);
+        if (!rows.length) return;
+        e.preventDefault();
+        if (rows.length === 1) {
+          applyFardeau(rows[0]);
+          return;
+        }
+        $("#pasteText").value = text;
+        renderPaste();
+        $("#pasteDialog").showModal();
+      });
+      function fit() {
+        const w = Math.min(document.documentElement.clientWidth - 16, 1000);
+        const k = w / PAGE_W;
+        $("#page").style.transform = `scale(${k})`;
+        Object.assign($("#viewport").style, {
+          width: w + "px",
+          height: PAGE_H * k + "px",
+        });
+      }
+      window.addEventListener("resize", fit);
 
-// ---------- Partage par mail ----------
-function mailSubject(v) {
-  const d = frDate(v.date);
-  return `Fdx NC du ${d.d}/${d.m}/${d.y}`;
-}
-function b64(bytes) {
-  let s = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(s);
-}
-const utf8b64 = (s) => b64(new TextEncoder().encode(s));
-// Brouillon .eml : « X-Unsent: 1 » fait ouvrir le mail par Outlook en mode rédaction
-function buildEml(subject, to, name, bytes) {
-  const boundary = "----=_NC_" + Date.now().toString(36);
-  const body = "Bonjour,\r\n\r\nVeuillez trouver ci-joint le rapport de non-conformité.\r\n\r\nCordialement,\r\n";
-  return [
-    "MIME-Version: 1.0",
-    "X-Unsent: 1",
-    to ? "To: " + to : null,
-    `Subject: =?UTF-8?B?${utf8b64(subject)}?=`,
-    `Content-Type: multipart/mixed; boundary="${boundary}"`,
-    "",
-    "--" + boundary,
-    "Content-Type: text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding: base64",
-    "",
-    utf8b64(body).replace(/.{76}/g, "$&\r\n"),
-    "--" + boundary,
-    `Content-Type: application/pdf; name="=?UTF-8?B?${utf8b64(name)}?="`,
-    "Content-Transfer-Encoding: base64",
-    `Content-Disposition: attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
-    "",
-    b64(bytes).replace(/.{76}/g, "$&\r\n"),
-    "--" + boundary + "--",
-    "",
-  ].filter((l) => l !== null).join("\r\n");
-}
-$("#btnShare").onclick = async () => {
-  const r = await generate();
-  if (!r) return;
-  const subject = mailSubject(r.v);
-  if (settings.shareMode === "system") {
-    const file = new File([r.blob], r.name, { type: "application/pdf" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: subject, text: subject }); } catch (e) { /* annulé */ }
-      return;
-    }
-    $("#err").textContent = "Le partage système n'est pas disponible ici : brouillon Outlook utilisé.";
-  }
-  const eml = buildEml(subject, settings.mailTo.trim(), r.name, r.bytes);
-  const url = URL.createObjectURL(new Blob([eml], { type: "message/rfc822" }));
-  download(url, subject.replace(/\//g, "-") + ".eml");
-  $("#status").textContent = "Brouillon de mail téléchargé : ouvrez-le pour l'envoyer depuis Outlook.";
-};
-
-// ---------- Nouveau rapport / mise à l'échelle ----------
-function today() {
-  const d = new Date();
-  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
-}
-function resetForm() {
-  for (const f of FIELDS) ui[f.k].set(f.def || "");
-  ui.date.set(today());
-  $("#err").textContent = ""; $("#status").textContent = "";
-  updateSections(); updateSig();
-}
-$("#btnReset").onclick = () => { resetForm(); ui.origine.els[0].focus(); };
-function fit() {
-  const w = Math.min(document.documentElement.clientWidth - 16, 1000);
-  const k = w / PAGE_W;
-  $("#page").style.transform = `scale(${k})`;
-  Object.assign($("#viewport").style, { width: w + "px", height: PAGE_H * k + "px" });
-}
-window.addEventListener("resize", fit);
-
-(async () => {
-  fit();
-  await initMetrics();
-  buildPage();
-  resetForm();
-  loadFolder();
-  renderLists();
-  renderSignaturePreviews();
-  ui.origine.els[0].focus();
-})();
-</script>
-</body>
+      (async () => {
+        fit();
+        await initMetrics();
+        buildPage();
+        resetForm();
+        loadFolder();
+        renderLists();
+        renderSignaturePreviews();
+        ui.origine.els[0].focus();
+      })();
+    </script>
+  </body>
 </html>

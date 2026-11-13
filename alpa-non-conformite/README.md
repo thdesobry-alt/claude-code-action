@@ -15,6 +15,31 @@ Les dates se tapent en chiffres (jj, mm, aaaa) et passent seules à la zone suiv
 Les textes longs (défaut constaté, 1ère analyse) s'écrivent dans une zone de saisie qui
 apparaît sous la partie 2 ; le texte se répartit en direct sur les lignes pointillées.
 
+### Pré-remplir depuis les données fardeau
+
+**📋 Coller des données** : coller l'export laminoir (en-tête `Jour …` et lignes fardeau),
+puis **Pré-remplir** la ligne voulue. On peut aussi coller une seule ligne directement sur
+la page (Ctrl+V hors d'une zone de saisie) :
+
+```
+06 5198852 10  16,00 12,000   211 B 235 C      2050 30574 15:00:00 1
+```
+
+| Colonne | Zone du rapport |
+| --- | --- |
+| Code NC (`06`) | Défaut constaté, en clair (`Fardeau tordu`) |
+| Fardeau | N° du fardeau |
+| Mes.1 / Mes.2 | Diam. / Long. |
+| Qualité | Qual. |
+| KG | Quantité en cause |
+| Coulée | N° de coulée |
+| Jour (en-tête) | Date de fabrication |
+
+Laminoir est coché, Nb fardeaux = 1, Lieu de stockage = « Zone NC » et
+« étiqueté en rose » = Non (valeurs par défaut de tout nouveau rapport).
+
+### Étapes
+
 1. Cocher **Aciérie / Laminoir / Expédition**.
    - Aciérie → la partie 1.2 (Ronds) est barrée.
    - Laminoir ou Expédition → la partie 1.1 (Billettes) est barrée.
