@@ -49,6 +49,8 @@
     --cal-closed: #2aa5b5;
     --cal-right: #dedbc6;
     --hl: #dceee8;
+    --xtra: #1673c9;
+    --xtra-row: #e1ecf8;
     --pv-m: #1e8a43;
     --pv-f: #f29a1f;
     --pv-n: #d23a26;
@@ -96,6 +98,8 @@
       --cal-closed: #16606a;
       --cal-right: #3a372b;
       --hl: #1f3a34;
+      --xtra: #63aef0;
+      --xtra-row: #182a3c;
       --pv-m: #23944a;
       --pv-f: #f0a43a;
       --pv-n: #d9452f;
@@ -141,6 +145,8 @@
     --cal-closed: #16606a;
     --cal-right: #3a372b;
     --hl: #1f3a34;
+    --xtra: #63aef0;
+    --xtra-row: #182a3c;
     --pv-m: #23944a;
     --pv-f: #f0a43a;
     --pv-n: #d9452f;
@@ -357,6 +363,18 @@
   .c-MN {
     background: var(--mf-n-bg);
     color: var(--mf-n-fg);
+  }
+  .plan tr.xrow th,
+  .plan tr.xrow td {
+    background: var(--xtra-row);
+  }
+  .cell.xtra {
+    background-image: linear-gradient(
+      315deg,
+      var(--xtra) 0 7px,
+      var(--surface) 7px 9px,
+      transparent 9px
+    );
   }
   .plan tr.mfrow th,
   .plan tr.mfrow td {
@@ -2618,6 +2636,22 @@
         }
       }
     }
+    // Heures « extra » : part des heures d'un poste refacturée, retirée des heures de production.
+    function workedOn(a, ds) {
+      const c = codeOf(a, ds);
+      if (!isWork(c)) return 0;
+      const p = shiftParts(c, entryOf(a.id, ds)?.pa);
+      return p[0] + p[1];
+    }
+    const extraOf = (a, ds) =>
+      Math.min(Number(entryOf(a.id, ds)?.x) || 0, workedOn(a, ds));
+    function setExtra(id, ds, x) {
+      const t = tx();
+      const { x: _old, ...rest } = t.entry(id, ds) || {};
+      const next = x > 0 ? { ...rest, x } : rest;
+      t.put(id, ds, Object.keys(next).length ? next : null);
+      t.commit();
+    }
     function setPartial(id, ds, pa) {
       const t = tx();
       const { pa: _old, ...rest } = t.entry(id, ds) || {};
@@ -3226,6 +3260,11 @@
                   k.push("need");
                   tip += " · à remplacer";
                 }
+                const xh = extraOf(a, ds);
+                if (xh) {
+                  k.push("xtra");
+                  tip += ` · dont ${fmtH(xh)} h extra`;
+                }
                 if (e?.pa && isWork(c)) {
                   k.push("part");
                   tip += ` · ${ABS[e.pa.m] || "absence"} ${e.pa.from}–${e.pa.to} · ${fmtH(12 - partialHours(c, e.pa))} h travaillées`;
@@ -3272,7 +3311,7 @@
         agents.reduce((h, a) => {
           if (codeOf(a, ds) !== code) return h;
           const p = shiftParts(code, entryOf(a.id, ds)?.pa);
-          return h + p[0] + p[1];
+          return h + p[0] + p[1] - extraOf(a, ds);
         }, 0);
       const hoursRow = (code) => {
         const vals = days.map((ds) =>
@@ -3299,8 +3338,26 @@
           const c = codeOf(a, ds);
           if (!isMF(c)) return h;
           const p = shiftParts(c, entryOf(a.id, ds)?.pa);
-          return h + p[0] + p[1];
+          return h + p[0] + p[1] - extraOf(a, ds);
         }, 0);
+      // Total des heures extra du jour (tous postes), réalisées jusqu'à la veille.
+      const xHours = (ds) => agents.reduce((h, a) => h + extraOf(a, ds), 0);
+      const extraRow = () => {
+        const vals = days.map((ds) => (isDone(ds) ? xHours(ds) : null));
+        return (
+          `<tr class="staff hrs xrow"><th class="name">Extra <small class="muted">heures refacturées</small></th>` +
+          vals
+            .map((h, i) => {
+              if (h === null) {
+                const pv = xHours(days[i]);
+                return `<td class="${cls(days[i])}"><span class="staffn muted" title="Pas encore réalisé${pv ? ` (prévu : ${fmtH(pv)} h)` : ""}">${pv ? "–" : ""}</span></td>`;
+              }
+              return `<td class="${cls(days[i])}"><span class="staffn" title="${fmtH(h)} h extra le ${fmtShort(days[i])}">${h ? fmtH(h) : ""}</span></td>`;
+            })
+            .join("") +
+          `<td class="tot"><b>${fmtH(vals.reduce((x, y) => x + (y || 0), 0))} h</b></td></tr>`
+        );
+      };
       const mfRow = () => {
         const vals = days.map((ds) => (isDone(ds) ? mfHours(ds) : null));
         return (
@@ -3328,13 +3385,13 @@
     <div class="reports"><span class="label">Remplacements à envoyer</span>${weeksBar}</div>
     <div class="gridwrap"><table class="plan">
       <thead><tr><th class="name" rowspan="2">Agent</th>${wkrow}<th class="tot" rowspan="2">H mois</th></tr><tr>${head}</tr></thead>
-      <tbody>${body}${staff("J")}${staff("N")}${hoursRow("J")}${hoursRow("N")}${mfRow()}</tbody>
+      <tbody>${body}${staff("J")}${staff("N")}${hoursRow("J")}${hoursRow("N")}${mfRow()}${extraRow()}</tbody>
     </table></div>
     <div class="legend">
       <span><i class="c c-J">J</i>Jour 8h–20h</span><span><i class="c c-N">N</i>Nuit 20h–8h</span><span><i class="c c-R" style="width:30px">·</i>Repos</span>
       <span><i class="c c-CP">CP</i>Congé</span><span><i class="c c-RCR">RCR</i>RCR/RCE</span><span><i class="c c-MAL">MAL</i>Maladie</span><span><i class="c c-FOR">FOR</i>Formation</span><span><i class="c c-ANA">ANA</i>Abs. non autorisée</span><span><i class="c c-MJ">MF</i>Maintien four jour</span><span><i class="c c-MN">MF</i>Maintien four nuit</span><span><i class="nd-mark">ND</i>contacté, non disponible</span><span><i class="dm-mark">?</i>demande en cours</span><span><i class="cmt-mark"></i>commentaire</span>
       <span><i class="c cell need" style="width:14px;height:14px"></i>à remplacer</span><span><i class="c cell cov" style="width:14px;height:14px"></i>remplacé</span>
-      <span><i class="c c-J cell rp">J</i>en remplacement</span><span><i class="c c-J cell ovr">J</i>modifié hors cycle</span><span><i class="c c-J cell part">J</i>absence partielle</span>
+      <span><i class="c c-J cell rp">J</i>en remplacement</span><span><i class="c c-J cell ovr">J</i>modifié hors cycle</span><span><i class="c c-J cell part">J</i>absence partielle</span><span><i class="c c-J cell xtra">J</i>heures extra</span>
     </div>
     <p class="note">Cliquez une case agent pour poser un congé, changer un poste ou choisir un remplaçant. Cliquez la ligne d'une équipe pour la passer en jour, nuit ou repos sur une date.</p>
   </div>`;
@@ -3380,7 +3437,7 @@
         tsv = [
           "Fonction\tMatricule\tNom\tPrénom\tÉquipe\t" +
             weeks.map((w) => `S${isoWeek(w)}`).join("\t") +
-            "\tMois\tJours d'absence\tHeures d'absence partielle",
+            "\tMois\tJours d'absence\tHeures d'absence partielle\tHeures extra",
         ];
       const lastTeam = (a) => {
         const act = days.filter((ds) => activeOn(a, ds));
@@ -3389,7 +3446,7 @@
       for (const t of GROUPS) {
         const list = agents.filter((a) => lastTeam(a) === t);
         if (!list.length) continue;
-        rows += `<tr class="grp"><td colspan="${weeks.length + 6}">${groupName(t)}</td></tr>`;
+        rows += `<tr class="grp"><td colspan="${weeks.length + 7}">${groupName(t)}</td></tr>`;
         for (const a of list) {
           const wh = weeks.map((w) =>
             w <= lastDone() ? doneHours(a, w, addDays(w, 6)) : null,
@@ -3397,11 +3454,14 @@
           const wp = weeks.map((w) => hoursBetween(a, w, addDays(w, 6)));
           const mh = doneHours(a, days[0], days[days.length - 1]);
           const absd = days.filter((d) => ABS[codeOf(a, d)]).length;
+          const xh = days
+            .filter(isDone)
+            .reduce((s2, d) => s2 + extraOf(a, d), 0);
           const parth = days.reduce(
             (s, d) => s + partialHours(codeOf(a, d), entryOf(a.id, d)?.pa),
             0,
           );
-          rows += `<tr><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}${histNote(a, days) ? `<div class="note">${esc(histNote(a, days))}</div>` : ""}</td>${wh.map((h, i) => (h === null ? `<td class="num muted" title="Semaine à venir (prévu : ${fmtH(wp[i])} h)">–</td>` : `<td class="num${h > max ? " over" : ""}" title="Prévu sur la semaine : ${fmtH(wp[i])} h">${fmtH(h)}</td>`)).join("")}<td class="num"><b>${fmtH(mh)}</b></td><td class="num">${absd || ""}</td><td class="num">${parth ? fmtH(parth) : ""}</td></tr>`;
+          rows += `<tr><td>${esc(a.fn || "")}</td><td class="mono">${esc(a.mat || "—")}</td><td>${esc(fullName(a))}${histNote(a, days) ? `<div class="note">${esc(histNote(a, days))}</div>` : ""}</td>${wh.map((h, i) => (h === null ? `<td class="num muted" title="Semaine à venir (prévu : ${fmtH(wp[i])} h)">–</td>` : `<td class="num${h > max ? " over" : ""}" title="Prévu sur la semaine : ${fmtH(wp[i])} h">${fmtH(h)}</td>`)).join("")}<td class="num"><b>${fmtH(mh)}</b></td><td class="num">${absd || ""}</td><td class="num">${parth ? fmtH(parth) : ""}</td><td class="num">${xh ? fmtH(xh) : ""}</td></tr>`;
           tsv.push(
             [
               a.fn || "",
@@ -3413,6 +3473,7 @@
               fmtH(mh),
               absd,
               fmtH(parth),
+              fmtH(xh),
             ].join("\t"),
           );
         }
@@ -3425,7 +3486,7 @@
     </div>
     <p class="note">Semaines calendaires du lundi 0 h au dimanche 24 h. Jour = 12 h. Nuit = 12 h ${S.cycle.nightSplit ? "réparties à minuit (4 h le soir de prise de poste, 8 h le lendemain)" : "comptées sur le jour de prise de poste"}. Les absences, y compris les absences partielles, ne comptent pas comme heures travaillées. En rouge : plus de ${max} h dans la semaine. Seules les heures réalisées sont comptées, jusqu'à la veille (${fmtShort(lastDone())}) incluse : la semaine en cours est partielle et les semaines à venir affichent « – ». Survolez une valeur pour voir les heures prévues. Les semaines à cheval sur deux mois sont comptées en entier.</p>
     <div class="tablewrap"><table class="list">
-      <thead><tr><th>Fonction</th><th>Matr.</th><th>Agent</th>${weeks.map((w) => `<th class="num" title="du ${fmtShort(w)} au ${fmtShort(addDays(w, 6))}">S${isoWeek(w)}<br><span style="text-transform:none;letter-spacing:0;font-weight:400">${fmtShort(w)}</span></th>`).join("")}<th class="num">Mois</th><th class="num">Abs. (j)</th><th class="num">Abs. part. (h)</th></tr></thead>
+      <thead><tr><th>Fonction</th><th>Matr.</th><th>Agent</th>${weeks.map((w) => `<th class="num" title="du ${fmtShort(w)} au ${fmtShort(addDays(w, 6))}">S${isoWeek(w)}<br><span style="text-transform:none;letter-spacing:0;font-weight:400">${fmtShort(w)}</span></th>`).join("")}<th class="num">Mois</th><th class="num">Abs. (j)</th><th class="num">Abs. part. (h)</th><th class="num" title="Heures extra réalisées sur le mois">Extra (h)</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
   </div>`;
@@ -3790,7 +3851,13 @@
         ${e ? `<button class="choice" data-act="shift" data-v="">Revenir au cycle</button>` : ""}</div></div>
       ${
         isWork(code)
-          ? `<div class="sec"><div class="label">Absence partielle sur le poste${e?.pa ? ` · ${fmtH(12 - partialHours(code, e.pa))} h travaillées` : ""}</div>
+          ? `<div class="sec"><div class="label">Heures extra (refacturées)${extraOf(a, ds) ? ` · ${fmtH(extraOf(a, ds))} h sur ${fmtH(workedOn(a, ds))} h` : ""}</div>
+        <div class="range"><label>Heures extra<input type="number" id="x-h" min="0" max="${workedOn(a, ds)}" step="0.25" value="${extraOf(a, ds) || ""}" placeholder="0" style="width:90px"></label>
+          <button class="btn sm" data-act="xall">Tout le poste (${fmtH(workedOn(a, ds))} h)</button></div>
+        <div class="choices"><button class="btn sm primary" data-act="xsave">${extraOf(a, ds) ? "Modifier" : "Enregistrer"}</button>${extraOf(a, ds) ? `<button class="btn sm" data-act="xdel">Retirer les heures extra</button>` : ""}</div>
+        <p class="note">Ces heures restent dans les heures de l'agent mais passent des heures de production à la ligne « Extra » en bas du planning.</p>
+      </div>
+      <div class="sec"><div class="label">Absence partielle sur le poste${e?.pa ? ` · ${fmtH(12 - partialHours(code, e.pa))} h travaillées` : ""}</div>
         <div class="range"><label>De<input type="time" id="pa-from" step="900" value="${esc(e?.pa?.from || (KIND[code] === "J" ? "08:00" : "20:00"))}"></label><label>À<input type="time" id="pa-to" step="900" value="${esc(e?.pa?.to || "")}"></label>
           <label>Motif<select id="pa-m">${Object.keys(ABS)
             .map(
@@ -3985,6 +4052,27 @@
       if (act === "unnote") {
         setNote(S.drawer.id, S.drawer.ds, null);
         toast("Commentaire supprimé");
+        return;
+      }
+      if (act === "xall") {
+        const a = agentById(S.drawer.id);
+        $("#x-h").value = workedOn(a, S.drawer.ds);
+        return;
+      }
+      if (act === "xsave" || act === "xdel") {
+        const a = agentById(S.drawer.id),
+          ds = S.drawer.ds;
+        const w = workedOn(a, ds);
+        const v =
+          act === "xdel"
+            ? 0
+            : Number(String($("#x-h").value).replace(",", "."));
+        if (!(v >= 0) || v > w) {
+          toast(`Indiquez un nombre d'heures entre 0 et ${fmtH(w)}.`);
+          return;
+        }
+        setExtra(a.id, ds, Math.round(v * 100) / 100);
+        toast(v ? `${fmtH(v)} h passées en extra` : "Heures extra retirées");
         return;
       }
       if (act === "unpartial") {

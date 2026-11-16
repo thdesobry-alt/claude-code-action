@@ -5,6 +5,7 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 ## Fonctions
 
 - **Agents** : saisie du matricule, du nom, du prénom et de l'équipe (A à D), import par copier-coller depuis Excel (`matricule;nom;prénom;équipe`), création rapide de 4 × 11 fiches à compléter. L'ordre des agents dans chaque équipe se règle librement (flèches ou glisser-déposer) et s'applique au planning et au tableau des heures.
+- **Heures extra** : dans la journée d'un agent, une partie ou la totalité des heures du poste peut être passée en « extra » (refacturée). Elles restent dans les heures de l'agent, sont retirées des lignes Heures jour/nuit (et Maintien four) et totalisées dans une ligne « Extra » en bas du planning ; colonne « Extra (h) » dans l'onglet Heures.
 - **Maintien four** : affectation « MF » de jour (8h–20h) ou de nuit (20h–8h), choisie dans la journée d'un agent. Ses heures comptent dans les heures de l'agent ; un agent de production mis en maintien four laisse son poste à remplacer. Ligne « Maintien four » sous les heures jour/nuit du planning.
 - **Demande en cours** : statut du jour (case encadrée en pointillés orange, « ? » sur un repos), à poser ou retirer dans la journée de l'agent ; signalé dans la liste des remplaçants possibles. Ne change ni les heures ni l'effectif.
 - **Remplaçants** : rubrique à part (code `REMP` à l'import) pour les renforts de production. Ils n'ont pas de cycle, apparaissent sous les équipes dans le planning et sont proposés en premier pour remplacer un absent.
