@@ -47,7 +47,7 @@ Servie par un serveur web (ex. `python3 -m http.server` dans ce dossier), l'appl
 
 ## Icône
 
-Le dossier `icons/` contient l'icône de l'application (deux cylindres de laminage et une barre d'acier chaude, aux couleurs de l'appli) :
+Le dossier `icons/` contient l'icône de l'application (une pièce dorée frappée du symbole €, sur le fond vert canard de l'appli) :
 
 - `icon.svg` : version vectorielle (source) ;
 - `icon-512.png`, `icon-192.png`, `icon-32.png`, `icon-16.png` : versions PNG ;
