@@ -45,6 +45,19 @@ La liste **Autorisant** de l'en-tête filtre toute l'application sur un « Nome 
 
 Servie par un serveur web (ex. `python3 -m http.server` dans ce dossier), l'application charge `data.json` automatiquement au premier lancement. Ouverte en double-cliquant, elle démarre sur les données de démonstration intégrées tant qu'aucun fichier n'a été ouvert.
 
+## Icône
+
+Le dossier `icons/` contient l'icône de l'application (deux cylindres de laminage et une barre d'acier chaude, aux couleurs de l'appli) :
+
+- `icon.svg` : version vectorielle (source) ;
+- `icon-512.png`, `icon-192.png`, `icon-32.png`, `icon-16.png` : versions PNG ;
+- `apple-touch-icon.png` : écran d'accueil iPhone / iPad ;
+- `favicon.ico` : à utiliser pour un raccourci Windows.
+
+L'icône de l'onglet et le logo de l'en-tête sont intégrés directement dans `index.html` : ils s'affichent même si le fichier est copié seul.
+
+**Raccourci sur le bureau Windows** : clic droit sur le bureau → Nouveau → Raccourci → choisir `index.html` ; puis clic droit sur le raccourci → Propriétés → Changer d'icône → choisir `icons/favicon.ico`.
+
 ## Format de `data.json`
 
 ```json
