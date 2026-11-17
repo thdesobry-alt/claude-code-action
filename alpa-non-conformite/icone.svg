@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a6fc4"/>
+      <stop offset="1" stop-color="#174a87"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ef4b3f"/>
+      <stop offset="1" stop-color="#c4231a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Feuille du rapport -->
+  <path d="M132 76 H318 L380 138 V436 H132 Z" fill="#ffffff"/>
+  <path d="M318 76 V138 H380 Z" fill="#c7d4e6"/>
+  <!-- En-tête jaune et lignes du formulaire -->
+  <rect x="164" y="112" width="120" height="22" rx="4" fill="#ffd60a"/>
+  <rect x="164" y="170" width="184" height="14" rx="7" fill="#c9d3e0"/>
+  <rect x="164" y="208" width="184" height="14" rx="7" fill="#c9d3e0"/>
+  <rect x="164" y="246" width="140" height="14" rx="7" fill="#c9d3e0"/>
+  <rect x="164" y="284" width="96" height="14" rx="7" fill="#c9d3e0"/>
+  <!-- Croix « partie barrée » -->
+  <path d="M164 330 L236 396 M236 330 L164 396" stroke="#0a296b" stroke-width="12" stroke-linecap="round"/>
+  <!-- Pastille NC -->
+  <circle cx="362" cy="372" r="100" fill="url(#badge)" stroke="#ffffff" stroke-width="16"/>
+  <text x="362" y="402" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="bold"
+        font-size="86" fill="#ffffff" letter-spacing="-2">NC</text>
+</svg>

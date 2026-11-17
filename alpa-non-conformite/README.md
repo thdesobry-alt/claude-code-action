@@ -25,15 +25,15 @@ la page (Ctrl+V hors d'une zone de saisie) :
 06 5198852 10  16,00 12,000   211 B 235 C      2050 30574 15:00:00 1
 ```
 
-| Colonne | Zone du rapport |
-| --- | --- |
+| Colonne        | Zone du rapport                             |
+| -------------- | ------------------------------------------- |
 | Code NC (`06`) | Défaut constaté, en clair (`Fardeau tordu`) |
-| Fardeau | N° du fardeau |
-| Mes.1 / Mes.2 | Diam. / Long. |
-| Qualité | Qual. |
-| KG | Quantité en cause |
-| Coulée | N° de coulée |
-| Jour (en-tête) | Date de fabrication |
+| Fardeau        | N° du fardeau                               |
+| Mes.1 / Mes.2  | Diam. / Long.                               |
+| Qualité        | Qual.                                       |
+| KG             | Quantité en cause                           |
+| Coulée         | N° de coulée                                |
+| Jour (en-tête) | Date de fabrication                         |
 
 Laminoir est coché, Nb fardeaux = 1, Lieu de stockage = « Zone NC » et
 « étiqueté en rose » = Non (valeurs par défaut de tout nouveau rapport).
@@ -61,6 +61,15 @@ Laminoir est coché, Nb fardeaux = 1, Lieu de stockage = « Zone NC » et
 7. **📂 Ouvrir le dossier d'enregistrement** : liste les PDF du dossier (du plus récent
    au plus ancien), un clic ouvre le PDF. Un navigateur ne peut pas lancer l'Explorateur Windows.
 
+## Icône
+
+`icone.svg` (source), `icone.png` (512 px) et `icone.ico` (Windows). L'icône s'affiche
+aussi dans l'onglet du navigateur.
+
+Raccourci sur le bureau Windows : clic droit sur `index.html` → *Envoyer vers* →
+*Bureau (créer un raccourci)*, puis clic droit sur le raccourci → *Propriétés* →
+*Changer d'icône…* → choisir `icone.ico`.
+
 ## Paramètres (⚙)
 
 - Listes des rédacteurs et des chefs de poste.
@@ -73,8 +82,8 @@ Les paramètres sont enregistrés dans le navigateur du poste (localStorage, et 
 
 ## Modifier l'application
 
-`index.html` est généré à partir de `template.html`, du PDF et de son image de fond `fond.png` :
+`index.html` est généré à partir de `template.html`, du PDF, de son image de fond `fond.png` et de l'icône `icone.svg` :
 
 ```bash
-python3 build.py template.html AQA.QUAL.03.pdf fond.png index.html
+python3 build.py template.html AQA.QUAL.03.pdf fond.png icone.svg index.html
 ```

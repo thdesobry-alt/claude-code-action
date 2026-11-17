@@ -1,9 +1,13 @@
-"""Génère index.html : python3 build.py template.html AQA.QUAL.03.pdf fond.png index.html"""
+"""Génère index.html : python3 build.py template.html AQA.QUAL.03.pdf fond.png icone.svg index.html"""
 import base64
 import sys
 
-template, pdf, fond, out = sys.argv[1:5]
+template, pdf, fond, icone, out = sys.argv[1:6]
 b64 = lambda p: base64.b64encode(open(p, "rb").read()).decode()
 html = open(template, encoding="utf-8").read()
-html = html.replace("__PDF_BASE64__", b64(pdf)).replace("__BG_BASE64__", b64(fond))
+html = (
+    html.replace("__PDF_BASE64__", b64(pdf))
+    .replace("__BG_BASE64__", b64(fond))
+    .replace("__ICON_BASE64__", b64(icone))
+)
 open(out, "w", encoding="utf-8").write(html)
