@@ -1862,7 +1862,7 @@
         // Structure du fichier : { application, format, revision, modifie_le, modifie_par,
         // verrou: {par, session, depuis, actif} | null, cycle, agents: {id: agent}, mois: {"AAAA-MM": mois} }
         const FILE_FORMAT = 1;
-        const APP_VERSION = "19/11/2026 (h)";
+        const APP_VERSION = "19/11/2026 (i)";
         const LOCK_STALE_MS = 15 * 60 * 1000; // verrou abandonné après 15 min sans signe de vie
         const HEARTBEAT_MS = 4 * 60 * 1000;
         const POLL_MS = 30 * 1000;
@@ -1929,6 +1929,7 @@
                     mode === "get" ? "readonly" : "readwrite",
                   );
                   const st = tr.objectStore("kv");
+                  tr.oncomplete = tr.onabort = () => rq.result.close();
                   const r = mode === "get" ? st.get(key) : st.put(value, key);
                   r.onsuccess = () =>
                     resolve(mode === "get" ? r.result || null : true);
@@ -2299,6 +2300,12 @@
           }</div>`
             : ""
         }
+        <div class="compat"><p class="note"><b>Réinitialiser ce poste</b> : oublie le fichier mémorisé (« Rouvrir »), la sauvegarde associée et les préférences de ce PC. Le fichier de planning partagé n'est pas touché.</p>
+          <div class="choices">${
+            S.resetAsk
+              ? `<span class="confirm">Réinitialiser ce poste ?<button class="btn sm danger" data-act="freset">Oui, réinitialiser</button><button class="btn sm" data-act="fresetno">Non</button></span>`
+              : `<button class="btn sm" data-act="fresetask">Réinitialiser ce poste…</button>`
+          }</div></div>
         <p class="note">Version de l'application : ${APP_VERSION} · ${esc((navigator.userAgent.match(/(Edg|Chrome)\/[\d.]+/) || ["navigateur inconnu"])[0])}</p>
         ${S.connectMsg ? `<p class="banner">${esc(S.connectMsg)}</p>` : ""}
         ${S.connectErr ? `<p class="over">${esc(S.connectErr)}</p>` : ""}
@@ -2383,6 +2390,31 @@
               }
               toast("Sauvegarde activée : " + bh.name);
               fileBanner();
+              return;
+            }
+            if (act === "fresetask" || act === "fresetno") {
+              S.resetAsk = act === "fresetask";
+              render();
+              return;
+            }
+            if (act === "freset") {
+              // Efface la mémoire de l'application sur ce poste (accès au fichier, sauvegarde, préférences).
+              // Les données locales « dans ce navigateur uniquement » sont conservées.
+              try {
+                localStorage.removeItem(LS_UI);
+              } catch {}
+              S.lastHandle = null;
+              await new Promise((done) => {
+                try {
+                  const rq = indexedDB.deleteDatabase("planning-equipes");
+                  rq.onsuccess = rq.onerror = rq.onblocked = () => done();
+                } catch {
+                  done();
+                }
+                setTimeout(done, 2000);
+              });
+              toast("Poste réinitialisé : la page va se recharger.");
+              setTimeout(() => location.reload(), 900);
               return;
             }
             if (act === "fcompatno") {
@@ -4191,7 +4223,7 @@
           const b = ev.target.closest("[data-act]");
           if (
             b &&
-            /^f(open|new|reopen|close|reload|take|force|forceno|local|backup|compat2|compatno)$/.test(
+            /^f(open|new|reopen|close|reload|take|force|forceno|local|backup|compat2|compatno|resetask|resetno|reset)$/.test(
               b.dataset.act,
             )
           ) {
