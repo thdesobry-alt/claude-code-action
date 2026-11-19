@@ -2136,8 +2136,12 @@
               return true;
             return (await handle.requestPermission({ mode })) === "granted";
           };
-          if (!(await perm("read")))
-            throw new Error("Accès au fichier refusé.");
+          // Une seule demande d'autorisation (lecture + écriture) ; à défaut, lecture seule.
+          const rw = await perm("readwrite");
+          if (!rw && !(await perm("read")))
+            throw new Error(
+              "Le navigateur n'a pas donné accès au fichier. Cliquez sur « Ouvrir un fichier de planning… » et choisissez-le.",
+            );
           let data;
           if (create) data = create;
           else {
@@ -2147,7 +2151,7 @@
           }
           const v = data.verrou;
           const busy = v && v.par !== me && lockAlive(v) && !force;
-          let writable = !busy && (await perm("readwrite"));
+          let writable = !busy && rw;
           const st = fileStore(handle, data, me, false);
           if (writable) await st.takeOver(!!create);
           await idb("put", handle);
@@ -2225,6 +2229,7 @@
         <div class="choices"><label class="btn">Consulter un fichier de planning…<input type="file" id="ro-file" accept=".json,application/json" hidden></label></div>`
         }
         <p class="note">Sans fichier, vous pouvez aussi <button class="linkbtn" data-act="flocal">travailler dans ce navigateur uniquement</button> (données non partagées).</p>
+        ${S.connectMsg ? `<p class="banner">${esc(S.connectMsg)}</p>` : ""}
         ${S.connectErr ? `<p class="over">${esc(S.connectErr)}</p>` : ""}
       </div>`;
         }
@@ -2380,7 +2385,24 @@
                   create.mois[k.slice(5)] = await loc.get(k);
             }
             if (!handle) return;
-            const { st, busy, writable } = await openFile(handle, { create });
+            // Message d'attente : la demande d'autorisation de Chrome peut être discrète
+            // (petite icône dans la barre d'adresse) ; au bout de 15 s, on propose l'autre bouton.
+            S.connectMsg = `Ouverture de « ${handle.name} »… Si le navigateur demande l'autorisation d'accéder au fichier (fenêtre ou icône en haut à droite de la barre d'adresse), cliquez sur « Autoriser » ou « Modifier le fichier ».`;
+            render();
+            const slow = setTimeout(() => {
+              if (S.store) return;
+              S.connectMsg = "";
+              S.connectErr = `Le fichier ne s'ouvre pas : l'autorisation n'a pas été donnée ou le fichier est inaccessible. Cliquez sur « Ouvrir un fichier de planning… » et choisissez « ${handle.name} » dans votre dossier partagé.`;
+              render();
+            }, 15000);
+            let res;
+            try {
+              res = await openFile(handle, { create });
+            } finally {
+              clearTimeout(slow);
+              S.connectMsg = "";
+            }
+            const { st, busy, writable } = res;
             S.canWrite = writable;
             startStore(st);
             if (busy)
@@ -2395,7 +2417,13 @@
               return;
             }
             S.connectErr =
-              e && e.message ? e.message : "Impossible d'ouvrir le fichier.";
+              e && e.name === "NotFoundError"
+                ? "Le fichier n'est plus à l'emplacement mémorisé (déplacé, renommé ou remplacé). Cliquez sur « Ouvrir un fichier de planning… » et choisissez-le à nouveau."
+                : e && e.name === "NotAllowedError"
+                  ? "Accès au fichier refusé par le navigateur. Cliquez sur « Ouvrir un fichier de planning… » et choisissez-le à nouveau."
+                  : e && e.message
+                    ? e.message
+                    : "Impossible d'ouvrir le fichier.";
             render();
           }
         }
