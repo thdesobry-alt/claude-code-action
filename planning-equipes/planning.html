@@ -1837,7 +1837,7 @@
     // Structure du fichier : { application, format, revision, modifie_le, modifie_par,
     // verrou: {par, session, depuis, actif} | null, cycle, agents: {id: agent}, mois: {"AAAA-MM": mois} }
     const FILE_FORMAT = 1;
-    const APP_VERSION = "19/11/2026 (g)";
+    const APP_VERSION = "19/11/2026 (h)";
     const LOCK_STALE_MS = 15 * 60 * 1000; // verrou abandonné après 15 min sans signe de vie
     const HEARTBEAT_MS = 4 * 60 * 1000;
     const POLL_MS = 30 * 1000;
@@ -2153,10 +2153,15 @@
           // on l'oublie pour repasser par l'explorateur de fichiers.
           S.lastHandle = null;
           idb("put", null);
-          if (e && e.message === "READ_TIMEOUT")
+          if (e && e.message === "READ_TIMEOUT") {
+            // Contournement : on garde cet accès pour écrire, et on lira le fichier de façon classique.
+            if (rw) S.compatHandle = handle;
             throw new Error(
-              `Chrome n'arrive pas à lire « ${handle.name} » avec l'accès mémorisé (étape 2/3). Cliquez sur « Ouvrir un fichier de planning… » et rechoisissez le fichier dans votre dossier partagé.`,
+              rw
+                ? `Sur ce poste, Chrome n'arrive pas à lire « ${handle.name} » directement (étape 2/3). Cliquez sur « Charger ${handle.name} (lecture classique)… » ci-dessus et choisissez le même fichier : les enregistrements se feront directement dedans.`
+                : `Chrome n'arrive pas à lire « ${handle.name} » (étape 2/3). Cliquez sur « Ouvrir un fichier de planning… » et rechoisissez le fichier dans votre dossier partagé.`,
             );
+          }
           throw e;
         }
         data = txt.trim() ? normalizeFile(JSON.parse(txt)) : emptyFile();
@@ -2242,10 +2247,13 @@
           FS_OK
             ? `<div class="compat"><p class="note"><b>Si l'ouverture bloque sur ce poste (étape 2/3)</b> :</p>
           ${
-            S.compatData
-              ? `<p>Fichier lu : <b>${esc(S.compatName)}</b>. Étape 2 : cliquez ci-dessous, retournez dans le même dossier, sélectionnez <b>${esc(S.compatName)}</b> et confirmez « Remplacer ». Ce choix sert uniquement à enregistrer.</p>
+            S.compatHandle && !S.compatData
+              ? `<div class="choices"><label class="btn primary">Charger ${esc(S.compatHandle.name)} (lecture classique)…<input type="file" id="compat-file" accept=".json,application/json" hidden></label><button class="btn" data-act="fcompatno">Annuler</button></div>
+          <p class="note">Choisissez le même fichier <b>${esc(S.compatHandle.name)}</b> dans le dossier partagé. Il est lu de façon classique (ce qui fonctionne sur ce poste), puis les enregistrements se font directement dans le fichier.</p>`
+              : S.compatData
+                ? `<p>Fichier lu : <b>${esc(S.compatName)}</b>. Étape 2 : cliquez ci-dessous, retournez dans le même dossier, sélectionnez <b>${esc(S.compatName)}</b> et confirmez « Remplacer ». Ce choix sert uniquement à enregistrer.</p>
           <div class="choices"><button class="btn primary" data-act="fcompat2">Choisir le fichier où enregistrer…</button><button class="btn" data-act="fcompatno">Annuler</button></div>`
-              : `<div class="choices"><label class="btn">Modifier en mode compatibilité…<input type="file" id="compat-file" accept=".json,application/json" hidden></label><label class="btn">Consulter en lecture seule…<input type="file" id="ro-file" accept=".json,application/json" hidden></label></div>
+                : `<div class="choices"><label class="btn">Modifier en mode compatibilité…<input type="file" id="compat-file" accept=".json,application/json" hidden></label><label class="btn">Consulter en lecture seule…<input type="file" id="ro-file" accept=".json,application/json" hidden></label></div>
           <p class="note">Le mode compatibilité lit le fichier de façon classique puis vous demande où enregistrer (choisissez le même fichier). L'affichage ne se met pas à jour tout seul : fermez et libérez le fichier en fin de travail.</p>`
           }</div>`
             : ""
@@ -2331,6 +2339,7 @@
         }
         if (act === "fcompatno") {
           S.compatData = null;
+          S.compatHandle = null;
           render();
           return;
         }
@@ -2348,18 +2357,21 @@
             render();
             return;
           }
-          const handle = await showSaveFilePicker({
-            suggestedName: S.compatName,
-            types: [
-              {
-                description: "Planning (JSON)",
-                accept: { "application/json": [".json"] },
-              },
-            ],
-          });
+          const handle =
+            S.compatHandle ||
+            (await showSaveFilePicker({
+              suggestedName: S.compatName,
+              types: [
+                {
+                  description: "Planning (JSON)",
+                  accept: { "application/json": [".json"] },
+                },
+              ],
+            }));
           const st = fileStore(handle, data, S.me, false);
           st.compat = true;
           S.compatData = null;
+          S.compatHandle = null;
           S.canWrite = false;
           startStore(st);
           st.status = "Mode compatibilité : prise de la main…";
@@ -5011,6 +5023,16 @@
         S.compatData = normalizeFile(JSON.parse(await f.text()));
         S.compatName = f.name;
         S.connectErr = "";
+        if (S.compatHandle) {
+          if (f.name !== S.compatHandle.name) {
+            S.compatData = null;
+            S.connectErr = `Choisissez le même fichier « ${S.compatHandle.name} » (vous avez choisi « ${f.name} »).`;
+            render();
+            return;
+          }
+          await fileAction("fcompat2");
+          return;
+        }
       } catch (e) {
         S.connectErr = e.message || "Fichier illisible.";
       }
