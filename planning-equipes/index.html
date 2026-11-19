@@ -1855,7 +1855,7 @@
         // Structure du fichier : { application, format, revision, modifie_le, modifie_par,
         // verrou: {par, session, depuis, actif} | null, cycle, agents: {id: agent}, mois: {"AAAA-MM": mois} }
         const FILE_FORMAT = 1;
-        const APP_VERSION = "19/11/2026 (b)";
+        const APP_VERSION = "19/11/2026 (c)";
         const LOCK_STALE_MS = 15 * 60 * 1000; // verrou abandonné après 15 min sans signe de vie
         const HEARTBEAT_MS = 4 * 60 * 1000;
         const POLL_MS = 30 * 1000;
@@ -2240,9 +2240,9 @@
         ${
           FS_OK
             ? `<div class="choices">
-          ${last ? `<button class="btn primary" data-act="freopen">Rouvrir « ${esc(last.name)} »</button>` : ""}
-          <button class="btn ${last ? "" : "primary"}" data-act="fopen">Ouvrir un fichier de planning…</button>
-          <button class="btn" data-act="fnew">Créer un nouveau fichier…</button>
+          ${last ? `<button class="btn primary" data-act="freopen" ${S.opening ? "disabled" : ""}>Rouvrir « ${esc(last.name)} »</button>` : ""}
+          <button class="btn ${last ? "" : "primary"}" data-act="fopen" ${S.opening ? "disabled" : ""}>Ouvrir un fichier de planning…</button>
+          <button class="btn" data-act="fnew" ${S.opening ? "disabled" : ""}>Créer un nouveau fichier…</button>
         </div>
         <p class="note">« Créer un nouveau fichier » reprend les données déjà saisies dans ce navigateur, s'il y en a. À chaque enregistrement, la version précédente est copiée dans <b>${BACKUP_NAME}</b> (à activer une fois, dans le même dossier). Pour revenir en arrière, ouvrez ce fichier de sauvegarde.</p>`
             : `<p class="banner">Ce navigateur ne sait pas enregistrer directement dans un fichier. Utilisez <b>Google Chrome</b> ou <b>Microsoft Edge</b> sur ordinateur pour modifier le planning. Ici, vous pouvez seulement le consulter.</p>
@@ -2256,6 +2256,14 @@
         }
 
         async function fileAction(act) {
+          // Une seule ouverture à la fois : un second clic pendant la demande de Chrome
+          // peut laisser la première demande sans réponse.
+          if (S.opening && /^f(open|new|reopen)$/.test(act)) {
+            toast(
+              "Ouverture déjà en cours : répondez à la demande de Chrome et patientez.",
+            );
+            return;
+          }
           const nameEl = $("#me-name");
           if (nameEl) {
             S.me = nameEl.value.trim();
@@ -2406,6 +2414,7 @@
                   create.mois[k.slice(5)] = await loc.get(k);
             }
             if (!handle) return;
+            S.opening = true;
             // Message d'attente : la demande d'autorisation de Chrome peut être discrète
             // (petite icône dans la barre d'adresse) ; au bout de 15 s, on propose l'autre bouton.
             S.connectMsg = `Ouverture de « ${handle.name} »… Si le navigateur demande l'autorisation d'accéder au fichier (fenêtre ou icône en haut à droite de la barre d'adresse), cliquez sur « Autoriser » ou « Modifier le fichier ».`;
@@ -2422,6 +2431,7 @@
             } finally {
               clearTimeout(slow);
               S.connectMsg = "";
+              S.opening = false;
             }
             const { st, busy, writable } = res;
             // Le planning s'affiche tout de suite (lecture), puis on prend la main pour écrire.
