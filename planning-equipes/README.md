@@ -35,6 +35,8 @@ Application web (un seul fichier HTML) pour gérer le planning de 4 équipes de 
 4. En fin de travail, cliquez « Fermer et libérer le fichier ». Un verrou oublié expire 15 minutes après la fermeture de la page. « Prendre la main » permet de forcer, après confirmation.
 5. Chaque enregistrement relit d'abord le fichier : si quelqu'un d'autre l'a modifié entre-temps, rien n'est écrasé et l'application demande de recharger.
 
+**Mode compatibilité** : sur un poste où Chrome bloque à la lecture du fichier (étape 2/3), « Modifier en mode compatibilité… » lit le fichier de façon classique, puis demande de choisir le même fichier pour enregistrer. Le verrou est posé et libéré normalement ; l'affichage ne se rafraîchit pas tout seul.
+
 `planning-data.exemple.json` montre la structure du fichier (cycle, agents, mois). Le fichier réel `planning-data.json` contient des données personnelles et n'est pas versionné (`.gitignore`). Firefox et Safari ne peuvent que consulter le fichier.
 
 ## Utilisation

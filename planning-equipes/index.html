@@ -1370,6 +1370,13 @@
         font-weight: 600;
         font-size: 14px;
       }
+      .compat {
+        border-top: 1px solid var(--line);
+        padding-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
       .ordcell {
         display: flex;
         align-items: center;
@@ -1855,7 +1862,7 @@
         // Structure du fichier : { application, format, revision, modifie_le, modifie_par,
         // verrou: {par, session, depuis, actif} | null, cycle, agents: {id: agent}, mois: {"AAAA-MM": mois} }
         const FILE_FORMAT = 1;
-        const APP_VERSION = "19/11/2026 (e)";
+        const APP_VERSION = "19/11/2026 (f)";
         const LOCK_STALE_MS = 15 * 60 * 1000; // verrou abandonné après 15 min sans signe de vie
         const HEARTBEAT_MS = 4 * 60 * 1000;
         const POLL_MS = 30 * 1000;
@@ -2022,6 +2029,7 @@
               await st.save();
             },
             async refresh() {
+              if (st.compat) return false;
               const f = await handle.getFile();
               if (f.lastModified === lastMod) return false;
               lastMod = f.lastModified;
@@ -2032,6 +2040,9 @@
             },
           };
           async function readFile() {
+            // Mode compatibilité : le poste ne sait pas relire le fichier par l'accès direct ;
+            // on se fie au contenu chargé (le verrou protège des autres utilisateurs).
+            if (st.compat) return clone({ ...data, revision: known });
             const f = await handle.getFile();
             lastMod = f.lastModified;
             const txt = await f.text();
@@ -2103,7 +2114,7 @@
               known = data.revision;
               lastWrite = Date.now();
               st.okAt = lastWrite;
-              lastMod = (await handle.getFile()).lastModified;
+              if (!st.compat) lastMod = (await handle.getFile()).lastModified;
               st.status = `Enregistré à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
             } catch (e) {
               st.status =
@@ -2224,7 +2235,7 @@
                 : st.backupPending
                   ? `<span class="over">Sauvegarde en pause.</span> <button class="btn sm primary" data-act="fbackup">Réactiver la sauvegarde</button>`
                   : `<span class="over">Aucune sauvegarde.</span> <button class="btn sm primary" data-act="fbackup">Activer la sauvegarde (${BACKUP_NAME})</button>`;
-            b.innerHTML = `<div class="filebar"><span><b>${name}</b> · ouvert par vous (${esc(st.me)}) · les autres utilisateurs le voient en lecture seule · <span class="muted">${esc(st.status || "")}</span></span><button class="btn sm" data-act="fclose">Fermer et libérer le fichier</button></div><div class="filebar" style="margin-top:6px;justify-content:flex-start">${bk}</div>`;
+            b.innerHTML = `<div class="filebar"><span><b>${name}</b> · ouvert par vous (${esc(st.me)})${st.compat ? " en mode compatibilité" : ""} · les autres utilisateurs le voient en lecture seule · <span class="muted">${esc(st.status || "")}</span></span><button class="btn sm" data-act="fclose">Fermer et libérer le fichier</button></div><div class="filebar" style="margin-top:6px;justify-content:flex-start">${bk}</div>`;
           } else if (st.conflict) {
             b.innerHTML = `<div class="filebar warnbar"><span>${esc(st.status)}</span><button class="btn sm primary" data-act="freload">Recharger le fichier</button></div>`;
           } else {
@@ -2264,7 +2275,14 @@
         <p class="note">Sans fichier, vous pouvez aussi <button class="linkbtn" data-act="flocal">travailler dans ce navigateur uniquement</button> (données non partagées).</p>
         ${
           FS_OK
-            ? `<p class="note">Si l'ouverture bloque sur ce poste : <label class="linkbtn" style="cursor:pointer">consulter le planning en lecture seule<input type="file" id="ro-file" accept=".json,application/json" hidden></label> (lecture classique du fichier, sans enregistrement ; l'affichage ne se met pas à jour tout seul).</p>`
+            ? `<div class="compat"><p class="note"><b>Si l'ouverture bloque sur ce poste (étape 2/3)</b> :</p>
+          ${
+            S.compatData
+              ? `<p>Fichier lu : <b>${esc(S.compatName)}</b>. Étape 2 : cliquez ci-dessous, retournez dans le même dossier, sélectionnez <b>${esc(S.compatName)}</b> et confirmez « Remplacer ». Ce choix sert uniquement à enregistrer.</p>
+          <div class="choices"><button class="btn primary" data-act="fcompat2">Choisir le fichier où enregistrer…</button><button class="btn" data-act="fcompatno">Annuler</button></div>`
+              : `<div class="choices"><label class="btn">Modifier en mode compatibilité…<input type="file" id="compat-file" accept=".json,application/json" hidden></label><label class="btn">Consulter en lecture seule…<input type="file" id="ro-file" accept=".json,application/json" hidden></label></div>
+          <p class="note">Le mode compatibilité lit le fichier de façon classique puis vous demande où enregistrer (choisissez le même fichier). L'affichage ne se met pas à jour tout seul : fermez et libérez le fichier en fin de travail.</p>`
+          }</div>`
             : ""
         }
         <p class="note">Version de l'application : ${APP_VERSION} · ${esc((navigator.userAgent.match(/(Edg|Chrome)\/[\d.]+/) || ["navigateur inconnu"])[0])}</p>
@@ -2351,6 +2369,62 @@
               }
               toast("Sauvegarde activée : " + bh.name);
               fileBanner();
+              return;
+            }
+            if (act === "fcompatno") {
+              S.compatData = null;
+              render();
+              return;
+            }
+            if (act === "fcompat2") {
+              if (!S.me) {
+                S.connectErr =
+                  "Indiquez votre nom : il permet aux autres utilisateurs de savoir qui modifie le planning.";
+                render();
+                return;
+              }
+              const data = S.compatData;
+              const v = data.verrou;
+              if (v && v.par !== S.me && lockAlive(v)) {
+                S.connectErr = `Le planning est en cours de modification par ${v.par} depuis le ${fmtTime(v.depuis)} : attendez qu'il soit libéré, ou consultez-le en lecture seule.`;
+                render();
+                return;
+              }
+              const handle = await showSaveFilePicker({
+                suggestedName: S.compatName,
+                types: [
+                  {
+                    description: "Planning (JSON)",
+                    accept: { "application/json": [".json"] },
+                  },
+                ],
+              });
+              const st = fileStore(handle, data, S.me, false);
+              st.compat = true;
+              S.compatData = null;
+              S.canWrite = false;
+              startStore(st);
+              st.status = "Mode compatibilité : prise de la main…";
+              fileBanner();
+              try {
+                await withTimeout(
+                  st.takeOver(true),
+                  20000,
+                  "l'écriture dans le fichier ne répond pas",
+                );
+              } catch (e) {
+                st.status = e.message;
+              }
+              if (st.okAt) {
+                S.canWrite = true;
+                toast("Mode compatibilité : vous pouvez modifier le planning.");
+              } else {
+                st.writable = false;
+                $("#banner").innerHTML =
+                  `<div class="filebar warnbar"><span><b>${esc(handle.name)}</b> · lecture seule : ce poste ne parvient pas non plus à écrire dans le fichier (${esc(st.status || "erreur")}). Le problème vient de l'accès de ce poste au lecteur réseau : à faire vérifier par le service informatique.</span></div>`;
+              }
+              fileBanner();
+              render();
               return;
             }
             if (act === "fforceno") {
@@ -4075,7 +4149,7 @@
           const b = ev.target.closest("[data-act]");
           if (
             b &&
-            /^f(open|new|reopen|close|reload|take|force|forceno|local|backup)$/.test(
+            /^f(open|new|reopen|close|reload|take|force|forceno|local|backup|compat2|compatno)$/.test(
               b.dataset.act,
             )
           ) {
@@ -4962,6 +5036,25 @@
           watchMonths();
           render();
         }
+        // Le nom saisi est gardé à chaque frappe (l'écran d'ouverture peut se redessiner).
+        document.addEventListener("input", (ev) => {
+          if (ev.target.id !== "me-name") return;
+          S.me = ev.target.value.trim();
+          uiSet({ me: S.me });
+        });
+        // Mode compatibilité, étape 1 : lecture classique du fichier.
+        document.addEventListener("change", async (ev) => {
+          if (ev.target.id !== "compat-file" || !ev.target.files[0]) return;
+          try {
+            const f = ev.target.files[0];
+            S.compatData = normalizeFile(JSON.parse(await f.text()));
+            S.compatName = f.name;
+            S.connectErr = "";
+          } catch (e) {
+            S.connectErr = e.message || "Fichier illisible.";
+          }
+          render();
+        });
         // Consultation seule d'un fichier choisi (navigateurs sans écriture directe).
         document.addEventListener("change", async (ev) => {
           if (ev.target.id !== "ro-file" || !ev.target.files[0]) return;
