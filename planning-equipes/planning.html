@@ -1830,7 +1830,7 @@
     // Structure du fichier : { application, format, revision, modifie_le, modifie_par,
     // verrou: {par, session, depuis, actif} | null, cycle, agents: {id: agent}, mois: {"AAAA-MM": mois} }
     const FILE_FORMAT = 1;
-    const APP_VERSION = "19/11/2026 (c)";
+    const APP_VERSION = "19/11/2026 (d)";
     const LOCK_STALE_MS = 15 * 60 * 1000; // verrou abandonné après 15 min sans signe de vie
     const HEARTBEAT_MS = 4 * 60 * 1000;
     const POLL_MS = 30 * 1000;
@@ -2127,11 +2127,24 @@
         S.openStep = "2/3 — lecture du fichier";
         S.connectMsg = `Étape ${S.openStep} « ${handle.name} »…`;
         render();
-        const txt = await withTimeout(
-          handle.getFile().then((f) => f.text()),
-          20000,
-          "la lecture du fichier ne répond pas (lecteur réseau lent ou déconnecté ?)",
-        );
+        let txt;
+        try {
+          txt = await withTimeout(
+            handle.getFile().then((f) => f.text()),
+            12000,
+            "READ_TIMEOUT",
+          );
+        } catch (e) {
+          // Accès mémorisé inutilisable (fichier remplacé, déplacé, lecteur réseau) :
+          // on l'oublie pour repasser par l'explorateur de fichiers.
+          S.lastHandle = null;
+          idb("put", null);
+          if (e && e.message === "READ_TIMEOUT")
+            throw new Error(
+              `Chrome n'arrive pas à lire « ${handle.name} » avec l'accès mémorisé (étape 2/3). Cliquez sur « Ouvrir un fichier de planning… » et rechoisissez le fichier dans votre dossier partagé.`,
+            );
+          throw e;
+        }
         data = txt.trim() ? normalizeFile(JSON.parse(txt)) : emptyFile();
       }
       const v = data.verrou;
@@ -2373,10 +2386,11 @@
         render();
         const slow = setTimeout(() => {
           if (S.store) return;
+          S.opening = false;
           S.connectMsg = "";
           S.connectErr = `Le fichier ne s'ouvre pas : blocage à l'étape ${S.openStep || "?"}. Cliquez sur « Ouvrir un fichier de planning… » et choisissez « ${handle.name} » dans votre dossier partagé.`;
           render();
-        }, 25000);
+        }, 60000);
         let res;
         try {
           res = await openFile(handle, { create });
