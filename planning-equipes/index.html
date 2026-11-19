@@ -1909,6 +1909,7 @@
         // Mémorise le dernier fichier ouvert (IndexedDB) pour le rouvrir en un clic.
         function idb(mode, value, key = "fichier") {
           return new Promise((resolve) => {
+            setTimeout(() => resolve(null), 3000); // ne jamais bloquer l'ouverture
             try {
               const rq = indexedDB.open("planning-equipes", 1);
               rq.onupgradeneeded = () => rq.result.createObjectStore("kv");
@@ -2100,6 +2101,7 @@
               await w.close();
               known = data.revision;
               lastWrite = Date.now();
+              st.okAt = lastWrite;
               lastMod = (await handle.getFile()).lastModified;
               st.status = `Enregistré à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
             } catch (e) {
@@ -2128,6 +2130,11 @@
         }
 
         // Ouvre un fichier : vérifie le verrou, puis le prend si possible.
+        const withTimeout = (p, ms, why) =>
+          Promise.race([
+            p,
+            new Promise((_, rej) => setTimeout(() => rej(new Error(why)), ms)),
+          ]);
         async function openFile(handle, { force = false, create = null } = {}) {
           const me = S.me;
           const perm = async (mode) => {
@@ -2145,16 +2152,20 @@
           let data;
           if (create) data = create;
           else {
-            const f = await handle.getFile();
-            const txt = await f.text();
+            S.connectMsg = `Lecture de « ${handle.name} »…`;
+            render();
+            const txt = await withTimeout(
+              handle.getFile().then((f) => f.text()),
+              20000,
+              "la lecture du fichier ne répond pas (lecteur réseau lent ou déconnecté ?)",
+            );
             data = txt.trim() ? normalizeFile(JSON.parse(txt)) : emptyFile();
           }
           const v = data.verrou;
           const busy = v && v.par !== me && lockAlive(v) && !force;
           let writable = !busy && rw;
           const st = fileStore(handle, data, me, false);
-          if (writable) await st.takeOver(!!create);
-          await idb("put", handle);
+          idb("put", handle);
           const bh = await idb("get", null, backupKey(handle));
           if (bh) {
             try {
@@ -2394,7 +2405,7 @@
               S.connectMsg = "";
               S.connectErr = `Le fichier ne s'ouvre pas : l'autorisation n'a pas été donnée ou le fichier est inaccessible. Cliquez sur « Ouvrir un fichier de planning… » et choisissez « ${handle.name} » dans votre dossier partagé.`;
               render();
-            }, 15000);
+            }, 25000);
             let res;
             try {
               res = await openFile(handle, { create });
@@ -2403,13 +2414,42 @@
               S.connectMsg = "";
             }
             const { st, busy, writable } = res;
-            S.canWrite = writable;
+            // Le planning s'affiche tout de suite (lecture), puis on prend la main pour écrire.
+            S.canWrite = false;
             startStore(st);
+            fileBanner();
             if (busy)
               toast(
                 `Planning utilisé par ${busy.par} : ouverture en lecture seule.`,
               );
-            fileBanner();
+            if (writable) {
+              st.status = "Prise de la main sur le fichier…";
+              fileBanner();
+              try {
+                await withTimeout(
+                  st.takeOver(!!create),
+                  20000,
+                  "l'écriture dans le fichier ne répond pas",
+                );
+              } catch (e) {
+                st.status = e.message;
+              }
+              if (st.okAt) {
+                S.canWrite = true;
+              } else {
+                st.writable = false;
+                S.canWrite = false;
+                toast(
+                  "Ouvert en lecture seule : impossible d'écrire dans le fichier.",
+                );
+                const b = $("#banner");
+                b.innerHTML = `<div class="filebar warnbar"><span><b>${esc(st.handle.name)}</b> · lecture seule : impossible d'enregistrer dans ce fichier (${esc(st.status || "erreur inconnue")}). Vérifiez que le fichier n'est pas en lecture seule et que le dossier partagé autorise l'écriture, puis rechargez la page.</span></div>`;
+                render();
+                return;
+              }
+              fileBanner();
+              render();
+            }
           } catch (e) {
             if (e && e.name === "AbortError") return;
             if (S.store) {
