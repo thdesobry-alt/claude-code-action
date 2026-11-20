@@ -2305,9 +2305,9 @@
     if (!RANK.hasOwnProperty(unlocked)) unlocked = "viewer";
     // accès complémentaires de profils Utilisateur nominatifs : menus ouverts en plus et mis en avant
     var EXTRA_PROFILES = {
-      zaino: { label: "Énergie", open: ["energie"], highlight: ["energie", "nc"], msg: "Énergie et Non conformes" },
-      daguenet: { label: "Saisie · Programme · Production", open: ["saisie", "prog", "prod"], highlight: ["saisie", "prog", "prod"], msg: "Saisie des arrêts, Programme de laminage et Production" },
-      balem: { label: "Saisie · Programme · Production", open: ["saisie", "prog", "prod"], highlight: ["saisie", "prog", "prod"], msg: "Saisie des arrêts, Programme de laminage et Production" },
+      zaino: { label: "Énergie", open: ["energie", "nc"], highlight: ["energie", "nc"], msg: "Énergie et Non conformes" },
+      daguenet: { label: "Saisie · Programme · Production", open: ["saisie", "prog", "prod", "nc"], highlight: ["saisie", "prog", "prod"], msg: "Saisie des arrêts, Programme de laminage et Production" },
+      balem: { label: "Saisie · Programme · Production", open: ["saisie", "prog", "prod", "nc"], highlight: ["saisie", "prog", "prod"], msg: "Saisie des arrêts, Programme de laminage et Production" },
     };
     var extraAccess = "";
     try { extraAccess = sessionStorage.getItem(LOCAL_KEY + "-extra") || ""; } catch (e) {}
@@ -2317,6 +2317,7 @@
     function canEnergy() { return isAdmin() || hasExtra("energie"); }
     function canSaisie() { return isAdmin() || hasExtra("saisie"); }
     function canProg() { return isAdmin() || hasExtra("prog"); }
+    function canNC() { return isAdmin() || hasExtra("nc"); }
     function canProd() { return isAdmin() || hasExtra("prod"); }
     function applyRole() {
       role = RANK[unlocked] <= RANK[platformRole] ? unlocked : platformRole;
@@ -3448,6 +3449,7 @@
       document.querySelector('nav.tabs [data-tab="energie"]').hidden = !canEnergy();
       document.querySelector('nav.tabs [data-tab="kpi"]').hidden = !isAdmin();
       document.querySelector('nav.tabs [data-tab="couts"]').hidden = !isAdmin();
+      document.querySelector('nav.tabs [data-tab="nc"]').hidden = !canNC();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent = unlocked === "user" ? "Passer en Admin" : "Se connecter";
       $("btnLogout").hidden = mode === "pending" || unlocked === "viewer";
@@ -4705,7 +4707,7 @@
       if (t) { if (ncPop.hidden) ncPopShow(t); else ncPopHide(); } else ncPopHide();
     });
     window.addEventListener("scroll", ncPopHide, { passive: true });
-    function ncCan() { return canClose(); } // Utilisateur et Admin saisissent ; seul l'Admin supprime
+    function ncCan() { return canClose() && canNC(); } // Utilisateur et Admin saisissent ; seul l'Admin supprime
     function ncMonthStart() {
       if (ui.ncMonth == null) { var t = new Date(); ui.ncMonth = new Date(t.getFullYear(), t.getMonth(), 1).getTime(); }
       return new Date(ui.ncMonth);
@@ -6528,7 +6530,7 @@
     }
     function renderAll() {
       if (ui.startHome) { ui.startHome = false; ui.tab = "home"; }
-      var tab = ((ui.tab === "saisie" && !canSaisie()) || ui.tab === "actions" || (ui.tab === "prog" && !canProg()) || (ui.tab === "prod" && !canProd()) || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi" || ui.tab === "couts") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      var tab = ((ui.tab === "saisie" && !canSaisie()) || ui.tab === "actions" || (ui.tab === "prog" && !canProg()) || (ui.tab === "prod" && !canProd()) || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi" || ui.tab === "couts" || (ui.tab === "nc" && !canNC())) && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
       // page Menu à la place de la barre d'onglets (tous les profils)
       document.querySelector("nav.tabs").hidden = true;
