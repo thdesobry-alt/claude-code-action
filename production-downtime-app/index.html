@@ -1971,6 +1971,17 @@
         </div>
       </div>
       <div id="ncForm"></div>
+      <details id="ncRelBox" hidden open>
+        <summary><strong>Créer les non conformes depuis un relevé (copier-coller)</strong></summary>
+        <p class="hint">Collez le relevé tel quel (ligne « Jour jj mm aaaa », en-tête puis une ligne par fardeau). La première colonne est le code défaut. Le tonnage vient de la colonne KG ; la description reprend diamètre, longueur, qualité et coulée.</p>
+        <textarea class="paste" id="ncRel" style="min-height: 110px; font-family: monospace" placeholder="Jour  19 11 2026                         Magasin  01&#10;   Fardeau Pr  Mes.1  Mes.2   Qualite            KG Coule   Heure  T EQ Box&#10;10 5200902 21  40,00 12,000   503 B500B        2340 30753 11:00:00 1"></textarea>
+        <div class="row" style="margin-top: 6px">
+          <label class="f">Équipe (si la colonne EQ est vide)<select id="ncRelTeam"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>Journée</option></select></label>
+          <button class="btn primary" id="ncRelAdd" disabled>Créer les non conformes</button>
+          <span class="muted" id="ncRelInfo"></span>
+        </div>
+        <div class="scroll" id="ncRelPrev"></div>
+      </details>
       <details id="ncPasteBox" hidden>
         <summary class="muted">Coller plusieurs fardeaux depuis Excel (date, heure, n° de fardeau, tonnage, code défaut, équipe, description)</summary>
         <textarea class="paste" id="ncPaste" style="min-height: 100px" placeholder="09/10/2026&#9;14:35&#9;F123456&#9;2,150&#9;12&#9;A&#9;Barres tordues"></textarea>
@@ -4508,6 +4519,7 @@
       $("ncMonth").textContent = MONTHS[m0.getMonth()].replace(/^./, function (c) { return c.toUpperCase(); }) + " " + m0.getFullYear();
       if (!editing) $("ncForm").innerHTML = ncFormHTML();
       $("ncPasteBox").hidden = !ncCan();
+      $("ncRelBox").hidden = !ncCan();
       var rows = ncList().filter(function (x) { return x.date.slice(0, 7) === mk; }), adm = isAdmin(), can = ncCan();
       $("ncTable").innerHTML = rows.length
         ? '<table class="ed-table nc-table"><thead><tr><th>Date</th><th>Heure</th><th>N° de fardeau</th><th class="num">Tonnage (t)</th><th>Code défaut</th><th>Équipe</th><th>Description</th><th>Fiche NC</th>' + (can ? "<th></th>" : "") + "</tr></thead><tbody>" +
@@ -4679,6 +4691,66 @@
       ncParsed = ok;
       $("ncPasteInfo").textContent = this.value.trim() ? ok.length + " fardeau(x) valides" + (bad ? " · " + bad + " ligne(s) invalide(s) ignorée(s)" : "") : "";
       $("ncPasteAdd").disabled = !ok.length;
+    });
+    // relevé magasin : « Jour jj mm aaaa » puis lignes « code fardeau Pr Mes.1 Mes.2 Qualité KG Coulée Heure T EQ Box »
+    var NC_REL_RE = /^\s*(\S+)\s+(\d{4,})\s+(\S+)\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)\s+(.*?)\s+(\d+(?:[.,]\d+)?)\s+(\d+)\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*(.*)$/;
+    function ncTeamOf(tok) {
+      var t = String(tok || "").trim().toUpperCase();
+      if (/^[ABCD]$/.test(t)) return t;
+      if (/^J(OUR(NEE|NÉE)?)?$/.test(t)) return "Journée";
+      return "";
+    }
+    function parseReleve(text) {
+      var out = { ok: [], bad: [], date: null };
+      String(text || "").split(/\r?\n/).forEach(function (line, i) {
+        if (!line.trim()) return;
+        var dm = line.match(/Jour\s+(\d{1,2})[\s\/.-]+(\d{1,2})[\s\/.-]+(\d{4})/i);
+        if (dm) { out.date = dm[3] + "-" + pad(+dm[2]) + "-" + pad(+dm[1]); return; }
+        if (/Fardeau/i.test(line) && /Heure/i.test(line)) return; // en-tête
+        var m = line.match(NC_REL_RE);
+        if (!m) { out.bad.push(i + 1); return; }
+        if (!out.date) { out.bad.push(i + 1); return; }
+        var rest = m[10].trim().split(/\s+/).filter(Boolean), eq = "";
+        rest.slice(1).some(function (t) { eq = ncTeamOf(t); return !!eq; });
+        var kg = parseFloat(m[7].replace(",", ".")), diam = parseFloat(m[4].replace(",", ".")), lg = parseFloat(m[5].replace(",", "."));
+        out.ok.push({
+          date: out.date, heure: m[9].slice(0, 5), fardeau: m[2], code: m[1], equipe: eq, tonnage: Math.round(kg) / 1000,
+          coulee: m[8], qualite: m[6].replace(/\s+/g, " ").trim(),
+          desc: ["Ø" + fmtNum(diam, 0), fmtNum(lg, 3) + " m", m[6].replace(/\s+/g, " ").trim(), "coulée " + m[8]].filter(Boolean).join(" · "),
+        });
+      });
+      return out;
+    }
+    var ncRelParsed = { ok: [] };
+    function renderNcRel() {
+      var txt = $("ncRel").value, R = (ncRelParsed = parseReleve(txt)), have = ncList(), team = $("ncRelTeam").value;
+      R.ok.forEach(function (x) { x.dup = have.some(function (y) { return y.fardeau === x.fardeau && y.date === x.date; }); });
+      var nNew = R.ok.filter(function (x) { return !x.dup; }).length;
+      $("ncRelInfo").textContent = txt.trim() ? R.ok.length + " fardeau(x) lu(s)" + (R.ok.length - nNew ? " · " + (R.ok.length - nNew) + " déjà saisi(s)" : "") + (R.bad.length ? " · ligne(s) non reconnue(s) : " + R.bad.join(", ") : "") + (!R.date && txt.trim() ? " · ligne « Jour jj mm aaaa » manquante" : "") : "";
+      $("ncRelAdd").disabled = !nNew;
+      $("ncRelAdd").textContent = nNew ? "Créer " + nNew + " non conforme" + (nNew > 1 ? "s" : "") : "Créer les non conformes";
+      $("ncRelPrev").innerHTML = R.ok.length
+        ? '<table class="ed-table"><thead><tr><th>Date</th><th>Heure</th><th>N° de fardeau</th><th class="num">Tonnage (t)</th><th>Code défaut</th><th>Équipe</th><th>Description</th><th></th></tr></thead><tbody>' +
+          R.ok.map(function (x) {
+            return "<tr" + (x.dup ? ' class="is-closed"' : "") + '><td class="mono">' + frDay(x.date) + '</td><td class="mono">' + x.heure + "</td><td><strong>" + esc(x.fardeau) + '</strong></td><td class="num">' + fmtNum(x.tonnage, 3) + "</td><td>" + esc(x.code) + "</td><td>" + esc(x.equipe || team || "—") + "</td><td>" + esc(x.desc) + "</td><td>" + (x.dup ? '<span class="pill neutral">déjà saisi</span>' : '<span class="pill ok">nouveau</span>') + "</td></tr>";
+          }).join("") + "</tbody></table>"
+        : "";
+    }
+    $("ncRel").addEventListener("input", renderNcRel);
+    $("ncRelTeam").addEventListener("change", renderNcRel);
+    $("ncRelAdd").addEventListener("click", async function () {
+      if (!ncCan()) return;
+      var team = $("ncRelTeam").value, n = 0, last = null;
+      for (var x of ncRelParsed.ok) {
+        if (x.dup) continue;
+        var body = { date: x.date, heure: x.heure, fardeau: x.fardeau, tonnage: x.tonnage, code: x.code, equipe: x.equipe || team, desc: x.desc, coulee: x.coulee, qualite: x.qualite, created: Date.now() + n, by: myId, at: Date.now() };
+        await writeItem(x.date.slice(0, 7), "n" + uid(), body, "nc");
+        n++; last = x.date;
+      }
+      if (last) { var d = new Date(last + "T12:00:00"); ui.ncMonth = new Date(d.getFullYear(), d.getMonth(), 1).getTime(); }
+      toast(n + " non conforme" + (n > 1 ? "s" : "") + " créé" + (n > 1 ? "s" : ""));
+      $("ncRel").value = ""; renderNcRel();
+      refresh();
     });
     $("ncPasteAdd").addEventListener("click", async function () {
       if (!ncCan()) return;
