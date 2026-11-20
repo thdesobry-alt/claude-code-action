@@ -281,6 +281,24 @@
     font-size: 16px;
     margin-bottom: 4px;
   }
+  .home-card.has-owner {
+    position: relative;
+    padding-top: 34px;
+  }
+  .home-card .owner {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-style: normal;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--bar);
+    border: 2px solid var(--bar);
+    border-radius: 3px;
+    padding: 1px 8px;
+    background: var(--surface);
+  }
   .home-card.hl {
     background: var(--bar);
     border-color: var(--bar);
@@ -6590,6 +6608,8 @@
         ["kpi", "Objectif, seuil d'alerte et valeur limite des indicateurs (couleurs vert / orange / rouge)"],
       ]],
     ];
+    // responsables de menus, affichés sur la page Menu de l'Admin
+    var MENU_OWNERS = { energie: "Zaino", nc: "Balem", saisie: "Daguenet" };
     function renderHome() {
       $("homeMenu").innerHTML = HOME_MENU.map(function (g) {
         var items = g[1].filter(function (it) { var tb = document.querySelector('nav.tabs [data-tab="' + it[0] + '"]'); return tb && !tb.hidden; });
@@ -6597,7 +6617,8 @@
         return "<h3>" + g[0] + '</h3><div class="home-grid">' + items.map(function (it) {
           var tb = document.querySelector('nav.tabs [data-tab="' + it[0] + '"]');
           var hl = !isAdmin() && extraProf() && extraProf().highlight.indexOf(it[0]) >= 0;
-          return '<button class="home-card' + (hl ? " hl" : "") + '" data-go="' + it[0] + '"><strong>' + esc(tb ? tb.textContent.trim() : it[0]) + "</strong><span>" + esc(it[1]) + "</span></button>";
+          var owner = isAdmin() && MENU_OWNERS[it[0]];
+          return '<button class="home-card' + (hl ? " hl" : "") + (owner ? " has-owner" : "") + '" data-go="' + it[0] + '">' + (owner ? '<em class="owner" title="Responsable du menu">' + esc(owner) + "</em>" : "") + "<strong>" + esc(tb ? tb.textContent.trim() : it[0]) + "</strong><span>" + esc(it[1]) + "</span></button>";
         }).join("") + "</div>";
       }).join("");
     }
