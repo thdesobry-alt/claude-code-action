@@ -281,6 +281,22 @@
     font-size: 16px;
     margin-bottom: 4px;
   }
+  .home-card.hl {
+    background: var(--bar);
+    border-color: var(--bar);
+    border-left-color: var(--accent);
+    color: var(--on-bar);
+    box-shadow: 0 0 0 3px var(--bar-soft);
+  }
+  .home-card.hl span {
+    color: var(--on-bar);
+    opacity: 0.9;
+  }
+  .home-card.hl:hover,
+  .home-card.hl:focus-visible {
+    background: var(--bar);
+    filter: brightness(1.08);
+  }
   .home-card span {
     font-size: 12px;
     color: var(--muted);
@@ -2260,11 +2276,15 @@
     var PWD_HASH = {
       d2f11871612a28e18352ee3e72277c61e618405bed720c8387b0134a78412fe1: "user",
       ced150a99d744423eec95f62df9c1670c03faa64df54189bfe23a7d0316d09aa: "admin",
-      "483545716b99ad21ca264e1d4568360fd10505a05ad97d9b48ce7a3703370eb1": "admin",
+      "483545716b99ad21ca264e1d4568360fd10505a05ad97d9b48ce7a3703370eb1": "zaino",
     };
     var platformRole = "viewer", unlocked = "viewer";
     try { unlocked = sessionStorage.getItem(LOCAL_KEY + "-unlock") || "viewer"; } catch (e) {}
     if (!RANK.hasOwnProperty(unlocked)) unlocked = "viewer";
+    // accès complémentaires d'un profil Utilisateur (zaino : Énergie en saisie, menus mis en avant)
+    var extraAccess = "";
+    try { extraAccess = sessionStorage.getItem(LOCAL_KEY + "-extra") || ""; } catch (e) {}
+    function canEnergy() { return isAdmin() || (extraAccess === "energie" && role === "user"); }
     function applyRole() {
       role = RANK[unlocked] <= RANK[platformRole] ? unlocked : platformRole;
     }
@@ -2280,12 +2300,15 @@
       try { got = PWD_HASH[await sha256hex("arrets-production:" + pwd)]; }
       catch (e) { return "Connexion impossible dans ce navigateur."; }
       if (!got) return "Mot de passe incorrect.";
+      extraAccess = got === "zaino" ? "energie" : "";
+      if (got === "zaino") got = "user";
+      try { sessionStorage.setItem(LOCAL_KEY + "-extra", extraAccess); } catch (e) {}
       unlocked = got;
       try { sessionStorage.setItem(LOCAL_KEY + "-unlock", got); } catch (e) {}
       applyRole();
       if (RANK[got] > RANK[platformRole])
         return "ok:Mot de passe accepté, mais votre accès à la page (menu Partager) limite votre profil à « " + (platformRole === "user" ? "Utilisateur" : "Lecture seule") + " ». Demandez au propriétaire le niveau Éditeur.";
-      return "ok:Connecté en " + (got === "admin" ? "Admin" : "Utilisateur") + ".";
+      return "ok:Connecté en " + (got === "admin" ? "Admin" : "Utilisateur") + (extraAccess ? " (Énergie et Non conformes)" : "") + ".";
     }
     var isAdmin = function () {
       return role === "admin";
@@ -3381,7 +3404,7 @@
         role === "admin"
           ? "Admin"
           : role === "user"
-            ? "Utilisateur"
+            ? (extraAccess === "energie" ? "Utilisateur · Énergie" : "Utilisateur")
             : "Lecture seule";
       document.querySelector('nav.tabs [data-tab="saisie"]').hidden =
         !isAdmin();
@@ -3389,7 +3412,7 @@
         !isAdmin();
       document.querySelector('nav.tabs [data-tab="prog"]').hidden = !isAdmin();
       document.querySelector('nav.tabs [data-tab="prod"]').hidden = !isAdmin();
-      document.querySelector('nav.tabs [data-tab="energie"]').hidden = !isAdmin();
+      document.querySelector('nav.tabs [data-tab="energie"]').hidden = !canEnergy();
       document.querySelector('nav.tabs [data-tab="kpi"]').hidden = !isAdmin();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent = unlocked === "user" ? "Passer en Admin" : "Se connecter";
@@ -3974,7 +3997,7 @@
     }
     $("enTable").addEventListener("change", function (e) {
       var tr = e.target.closest("tr[data-day]");
-      if (tr && isAdmin()) saveEnRow(tr);
+      if (tr && canEnergy()) saveEnRow(tr);
     });
     $("enTable").addEventListener("keydown", function (e) {
       if (e.key === "Enter" && e.target.matches("[data-en]")) {
@@ -4008,7 +4031,7 @@
       $("enPasteAdd").disabled = !ok.length;
     });
     $("enPasteAdd").addEventListener("click", function () {
-      if (!isAdmin()) return;
+      if (!canEnergy()) return;
       enParsed.forEach(function (r) { writeEnergy(r.k, r.b); });
       toast(enParsed.length + " jour(s) enregistré(s)");
       $("enPaste").value = ""; $("enPaste").dispatchEvent(new Event("input"));
@@ -6348,7 +6371,7 @@
     }
     function renderAll() {
       if (ui.startHome) { ui.startHome = false; ui.tab = "home"; }
-      var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod" || ui.tab === "energie" || ui.tab === "kpi") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod" || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
       // page Menu à la place de la barre d'onglets (tous les profils)
       document.querySelector("nav.tabs").hidden = true;
@@ -6434,7 +6457,8 @@
         if (!items.length) return "";
         return "<h3>" + g[0] + '</h3><div class="home-grid">' + items.map(function (it) {
           var tb = document.querySelector('nav.tabs [data-tab="' + it[0] + '"]');
-          return '<button class="home-card" data-go="' + it[0] + '"><strong>' + esc(tb ? tb.textContent.trim() : it[0]) + "</strong><span>" + esc(it[1]) + "</span></button>";
+          var hl = !isAdmin() && extraAccess === "energie" && (it[0] === "energie" || it[0] === "nc");
+          return '<button class="home-card' + (hl ? " hl" : "") + '" data-go="' + it[0] + '"><strong>' + esc(tb ? tb.textContent.trim() : it[0]) + "</strong><span>" + esc(it[1]) + "</span></button>";
         }).join("") + "</div>";
       }).join("");
     }
@@ -6494,8 +6518,8 @@
       }
     });
     $("btnLogout").addEventListener("click", function () {
-      unlocked = "viewer";
-      try { sessionStorage.removeItem(LOCAL_KEY + "-unlock"); } catch (e) {}
+      unlocked = "viewer"; extraAccess = "";
+      try { sessionStorage.removeItem(LOCAL_KEY + "-unlock"); sessionStorage.removeItem(LOCAL_KEY + "-extra"); } catch (e) {}
       applyRole();
       toast("Déconnecté : lecture seule");
       renderAll();
