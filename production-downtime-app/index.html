@@ -6609,7 +6609,7 @@
       ]],
     ];
     // responsables de menus, affichés sur la page Menu de l'Admin
-    var MENU_OWNERS = { energie: "Zaino", nc: "Balem", saisie: "Daguenet" };
+    var MENU_OWNERS = { energie: "Zaino", nc: "Balem", prod: "Balem", saisie: "Daguenet" };
     function renderHome() {
       $("homeMenu").innerHTML = HOME_MENU.map(function (g) {
         var items = g[1].filter(function (it) { var tb = document.querySelector('nav.tabs [data-tab="' + it[0] + '"]'); return tb && !tb.hidden; });
