@@ -3447,6 +3447,7 @@
       document.querySelector('nav.tabs [data-tab="prod"]').hidden = !canProd();
       document.querySelector('nav.tabs [data-tab="energie"]').hidden = !canEnergy();
       document.querySelector('nav.tabs [data-tab="kpi"]').hidden = !isAdmin();
+      document.querySelector('nav.tabs [data-tab="couts"]').hidden = !isAdmin();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent = unlocked === "user" ? "Passer en Admin" : "Se connecter";
       $("btnLogout").hidden = mode === "pending" || unlocked === "viewer";
@@ -6527,7 +6528,7 @@
     }
     function renderAll() {
       if (ui.startHome) { ui.startHome = false; ui.tab = "home"; }
-      var tab = ((ui.tab === "saisie" && !canSaisie()) || ui.tab === "actions" || (ui.tab === "prog" && !canProg()) || (ui.tab === "prod" && !canProd()) || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      var tab = ((ui.tab === "saisie" && !canSaisie()) || ui.tab === "actions" || (ui.tab === "prog" && !canProg()) || (ui.tab === "prod" && !canProd()) || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi" || ui.tab === "couts") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
       // page Menu à la place de la barre d'onglets (tous les profils)
       document.querySelector("nav.tabs").hidden = true;
