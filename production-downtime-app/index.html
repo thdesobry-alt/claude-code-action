@@ -2278,6 +2278,7 @@
       ced150a99d744423eec95f62df9c1670c03faa64df54189bfe23a7d0316d09aa: "admin",
       "483545716b99ad21ca264e1d4568360fd10505a05ad97d9b48ce7a3703370eb1": "zaino",
       "da8f5a77478c82a60145949e334be989f1ecfdc29203b3d0b773f60919630018": "daguenet",
+      "e3f0176a63936f91596643b5eab6e8fa455f5220fd567405274d91a712d4a069": "balem",
     };
     var platformRole = "viewer", unlocked = "viewer";
     try { unlocked = sessionStorage.getItem(LOCAL_KEY + "-unlock") || "viewer"; } catch (e) {}
@@ -2285,7 +2286,8 @@
     // accès complémentaires de profils Utilisateur nominatifs : menus ouverts en plus et mis en avant
     var EXTRA_PROFILES = {
       zaino: { label: "Énergie", open: ["energie"], highlight: ["energie", "nc"], msg: "Énergie et Non conformes" },
-      daguenet: { label: "Saisie des arrêts", open: ["saisie"], highlight: ["saisie"], msg: "Saisie des arrêts" },
+      daguenet: { label: "Saisie · Programme · Production", open: ["saisie", "prog", "prod"], highlight: ["saisie", "prog", "prod"], msg: "Saisie des arrêts, Programme de laminage et Production" },
+      balem: { label: "Saisie · Programme · Production", open: ["saisie", "prog", "prod"], highlight: ["saisie", "prog", "prod"], msg: "Saisie des arrêts, Programme de laminage et Production" },
     };
     var extraAccess = "";
     try { extraAccess = sessionStorage.getItem(LOCAL_KEY + "-extra") || ""; } catch (e) {}
@@ -2294,6 +2296,8 @@
     function hasExtra(tab) { var x = extraProf(); return !!(x && x.open.indexOf(tab) >= 0); }
     function canEnergy() { return isAdmin() || hasExtra("energie"); }
     function canSaisie() { return isAdmin() || hasExtra("saisie"); }
+    function canProg() { return isAdmin() || hasExtra("prog"); }
+    function canProd() { return isAdmin() || hasExtra("prod"); }
     function applyRole() {
       role = RANK[unlocked] <= RANK[platformRole] ? unlocked : platformRole;
     }
@@ -3419,8 +3423,8 @@
         !canSaisie();
       document.querySelector('nav.tabs [data-tab="actions"]').hidden =
         !isAdmin();
-      document.querySelector('nav.tabs [data-tab="prog"]').hidden = !isAdmin();
-      document.querySelector('nav.tabs [data-tab="prod"]').hidden = !isAdmin();
+      document.querySelector('nav.tabs [data-tab="prog"]').hidden = !canProg();
+      document.querySelector('nav.tabs [data-tab="prod"]').hidden = !canProd();
       document.querySelector('nav.tabs [data-tab="energie"]').hidden = !canEnergy();
       document.querySelector('nav.tabs [data-tab="kpi"]').hidden = !isAdmin();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
@@ -3821,7 +3825,7 @@
     }
     $("pdTable").addEventListener("change", function (e) {
       var tr = e.target.closest("tr[data-day]");
-      if (tr && isAdmin()) savePdRow(tr);
+      if (tr && canProd()) savePdRow(tr);
     });
     $("pdTable").addEventListener("keydown", function (e) {
       if (e.key === "Enter" && e.target.matches("[data-pd]")) {
@@ -3854,7 +3858,7 @@
       $("pdPasteAdd").disabled = !ok.length;
     });
     $("pdPasteAdd").addEventListener("click", function () {
-      if (!isAdmin()) return;
+      if (!canProd()) return;
       pdParsed.forEach(function (r) { writeProduction(r.k, { tonnes: r.t, ouverture: r.o }); });
       toast(pdParsed.length + " jour(s) enregistré(s)");
       $("pdPaste").value = ""; $("pdPaste").dispatchEvent(new Event("input"));
@@ -5060,7 +5064,7 @@
       if (!$("pgEnd").value) $("pgEnd").value = toLocalInput(b.getTime());
     }
     function renderProgram() {
-      var adm = isAdmin(), ae = document.activeElement;
+      var adm = canProg(), ae = document.activeElement;
       $("pgFormWrap").hidden = !adm;
       if (adm) pgDefaults();
       if (pgEdit && ae && ae.matches && ae.matches("#pgTable [data-pg]")) return; // saisie en cours
@@ -6380,7 +6384,7 @@
     }
     function renderAll() {
       if (ui.startHome) { ui.startHome = false; ui.tab = "home"; }
-      var tab = ((ui.tab === "saisie" && !canSaisie()) || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod" || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      var tab = ((ui.tab === "saisie" && !canSaisie()) || ui.tab === "actions" || (ui.tab === "prog" && !canProg()) || (ui.tab === "prod" && !canProd()) || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
       // page Menu à la place de la barre d'onglets (tous les profils)
       document.querySelector("nav.tabs").hidden = true;
@@ -6534,7 +6538,7 @@
       renderAll();
     });
     $("pgAdd").addEventListener("click", function () {
-      if (!isAdmin()) return;
+      if (!canProg()) return;
       var d = $("pgDiam").value.trim().replace(/^Ø\s*/i, ""), a = fromLocalInput($("pgStart").value), b = fromLocalInput($("pgEnd").value);
       var err = pgCheck(d, a, b);
       if (err) { toast(err); return; }
@@ -6545,7 +6549,7 @@
     });
     $("pgPaste").addEventListener("input", parsePgPaste);
     $("pgPasteAdd").addEventListener("click", function () {
-      if (!isAdmin()) return;
+      if (!canProg()) return;
       var added = 0, skipped = 0, batch = [];
       pgParsed.forEach(function (r) {
         var clash = pgOverlap(r.start, r.end) || batch.find(function (x) { return r.start < x.end && r.end > x.start; });
@@ -6558,7 +6562,7 @@
     });
     $("pgTable").addEventListener("click", function (e) {
       var b = e.target.closest("button");
-      if (!b || !isAdmin()) return;
+      if (!b || !canProg()) return;
       var tr = b.closest("tr[data-pid]"), id = tr.dataset.pid;
       if (b.hasAttribute("data-pg-edit")) { pgEdit = id; pgDel = null; renderProgram(); }
       else if (b.hasAttribute("data-pg-cancel")) { pgEdit = null; document.activeElement.blur(); renderProgram(); }
