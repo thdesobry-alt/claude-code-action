@@ -2277,14 +2277,23 @@
       d2f11871612a28e18352ee3e72277c61e618405bed720c8387b0134a78412fe1: "user",
       ced150a99d744423eec95f62df9c1670c03faa64df54189bfe23a7d0316d09aa: "admin",
       "483545716b99ad21ca264e1d4568360fd10505a05ad97d9b48ce7a3703370eb1": "zaino",
+      "da8f5a77478c82a60145949e334be989f1ecfdc29203b3d0b773f60919630018": "daguenet",
     };
     var platformRole = "viewer", unlocked = "viewer";
     try { unlocked = sessionStorage.getItem(LOCAL_KEY + "-unlock") || "viewer"; } catch (e) {}
     if (!RANK.hasOwnProperty(unlocked)) unlocked = "viewer";
-    // accès complémentaires d'un profil Utilisateur (zaino : Énergie en saisie, menus mis en avant)
+    // accès complémentaires de profils Utilisateur nominatifs : menus ouverts en plus et mis en avant
+    var EXTRA_PROFILES = {
+      zaino: { label: "Énergie", open: ["energie"], highlight: ["energie", "nc"], msg: "Énergie et Non conformes" },
+      daguenet: { label: "Saisie des arrêts", open: ["saisie"], highlight: ["saisie"], msg: "Saisie des arrêts" },
+    };
     var extraAccess = "";
     try { extraAccess = sessionStorage.getItem(LOCAL_KEY + "-extra") || ""; } catch (e) {}
-    function canEnergy() { return isAdmin() || (extraAccess === "energie" && role === "user"); }
+    if (extraAccess === "energie") extraAccess = "zaino"; // ancienne valeur
+    function extraProf() { return role === "user" && EXTRA_PROFILES[extraAccess] ? EXTRA_PROFILES[extraAccess] : null; }
+    function hasExtra(tab) { var x = extraProf(); return !!(x && x.open.indexOf(tab) >= 0); }
+    function canEnergy() { return isAdmin() || hasExtra("energie"); }
+    function canSaisie() { return isAdmin() || hasExtra("saisie"); }
     function applyRole() {
       role = RANK[unlocked] <= RANK[platformRole] ? unlocked : platformRole;
     }
@@ -2300,15 +2309,15 @@
       try { got = PWD_HASH[await sha256hex("arrets-production:" + pwd)]; }
       catch (e) { return "Connexion impossible dans ce navigateur."; }
       if (!got) return "Mot de passe incorrect.";
-      extraAccess = got === "zaino" ? "energie" : "";
-      if (got === "zaino") got = "user";
+      extraAccess = EXTRA_PROFILES[got] ? got : "";
+      if (extraAccess) got = "user";
       try { sessionStorage.setItem(LOCAL_KEY + "-extra", extraAccess); } catch (e) {}
       unlocked = got;
       try { sessionStorage.setItem(LOCAL_KEY + "-unlock", got); } catch (e) {}
       applyRole();
       if (RANK[got] > RANK[platformRole])
         return "ok:Mot de passe accepté, mais votre accès à la page (menu Partager) limite votre profil à « " + (platformRole === "user" ? "Utilisateur" : "Lecture seule") + " ». Demandez au propriétaire le niveau Éditeur.";
-      return "ok:Connecté en " + (got === "admin" ? "Admin" : "Utilisateur") + (extraAccess ? " (Énergie et Non conformes)" : "") + ".";
+      return "ok:Connecté en " + (got === "admin" ? "Admin" : "Utilisateur") + (extraAccess ? " (" + EXTRA_PROFILES[extraAccess].msg + ")" : "") + ".";
     }
     var isAdmin = function () {
       return role === "admin";
@@ -3404,10 +3413,10 @@
         role === "admin"
           ? "Admin"
           : role === "user"
-            ? (extraAccess === "energie" ? "Utilisateur · Énergie" : "Utilisateur")
+            ? (extraProf() ? "Utilisateur · " + extraProf().label : "Utilisateur")
             : "Lecture seule";
       document.querySelector('nav.tabs [data-tab="saisie"]').hidden =
-        !isAdmin();
+        !canSaisie();
       document.querySelector('nav.tabs [data-tab="actions"]').hidden =
         !isAdmin();
       document.querySelector('nav.tabs [data-tab="prog"]').hidden = !isAdmin();
@@ -3541,7 +3550,7 @@
           : "");
     }
     async function doImport() {
-      if (!parsed || !parsed.ok.length || busy || !isAdmin()) return;
+      if (!parsed || !parsed.ok.length || busy || !canSaisie()) return;
       var diam = "",
         impId = "i" + uid(),
         impAt = Date.now(),
@@ -3664,7 +3673,7 @@
     $("edAll").addEventListener("change", function () { ed.id = null; renderEditor(); });
     $("edTable").addEventListener("click", function (e) {
       var b = e.target.closest("button");
-      if (!b || !isAdmin()) return;
+      if (!b || !canSaisie()) return;
       var tr = b.closest("tr[data-id]"), id = tr.dataset.id;
       if (b.hasAttribute("data-ed-edit")) { ed.id = id; ed.del = null; renderEditor(); }
       else if (b.hasAttribute("data-ed-cancel")) { ed.id = null; document.activeElement.blur(); renderEditor(); }
@@ -3696,7 +3705,7 @@
     var exclConfirm = false;
     function renderExclBanner() {
       var el = $("exclBanner");
-      el.hidden = !excludedCount || !isAdmin();
+      el.hidden = !excludedCount || !canSaisie();
       if (el.hidden) return;
       el.innerHTML = excludedCount + " arrêt(s) enregistré(s) sont exclus des analyses (code FER 51 cycle, ou sans machine / N/A). " +
         (exclConfirm
@@ -6371,7 +6380,7 @@
     }
     function renderAll() {
       if (ui.startHome) { ui.startHome = false; ui.tab = "home"; }
-      var tab = (ui.tab === "saisie" || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod" || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
+      var tab = ((ui.tab === "saisie" && !canSaisie()) || ui.tab === "actions" || ui.tab === "prog" || ui.tab === "prod" || (ui.tab === "energie" && !canEnergy()) || ui.tab === "kpi") && !isAdmin() ? (ui.tab === "actions" ? "actview" : "machine") : ui.tab;
       if (tab === "type") tab = "machine"; // onglet Pareto par type d'arrêt retiré
       // page Menu à la place de la barre d'onglets (tous les profils)
       document.querySelector("nav.tabs").hidden = true;
@@ -6457,7 +6466,7 @@
         if (!items.length) return "";
         return "<h3>" + g[0] + '</h3><div class="home-grid">' + items.map(function (it) {
           var tb = document.querySelector('nav.tabs [data-tab="' + it[0] + '"]');
-          var hl = !isAdmin() && extraAccess === "energie" && (it[0] === "energie" || it[0] === "nc");
+          var hl = !isAdmin() && extraProf() && extraProf().highlight.indexOf(it[0]) >= 0;
           return '<button class="home-card' + (hl ? " hl" : "") + '" data-go="' + it[0] + '"><strong>' + esc(tb ? tb.textContent.trim() : it[0]) + "</strong><span>" + esc(it[1]) + "</span></button>";
         }).join("") + "</div>";
       }).join("");
@@ -6577,7 +6586,7 @@
     });
     $("exclBanner").addEventListener("click", function (e) {
       var b = e.target.closest("button");
-      if (!b || !isAdmin()) return;
+      if (!b || !canSaisie()) return;
       if (b.hasAttribute("data-excl")) { exclConfirm = true; renderExclBanner(); }
       else if (b.hasAttribute("data-excl-no")) { exclConfirm = false; renderExclBanner(); }
       else if (b.hasAttribute("data-excl-yes")) {
@@ -6587,7 +6596,7 @@
     });
     $("batches").addEventListener("click", function (e) {
       var b = e.target.closest("button");
-      if (!b || !isAdmin()) return;
+      if (!b || !canSaisie()) return;
       if (b.dataset.del != null) {
         pendingDelete = b.dataset.del;
         renderBatches();
@@ -6954,7 +6963,7 @@
       return saveCodes(next);
     }
     $("codesUnknown").addEventListener("click", async function (e) {
-      if (!e.target.closest("#ukSave") || !isAdmin()) return;
+      if (!e.target.closest("#ukSave") || !canSaisie()) return;
       var pairs = [], fixes = [];
       $("codesUnknown").querySelectorAll("input[data-uk-fix]").forEach(function (el) {
         var to = normCode(el.value);
@@ -7002,7 +7011,7 @@
     $("cnCode").addEventListener("input", cnShowCurrent);
     $("cnKind").addEventListener("change", cnShowCurrent);
     $("cnSave").addEventListener("click", async function () {
-      if (!isAdmin()) return;
+      if (!canSaisie()) return;
       var c = normCode($("cnCode").value), n = $("cnName").value.trim();
       if (!c || !n) { toast("Indiquez le code et le nom."); return; }
       if (await saveCodeNames([{ kind: $("cnKind").value, code: c, name: n }])) {
@@ -7023,7 +7032,7 @@
       $("btnCodes").disabled = !codesParsed;
     }
     async function saveCodes(next) {
-      if (!isAdmin()) return;
+      if (!canSaisie()) return;
       try {
         if (mode === "db") await db.doc("config/codes").set(next);
         else { codes = { fer: next.fer || DEFAULT_CODES.fer, macc: next.macc || DEFAULT_CODES.macc }; codesCustom = !!(next.fer || next.macc); try { localStorage.setItem(LOCAL_KEY + "-codes", JSON.stringify(next)); } catch (e) {} saveLocal(); refresh(); }
