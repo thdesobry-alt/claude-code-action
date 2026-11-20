@@ -1459,6 +1459,7 @@
     </div>
   </header>
   <div class="filebar" id="fileBar" hidden></div>
+  <div class="filebar" id="pfBarTop" hidden></div>
   <form class="panel login" id="loginPanel" hidden autocomplete="off">
     <label class="f"
       >Mot de passe Utilisateur ou Admin<input type="password" id="loginPwd" autocomplete="current-password"
@@ -1874,6 +1875,7 @@
           <button class="btn" id="pdCopy">Copier pour Excel</button>
         </div>
       </div>
+      <div class="filebar" id="pfBar"></div>
       <div class="kpis" id="pdKpis"></div>
       <details>
         <summary class="muted">Coller plusieurs jours depuis Excel (date, tonnes, temps d'ouverture)</summary>
@@ -3776,16 +3778,137 @@
       var m0 = pdMonthStart(), y = m0.getFullYear(), mo = m0.getMonth(), n = new Date(y, mo + 1, 0).getDate(), rows = [];
       for (var d = 1; d <= n; d++) {
         var a = new Date(y, mo, d, DAY_START_HOUR).getTime(), b = new Date(y, mo, d + 1, DAY_START_HOUR).getTime();
-        var key = y + "-" + pad(mo + 1) + "-" + pad(d), v = production[key] || {};
+        var key = y + "-" + pad(mo + 1) + "-" + pad(d), v = prodGet(key);
         var stopMs = stopTimeIn(a, b), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
         var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
-        rows.push({ key: key, a: a, tons: tons, open: open, stopMs: stopMs, run: run,
+        rows.push({ key: key, a: a, tons: tons, open: open, stopMs: stopMs, run: run, src: v.src,
           taux: openMs ? run / openMs : null, prod: openMs && tons != null ? tons / (openMs / 3600000) : null });
       }
       return rows;
     }
     var pdEditing = false;
+    // ---------- Base production laminoir (fichier JSON externe, lecture seule) ----------
+    // rapports[] : dateDebut (journée 8h → 8h), heuresProduction, lignes[{diam, long, tonnes, qualite}]
+    var prodFile = {}, pfHandle = null, pfStored = null, pfName = "", pfLast = 0, pfTimer = null, pfAt = null, PF_NAME = "base_production_laminoir.json";
+    function prodGet(day) {
+      var f = prodFile[day];
+      if (f && (f.tonnes != null || f.ouverture != null)) return { tonnes: f.tonnes, ouverture: f.ouverture, lignes: f.lignes, src: "file" };
+      return production[day] || {};
+    }
+    function parseProdFile(text) {
+      var d = JSON.parse(text), out = {};
+      if (!d || !Array.isArray(d.rapports)) throw new Error("format");
+      d.rapports.forEach(function (rp) {
+        var k = String(rp.dateDebut || "").slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+        var o = (out[k] = out[k] || { tonnes: 0, ouverture: null, lignes: [] });
+        var t = 0;
+        (rp.lignes || []).forEach(function (l) {
+          var tn = l.tonnes != null ? +l.tonnes : l.kgMaj != null ? l.kgMaj / 1000 : l.kgFard != null ? l.kgFard / 1000 : 0;
+          if (isNaN(tn)) tn = 0;
+          t += tn;
+          o.lignes.push({ diam: l.diam, long: l.long, tonnes: tn, qualite: l.qualite || "", denom: l.denomination || "" });
+        });
+        if (!(rp.lignes || []).length && rp.calculs && rp.calculs.tonnesJour != null) t = +rp.calculs.tonnesJour;
+        o.tonnes += t;
+        if (rp.heuresProduction != null && !isNaN(+rp.heuresProduction)) o.ouverture = (o.ouverture || 0) + Math.round(+rp.heuresProduction * 60);
+      });
+      return out;
+    }
+    async function pfRead() {
+      var f = await pfHandle.getFile();
+      pfLast = f.lastModified;
+      prodFile = parseProdFile(await f.text());
+      pfAt = Date.now();
+    }
+    async function pfConnect(hd, ask) {
+      var ok = (await hd.queryPermission({ mode: "read" })) === "granted";
+      if (!ok && ask) ok = (await hd.requestPermission({ mode: "read" })) === "granted";
+      if (!ok) { renderPfBar(); return false; }
+      var prev = pfHandle;
+      pfHandle = hd;
+      try { await pfRead(); }
+      catch (e) { pfHandle = prev; toast(e && e.message === "format" ? "Ce fichier n'est pas une base production (liste « rapports » absente)." : "Lecture de la base production impossible."); renderPfBar(); return false; }
+      pfName = hd.name;
+      idb(function (st) { return st.put(hd, "prodHandle"); }).catch(function () {});
+      clearInterval(pfTimer);
+      pfTimer = setInterval(async function () {
+        try { var f = await pfHandle.getFile(); if (f.lastModified !== pfLast) { await pfRead(); refresh(); } } catch (e) {}
+      }, 60000);
+      refresh();
+      toast("Base production connectée : " + Object.keys(prodFile).length + " journée(s)");
+      return true;
+    }
+    async function pfPick() {
+      try {
+        var opts = { id: "prod-base", multiple: false, types: [{ description: "Base production (JSON)", accept: { "application/json": [".json"] } }] };
+        if (pfStored) opts.startIn = pfStored;
+        var hs = await window.showOpenFilePicker(opts);
+        if (hs && hs[0]) {
+          if (hs[0].name !== PF_NAME && !confirm("Le fichier choisi s'appelle « " + hs[0].name + " » et non « " + PF_NAME + " ». L'utiliser quand même comme base production ?")) return;
+          if (await pfConnect(hs[0], true)) pfStored = hs[0];
+        }
+      } catch (e) {}
+    }
+    function renderPfBar() {
+      // rappel en haut de page tant que la base production n'est pas connectée sur ce poste
+      var top = $("pfBarTop");
+      if (top) {
+        top.hidden = pfHandle || mode !== "local" || typeof window.showOpenFilePicker !== "function";
+        if (!top.hidden) top.innerHTML = pfStored
+          ? '<span class="pill a">Base production</span> <strong>' + esc(pfStored.name) + "</strong> : cliquez n'importe où pour la reconnecter. " + '<button class="btn sm primary" data-pf-reconnect>Reconnecter</button>'
+          : '<span class="pill late">Base production non connectée</span> Choisissez une fois sur ce poste le fichier <strong>' + PF_NAME + "</strong> pour reprendre tonnage et heures d'ouverture. " + '<button class="btn sm primary" data-pf-pick>Choisir le fichier…</button>';
+      }
+      var bar = $("pfBar");
+      if (!bar) return;
+      if (typeof window.showOpenFilePicker !== "function") { bar.innerHTML = '<span class="pill neutral">Base production</span> Connexion possible avec Chrome ou Edge, application ouverte depuis le dossier partagé. Saisie manuelle ci-dessous.'; return; }
+      var can = true; // lecture seule : tout profil peut connecter le fichier sur son poste
+      if (pfHandle) {
+        bar.innerHTML = '<span class="pill ok">Base production</span> <strong>' + esc(pfName) + "</strong> · " + Object.keys(prodFile).length + " journée(s) · lue à " + (pfAt ? fmtDate(pfAt).slice(11, 16) : "—") +
+          ' <span class="muted">· tonnage et heures d\'ouverture repris automatiquement (lignes « auto »), relecture toutes les minutes</span>' +
+          (can ? ' <button class="btn sm" data-pf-pick>Changer de fichier…</button>' : "");
+        return;
+      }
+      bar.innerHTML = pfStored
+        ? '<span class="pill a">Base production</span> <strong>' + esc(pfStored.name) + "</strong> non reconnectée. " + '<button class="btn sm primary" data-pf-reconnect>Reconnecter</button>' + (can ? ' <button class="btn sm" data-pf-pick>Autre fichier…</button>' : "")
+        : '<span class="pill late">Base production non connectée</span> ' + (can ? 'Choisissez le fichier <strong>' + PF_NAME + "</strong> (une fois par poste) pour reprendre automatiquement tonnage et heures d'ouverture. " + '<button class="btn sm primary" data-pf-pick>Choisir le fichier…</button>' : "Un profil Production doit connecter le fichier sur ce poste.");
+    }
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-pf-pick], [data-pf-reconnect]");
+      if (!b) return;
+      if (b.hasAttribute("data-pf-pick")) pfPick();
+      else if (pfStored) pfConnect(pfStored, true);
+    });
+    async function initProdFile() {
+      if (typeof window.showOpenFilePicker !== "function") return;
+      var hd = null;
+      try { hd = await idb(function (st) { return st.get("prodHandle"); }); } catch (e) {}
+      if (!hd) return;
+      pfStored = hd;
+      if (!(await pfConnect(hd, false))) {
+        // reconnexion au premier clic dans la page (geste de l'utilisateur exigé par le navigateur)
+        var once = function () { document.removeEventListener("click", once, true); if (!pfHandle) pfConnect(hd, true); };
+        document.addEventListener("click", once, true);
+      }
+    }
+    // détail de la production d'une journée (survol de la tuile Production du CR)
+    function prodPopHTML(key) {
+      var v = prodGet(key), L = (v.lignes || []).filter(function (l) { return l.tonnes > 0; });
+      if (!L.length) return '<div class="nc-pop-h">Pas de détail de production pour cette journée.</div>';
+      var by = {};
+      L.forEach(function (l) { var k = l.diam + "|" + l.long; (by[k] = by[k] || { diam: l.diam, long: l.long, t: 0 }).t += l.tonnes; });
+      var rows = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return a.diam - b.diam || a.long - b.long; });
+      var byD = {};
+      rows.forEach(function (x) { byD[x.diam] = (byD[x.diam] || 0) + x.t; });
+      var mx = Math.max.apply(null, rows.map(function (x) { return x.t; }));
+      return '<div class="nc-pop-h">Production du ' + frDay(key) + " · " + fmtNum(v.tonnes, 1) + " t" + (v.ouverture != null ? " · " + fmtOpening(v.ouverture) + " d'ouverture" : "") + "</div>" +
+        '<table><thead><tr><th>Diamètre</th><th class="num">Longueur</th><th class="num">Tonnage</th></tr></thead><tbody>' +
+        rows.map(function (x) { return "<tr><td><strong>Ø " + fmtNum(x.diam, 0) + '</strong></td><td class="num">' + fmtNum(x.long, 2) + ' m</td><td class="num"><span class="nc-bar" style="width: ' + Math.max(2, (x.t / mx) * 50) + 'px"></span>' + fmtNum(x.t, 1) + " t</td></tr>"; }).join("") +
+        "</tbody></table>" +
+        '<div class="nc-pop-l">' + Object.keys(byD).sort(function (a, b) { return a - b; }).map(function (d) { return "Total Ø " + fmtNum(+d, 0) + " : " + fmtNum(byD[d], 1) + " t"; }).join("<br>") + "</div>";
+    }
     function renderProduction() {
+      renderPfBar();
       if (pdEditing) return; // saisie en cours dans le tableau : redessiné à la sortie
       var ae = document.activeElement;
       if (ae && ae.matches && ae.matches("#pdTable input")) return;
@@ -3806,8 +3929,10 @@
         rows.map(function (r) {
           var dt = new Date(r.a);
           return '<tr data-day="' + r.key + '"><td class="mono">' + wd[dt.getDay()] + " " + fmtDate(r.a).slice(0, 10) + "</td>" +
-            '<td class="num"><input data-pd="tonnes" inputmode="decimal" value="' + (r.tons == null ? "" : String(r.tons).replace(".", ",")) + '" placeholder="t" /></td>' +
-            '<td class="num"><input data-pd="ouverture" value="' + fmtOpening(r.open) + '" placeholder="hh:mm" /></td>' +
+            (r.src === "file"
+              ? '<td class="num" title="Base production laminoir">' + fmtNum(r.tons, 1) + ' <span class="pill ok">auto</span></td><td class="num" title="Base production laminoir">' + fmtOpening(r.open) + "</td>"
+              : '<td class="num"><input data-pd="tonnes" inputmode="decimal" value="' + (r.tons == null ? "" : String(r.tons).replace(".", ",")) + '" placeholder="t" /></td>' +
+                '<td class="num"><input data-pd="ouverture" value="' + fmtOpening(r.open) + '" placeholder="hh:mm" /></td>') +
             '<td class="num">' + fmtHM(r.stopMs) + '</td><td class="num">' + (r.run == null ? "—" : fmtHM(r.run)) + "</td>" +
             '<td class="num">' + (r.taux == null ? "—" : kpiState("taux", r.taux * 100) ? "<strong>" + kpiSpan("taux", r.taux * 100, pct(r.taux)) + "</strong>" : '<strong class="' + (r.taux < 0.8 ? "pd-low" : "") + '">' + pct(r.taux) + "</strong>") + "</td>" +
             '<td class="num">' + (r.prod == null ? "—" : kpiSpan("prod", r.prod, fmtNum(r.prod, 1))) + "</td></tr>";
@@ -3907,7 +4032,7 @@
         (st ? '<div class="kt">' + (st.obj != null ? "Objectif " + fmtNum(st.obj, 2) : "") + (st.limit ? ' · <strong class="kpi-bad">⚠ limite dépassée</strong>' : "") + "</div>" : "") + "</div>";
     }
     function enRatios(day) {
-      var e = energy[day] || {}, t = (production[day] || {}).tonnes;
+      var e = energy[day] || {}, t = prodGet(day).tonnes;
       return { gp: e.gp == null ? null : e.gp, ep: e.ep == null ? null : e.ep, t: t == null ? null : t,
         gaz: e.gp != null && t ? e.gp / t : null, elec: e.ep != null && t ? e.ep / t : null };
     }
@@ -4081,7 +4206,7 @@
       Object.keys(CO_CAT).forEach(function (k) { R.cat[k] = { ms: 0, n: 0 }; });
       function dBucket(k) { return (R.diam[k] = R.diam[k] || { ouv: 0, tons: 0, stop: 0 }); }
       for (; d <= end; d.setDate(d.getDate() + 1)) {
-        var key = dayKeyOf(d), v = production[key] || {};
+        var key = dayKeyOf(d), v = prodGet(key);
         if (v.ouverture == null) continue;
         var a = new Date(d.getFullYear(), d.getMonth(), d.getDate(), DAY_START_HOUR).getTime(), b = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, DAY_START_HOUR).getTime();
         var ouv = v.ouverture * 60000, tons = +v.tonnes || 0;
@@ -4527,7 +4652,7 @@
     }
     // détail des non conformes d'une journée (popup au survol de la tuile du CR)
     function ncPopHTML(key) {
-      var q = ncOfDay(key), tons = (production[key] || {}).tonnes;
+      var q = ncOfDay(key), tons = prodGet(key).tonnes;
       if (!q.n) return '<div class="nc-pop-h">Aucun fardeau non conforme sur la journée.</div>';
       var by = {};
       q.list.forEach(function (x) { var k = ncCodeKey(x.code) || "—"; by[k] = by[k] || { n: 0, t: 0 }; by[k].n++; by[k].t += +x.tonnage || 0; });
@@ -4544,7 +4669,7 @@
     ncPop.className = "nc-pop"; ncPop.hidden = true; ncPop.setAttribute("role", "tooltip");
     document.body.appendChild(ncPop);
     function ncPopShow(el) {
-      ncPop.innerHTML = ncPopHTML(el.dataset.ncPop);
+      ncPop.innerHTML = el.dataset.prodPop ? prodPopHTML(el.dataset.prodPop) : ncPopHTML(el.dataset.ncPop);
       ncPop.hidden = false;
       var r = el.getBoundingClientRect(), w = ncPop.offsetWidth, h = ncPop.offsetHeight;
       var x = Math.min(Math.max(8, r.left), window.innerWidth - w - 8), y = r.bottom + 6;
@@ -4552,12 +4677,12 @@
       ncPop.style.left = x + "px"; ncPop.style.top = y + "px";
     }
     function ncPopHide() { ncPop.hidden = true; }
-    document.addEventListener("mouseover", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop]"); if (t) ncPopShow(t); });
-    document.addEventListener("mouseout", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop]"); if (t && !t.contains(e.relatedTarget)) ncPopHide(); });
-    document.addEventListener("focusin", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop]"); if (t) ncPopShow(t); });
-    document.addEventListener("focusout", function (e) { if (e.target.closest && e.target.closest("[data-nc-pop]")) ncPopHide(); });
+    document.addEventListener("mouseover", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop], [data-prod-pop]"); if (t) ncPopShow(t); });
+    document.addEventListener("mouseout", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop], [data-prod-pop]"); if (t && !t.contains(e.relatedTarget)) ncPopHide(); });
+    document.addEventListener("focusin", function (e) { var t = e.target.closest && e.target.closest("[data-nc-pop], [data-prod-pop]"); if (t) ncPopShow(t); });
+    document.addEventListener("focusout", function (e) { if (e.target.closest && e.target.closest("[data-nc-pop], [data-prod-pop]")) ncPopHide(); });
     document.addEventListener("click", function (e) {
-      var t = e.target.closest && e.target.closest("[data-nc-pop]");
+      var t = e.target.closest && e.target.closest("[data-nc-pop], [data-prod-pop]");
       if (t) { if (ncPop.hidden) ncPopShow(t); else ncPopHide(); } else ncPopHide();
     });
     window.addEventListener("scroll", ncPopHide, { passive: true });
@@ -4945,7 +5070,7 @@
     function renderCRPerf() {
       var box = $("crPerf"), ae = document.activeElement;
       if (ae && ae.matches && ae.matches("#crPerf input")) return;
-      var r = crRange(), v = production[r.key] || {}, adm = isAdmin();
+      var r = crRange(), v = prodGet(r.key), adm = isAdmin() && v.src !== "file";
       var stopMs = stopTimeIn(r.a, r.b), mb = stopTimeIn(r.a, r.b, true), open = v.ouverture == null ? null : v.ouverture, tons = v.tonnes == null ? null : v.tonnes;
       var openMs = open == null ? null : open * 60000, run = openMs == null ? null : Math.max(0, openMs - stopMs);
       var taux = openMs ? run / openMs : null, prod = openMs && tons != null ? tons / (openMs / 3600000) : null;
@@ -4963,7 +5088,7 @@
       box.innerHTML = '<div class="kpis">' +
         (kpiState("taux", taux == null ? null : taux * 100) ? kpiTile("taux", "Taux de marche", taux * 100, pct(taux)) : '<div class="kpi"><div class="l">Taux de marche</div><div class="v' + (taux != null && taux < 0.8 ? " pd-low" : "") + '">' + (taux == null ? "—" : pct(taux)) + "</div></div>") +
         kpiTile("prod", "Productivité", prod, prod == null ? "—" : fmtNum(prod, 1) + " t/h") +
-        '<div class="kpi"><div class="l">Production</div><div class="v">' + (tons == null ? "—" : fmtNum(tons, 1) + " t") + "</div></div>" +
+        '<div class="kpi' + (v.lignes && v.lignes.length ? ' nc-hover" tabindex="0" data-prod-pop="' + r.key : "") + '"><div class="l">Production</div><div class="v">' + (tons == null ? "—" : fmtNum(tons, 1) + " t") + "</div>" + (v.src === "file" ? '<div class="kt">base production</div>' : "") + "</div>" +
         '<div class="kpi"><div class="l">Temps d\'arrêt</div><div class="v">' + fmtHM(stopMs) + "</div></div>" +
         "</div>" +
         '<p class="hint" style="margin-top: 8px">Ouverture ' + (open == null ? "non saisie" : fmtOpening(open)) + " · marche " + (run == null ? "—" : fmtHM(run)) +
@@ -6398,6 +6523,7 @@
       renderBatches();
       if (tab === "saisie") renderEditor();
       renderCodesInfo();
+      renderPfBar();
       document.querySelectorAll("nav.tabs button").forEach(function (b) {
         b.setAttribute("aria-selected", b.dataset.tab === tab);
       });
@@ -7068,6 +7194,7 @@
       loadLocal();
       refresh();
       initFileBase();
+      initProdFile();
     }
     async function init() {
       try {
