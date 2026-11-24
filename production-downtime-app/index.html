@@ -1474,6 +1474,7 @@
       <button class="btn sm" id="btnLogin" hidden>Se connecter</button>
       <button class="btn sm" id="btnLogout" hidden>Se déconnecter</button>
       <button class="btn sm" id="btnExportTop">Exporter la base JSON</button>
+      <button class="btn sm" id="btnResetPoste" title="Efface ce que l'application a mémorisé dans ce navigateur (connexions aux fichiers, préférences, cache) puis recharge la page. La base commune n'est pas modifiée.">↻ Réinitialiser ce poste</button>
     </div>
   </header>
   <div class="filebar" id="fileBar" hidden></div>
@@ -2646,7 +2647,7 @@
           rq.onsuccess = function () {
             try {
               var tx = rq.result.transaction("kv", "readwrite"), r = fn(tx.objectStore("kv"));
-              tx.oncomplete = function () { res(r && r.result); };
+              tx.oncomplete = function () { res(r && r.result); try { rq.result.close(); } catch (e) {} };
               tx.onerror = tx.onabort = function () { rej(tx.error); };
             } catch (e) { rej(e); }
           };
@@ -2738,7 +2739,7 @@
       if (!fsSupported) return;
       var hd = null;
       try { hd = await idb(function (s) { return s.get("fileHandle"); }); } catch (e) {}
-      if (!hd) return;
+      if (!hd || typeof hd.queryPermission !== "function") return; // connexion mémorisée absente ou invalide
       fileStoredName = hd.name;
       storedHandle = hd;
       if (await ensurePerm(hd, false)) await connectFile(hd, false);
@@ -3904,7 +3905,7 @@
       if (typeof window.showOpenFilePicker !== "function") return;
       var hd = null;
       try { hd = await idb(function (st) { return st.get("prodHandle"); }); } catch (e) {}
-      if (!hd) return;
+      if (!hd || typeof hd.queryPermission !== "function") return;
       pfStored = hd;
       if (!(await pfConnect(hd, false))) {
         // reconnexion au premier clic dans la page (geste de l'utilisateur exigé par le navigateur)
@@ -6633,6 +6634,43 @@
       var a = e.target.closest && e.target.closest("[data-go-tab]");
       if (a) { e.preventDefault(); setTab(a.dataset.goTab); window.scrollTo(0, 0); }
     });
+    // ---------- Réinitialisation du poste (navigateur) ----------
+    // efface uniquement les données de cette application dans ce navigateur, puis recharge la page
+    function hasUnsharedLocalData() {
+      return mode === "local" && !fileHandle && Object.keys(days || {}).length > 0;
+    }
+    async function resetPoste() {
+      var msg = "Réinitialiser ce poste ?\n\nCela efface, dans ce navigateur uniquement :\n" +
+        "• les connexions mémorisées à la base commune et à la base production,\n" +
+        "• la connexion en cours (profil) et les préférences d'affichage,\n" +
+        "• les données en cache de l'application.\n\n" +
+        "La base commune (fichier JSON du dossier partagé) n'est pas modifiée. Après rechargement, il faudra rouvrir arrets-production-base.json.";
+      if (hasUnsharedLocalData()) msg += "\n\n⚠ Ce poste n'est pas connecté à la base commune : les données saisies sur ce poste seulement seront perdues. Exportez-les d'abord si besoin (« Exporter la base JSON »).";
+      if (!confirm(msg)) return;
+      if (fileHandle && (fileSaving || filePending)) {
+        toast("Enregistrement en cours, patientez…");
+        for (var i = 0; i < 20 && (fileSaving || filePending); i++) await new Promise(function (r) { setTimeout(r, 250); });
+      }
+      try { clearInterval(filePollTimer); clearInterval(pfTimer); } catch (e) {}
+      try {
+        Object.keys(localStorage).forEach(function (k) { if (k.indexOf("arrets-production") === 0) localStorage.removeItem(k); });
+      } catch (e) {}
+      try {
+        Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf("arrets-production") === 0) sessionStorage.removeItem(k); });
+      } catch (e) {}
+      await new Promise(function (res) {
+        try {
+          var rq = indexedDB.deleteDatabase("arrets-production");
+          rq.onsuccess = rq.onerror = rq.onblocked = function () { res(); };
+          setTimeout(res, 2000);
+        } catch (e) { res(); }
+      });
+      try { if (window.caches && caches.keys) { var ks = await caches.keys(); await Promise.all(ks.map(function (k) { return caches.delete(k); })); } } catch (e) {}
+      try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) { var regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(function (r) { return r.unregister(); })); } } catch (e) {}
+      toast("Poste réinitialisé : rechargement…");
+      setTimeout(function () { location.replace(location.pathname + location.search); }, 400);
+    }
+    $("btnResetPoste").addEventListener("click", resetPoste);
     $("btnHome").addEventListener("click", function () { setTab("home"); window.scrollTo(0, 0); });
     function setTab(t) {
       ui.tab = t;
