@@ -132,3 +132,9 @@ Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5,
 ## Cisaille CV5
 
 Chaîne cinématique : moteur, accouplement, arbre inférieur, 2 arbres à pignon superposés, arbre supérieur — les 6 sont suivis. Le dessin est animé (les engrenages tournent, les pignons en sens inverse). Une base existante reçoit la cisaille à l'ouverture, avec un suivi qui démarre à zéro.
+
+## Page Laminoir (menu principal)
+
+L'onglet « 🏭 Laminoir » affiche toutes les machines du laminoir en tuiles, dans l'ordre du process (liste reprise de l'outil « Arrêt technique RIVA »). Chaque tuile indique le nombre de dessins rattachés et leur état (bord vert / orange / rouge). Un clic ouvre le dessin de la machine (ou la liste de ses dessins s'il y en a plusieurs, ex. Centrales, Ligne gros diamètre).
+
+Chaque dessin GMAO est rattaché à une machine : soit avec « 🔗 Associer des dessins » sur la page d'une machine, soit avec le champ « Machine du laminoir » de « Modifier l'équipement ». Les dessins non rattachés sont listés en bas de la page Laminoir. Le menu de gauche ne liste plus chaque équipement : tout passe par les tuiles.

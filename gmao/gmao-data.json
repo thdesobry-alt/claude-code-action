@@ -79,7 +79,8 @@
             "tonnes": 474250
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "nortek",
@@ -586,7 +587,8 @@
             "tonnes": 812000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "vr-chg",
@@ -810,7 +812,8 @@
       ],
       "options": {
         "motorise": true
-      }
+      },
+      "machine": "vrl-charg"
     },
     {
       "id": "vr-enf",
@@ -1034,7 +1037,8 @@
       ],
       "options": {
         "motorise": true
-      }
+      },
+      "machine": "vrl-enf"
     },
     {
       "id": "pous",
@@ -1073,7 +1077,8 @@
             "tonnes": 819000
           }
         }
-      ]
+      ],
+      "machine": "enfourneuse"
     },
     {
       "id": "defo",
@@ -1164,7 +1169,8 @@
             "tonnes": 232000
           }
         }
-      ]
+      ],
+      "machine": "defourneuse"
     },
     {
       "id": "tro0",
@@ -1307,7 +1313,8 @@
             "tonnes": 712000
           }
         }
-      ]
+      ],
+      "machine": "tro0"
     },
     {
       "id": "soud",
@@ -1567,7 +1574,8 @@
             "tonnes": -299250
           }
         }
-      ]
+      ],
+      "machine": "soudeuse"
     },
     {
       "id": "ch-curseur",
@@ -1636,7 +1644,8 @@
             "tonnes": 712000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "curseur",
@@ -1703,7 +1712,8 @@
             "tonnes": 612000
           }
         }
-      ]
+      ],
+      "machine": "ligne-gd"
     },
     {
       "id": "ch-tro7",
@@ -1747,7 +1757,8 @@
             "tonnes": 662000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "cages",
@@ -1986,7 +1997,8 @@
             "tonnes": 612000
           }
         }
-      ]
+      ],
+      "machine": "train"
     },
     {
       "id": "bruleurs",
@@ -2976,7 +2988,8 @@
             "tonnes": 762000
           }
         }
-      ]
+      ],
+      "machine": "four"
     },
     {
       "id": "ch-soudeuse",
@@ -3045,7 +3058,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "ch-h1-6",
@@ -3114,7 +3128,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "ch-lub1-6",
@@ -3183,7 +3198,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "ch-lub7-10",
@@ -3252,7 +3268,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "ch-lub11-14",
@@ -3321,7 +3338,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "ch-lub15-16",
@@ -3390,7 +3408,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "ch-cv4fq",
@@ -3459,7 +3478,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "ch-cv1",
@@ -3528,7 +3548,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "centrales"
     },
     {
       "id": "cisaille-cv1",
@@ -3595,7 +3616,8 @@
             "tonnes": 832000
           }
         }
-      ]
+      ],
+      "machine": "cv1"
     },
     {
       "id": "tempcore",
@@ -3667,7 +3689,8 @@
             "tonnes": 762000
           }
         }
-      ]
+      ],
+      "machine": "tempcore"
     },
     {
       "id": "lasers",
@@ -3743,7 +3766,8 @@
             "tonnes": 712000
           }
         }
-      ]
+      ],
+      "machine": ""
     },
     {
       "id": "cisaille-cv5",
@@ -3836,9 +3860,10 @@
             "tonnes": 612000
           }
         }
-      ]
+      ],
+      "machine": "ligne-gd"
     }
   ],
   "journal": [],
-  "schema": 27
+  "schema": 28
 }
