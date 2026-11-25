@@ -131,4 +131,4 @@ Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5,
 
 ## Cisaille CV5
 
-Chaîne cinématique : moteur, accouplement, arbre inférieur, 2 arbres à pignon, arbre supérieur — les 6 sont suivis. Le dessin est animé (les engrenages tournent, les pignons en sens inverse). Une base existante reçoit la cisaille à l'ouverture, avec un suivi qui démarre à zéro.
+Chaîne cinématique : moteur, accouplement, arbre inférieur, 2 arbres à pignon superposés, arbre supérieur — les 6 sont suivis. Le dessin est animé (les engrenages tournent, les pignons en sens inverse). Une base existante reçoit la cisaille à l'ouverture, avec un suivi qui démarre à zéro.

@@ -2518,32 +2518,34 @@
       <path class="o spin${rev ? " rev" : ""}" d="${sp}" style="stroke-width:3"/>
       <circle class="nd" cx="${cx}" cy="${cy}" r="5"/></g>`;
           };
+          // train vertical : arbre inférieur -> pignon 1 -> pignon 2 (superposés) -> arbre supérieur
           return `<svg viewBox="0 0 470 250" role="img" aria-label="Cisaille CV5">
   <rect class="n" x="10" y="226" width="450" height="8" rx="2"/>
-  <rect class="n" x="200" y="34" width="196" height="186" rx="8" opacity=".35"/>
-  <text x="298" y="28" text-anchor="middle" style="font-size:8px">carter de transmission</text>
+  <rect class="n" x="236" y="4" width="124" height="222" rx="8" opacity=".35"/>
   <g ${P("moteur")}>
-    <rect class="f" x="20" y="150" width="92" height="52" rx="6"/>
-    <path class="o" d="M32 158 v36 M42 158 v36 M52 158 v36 M62 158 v36 M72 158 v36 M82 158 v36"/>
+    <rect class="f" x="20" y="164" width="92" height="52" rx="6"/>
+    <path class="o" d="M32 172 v36 M42 172 v36 M52 172 v36 M62 172 v36 M72 172 v36 M82 172 v36"/>
   </g>
-  <text x="66" y="142" text-anchor="middle">MOTEUR</text>
-  <rect class="n" x="36" y="202" width="60" height="24" rx="2"/>
+  <text x="66" y="156" text-anchor="middle">MOTEUR</text>
+  <rect class="n" x="36" y="216" width="60" height="10" rx="2"/>
   <g ${P("accouplement")}>
-    <rect class="f" x="114" y="160" width="12" height="32" rx="2"/><rect class="f" x="130" y="160" width="12" height="32" rx="2"/>
-    <rect class="nd" x="112" y="172" width="32" height="8"/>
+    <rect class="f" x="114" y="174" width="12" height="32" rx="2"/><rect class="f" x="130" y="174" width="12" height="32" rx="2"/>
+    <rect class="nd" x="112" y="186" width="32" height="8"/>
   </g>
-  <text x="128" y="214" text-anchor="middle" style="font-size:8px">accouplement</text>
-  <g ${P("arbre_inf")}><rect class="f" x="144" y="171" width="122" height="10" rx="2"/></g>
-  ${roue(298, 176, 34, "arbre_inf", false)}
-  <text x="298" y="222" text-anchor="middle" style="font-size:8px">ARBRE INFÉRIEUR</text>
-  ${roue(258, 126, 22, "arbre_pignon_1", true)}${roue(338, 126, 22, "arbre_pignon_2", true)}
-  <text x="226" y="112" text-anchor="end" style="font-size:8px">PIGNON 1</text><text x="370" y="112" style="font-size:8px">PIGNON 2</text>
-  ${roue(298, 78, 30, "arbre_sup", false)}
-  <g ${P("arbre_sup")}><rect class="f" x="328" y="73" width="122" height="10" rx="2"/></g>
-  <text x="298" y="48" text-anchor="middle" style="font-size:8px;paint-order:stroke;stroke:var(--draw-bg);stroke-width:3px">ARBRE SUPÉRIEUR</text>
-  <g ${P("arbre_inf")}><rect class="f" x="330" y="171" width="120" height="10" rx="2"/></g>
-  <path class="ln" d="M452 72 l8 6 -8 6 M452 170 l8 6 -8 6"/>
-  <text x="440" y="66" text-anchor="end" style="font-size:7.5px">vers lame sup.</text><text x="440" y="198" text-anchor="end" style="font-size:7.5px">vers lame inf.</text>
+  <text x="128" y="160" text-anchor="middle" style="font-size:8px">accouplement</text>
+  <g ${P("arbre_inf")}><rect class="f" x="144" y="185" width="122" height="10" rx="2"/></g>
+  ${roue(298, 190, 34, "arbre_inf", false)}
+  <g ${P("arbre_inf")}><rect class="f" x="330" y="185" width="120" height="10" rx="2"/></g>
+  ${roue(298, 134, 22, "arbre_pignon_1", true)}
+  ${roue(298, 90, 22, "arbre_pignon_2", false)}
+  ${roue(298, 38, 30, "arbre_sup", true)}
+  <g ${P("arbre_sup")}><rect class="f" x="326" y="33" width="124" height="10" rx="2"/></g>
+  <text x="368" y="94" style="font-size:8px">PIGNON 2</text>
+  <text x="368" y="138" style="font-size:8px">PIGNON 1</text>
+  <text x="228" y="42" text-anchor="end" style="font-size:8px">ARBRE SUPÉRIEUR</text>
+  <text x="228" y="218" text-anchor="end" style="font-size:8px">ARBRE INFÉRIEUR</text>
+  <path class="ln" d="M452 32 l8 6 -8 6 M452 184 l8 6 -8 6"/>
+  <text x="444" y="58" text-anchor="end" style="font-size:7.5px">vers lame sup.</text><text x="444" y="212" text-anchor="end" style="font-size:7.5px">vers lame inf.</text>
 </svg>`;
         },
         cisaille: (eq, P) => {
