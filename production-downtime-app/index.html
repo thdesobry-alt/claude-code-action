@@ -13711,8 +13711,9 @@
           if (Math.abs(o[1] - c) > cfg.tol) A.out.push(o.concat([c]));
         });
       });
+      // les plus éloignés de la cible en premier (écart en valeur absolue), puis par date
       A.out.sort(function (a, b) {
-        return a[0] - b[0];
+        return Math.abs(b[1] - b[8]) - Math.abs(a[1] - a[8]) || a[0] - b[0];
       });
       return A;
     }
@@ -14435,8 +14436,8 @@
           out.length +
           " fardeau(x) à plus de ± " +
           fdKg(cfg.tol) +
-          " kg de la cible" +
-          (out.length > 300 ? " (300 premiers affichés)" : "") +
+          " kg de la cible, du plus éloigné au plus proche" +
+          (out.length > 300 ? " (300 plus éloignés affichés)" : "") +
           ".</p>" +
           '<table><thead><tr><th>Date</th><th>Coulée</th><th>Qualité</th><th>Diamètre</th><th>Longueur</th><th class="num">Poids</th><th class="num">Cible</th><th class="num">Écart</th><th>Poste</th><th>ID</th></tr></thead><tbody>' +
           out
