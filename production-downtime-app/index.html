@@ -1401,6 +1401,13 @@
     cursor: crosshair;
     user-select: none;
   }
+  svg[data-ch-zoom][data-zoomed] {
+    cursor: grab;
+  }
+  body.ch-panning,
+  body.ch-panning svg[data-ch-zoom] {
+    cursor: grabbing;
+  }
   .chart .ch-hit {
     fill: transparent;
   }
@@ -2505,6 +2512,10 @@
       <div class="row ch-zoombar" id="caZoomBar">
         <label class="f">Zoom de<input type="time" id="caZFrom" /></label>
         <label class="f">à<input type="time" id="caZTo" /></label>
+        <button class="btn" id="caZBack" aria-label="Reculer">
+          ◀ Reculer
+        </button>
+        <button class="btn" id="caZFwd" aria-label="Avancer">Avancer ▶</button>
         <button class="btn" id="caZReset">Journée entière</button>
         <span class="muted" id="caZInfo"></span>
       </div>
@@ -15073,7 +15084,9 @@
         return T0 + ch - ((v - lo) / (hi - lo)) * ch;
       }
       var s =
-        '<svg class="chart ch-svg" data-ch-zoom="1" data-l="' +
+        '<svg class="chart ch-svg" data-ch-zoom="1"' +
+        (span < 86400 ? " data-zoomed" : "") +
+        ' data-l="' +
         L +
         '" data-cw="' +
         cw +
@@ -15261,11 +15274,23 @@
           chSecToHM(z[1]) +
           " · " +
           n +
-          " billette(s) · double-clic pour revenir à la journée entière";
+          " billette(s) · glissez le graphique pour avancer ou reculer · Maj + glisser pour un nouveau zoom · double-clic pour la journée entière";
+      $("caZBack").disabled = full || z[0] <= 0;
+      $("caZFwd").disabled = full || z[1] >= 86400;
     }
-    // sélection d'une période à la souris (glisser) sur l'un des graphiques
+    // souris sur les graphiques : glisser = zoom (journée entière) ou déplacement (une fois zoomé),
+    // Maj + glisser = nouveau zoom, double-clic = journée entière
+    function chPan(sec) {
+      var z = chZoom(),
+        w = z[1] - z[0],
+        a = Math.max(0, Math.min(86400 - w, z[0] + sec));
+      if (w >= 86400) return;
+      ui.caZoom = [Math.round(a), Math.round(a + w)];
+      renderChAnalyse();
+    }
     (function () {
-      var drag = null;
+      var drag = null,
+        raf = 0;
       function svgX(svg, e) {
         var r = svg.getBoundingClientRect();
         return ((e.clientX - r.left) * +svg.dataset.w) / r.width;
@@ -15283,12 +15308,39 @@
         var x = svgX(svg, e),
           L = +svg.dataset.l;
         if (x < L || x > L + +svg.dataset.cw) return;
-        drag = { svg: svg, x0: x, sel: svg.querySelector(".ch-sel") };
-        svg.setPointerCapture && svg.setPointerCapture(e.pointerId);
+        var z = chZoom(),
+          pan = z[1] - z[0] < 86400 && !e.shiftKey;
+        drag = {
+          svg: svg,
+          x0: x,
+          cx0: e.clientX,
+          pan: pan,
+          z0: z.slice(),
+          // secondes par pixel écran, mesurées au départ (le graphique est redessiné pendant le déplacement)
+          spp:
+            ((z[1] - z[0]) / +svg.dataset.cw) *
+            (+svg.dataset.w / svg.getBoundingClientRect().width),
+          sel: svg.querySelector(".ch-sel"),
+        };
+        if (pan) document.body.classList.add("ch-panning");
         e.preventDefault();
       });
       document.addEventListener("pointermove", function (e) {
         if (!drag) return;
+        if (drag.pan) {
+          var w = drag.z0[1] - drag.z0[0],
+            a = drag.z0[0] - (e.clientX - drag.cx0) * drag.spp;
+          a = Math.max(0, Math.min(86400 - w, a));
+          drag.moved = drag.moved || Math.abs(e.clientX - drag.cx0) > 3;
+          if (!drag.moved) return;
+          ui.caZoom = [Math.round(a), Math.round(a + w)];
+          if (!raf)
+            raf = requestAnimationFrame(function () {
+              raf = 0;
+              renderChAnalyse();
+            });
+          return;
+        }
         var L = +drag.svg.dataset.l,
           x = Math.max(
             L,
@@ -15302,6 +15354,12 @@
         if (!drag) return;
         var d = drag;
         drag = null;
+        document.body.classList.remove("ch-panning");
+        if (d.pan) {
+          // simple clic (sans déplacement) : pas de redessin, le double-clic reste possible
+          if (d.moved) renderChAnalyse();
+          return;
+        }
         d.sel.setAttribute("width", 0);
         if (d.x1 == null || Math.abs(d.x1 - d.x0) < 4) return;
         var s0 = toSec(d.svg, Math.min(d.x0, d.x1)),
@@ -15796,6 +15854,14 @@
     }
     $("caZFrom").addEventListener("change", caZoomInputs);
     $("caZTo").addEventListener("change", caZoomInputs);
+    $("caZBack").addEventListener("click", function () {
+      var z = chZoom();
+      chPan(-(z[1] - z[0]) / 2);
+    });
+    $("caZFwd").addEventListener("click", function () {
+      var z = chZoom();
+      chPan((z[1] - z[0]) / 2);
+    });
     $("caZReset").addEventListener("click", function () {
       ui.caZoom = null;
       renderChAnalyse();
