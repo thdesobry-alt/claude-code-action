@@ -3251,10 +3251,10 @@
         msg: "Énergie et Non conformes",
       },
       daguenet: {
-        label: "Saisie · Programme · Production",
-        open: ["saisie", "prog", "prod", "nc"],
-        highlight: ["saisie"],
-        msg: "Saisie des arrêts, Programme de laminage et Production",
+        label: "Saisie · Programme · Production · Fardeaux · Chauffe",
+        open: ["saisie", "prog", "prod", "nc", "fsaisie", "csaisie"],
+        highlight: ["saisie", "fsaisie", "csaisie"],
+        msg: "Saisie des arrêts, Programme de laminage, Production, Saisie des fardeaux et Saisie chauffe billettes",
       },
       balem: {
         label: "Saisie · Programme · Production",
@@ -5382,7 +5382,7 @@
       document.querySelector('nav.tabs [data-tab="fsaisie"]').hidden =
         !canFard();
       document.querySelector('nav.tabs [data-tab="csaisie"]').hidden =
-        !canFard();
+        !canChauffe();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent =
         unlocked === "user" ? "Passer en Admin" : "Se connecter";
@@ -13394,7 +13394,7 @@
           (ui.tab === "prod" && !canProd()) ||
           (ui.tab === "energie" && !canEnergy()) ||
           (ui.tab === "fsaisie" && !canFard()) ||
-          (ui.tab === "csaisie" && !canFard()) ||
+          (ui.tab === "csaisie" && !canChauffe()) ||
           ui.tab === "kpi" ||
           ui.tab === "couts" ||
           (ui.tab === "nc" && !canNC())) &&
@@ -13486,7 +13486,10 @@
     // Seuls les fardeaux hors tolérance (réglage au moment de l'import) sont gardés un par un : la base reste légère.
     var FD_OUT_MAX = 500;
     function canFard() {
-      return isAdmin() || hasExtra("prod");
+      return isAdmin() || hasExtra("fsaisie");
+    }
+    function canChauffe() {
+      return isAdmin() || hasExtra("csaisie");
     }
     function fdCfg() {
       var c = kpi.fardCfg || {};
@@ -15156,7 +15159,7 @@
     var chPending = null,
       chCfgEditing = false;
     async function chImport(file) {
-      if (!canFard()) return;
+      if (!canChauffe()) return;
       $("chPreview").innerHTML =
         '<p class="muted">Lecture de « ' + esc(file.name) + " »…</p>";
       try {
@@ -15230,7 +15233,7 @@
         '</button><button class="btn" id="chCancel">Annuler</button></div></div>';
     }
     function chSavePending() {
-      if (!chPending || !canFard()) return;
+      if (!chPending || !canChauffe()) return;
       var P = chPending,
         keys = Object.keys(P.days).sort(),
         at = Date.now();
@@ -15279,7 +15282,7 @@
       renderChCfg();
       var keys = chDays().reverse(),
         cfg = chCfg(),
-        ed = canFard();
+        ed = canChauffe();
       $("chDrop").hidden = !ed;
       if (!keys.length) {
         $("chDays").innerHTML =
@@ -15570,7 +15573,7 @@
       }
       if (
         d &&
-        canFard() &&
+        canChauffe() &&
         confirm(
           "Supprimer les billettes de la journée du " +
             frDay(d.dataset.chDel) +
@@ -15766,6 +15769,8 @@
       prog: "Desobry",
       kpi: "Desobry",
       couts: "Desobry",
+      fsaisie: "Daguenet",
+      csaisie: "Daguenet",
     };
     function renderHome() {
       $("homeMenu").innerHTML = HOME_MENU.map(function (g) {
