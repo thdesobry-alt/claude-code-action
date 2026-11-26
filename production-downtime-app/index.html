@@ -2196,7 +2196,13 @@
       <div id="crSafety"></div>
     </div>
     <div class="panel stack">
-      <h2 class="cr-h">2. Qualité, environnement</h2>
+      <div
+        class="row"
+        style="justify-content: space-between; align-items: center"
+      >
+        <h2 class="cr-h">2. Qualité, environnement</h2>
+        <button class="btn primary" id="crChauffe">Chauffe billettes</button>
+      </div>
       <div id="crQE"></div>
     </div>
     <div class="panel stack">
@@ -2460,6 +2466,9 @@
           <p class="hint" id="caSub"></p>
         </div>
         <div class="row">
+          <button class="btn primary" id="caBackCr" hidden>
+            ← Retour au CR journalier
+          </button>
           <button class="btn" id="caPrev" aria-label="Journée précédente">
             ◀
           </button>
@@ -14670,6 +14679,18 @@
       setTab("cr");
       window.scrollTo(0, 0);
     });
+    // accès depuis le CR journalier : chauffe des billettes de la journée affichée, puis retour au CR
+    $("crChauffe").addEventListener("click", function () {
+      ui.caDay = crRange().key;
+      ui.caFromCr = true;
+      setTab("canalyse");
+      window.scrollTo(0, 0);
+    });
+    $("caBackCr").addEventListener("click", function () {
+      ui.caFromCr = false;
+      setTab("cr");
+      window.scrollTo(0, 0);
+    });
     $("fdFile").addEventListener("change", function () {
       if (this.files && this.files[0]) fdImport(this.files[0]);
       this.value = "";
@@ -15327,6 +15348,7 @@
           var a = chDayStart(k);
           return t + Math.min(s.end, a + 864e5) - Math.max(s.start, a);
         }, 0);
+      $("caBackCr").hidden = !ui.caFromCr;
       $("caSub").textContent =
         "Journée du " +
         frDay(k) +
@@ -15892,6 +15914,7 @@
     $("btnResetPoste").addEventListener("click", resetPoste);
     $("btnHome").addEventListener("click", function () {
       ui.fpFromCr = false;
+      ui.caFromCr = false;
       setTab("home");
       window.scrollTo(0, 0);
     });
