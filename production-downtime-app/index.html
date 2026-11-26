@@ -1397,6 +1397,23 @@
     background: var(--danger-soft);
     border: 1px dashed var(--danger);
   }
+  svg[data-ch-zoom] {
+    cursor: crosshair;
+    user-select: none;
+  }
+  .chart .ch-hit {
+    fill: transparent;
+  }
+  .chart .ch-sel {
+    fill: var(--bar);
+    fill-opacity: 0.15;
+    stroke: var(--bar);
+    stroke-width: 1;
+    pointer-events: none;
+  }
+  .ch-zoombar {
+    align-items: flex-end;
+  }
   #caTable tr.sel td {
     background: var(--surface-2);
     font-weight: 600;
@@ -2485,6 +2502,12 @@
     </div>
     <div class="panel stack">
       <h2 class="cr-h">Température de défournement</h2>
+      <div class="row ch-zoombar" id="caZoomBar">
+        <label class="f">Zoom de<input type="time" id="caZFrom" /></label>
+        <label class="f">à<input type="time" id="caZTo" /></label>
+        <button class="btn" id="caZReset">Journée entière</button>
+        <span class="muted" id="caZInfo"></span>
+      </div>
       <div id="caDef"></div>
     </div>
     <div class="panel stack">
@@ -15002,6 +15025,22 @@
       var d = new Date(ms);
       return pad(d.getHours()) + ":" + pad(d.getMinutes());
     }
+    // zoom commun aux deux graphiques : ui.caZoom = [début, fin] en secondes depuis 8h (null = journée entière)
+    function chZoom() {
+      var z = ui.caZoom;
+      return z && z[1] - z[0] >= 60 ? z : [0, 86400];
+    }
+    function chSecToHM(sec) {
+      var t = (DAY_START_HOUR * 3600 + Math.round(sec)) % 86400;
+      return pad(Math.floor(t / 3600)) + ":" + pad(Math.floor((t % 3600) / 60));
+    }
+    function chHMToSec(v) {
+      var m = String(v || "").match(/^(\d{1,2}):(\d{2})/);
+      if (!m) return null;
+      return (
+        (+m[1] * 3600 + +m[2] * 60 - DAY_START_HOUR * 3600 + 86400) % 86400
+      );
+    }
     // graphique d'une journée (8h -> 8h) : points par billette, bandes des arrêts four
     function chChart(key, list, idx, opt) {
       var W = 1000,
@@ -15013,36 +15052,59 @@
         cw = W - L - R,
         ch = H - T0 - B0,
         a = chDayStart(key),
-        vals = list
-          .map(function (b) {
-            return b[idx];
-          })
-          .filter(function (v) {
-            return v > 0;
-          }),
+        z = chZoom(),
+        r0 = z[0],
+        r1 = z[1],
+        span = r1 - r0,
+        vis = list.filter(function (b) {
+          return b[0] >= r0 && b[0] <= r1 && b[idx] > 0;
+        }),
         lo = opt.lo,
         hi = opt.hi;
-      vals.forEach(function (v) {
+      vis.forEach(function (b) {
+        var v = b[idx];
         if (v < lo) lo = Math.floor(v / 50) * 50;
         if (v > hi) hi = Math.ceil(v / 50) * 50;
       });
       function X(sec) {
-        return L + (Math.max(0, Math.min(86400, sec)) / 86400) * cw;
+        return L + ((Math.max(r0, Math.min(r1, sec)) - r0) / span) * cw;
       }
       function Y(v) {
         return T0 + ch - ((v - lo) / (hi - lo)) * ch;
       }
       var s =
-        '<svg class="chart ch-svg" viewBox="0 0 ' +
+        '<svg class="chart ch-svg" data-ch-zoom="1" data-l="' +
+        L +
+        '" data-cw="' +
+        cw +
+        '" data-w="' +
+        W +
+        '" data-r0="' +
+        r0 +
+        '" data-r1="' +
+        r1 +
+        '" viewBox="0 0 ' +
         W +
         " " +
         H +
         '" role="img" aria-label="' +
         esc(opt.label) +
-        '">';
+        '">' +
+        '<rect class="ch-hit" x="' +
+        L +
+        '" y="' +
+        T0 +
+        '" width="' +
+        cw +
+        '" height="' +
+        ch +
+        '" />';
       chFourStops(key).forEach(function (st) {
-        var x1 = X((st.start - a) / 1000),
-          x2 = X((st.end - a) / 1000);
+        var s0 = (st.start - a) / 1000,
+          s1 = (st.end - a) / 1000;
+        if (s1 < r0 || s0 > r1) return;
+        var x1 = X(s0),
+          x2 = X(s1);
         s +=
           "<g><title>Arrêt four (code " +
           esc(st.fer) +
@@ -15091,15 +15153,35 @@
           '" text-anchor="end">' +
           v +
           "</text>";
-      for (var h = 0; h <= 24; h += 2)
+      // graduations horaires adaptées à la période affichée
+      var ts =
+        [120, 300, 600, 900, 1800, 3600, 7200].filter(function (x) {
+          return span / x <= 13;
+        })[0] || 7200;
+      for (var t = Math.ceil(r0 / ts) * ts; t <= r1; t += ts)
         s +=
+          (t > r0 && t < r1
+            ? '<line class="grid" x1="' +
+              X(t) +
+              '" x2="' +
+              X(t) +
+              '" y1="' +
+              T0 +
+              '" y2="' +
+              (T0 + ch) +
+              '" />'
+            : "") +
           '<text x="' +
-          X(h * 3600) +
+          X(t) +
           '" y="' +
           (H - 10) +
-          '" text-anchor="middle">' +
-          pad((DAY_START_HOUR + h) % 24) +
-          "h</text>";
+          '" text-anchor="' +
+          (X(t) > W - R - 20 ? "end" : "middle") +
+          '">' +
+          (ts >= 3600
+            ? pad((DAY_START_HOUR + t / 3600) % 24) + "h"
+            : chSecToHM(t)) +
+          "</text>";
       if (opt.limit != null)
         s +=
           '<line class="ch-limit" x1="' +
@@ -15118,10 +15200,10 @@
           '" text-anchor="end">' +
           opt.limitLabel +
           "</text>";
-      list.forEach(function (b) {
-        var v = b[idx];
-        if (!(v > 0)) return;
-        var bad = opt.bad(v);
+      var rr = span < 3 * 3600 ? 1.5 : 1;
+      vis.forEach(function (b) {
+        var v = b[idx],
+          bad = opt.bad(v);
         s +=
           '<circle class="ch-dot' +
           (bad ? " " + opt.badClass : "") +
@@ -15130,7 +15212,7 @@
           '" cy="' +
           Y(v).toFixed(1) +
           '" r="' +
-          (bad ? 3 : 2.2) +
+          ((bad ? 3 : 2.2) * rr).toFixed(1) +
           '"><title>' +
           chHM(a + b[0] * 1000) +
           " · enfournée " +
@@ -15140,6 +15222,11 @@
           " °C</title></circle>";
       });
       s +=
+        '<rect class="ch-sel" x="0" y="' +
+        T0 +
+        '" width="0" height="' +
+        ch +
+        '" />' +
         '<line class="axis" x1="' +
         L +
         '" x2="' +
@@ -15154,7 +15241,82 @@
         '" y="12" text-anchor="end">°C</text></svg>';
       return s;
     }
-
+    function renderChZoomBar(key, list) {
+      var z = chZoom(),
+        full = z[0] === 0 && z[1] === 86400,
+        ae = document.activeElement,
+        n = list.filter(function (b) {
+          return b[0] >= z[0] && b[0] <= z[1];
+        }).length;
+      if (!(ae && (ae.id === "caZFrom" || ae.id === "caZTo"))) {
+        $("caZFrom").value = chSecToHM(z[0]);
+        $("caZTo").value = chSecToHM(z[1] % 86400);
+      }
+      $("caZReset").disabled = full;
+      $("caZInfo").textContent = full
+        ? "Journée entière · glissez la souris sur un graphique pour zoomer"
+        : "Zoom de " +
+          chSecToHM(z[0]) +
+          " à " +
+          chSecToHM(z[1]) +
+          " · " +
+          n +
+          " billette(s) · double-clic pour revenir à la journée entière";
+    }
+    // sélection d'une période à la souris (glisser) sur l'un des graphiques
+    (function () {
+      var drag = null;
+      function svgX(svg, e) {
+        var r = svg.getBoundingClientRect();
+        return ((e.clientX - r.left) * +svg.dataset.w) / r.width;
+      }
+      function toSec(svg, x) {
+        var L = +svg.dataset.l,
+          cw = +svg.dataset.cw,
+          r0 = +svg.dataset.r0,
+          r1 = +svg.dataset.r1;
+        return r0 + (Math.max(0, Math.min(cw, x - L)) / cw) * (r1 - r0);
+      }
+      document.addEventListener("pointerdown", function (e) {
+        var svg = e.target.closest && e.target.closest("svg[data-ch-zoom]");
+        if (!svg || e.button !== 0) return;
+        var x = svgX(svg, e),
+          L = +svg.dataset.l;
+        if (x < L || x > L + +svg.dataset.cw) return;
+        drag = { svg: svg, x0: x, sel: svg.querySelector(".ch-sel") };
+        svg.setPointerCapture && svg.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      });
+      document.addEventListener("pointermove", function (e) {
+        if (!drag) return;
+        var L = +drag.svg.dataset.l,
+          x = Math.max(
+            L,
+            Math.min(L + +drag.svg.dataset.cw, svgX(drag.svg, e)),
+          );
+        drag.x1 = x;
+        drag.sel.setAttribute("x", Math.min(drag.x0, x));
+        drag.sel.setAttribute("width", Math.abs(x - drag.x0));
+      });
+      document.addEventListener("pointerup", function () {
+        if (!drag) return;
+        var d = drag;
+        drag = null;
+        d.sel.setAttribute("width", 0);
+        if (d.x1 == null || Math.abs(d.x1 - d.x0) < 4) return;
+        var s0 = toSec(d.svg, Math.min(d.x0, d.x1)),
+          s1 = toSec(d.svg, Math.max(d.x0, d.x1));
+        if (s1 - s0 < 60) return;
+        ui.caZoom = [Math.round(s0), Math.round(s1)];
+        renderChAnalyse();
+      });
+      document.addEventListener("dblclick", function (e) {
+        if (e.target.closest && e.target.closest("svg[data-ch-zoom]")) {
+          ui.caZoom = null;
+          renderChAnalyse();
+        }
+      });
+    })();
     // --- onglet Saisie chauffe ---
     var chPending = null,
       chCfgEditing = false;
@@ -15399,6 +15561,8 @@
             fs.length ? fmtHM(fourMs) + " d'arrêt" : "codes 7 et 27",
           )
         : "";
+      $("caZoomBar").hidden = !D;
+      if (D) renderChZoomBar(k, list);
       if (!D) {
         var none =
           '<div class="empty">Pas de liste de billettes enregistrée pour la journée du ' +
@@ -15616,6 +15780,26 @@
         d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
       renderChAnalyse();
     }
+    function caZoomInputs() {
+      var a = chHMToSec($("caZFrom").value),
+        b = chHMToSec($("caZTo").value);
+      if (a == null || b == null) return;
+      if (b === 0) b = 86400;
+      if (b - a < 60) {
+        toast(
+          "L'heure de fin doit être après l'heure de début (journée de 8h à 8h)",
+        );
+        return;
+      }
+      ui.caZoom = a === 0 && b === 86400 ? null : [a, b];
+      renderChAnalyse();
+    }
+    $("caZFrom").addEventListener("change", caZoomInputs);
+    $("caZTo").addEventListener("change", caZoomInputs);
+    $("caZReset").addEventListener("click", function () {
+      ui.caZoom = null;
+      renderChAnalyse();
+    });
     $("caPrev").addEventListener("click", function () {
       caShift(-1);
     });
