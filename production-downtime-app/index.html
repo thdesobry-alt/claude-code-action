@@ -1340,6 +1340,67 @@
     margin: 0;
     padding-left: 18px;
   }
+  svg.ch-svg {
+    max-width: 1000px;
+  }
+  .chart .ch-four {
+    fill: var(--danger-soft);
+    stroke: var(--danger);
+    stroke-width: 0.6;
+    stroke-dasharray: 3 3;
+  }
+  .chart text.ch-four-t {
+    fill: var(--danger);
+    font-weight: 600;
+  }
+  .chart .ch-dot {
+    fill: var(--bar);
+  }
+  .chart .ch-dot.low {
+    fill: var(--danger);
+  }
+  .chart .ch-dot.cold {
+    fill: var(--accent);
+  }
+  .chart .ch-limit {
+    stroke: var(--danger);
+    stroke-width: 1.4;
+    stroke-dasharray: 6 4;
+  }
+  .chart text.ch-limit-t {
+    fill: var(--danger);
+  }
+  .ch-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .ch-k {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bar);
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+  .ch-k.low {
+    background: var(--danger);
+  }
+  .ch-k.cold {
+    background: var(--accent);
+  }
+  .ch-k.four {
+    border-radius: 0;
+    background: var(--danger-soft);
+    border: 1px dashed var(--danger);
+  }
+  #caTable tr.sel td {
+    background: var(--surface-2);
+    font-weight: 600;
+  }
   svg.fd-svg {
     max-width: 1000px;
   }
@@ -1639,6 +1700,12 @@
     </button>
     <button role="tab" data-tab="fpoids" aria-selected="false">
       Poids des fardeaux
+    </button>
+    <button role="tab" data-tab="csaisie" aria-selected="false">
+      Saisie chauffe billettes
+    </button>
+    <button role="tab" data-tab="canalyse" aria-selected="false">
+      Chauffe des billettes
     </button>
     <button role="tab" data-tab="kpi" aria-selected="false">
       KPI - Objectifs
@@ -2338,6 +2405,105 @@
     <div class="panel stack">
       <h2 class="cr-h">Fardeaux hors tolérance</h2>
       <div class="scroll" id="fpOut"></div>
+    </div>
+  </section>
+
+  <section data-panel="csaisie" class="stack" hidden>
+    <div class="panel stack">
+      <div>
+        <h2>Saisie chauffe des billettes</h2>
+        <p class="hint">
+          Déposez l'extraction ALPA « Liste billettes défournées » (fichier .xls
+          ou .xlsx). L'application garde pour chaque billette l'heure de
+          défournement, la température d'enfournement et la température de
+          défournement, rangées par journée de production (8h à 8h). Réimporter
+          une journée la remplace.
+        </p>
+      </div>
+      <label class="fd-drop" id="chDrop" tabindex="0">
+        <input
+          type="file"
+          id="chFile"
+          accept=".xls,.xlsx,.csv,.txt,.htm,.html"
+          hidden
+        />
+        <strong>Glisser le fichier Liste billettes défournées ici</strong>
+        <span class="muted">ou cliquer pour le choisir</span>
+      </label>
+      <div id="chPreview"></div>
+    </div>
+    <div class="panel stack">
+      <div>
+        <h2>Seuils</h2>
+        <p class="hint">
+          Température de défournement minimale, et température d'enfournement
+          sous laquelle une billette est comptée comme enfournée froide. Réglage
+          réservé aux Admin.
+        </p>
+      </div>
+      <div id="chCfg"></div>
+    </div>
+    <div class="panel stack">
+      <h2>Journées enregistrées</h2>
+      <div class="scroll" id="chDays"></div>
+    </div>
+  </section>
+
+  <section data-panel="canalyse" class="stack" hidden>
+    <div class="panel stack">
+      <div
+        class="row"
+        style="justify-content: space-between; align-items: flex-end"
+      >
+        <div>
+          <h2>Chauffe des billettes</h2>
+          <p class="hint" id="caSub"></p>
+        </div>
+        <div class="row">
+          <button class="btn" id="caPrev" aria-label="Journée précédente">
+            ◀
+          </button>
+          <label class="f"
+            >Journée de production<input type="date" id="caDay"
+          /></label>
+          <button class="btn" id="caNext" aria-label="Journée suivante">
+            ▶
+          </button>
+          <button class="btn" id="caLast">Dernière journée</button>
+        </div>
+      </div>
+      <div class="kpis" id="caKpis"></div>
+    </div>
+    <div class="panel stack">
+      <h2 class="cr-h">Température de défournement</h2>
+      <div id="caDef"></div>
+    </div>
+    <div class="panel stack">
+      <h2 class="cr-h">Température d'enfournement</h2>
+      <p class="hint">
+        Température à l'enfournement des billettes, placée à leur heure de
+        défournement. Des billettes froides juste avant un arrêt four montrent
+        si l'arrêt a été anticipé.
+      </p>
+      <div id="caEnf"></div>
+    </div>
+    <div class="panel stack">
+      <h2 class="cr-h">Arrêts chauffe four (codes 7 et 27)</h2>
+      <div class="scroll" id="caStops"></div>
+    </div>
+    <div class="panel stack">
+      <div
+        class="row"
+        style="justify-content: space-between; align-items: flex-end"
+      >
+        <h2 class="cr-h">Synthèse par journée</h2>
+        <div class="row">
+          <label class="f">Du<input type="date" id="caFrom" /></label>
+          <label class="f">Au<input type="date" id="caTo" /></label>
+          <button class="btn" id="caCopy">Copier pour Excel</button>
+        </div>
+      </div>
+      <div class="scroll" id="caTable"></div>
     </div>
   </section>
 
@@ -3415,6 +3581,7 @@
         kpi: kpi,
         nc: nc,
         fard: fard,
+        chauffe: chauffe,
       };
       try {
         localStorage.setItem(
@@ -3512,6 +3679,7 @@
         kpi: kpi,
         nc: nc,
         fard: fard,
+        chauffe: chauffe,
         codes: codesCustom ? { fer: codes.fer, macc: codes.macc } : null,
       });
     }
@@ -3529,6 +3697,7 @@
       kpi = s.kpi || {};
       nc = s.nc || {};
       fard = s.fard || {};
+      chauffe = s.chauffe || {};
       if (s.codes && (s.codes.fer || s.codes.macc)) {
         codes = {
           fer: s.codes.fer || DEFAULT_CODES.fer,
@@ -3556,6 +3725,7 @@
           kpi: {},
           nc: {},
           fard: {},
+          chauffe: {},
           codes: null,
         },
         groups = {},
@@ -3735,6 +3905,7 @@
           kpi: {},
           nc: {},
           fard: {},
+          chauffe: {},
           codes: null,
         };
       var d = JSON.parse(text);
@@ -3753,6 +3924,7 @@
           kpi: d.kpi || {},
           nc: d.nc || {},
           fard: d.fard || {},
+          chauffe: d.chauffe || {},
           codes: d.codes || null,
         };
       if (d && Array.isArray(d.arrets)) return fromExport(d);
@@ -3778,6 +3950,7 @@
           kpi: s.kpi || {},
           nc: s.nc || {},
           fard: s.fard || {},
+          chauffe: s.chauffe || {},
           codes: s.codes,
         }),
       );
@@ -4066,6 +4239,7 @@
           kpi = d.kpi || {};
           nc = d.nc || {};
           fard = d.fard || {};
+          chauffe = d.chauffe || {};
         }
       } catch (e) {}
     }
@@ -4121,7 +4295,8 @@
         });
       return chains[ck];
     }
-    var fard = {};
+    var fard = {},
+      chauffe = {};
     // énergie par journée : config/energy = {items: {jour: {gm, gp, em, ep}}} ; objectifs : config/kpi = {items: {taux|prod|gaz|elec: {obj, seuil, lim}, units: {gaz, elec}}}
     var energy = {},
       kpi = {};
@@ -5196,6 +5371,8 @@
       document.querySelector('nav.tabs [data-tab="couts"]').hidden = !isAdmin();
       document.querySelector('nav.tabs [data-tab="nc"]').hidden = !canNC();
       document.querySelector('nav.tabs [data-tab="fsaisie"]').hidden =
+        !canFard();
+      document.querySelector('nav.tabs [data-tab="csaisie"]').hidden =
         !canFard();
       $("btnLogin").hidden = mode === "pending" || unlocked === "admin";
       $("btnLogin").textContent =
@@ -13208,6 +13385,7 @@
           (ui.tab === "prod" && !canProd()) ||
           (ui.tab === "energie" && !canEnergy()) ||
           (ui.tab === "fsaisie" && !canFard()) ||
+          (ui.tab === "csaisie" && !canFard()) ||
           ui.tab === "kpi" ||
           ui.tab === "couts" ||
           (ui.tab === "nc" && !canNC())) &&
@@ -13243,6 +13421,8 @@
         tab === "energie" ||
         tab === "fsaisie" ||
         tab === "fpoids" ||
+        tab === "csaisie" ||
+        tab === "canalyse" ||
         tab === "cr" ||
         tab === "home" ||
         tab === "nc" ||
@@ -13258,6 +13438,8 @@
       if (tab === "energie") renderEnergy();
       if (tab === "fsaisie") renderFardSaisie();
       if (tab === "fpoids") renderFardPoids();
+      if (tab === "csaisie") renderChSaisie();
+      if (tab === "canalyse") renderChAnalyse();
       if (tab === "kpi") renderKpiCfg();
       if (tab === "nc") renderNC();
       if (tab === "secu") renderSecu();
@@ -14646,6 +14828,846 @@
       }
     });
 
+    // ---------- Chauffe des billettes : import de la liste ALPA des billettes défournées ----------
+    // config/chauffe = {items: {"AAAA-MM-JJ" (journée 8h): {file, at, by, n, b}}}
+    // b : une billette = 8 caractères base 36 -> secondes depuis 8h (4), T enfournement (2), T défournement (2)
+    function chCfg() {
+      var c = kpi.chauffeCfg || {};
+      return {
+        min: +c.min > 0 ? +c.min : 1050,
+        cold: +c.cold > 0 ? +c.cold : 400,
+      };
+    }
+    function chB36(n, w) {
+      var mx = Math.pow(36, w) - 1;
+      n = Math.max(0, Math.min(mx, Math.round(n)));
+      var s = n.toString(36);
+      while (s.length < w) s = "0" + s;
+      return s;
+    }
+    function chDec(str) {
+      var out = [];
+      str = str || "";
+      for (var i = 0; i + 8 <= str.length; i += 8)
+        out.push([
+          parseInt(str.substr(i, 4), 36),
+          parseInt(str.substr(i + 4, 2), 36),
+          parseInt(str.substr(i + 6, 2), 36),
+        ]);
+      return out;
+    }
+    function chDayStart(key) {
+      var p = key.split("-");
+      return new Date(+p[0], +p[1] - 1, +p[2], DAY_START_HOUR).getTime();
+    }
+    function chDays() {
+      return Object.keys(chauffe)
+        .filter(function (k) {
+          return chauffe[k] && !chauffe[k].deleted && chauffe[k].n > 0;
+        })
+        .sort();
+    }
+    function chBuild(rows) {
+      var hi = -1,
+        col = {};
+      for (var i = 0; i < Math.min(rows.length, 40) && hi < 0; i++) {
+        var norm = (rows[i] || []).map(function (c) {
+          return String(c == null ? "" : c)
+            .toUpperCase()
+            .normalize("NFD")
+            .replace(/[^A-Z]/g, "");
+        });
+        if (
+          norm.some(function (c) {
+            return c.indexOf("TDEF") === 0;
+          }) &&
+          norm.some(function (c) {
+            return c.indexOf("DATE") === 0;
+          })
+        ) {
+          hi = i;
+          norm.forEach(function (c, j) {
+            var k =
+              c.indexOf("DATE") === 0
+                ? "date"
+                : c.indexOf("TENF") === 0
+                  ? "enf"
+                  : c.indexOf("TDEF") === 0
+                    ? "def"
+                    : null;
+            if (k && col[k] == null) col[k] = j;
+          });
+        }
+      }
+      if (hi < 0 || col.date == null || col.def == null)
+        return {
+          error:
+            "Colonnes DATE et T.DEF introuvables : ce fichier n'est pas une liste de billettes défournées ALPA.",
+        };
+      var days = {},
+        total = 0,
+        ignored = 0;
+      for (var r = hi + 1; r < rows.length; r++) {
+        var row = rows[r] || [];
+        if (
+          !row.some(function (c) {
+            return String(c).trim() !== "";
+          })
+        )
+          continue;
+        var ms = fdDate(row[col.date]),
+          td = fdNum(row[col.def]),
+          te = col.enf == null ? NaN : fdNum(row[col.enf]);
+        if (ms == null || !(td > 0)) {
+          ignored++;
+          continue;
+        }
+        total++;
+        var key = fdDayKey(ms);
+        (days[key] = days[key] || []).push([
+          Math.round((ms - chDayStart(key)) / 1000),
+          isNaN(te) ? 0 : te,
+          td,
+        ]);
+      }
+      Object.keys(days).forEach(function (k) {
+        days[k].sort(function (a, b) {
+          return a[0] - b[0];
+        });
+      });
+      return { days: days, total: total, ignored: ignored };
+    }
+    function chStats(list, cfg) {
+      var S = {
+        n: list.length,
+        sd: 0,
+        se: 0,
+        mn: Infinity,
+        mx: -Infinity,
+        low: 0,
+        cold: 0,
+        ne: 0,
+      };
+      list.forEach(function (b) {
+        S.sd += b[2];
+        if (b[2] < S.mn) S.mn = b[2];
+        if (b[2] > S.mx) S.mx = b[2];
+        if (b[2] < cfg.min) S.low++;
+        if (b[1] > 0) {
+          S.se += b[1];
+          S.ne++;
+          if (b[1] < cfg.cold) S.cold++;
+        }
+      });
+      return S;
+    }
+    // arrêts four (codes FER 7 et 27) qui touchent la journée
+    function chFourStops(key) {
+      var a = chDayStart(key),
+        b = a + 864e5;
+      return stops
+        .filter(function (s) {
+          var c = normCode(s.fer);
+          return (c === "7" || c === "27") && s.end > a && s.start < b;
+        })
+        .sort(function (x, y) {
+          return x.start - y.start;
+        });
+    }
+    function chHM(ms) {
+      var d = new Date(ms);
+      return pad(d.getHours()) + ":" + pad(d.getMinutes());
+    }
+    // graphique d'une journée (8h -> 8h) : points par billette, bandes des arrêts four
+    function chChart(key, list, idx, opt) {
+      var W = 1000,
+        H = 300,
+        L = 46,
+        R = 14,
+        T0 = 26,
+        B0 = 30,
+        cw = W - L - R,
+        ch = H - T0 - B0,
+        a = chDayStart(key),
+        vals = list
+          .map(function (b) {
+            return b[idx];
+          })
+          .filter(function (v) {
+            return v > 0;
+          }),
+        lo = opt.lo,
+        hi = opt.hi;
+      vals.forEach(function (v) {
+        if (v < lo) lo = Math.floor(v / 50) * 50;
+        if (v > hi) hi = Math.ceil(v / 50) * 50;
+      });
+      function X(sec) {
+        return L + (Math.max(0, Math.min(86400, sec)) / 86400) * cw;
+      }
+      function Y(v) {
+        return T0 + ch - ((v - lo) / (hi - lo)) * ch;
+      }
+      var s =
+        '<svg class="chart ch-svg" viewBox="0 0 ' +
+        W +
+        " " +
+        H +
+        '" role="img" aria-label="' +
+        esc(opt.label) +
+        '">';
+      chFourStops(key).forEach(function (st) {
+        var x1 = X((st.start - a) / 1000),
+          x2 = X((st.end - a) / 1000);
+        s +=
+          "<g><title>Arrêt four (code " +
+          esc(st.fer) +
+          ") de " +
+          chHM(st.start) +
+          " à " +
+          chHM(st.end) +
+          " · " +
+          fmtMin(st.end - st.start) +
+          " min" +
+          (st.detail ? " · " + esc(st.detail) : "") +
+          "</title>" +
+          '<rect class="ch-four" x="' +
+          x1 +
+          '" y="' +
+          T0 +
+          '" width="' +
+          Math.max(2, x2 - x1) +
+          '" height="' +
+          ch +
+          '" /></g>' +
+          (x2 - x1 > 30
+            ? '<text class="ch-four-t" x="' +
+              (x1 + x2) / 2 +
+              '" y="' +
+              (T0 + 12) +
+              '" text-anchor="middle">Four</text>'
+            : "");
+      });
+      var step = hi - lo > 600 ? 200 : hi - lo > 300 ? 100 : 50;
+      for (var v = Math.ceil(lo / step) * step; v <= hi; v += step)
+        s +=
+          '<line class="grid" x1="' +
+          L +
+          '" x2="' +
+          (W - R) +
+          '" y1="' +
+          Y(v) +
+          '" y2="' +
+          Y(v) +
+          '" />' +
+          '<text x="' +
+          (L - 6) +
+          '" y="' +
+          (Y(v) + 4) +
+          '" text-anchor="end">' +
+          v +
+          "</text>";
+      for (var h = 0; h <= 24; h += 2)
+        s +=
+          '<text x="' +
+          X(h * 3600) +
+          '" y="' +
+          (H - 10) +
+          '" text-anchor="middle">' +
+          pad((DAY_START_HOUR + h) % 24) +
+          "h</text>";
+      if (opt.limit != null)
+        s +=
+          '<line class="ch-limit" x1="' +
+          L +
+          '" x2="' +
+          (W - R) +
+          '" y1="' +
+          Y(opt.limit) +
+          '" y2="' +
+          Y(opt.limit) +
+          '" />' +
+          '<text class="ch-limit-t" x="' +
+          (W - R) +
+          '" y="' +
+          (Y(opt.limit) - 5) +
+          '" text-anchor="end">' +
+          opt.limitLabel +
+          "</text>";
+      list.forEach(function (b) {
+        var v = b[idx];
+        if (!(v > 0)) return;
+        var bad = opt.bad(v);
+        s +=
+          '<circle class="ch-dot' +
+          (bad ? " " + opt.badClass : "") +
+          '" cx="' +
+          X(b[0]).toFixed(1) +
+          '" cy="' +
+          Y(v).toFixed(1) +
+          '" r="' +
+          (bad ? 3 : 2.2) +
+          '"><title>' +
+          chHM(a + b[0] * 1000) +
+          " · enfournée " +
+          b[1] +
+          " °C · défournée " +
+          b[2] +
+          " °C</title></circle>";
+      });
+      s +=
+        '<line class="axis" x1="' +
+        L +
+        '" x2="' +
+        (W - R) +
+        '" y1="' +
+        (T0 + ch) +
+        '" y2="' +
+        (T0 + ch) +
+        '" />' +
+        '<text x="' +
+        (L - 6) +
+        '" y="12" text-anchor="end">°C</text></svg>';
+      return s;
+    }
+
+    // --- onglet Saisie chauffe ---
+    var chPending = null,
+      chCfgEditing = false;
+    async function chImport(file) {
+      if (!canFard()) return;
+      $("chPreview").innerHTML =
+        '<p class="muted">Lecture de « ' + esc(file.name) + " »…</p>";
+      try {
+        var res = chBuild(await fdReadFile(file));
+        if (res.error || !res.total) {
+          chPending = null;
+          $("chPreview").innerHTML =
+            '<p class="pill late">' +
+            esc(res.error || "Aucune billette lisible dans ce fichier.") +
+            "</p>";
+          return;
+        }
+        res.file = file.name;
+        chPending = res;
+        renderChPreview();
+      } catch (e) {
+        chPending = null;
+        $("chPreview").innerHTML =
+          '<p class="pill late">Lecture du fichier impossible' +
+          (e && e.message === "xlsx"
+            ? " (le format .xls ancien demande une connexion Internet)"
+            : "") +
+          ". Enregistrez-le en .xlsx depuis Excel puis réessayez.</p>";
+      }
+    }
+    function renderChPreview() {
+      var box = $("chPreview");
+      if (!chPending) {
+        box.innerHTML = "";
+        return;
+      }
+      var P = chPending,
+        cfg = chCfg(),
+        keys = Object.keys(P.days).sort();
+      box.innerHTML =
+        '<div class="fd-pending"><p><strong>' +
+        esc(P.file) +
+        "</strong> : " +
+        P.total +
+        " billette(s) lue(s)" +
+        (P.ignored ? ", " + P.ignored + " ligne(s) ignorée(s)" : "") +
+        "</p><ul>" +
+        keys
+          .map(function (k) {
+            var S = chStats(P.days[k], cfg);
+            return (
+              "<li>Journée du " +
+              frDay(k) +
+              " : " +
+              S.n +
+              " billette(s), défournement moyen " +
+              fdKg(S.sd / S.n) +
+              " °C, " +
+              S.low +
+              " sous " +
+              fdKg(cfg.min) +
+              " °C, " +
+              S.cold +
+              " enfournée(s) froide(s)" +
+              (chauffe[k] && !chauffe[k].deleted
+                ? ' <span class="pill late">déjà enregistrée, sera remplacée</span>'
+                : "") +
+              "</li>"
+            );
+          })
+          .join("") +
+        '</ul><div class="row"><button class="btn primary" id="chSave">Enregistrer ' +
+        (keys.length > 1
+          ? "ces " + keys.length + " journées"
+          : "cette journée") +
+        '</button><button class="btn" id="chCancel">Annuler</button></div></div>';
+    }
+    function chSavePending() {
+      if (!chPending || !canFard()) return;
+      var P = chPending,
+        keys = Object.keys(P.days).sort(),
+        at = Date.now();
+      chPending = null;
+      Promise.all(
+        keys.map(function (k) {
+          return writeConfigItem("chauffe", chauffe, k, {
+            file: P.file,
+            at: at,
+            by: myId,
+            n: P.days[k].length,
+            b: P.days[k]
+              .map(function (x) {
+                return chB36(x[0], 4) + chB36(x[1], 2) + chB36(x[2], 2);
+              })
+              .join(""),
+            deleted: false,
+          });
+        }),
+      ).then(function () {
+        toast(keys.length + " journée(s) de chauffe enregistrée(s)");
+        ui.caDay = keys[keys.length - 1];
+        renderAll();
+      });
+    }
+    function renderChCfg() {
+      var box = $("chCfg"),
+        ae = document.activeElement;
+      if (chCfgEditing || (ae && ae.matches && ae.matches("#chCfg input")))
+        return;
+      var c = chCfg(),
+        dis = isAdmin() ? "" : " disabled";
+      box.innerHTML =
+        '<div class="row"><label class="f">Défournement minimum (°C)<input data-chcfg="min" inputmode="numeric" value="' +
+        c.min +
+        '"' +
+        dis +
+        ' /></label><label class="f">Billette froide si enfournée sous (°C)<input data-chcfg="cold" inputmode="numeric" value="' +
+        c.cold +
+        '"' +
+        dis +
+        " /></label></div>";
+    }
+    function renderChSaisie() {
+      renderChPreview();
+      renderChCfg();
+      var keys = chDays().reverse(),
+        cfg = chCfg(),
+        ed = canFard();
+      $("chDrop").hidden = !ed;
+      if (!keys.length) {
+        $("chDays").innerHTML =
+          '<div class="empty">Aucune journée enregistrée. Déposez une liste de billettes défournées ci-dessus.</div>';
+        return;
+      }
+      $("chDays").innerHTML =
+        '<table><thead><tr><th>Journée</th><th>Fichier</th><th>Importé le</th><th class="num">Billettes</th><th class="num">Défournement moyen</th><th class="num">Sous ' +
+        fdKg(cfg.min) +
+        ' °C</th><th class="num">Enfournées froides</th><th></th></tr></thead><tbody>' +
+        keys
+          .map(function (k) {
+            var D = chauffe[k],
+              S = chStats(chDec(D.b), cfg);
+            return (
+              "<tr><td>" +
+              frDay(k) +
+              "</td><td>" +
+              esc(D.file || "") +
+              '</td><td class="muted">' +
+              (D.at ? fmtDate(D.at).slice(0, 16) : "") +
+              '</td><td class="num">' +
+              S.n +
+              '</td><td class="num">' +
+              fdKg(S.sd / S.n) +
+              ' °C</td><td class="num">' +
+              S.low +
+              " (" +
+              fdPct(S.low, S.n) +
+              ')</td><td class="num">' +
+              S.cold +
+              '</td><td><button class="linkbtn" data-ch-view="' +
+              k +
+              "\">Voir l'analyse</button>" +
+              (ed
+                ? ' <button class="linkbtn" data-ch-del="' +
+                  k +
+                  '">Supprimer</button>'
+                : "") +
+              "</td></tr>"
+            );
+          })
+          .join("") +
+        "</tbody></table>";
+    }
+
+    // --- onglet Analyse chauffe ---
+    var chLastRows = [];
+    function renderChAnalyse() {
+      var keys = chDays(),
+        cfg = chCfg(),
+        ae = document.activeElement;
+      if (!ui.caDay)
+        ui.caDay = keys[keys.length - 1] || fdDayKey(Date.now() - 864e5);
+      if (!ui.caTo) ui.caTo = keys[keys.length - 1] || ui.caDay;
+      if (!ui.caFrom) ui.caFrom = ui.caTo.slice(0, 8) + "01";
+      if (!(ae && ae.id === "caDay")) $("caDay").value = ui.caDay;
+      if (!(ae && ae.id === "caFrom")) $("caFrom").value = ui.caFrom;
+      if (!(ae && ae.id === "caTo")) $("caTo").value = ui.caTo;
+      var k = ui.caDay,
+        D = chauffe[k] && !chauffe[k].deleted ? chauffe[k] : null,
+        list = D ? chDec(D.b) : [],
+        S = chStats(list, cfg),
+        fs = chFourStops(k),
+        fourMs = fs.reduce(function (t, s) {
+          var a = chDayStart(k);
+          return t + Math.min(s.end, a + 864e5) - Math.max(s.start, a);
+        }, 0);
+      $("caSub").textContent =
+        "Journée du " +
+        frDay(k) +
+        " (8h à 8h le lendemain) · défournement minimum " +
+        fdKg(cfg.min) +
+        " °C · billette froide si enfournée sous " +
+        fdKg(cfg.cold) +
+        " °C";
+      function t(l, v, sub, cls) {
+        return (
+          '<div class="kpi' +
+          (cls ? " " + cls : "") +
+          '"><div class="l">' +
+          l +
+          '</div><div class="v">' +
+          v +
+          "</div>" +
+          (sub ? '<div class="muted">' + sub + "</div>" : "") +
+          "</div>"
+        );
+      }
+      $("caKpis").innerHTML = D
+        ? t("Billettes défournées", S.n, "") +
+          t(
+            "Défournement moyen",
+            fdKg(S.sd / S.n) + " °C",
+            "mini " + fdKg(S.mn) + " °C · maxi " + fdKg(S.mx) + " °C",
+          ) +
+          t(
+            "Sous " + fdKg(cfg.min) + " °C",
+            fdPct(S.low, S.n),
+            S.low + " billette(s)",
+            S.low ? "kpi-bad" : "kpi-ok",
+          ) +
+          t("Enfournement moyen", S.ne ? fdKg(S.se / S.ne) + " °C" : "—", "") +
+          t(
+            "Enfournées froides",
+            S.cold,
+            "sous " + fdKg(cfg.cold) + " °C",
+            S.cold ? "kpi-warn" : "",
+          ) +
+          t(
+            "Arrêts four",
+            fs.length,
+            fs.length ? fmtHM(fourMs) + " d'arrêt" : "codes 7 et 27",
+          )
+        : "";
+      if (!D) {
+        var none =
+          '<div class="empty">Pas de liste de billettes enregistrée pour la journée du ' +
+          frDay(k) +
+          ".</div>";
+        $("caDef").innerHTML = none;
+        $("caEnf").innerHTML = none;
+      } else {
+        $("caDef").innerHTML =
+          chChart(k, list, 2, {
+            lo: 1000,
+            hi: 1150,
+            limit: cfg.min,
+            limitLabel: "minimum " + fdKg(cfg.min) + " °C",
+            label: "Température de défournement par billette",
+            bad: function (v) {
+              return v < cfg.min;
+            },
+            badClass: "low",
+          }) + chLegend("Billette défournée", "Sous " + fdKg(cfg.min) + " °C");
+        $("caEnf").innerHTML =
+          chChart(k, list, 1, {
+            lo: 0,
+            hi: 900,
+            limit: cfg.cold,
+            limitLabel: "froide sous " + fdKg(cfg.cold) + " °C",
+            label: "Température d'enfournement par billette",
+            bad: function (v) {
+              return v < cfg.cold;
+            },
+            badClass: "cold",
+          }) + chLegend("Billette enfournée chaude", "Enfournée froide", true);
+      }
+      $("caStops").innerHTML = fs.length
+        ? '<table><thead><tr><th>Début</th><th>Fin</th><th class="num">Durée</th><th>Code</th><th>Détail</th><th class="num">Défournement moyen 1 h avant</th><th class="num">Enfournées froides 1 h avant</th></tr></thead><tbody>' +
+          fs
+            .map(function (s) {
+              var a = chDayStart(k),
+                w0 = (s.start - a) / 1000 - 3600,
+                w1 = (s.start - a) / 1000,
+                before = list.filter(function (b) {
+                  return b[0] >= w0 && b[0] < w1;
+                }),
+                SB = chStats(before, cfg);
+              return (
+                "<tr><td>" +
+                fmtDate(s.start).slice(0, 16) +
+                "</td><td>" +
+                fmtDate(s.end).slice(0, 16) +
+                '</td><td class="num">' +
+                fmtHM(s.end - s.start) +
+                "</td><td>" +
+                esc(s.fer) +
+                "</td><td>" +
+                esc(s.detail || "") +
+                '</td><td class="num">' +
+                (SB.n ? fdKg(SB.sd / SB.n) + " °C" : "—") +
+                '</td><td class="num">' +
+                (SB.n ? SB.cold + " / " + SB.n : "—") +
+                "</td></tr>"
+              );
+            })
+            .join("") +
+          "</tbody></table>"
+        : '<div class="empty">Aucun arrêt four (codes 7 et 27) sur cette journée.</div>';
+      // synthèse par journée
+      var rk = keys.filter(function (x) {
+        return x >= ui.caFrom && x <= ui.caTo;
+      });
+      chLastRows = rk.map(function (x) {
+        var SS = chStats(chDec(chauffe[x].b), cfg),
+          f = chFourStops(x);
+        return {
+          k: x,
+          S: SS,
+          nf: f.length,
+          df: f.reduce(function (t, s) {
+            var a = chDayStart(x);
+            return t + Math.min(s.end, a + 864e5) - Math.max(s.start, a);
+          }, 0),
+        };
+      });
+      $("caTable").innerHTML = rk.length
+        ? '<table><thead><tr><th>Journée</th><th class="num">Billettes</th><th class="num">Défournement moyen</th><th class="num">Mini</th><th class="num">Sous ' +
+          fdKg(cfg.min) +
+          ' °C</th><th class="num">Enfournement moyen</th><th class="num">Enfournées froides</th><th class="num">Arrêts four</th><th class="num">Durée arrêts four</th><th></th></tr></thead><tbody>' +
+          chLastRows
+            .map(function (r) {
+              var S2 = r.S;
+              return (
+                "<tr" +
+                (r.k === k ? ' class="sel"' : "") +
+                "><td>" +
+                frDay(r.k) +
+                '</td><td class="num">' +
+                S2.n +
+                '</td><td class="num">' +
+                fdKg(S2.sd / S2.n) +
+                ' °C</td><td class="num">' +
+                fdKg(S2.mn) +
+                ' °C</td><td class="num' +
+                (S2.low ? " kpi-bad" : "") +
+                '">' +
+                S2.low +
+                " (" +
+                fdPct(S2.low, S2.n) +
+                ')</td><td class="num">' +
+                (S2.ne ? fdKg(S2.se / S2.ne) + " °C" : "—") +
+                '</td><td class="num">' +
+                S2.cold +
+                '</td><td class="num">' +
+                r.nf +
+                '</td><td class="num">' +
+                (r.nf ? fmtHM(r.df) : "—") +
+                '</td><td><button class="linkbtn" data-ca-day="' +
+                r.k +
+                '">Voir</button></td></tr>'
+              );
+            })
+            .join("") +
+          "</tbody></table>"
+        : '<div class="empty">Aucune journée enregistrée sur cette période.</div>';
+    }
+    function chLegend(okLab, badLab, cold) {
+      return (
+        '<div class="ch-legend"><span><i class="ch-k"></i>' +
+        okLab +
+        '</span><span><i class="ch-k ' +
+        (cold ? "cold" : "low") +
+        '"></i>' +
+        badLab +
+        '</span><span><i class="ch-k four"></i>Arrêt four (codes 7 et 27)</span></div>'
+      );
+    }
+    $("chFile").addEventListener("change", function () {
+      if (this.files && this.files[0]) chImport(this.files[0]);
+      this.value = "";
+    });
+    $("chDrop").addEventListener("dragover", function (e) {
+      e.preventDefault();
+      this.classList.add("over");
+    });
+    $("chDrop").addEventListener("dragleave", function () {
+      this.classList.remove("over");
+    });
+    $("chDrop").addEventListener("drop", function (e) {
+      e.preventDefault();
+      this.classList.remove("over");
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) chImport(f);
+    });
+    $("chDrop").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        $("chFile").click();
+      }
+    });
+    $("chPreview").addEventListener("click", function (e) {
+      if (e.target.id === "chSave") chSavePending();
+      if (e.target.id === "chCancel") {
+        chPending = null;
+        renderChPreview();
+      }
+    });
+    $("chDays").addEventListener("click", function (e) {
+      var v = e.target.closest("[data-ch-view]"),
+        d = e.target.closest("[data-ch-del]");
+      if (v) {
+        ui.caDay = v.dataset.chView;
+        setTab("canalyse");
+        window.scrollTo(0, 0);
+      }
+      if (
+        d &&
+        canFard() &&
+        confirm(
+          "Supprimer les billettes de la journée du " +
+            frDay(d.dataset.chDel) +
+            " ?",
+        )
+      )
+        writeConfigItem("chauffe", chauffe, d.dataset.chDel, {
+          deleted: true,
+          n: 0,
+          b: "",
+          at: Date.now(),
+          by: myId,
+        });
+    });
+    $("chCfg").addEventListener("focusin", function () {
+      chCfgEditing = true;
+    });
+    $("chCfg").addEventListener("focusout", function () {
+      chCfgEditing = false;
+      setTimeout(function () {
+        if (curTab === "csaisie") renderChSaisie();
+      }, 0);
+    });
+    $("chCfg").addEventListener("change", function (e) {
+      var k = e.target.dataset.chcfg;
+      if (!k || !isAdmin()) return;
+      var v = Math.round(fdNum(e.target.value));
+      if (!(v > 0)) {
+        toast("Saisissez une température en °C");
+        return;
+      }
+      var c = chCfg();
+      c[k] = v;
+      writeKpi("chauffeCfg", c);
+    });
+    function caShift(n) {
+      var p = ui.caDay.split("-"),
+        d = new Date(+p[0], +p[1] - 1, +p[2] + n, 12);
+      ui.caDay =
+        d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+      renderChAnalyse();
+    }
+    $("caPrev").addEventListener("click", function () {
+      caShift(-1);
+    });
+    $("caNext").addEventListener("click", function () {
+      caShift(1);
+    });
+    $("caLast").addEventListener("click", function () {
+      var k = chDays();
+      if (k.length) ui.caDay = k[k.length - 1];
+      renderChAnalyse();
+    });
+    $("caDay").addEventListener("change", function () {
+      if (this.value) ui.caDay = this.value;
+      renderChAnalyse();
+    });
+    $("caFrom").addEventListener("change", function () {
+      ui.caFrom = this.value || ui.caFrom;
+      if (ui.caTo < ui.caFrom) ui.caTo = ui.caFrom;
+      renderChAnalyse();
+    });
+    $("caTo").addEventListener("change", function () {
+      ui.caTo = this.value || ui.caTo;
+      if (ui.caTo < ui.caFrom) ui.caFrom = ui.caTo;
+      renderChAnalyse();
+    });
+    $("caTable").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-ca-day]");
+      if (!b) return;
+      ui.caDay = b.dataset.caDay;
+      renderChAnalyse();
+      window.scrollTo(0, 0);
+    });
+    $("caCopy").addEventListener("click", function () {
+      var cfg = chCfg(),
+        L = [
+          [
+            "Journée",
+            "Billettes",
+            "Défournement moyen (°C)",
+            "Mini (°C)",
+            "Sous " + cfg.min + " °C",
+            "Enfournement moyen (°C)",
+            "Enfournées froides",
+            "Arrêts four",
+            "Durée arrêts four",
+          ].join("\t"),
+        ];
+      chLastRows.forEach(function (r) {
+        var S = r.S;
+        L.push(
+          [
+            frDay(r.k),
+            S.n,
+            Math.round(S.sd / S.n),
+            S.mn,
+            S.low,
+            S.ne ? Math.round(S.se / S.ne) : "",
+            S.cold,
+            r.nf,
+            r.nf ? fmtHM(r.df) : "",
+          ].join("\t"),
+        );
+      });
+      try {
+        navigator.clipboard.writeText(L.join("\n")).then(
+          function () {
+            toast("Tableau copié : collez dans Excel");
+          },
+          function () {
+            toast("Copie refusée par le navigateur");
+          },
+        );
+      } catch (e) {
+        toast("Copie refusée par le navigateur");
+      }
+    });
+
     var HOME_MENU = [
       [
         "Saisie",
@@ -14664,6 +15686,10 @@
             "fsaisie",
             "Déposer la liste fardeaux ALPA, fardeaux classés par poids",
           ],
+          [
+            "csaisie",
+            "Déposer la liste ALPA des billettes défournées (températures)",
+          ],
           ["actions", "Créer et modifier les actions et les REX par arrêt"],
         ],
       ],
@@ -14676,6 +15702,10 @@
           [
             "fpoids",
             "Répartition des poids par rapport à la cible, sous-poids et sur-poids",
+          ],
+          [
+            "canalyse",
+            "Températures de défournement et d'enfournement par journée, arrêts four",
           ],
           [
             "couts",
@@ -15980,6 +17010,11 @@
       db.doc("config/energy").onSnapshot(function (snap) {
         var d = snap.exists ? snap.data() : null;
         energy = (d && d.items) || {};
+        refresh();
+      }, onErr);
+      db.doc("config/chauffe").onSnapshot(function (snap) {
+        var d = snap.exists ? snap.data() : null;
+        chauffe = (d && d.items) || {};
         refresh();
       }, onErr);
       db.doc("config/fardeaux").onSnapshot(function (snap) {
