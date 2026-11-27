@@ -1856,20 +1856,34 @@
   <section data-panel="saisie" class="stack" hidden>
     <div class="panel stack">
       <div>
-        <h2>Coller des arrêts depuis Excel</h2>
+        <h2>Importer des arrêts depuis Excel</h2>
         <p class="hint">
-          Collez directement l'extraction complète des arrêts (11 colonnes :
-          seules la date début, la date fin, le code FER, le code Macc et la
-          description sont reprises), ou bien les 5 colonnes date début, date
-          fin, code FER, code Macc, détail. Format des dates : jj/mm/aaaa
-          hh:mm:ss. Les lignes d'en-tête sont ignorées et les espaces superflus
-          du détail sont supprimés.
+          Glissez le fichier Excel « Report arrêts » ou collez directement
+          l'extraction complète des arrêts (11 colonnes : seules la date début,
+          la date fin, le code FER, le code Macc et la description sont
+          reprises), ou bien les 5 colonnes date début, date fin, code FER, code
+          Macc, détail. Format des dates : jj/mm/aaaa hh:mm:ss. Les lignes
+          d'en-tête sont ignorées et les espaces superflus du détail sont
+          supprimés.
         </p>
       </div>
       <p class="hint">
         Le diamètre de chaque arrêt vient de l'onglet
         <strong>Programme de laminage</strong>, selon son heure de début.
       </p>
+      <label class="fd-drop" id="stDrop" tabindex="0">
+        <input
+          type="file"
+          id="stFile"
+          accept=".xls,.xlsx,.csv,.txt,.htm,.html"
+          hidden
+        />
+        <strong>Glisser le fichier Report arrêts ici</strong>
+        <span class="muted"
+          >ou cliquer pour le choisir · les arrêts lus apparaissent ci-dessous
+          pour contrôle avant ajout</span
+        >
+      </label>
       <textarea
         class="paste"
         id="paste"
@@ -5634,7 +5648,7 @@
           diam: diam,
           imp: impId,
           impAt: impAt,
-          impSrc: "Collage Excel",
+          impSrc: stSrc || "Collage Excel",
         };
         if (keys[stopKey(s)]) {
           dup++;
@@ -13704,11 +13718,238 @@
         document.head.appendChild(sc);
       });
     }
+    // lecture des .xls Excel 97-2003 (BIFF8) dans la page, sans connexion : conteneur OLE puis feuille 1
+    function xlsCfbStream(buf, names) {
+      var dv = new DataView(buf),
+        len = buf.byteLength,
+        ss = 1 << dv.getUint16(30, true),
+        mss = 1 << dv.getUint16(32, true),
+        cutoff = dv.getUint32(56, true),
+        fat = [],
+        difat = [],
+        i;
+      function secOff(s) {
+        return 512 + s * ss;
+      }
+      for (i = 0; i < 109; i++) {
+        var d0 = dv.getUint32(76 + i * 4, true);
+        if (d0 < 0xfffffffa) difat.push(d0);
+      }
+      var nd = dv.getUint32(72, true),
+        ds = dv.getUint32(68, true);
+      while (nd-- > 0 && ds < 0xfffffffa && secOff(ds) < len) {
+        for (i = 0; i < ss / 4 - 1; i++) {
+          var d1 = dv.getUint32(secOff(ds) + i * 4, true);
+          if (d1 < 0xfffffffa) difat.push(d1);
+        }
+        ds = dv.getUint32(secOff(ds) + ss - 4, true);
+      }
+      difat.forEach(function (s) {
+        for (var k = 0; k < ss / 4; k++) {
+          var o = secOff(s) + k * 4;
+          fat.push(o + 4 <= len ? dv.getUint32(o, true) : 0xfffffffe);
+        }
+      });
+      function chain(start, table, guard) {
+        var out = [],
+          s = start;
+        while (s < 0xfffffffa && out.length < guard) {
+          out.push(s);
+          s = table[s];
+          if (s === undefined) break;
+        }
+        return out;
+      }
+      function readChain(start, size) {
+        var secs = chain(start, fat, len / ss + 2),
+          out = new Uint8Array(secs.length * ss),
+          u8 = new Uint8Array(buf);
+        secs.forEach(function (s, k) {
+          var o = secOff(s);
+          out.set(u8.subarray(o, Math.min(len, o + ss)), k * ss);
+        });
+        return size == null ? out : out.subarray(0, size);
+      }
+      var dir = readChain(dv.getUint32(48, true)),
+        ddv = new DataView(dir.buffer),
+        entries = [];
+      for (i = 0; i + 128 <= dir.length; i += 128) {
+        var nl = ddv.getUint16(i + 64, true),
+          nm = "";
+        for (var c = 0; c + 2 < nl; c += 2)
+          nm += String.fromCharCode(ddv.getUint16(i + c, true));
+        entries.push({
+          name: nm,
+          type: dir[i + 66],
+          start: ddv.getUint32(i + 116, true),
+          size: ddv.getUint32(i + 120, true),
+        });
+      }
+      var e = entries.filter(function (x) {
+        return x.type === 2 && names.indexOf(x.name) >= 0;
+      })[0];
+      if (!e) throw new Error("xls");
+      if (e.size >= cutoff) return readChain(e.start, e.size);
+      // petit flux : mini-secteurs dans le flux de l'entrée racine
+      var root = readChain(entries[0].start),
+        mfatRaw = readChain(dv.getUint32(60, true)),
+        mdv = new DataView(mfatRaw.buffer),
+        mfat = [];
+      for (i = 0; i + 4 <= mfatRaw.length; i += 4)
+        mfat.push(mdv.getUint32(i, true));
+      var ms = chain(e.start, mfat, root.length / mss + 2),
+        out = new Uint8Array(ms.length * mss);
+      ms.forEach(function (s, k) {
+        out.set(root.subarray(s * mss, s * mss + mss), k * mss);
+      });
+      return out.subarray(0, e.size);
+    }
+    function xlsRead(buf) {
+      var wb = xlsCfbStream(buf, ["Workbook", "Book"]),
+        dv = new DataView(wb.buffer, wb.byteOffset, wb.byteLength),
+        p = 0,
+        sst = [],
+        rows = [],
+        sheet = -1,
+        pendingStr = null,
+        latin = new TextDecoder("windows-1252"),
+        utf16 = new TextDecoder("utf-16le");
+      function put(r, c, v) {
+        var row = (rows[r] = rows[r] || []);
+        while (row.length < c) row.push("");
+        row[c] = v;
+      }
+      function rk(v) {
+        var n;
+        if (v & 2) n = v >> 2;
+        else {
+          var t = new DataView(new ArrayBuffer(8));
+          t.setUint32(0, v & 0xfffffffc, false);
+          n = t.getFloat64(0, false);
+        }
+        return v & 1 ? n / 100 : n;
+      }
+      // chaîne Unicode BIFF8 pouvant continuer dans les enregistrements CONTINUE (segments)
+      function strReader(segs) {
+        var si = 0,
+          pos = 0;
+        function avail() {
+          while (si < segs.length && pos >= segs[si].length) {
+            si++;
+            pos = 0;
+          }
+          return si < segs.length;
+        }
+        function u8() {
+          avail();
+          return segs[si][pos++];
+        }
+        function u16() {
+          return u8() | (u8() << 8);
+        }
+        function u32() {
+          return (u16() | (u16() << 16)) >>> 0;
+        }
+        function skip(n) {
+          while (n > 0 && avail()) {
+            var k = Math.min(n, segs[si].length - pos);
+            pos += k;
+            n -= k;
+          }
+        }
+        function str() {
+          var cch = u16(),
+            fl = u8(),
+            high = fl & 1,
+            runs = fl & 8 ? u16() : 0,
+            ext = fl & 4 ? u32() : 0,
+            out = "";
+          while (cch > 0) {
+            if (pos >= segs[si].length) {
+              si++;
+              pos = 0;
+              if (si >= segs.length) break;
+              high = segs[si][pos++] & 1;
+            }
+            var w = high ? 2 : 1,
+              k = Math.min(cch, Math.floor((segs[si].length - pos) / w)),
+              part = segs[si].subarray(pos, pos + k * w);
+            out += high ? utf16.decode(part) : latin.decode(part);
+            pos += k * w;
+            cch -= k;
+            if (k === 0 && cch > 0) pos = segs[si].length;
+          }
+          skip(runs * 4 + ext);
+          return out;
+        }
+        return { u32: u32, str: str, more: avail };
+      }
+      while (p + 4 <= wb.length) {
+        var type = dv.getUint16(p, true),
+          sz = dv.getUint16(p + 2, true),
+          d = p + 4;
+        p = d + sz;
+        if (type === 0x0809) {
+          var bt = dv.getUint16(d + 2, true);
+          if (bt === 0x0010 && sheet < 0) sheet = 0;
+          else if (sheet === 0 && bt !== 0x0005) sheet = 1;
+          continue;
+        }
+        if (type === 0x00fc) {
+          var segs = [wb.subarray(d + 8, d + sz)];
+          while (p + 4 <= wb.length && dv.getUint16(p, true) === 0x003c) {
+            var cs = dv.getUint16(p + 2, true);
+            segs.push(wb.subarray(p + 4, p + 4 + cs));
+            p += 4 + cs;
+          }
+          var R = strReader(segs),
+            nu = dv.getUint32(d + 4, true);
+          for (var k = 0; k < nu && R.more(); k++) sst.push(R.str());
+          continue;
+        }
+        if (sheet !== 0) continue;
+        if (type === 0x000a) {
+          sheet = 1;
+          continue;
+        }
+        var r = sz >= 4 ? dv.getUint16(d, true) : 0,
+          c = sz >= 4 ? dv.getUint16(d + 2, true) : 0;
+        if (type === 0x00fd) put(r, c, sst[dv.getUint32(d + 6, true)] || "");
+        else if (type === 0x0203) put(r, c, dv.getFloat64(d + 6, true));
+        else if (type === 0x027e) put(r, c, rk(dv.getUint32(d + 6, true)));
+        else if (type === 0x00bd) {
+          var last = dv.getUint16(d + sz - 2, true);
+          for (var cc = c, q = d + 4; cc <= last; cc++, q += 6)
+            put(r, cc, rk(dv.getUint32(q + 2, true)));
+        } else if (type === 0x0204 || type === 0x00d6) {
+          put(r, c, strReader([wb.subarray(d + 6, d + sz)]).str());
+        } else if (type === 0x0006) {
+          if (dv.getUint16(d + 12, true) === 0xffff) {
+            var ft = wb[d + 6];
+            if (ft === 0) pendingStr = [r, c];
+            else put(r, c, ft === 1 ? !!wb[d + 8] : "");
+          } else put(r, c, dv.getFloat64(d + 6, true));
+        } else if (type === 0x0207 && pendingStr) {
+          put(
+            pendingStr[0],
+            pendingStr[1],
+            strReader([wb.subarray(d, d + sz)]).str(),
+          );
+          pendingStr = null;
+        }
+      }
+      for (var i = 0; i < rows.length; i++) rows[i] = rows[i] || [];
+      return rows;
+    }
     async function fdReadFile(file) {
       var buf = await file.arrayBuffer(),
         u8 = new Uint8Array(buf.slice(0, 8));
       if (u8[0] === 0x50 && u8[1] === 0x4b) return fdReadXlsx(buf);
       if (u8[0] === 0xd0 && u8[1] === 0xcf) {
+        try {
+          var own = xlsRead(buf);
+          if (own.length) return own;
+        } catch (e) {}
         var X = await fdLoadSheetJs(),
           wb = X.read(new Uint8Array(buf), { type: "array" });
         return X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {
@@ -16186,7 +16427,80 @@
       var b = e.target.closest("button[data-tab]");
       if (b) setTab(b.dataset.tab);
     });
-    $("paste").addEventListener("input", renderPreview);
+    $("paste").addEventListener("input", function () {
+      stSrc = "";
+      renderPreview();
+    });
+    // fichier Excel « Report arrêts » glissé : les lignes d'arrêt sont mises dans la zone de collage puis contrôlées
+    function stCell(v, isDate) {
+      if (isDate && typeof v === "number") {
+        var ms = fdDate(v);
+        return ms == null ? "" : fmtDate(ms);
+      }
+      return String(v == null ? "" : v).replace(/[\t\r\n]+/g, " ");
+    }
+    var stSrc = ""; // origine de l'import affichée dans l'historique
+    async function stImport(file) {
+      if (!canSaisie()) return;
+      stSrc = "";
+      $("parseInfo").textContent = "Lecture de « " + file.name + " »…";
+      try {
+        var rows = await fdReadFile(file),
+          lines = [];
+        rows.forEach(function (r) {
+          if (!r || fdDate(r[0]) == null) return;
+          lines.push(
+            r
+              .map(function (v, i) {
+                return stCell(v, i === 0 || i === 2);
+              })
+              .join("\t"),
+          );
+        });
+        if (!lines.length) {
+          $("parseInfo").textContent = "";
+          toast("Aucun arrêt trouvé dans « " + file.name + " »");
+          return;
+        }
+        $("paste").value = lines.join("\n");
+        stSrc = "Fichier " + file.name;
+        renderPreview();
+        toast(
+          lines.length +
+            " ligne(s) lue(s) dans « " +
+            file.name +
+            " » : vérifiez puis cliquez sur Ajouter les arrêts",
+        );
+      } catch (e) {
+        $("parseInfo").textContent = "";
+        toast(
+          "Lecture du fichier impossible. Enregistrez-le en .xlsx depuis Excel puis réessayez.",
+        );
+      }
+    }
+    $("stFile").addEventListener("change", function () {
+      if (this.files && this.files[0]) stImport(this.files[0]);
+      this.value = "";
+    });
+    $("stDrop").addEventListener("dragover", function (e) {
+      e.preventDefault();
+      this.classList.add("over");
+    });
+    $("stDrop").addEventListener("dragleave", function () {
+      this.classList.remove("over");
+    });
+    $("stDrop").addEventListener("drop", function (e) {
+      e.preventDefault();
+      this.classList.remove("over");
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) stImport(f);
+    });
+    $("stDrop").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        $("stFile").click();
+      }
+    });
     $("btnClearPaste").addEventListener("click", function () {
       $("paste").value = "";
       renderPreview();
