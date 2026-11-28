@@ -3330,7 +3330,10 @@
         else if (r.page === "cycles") m.innerHTML = viewCycles();
         else if (r.page === "centrales") m.innerHTML = viewCentrales();
         else if (r.page === "laminoir") m.innerHTML = viewLaminoir();
-        else if (r.page === "machine" && MACHINE[r.id]) m.innerHTML = viewMachine(MACHINE[r.id]);
+        else if (r.page === "machine" && MACHINE[r.id] && seulDessin(r.id)) {
+          history.replaceState(null, "", "#eq=" + seulDessin(r.id).id);
+          return renderMain();
+        } else if (r.page === "machine" && MACHINE[r.id]) m.innerHTML = viewMachine(MACHINE[r.id]);
         else m.innerHTML = viewDash();
         bindMain();
       }
@@ -3494,6 +3497,8 @@
         const i = MACHINE[id].num - 1;
         return { x: (i % TUILE.cols) * (TUILE.w + TUILE.gap), y: Math.floor(i / TUILE.cols) * (TUILE.h + TUILE.gap) };
       }
+      // machine qui n'a qu'un dessin : on l'ouvre directement
+      const seulDessin = (mid) => { const l = eqsMachine(mid); return l.length === 1 ? l[0] : null; };
       function viewLaminoir() {
         const pos = Object.fromEntries(LAMINOIR.map(([id]) => [id, posTuile(id)]));
         const W = Math.max(...Object.values(pos).map((p) => p.x)) + TUILE.w, H = Math.max(...Object.values(pos).map((p) => p.y)) + TUILE.h;
@@ -3594,6 +3599,14 @@
     </div>
     <p class="hint" style="font-size:12px;color:var(--muted);margin:6px 0 0">Les organes de la machine comptent les tonnes produites dans ces diamètres.${perso.length ? " Exception : " + esc(perso.map((e) => e.nom).join(", ")) + " garde(nt) ses propres diamètres (page Production)." : ""} Les organes qui ont leurs propres diamètres (cages, ranges, lasers, frettes) les gardent.</p>
   </div>`;
+      }
+      function bindDiamMachine(m, mid) {
+        const setMd = (list) => { db.machines[mid] = Object.assign({}, db.machines[mid], { diametres: [...new Set(list)].filter((x) => x > 0).sort((a, b) => a - b) }); commit(); };
+        m.querySelectorAll("#mDiams input[data-md]").forEach((x) => (x.onchange = () => {
+          const k = +x.dataset.md, cur = machineDiams(mid);
+          setMd(x.checked ? [...cur, k] : cur.filter((d) => d !== k));
+        }));
+        $("#mDiamPlus").onchange = (ev) => setMd([...machineDiams(mid), ...ev.target.value.split(/[;,\s]+/).map(Number)]);
       }
       function associer(mc) {
         const list = db.equipements.map((e) => `<label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
@@ -3733,8 +3746,8 @@
         <button class="btn sm" data-act="edit" data-org="${o.id}">✏️</button></td></tr>`;
           })
           .join("");
-        const mc = MACHINE[e.machine], nbm = mc ? eqsMachine(mc.id).length : 0;
-        return `<p style="margin:0 0 6px"><a href="#laminoir">← Laminoir</a>${mc ? ` › <a href="#machine=${mc.id}">${esc(mc.nom)}</a>` : ""}</p><div class="eqhead"><div class="t"><h2>${esc(e.nom)}</h2><p class="sub" style="margin:0">${esc(e.zone || "")} · ${esc(TYPES[e.type].label)} · ${badge(eqStatus(e))}</p></div>
+        const mc = MACHINE[e.machine], nbm = mc ? eqsMachine(mc.id).length : 0, seul = mc && nbm === 1;
+        return `<p style="margin:0 0 6px"><a href="#laminoir">← Laminoir</a>${mc ? (seul ? ` › ${String(mc.num).padStart(2, "0")} · ${esc(mc.nom)}` : ` › <a href="#machine=${mc.id}">${esc(mc.nom)}</a>`) : ""}</p><div class="eqhead"><div class="t"><h2>${esc(e.nom)}</h2><p class="sub" style="margin:0">${esc(e.zone || "")} · ${esc(TYPES[e.type].label)} · ${badge(eqStatus(e))}</p></div>
     <div class="counters">
       ${prodActive()
         ? `<div class="card counter" title="Tonnes produites dans la base production (${diamTxt(e)})"><div class="k">Tonnage produit · ${diamTxt(e)}</div><div class="v">${fmt(prodTonnes(e, ""))} t</div></div>`
@@ -3744,8 +3757,10 @@
     ${prodActive() ? "" : '<button class="btn pri" data-act="releve">⚖️ Saisir le tonnage</button>'}
     <button class="btn" data-act="addorg">＋ Ajouter un organe</button>
     <button class="btn" data-act="editeq">⚙️ Modifier l'équipement</button>
+    ${seul ? '<button class="btn" type="button" id="mAssoc">🔗 Associer des dessins</button>' : ""}
     <span class="muted" style="font-size:12px">${prodActive() ? "Tonnage : base production au " + fdate(PROD.fin) : "Dernier relevé : " + fdate(e.compteurs.date)} · Cliquez une pièce du dessin pour sa fiche.</span>
   </div>
+  ${seul ? diamMachine(mc) : ""}
   <div class="split">
     <div class="card" style="padding:10px">${drawing(e)}${legend}
       ${(DRAW_EXTRA[e.type] || []).map((v) => `<h3 style="margin:16px 4px 8px;font-size:14px;color:var(--accent)">${esc(v.titre)}</h3><div class="draw-extra">${drawing(e, false, v.fn)}</div>`).join("")}</div>
@@ -3861,6 +3876,10 @@
         if (r.page === "eq") {
           const e = findEq(r.id);
           if (!e) return;
+          if (MACHINE[e.machine] && seulDessin(e.machine)) {
+            bindDiamMachine(m, e.machine);
+            $("#mAssoc").onclick = () => associer(MACHINE[e.machine]);
+          }
           m.querySelectorAll("#tCages input[data-cd]").forEach((x) => (x.onchange = () => {
             const tr = x.closest("tr"), k = +x.dataset.cd;
             const os = tr.dataset.cage ? e.organes.filter((o) => o.cage === +tr.dataset.cage) : [findOrg(e, tr.dataset.org)];
@@ -3929,7 +3948,7 @@
           if (bOk) bOk.onclick = () => { planEdit = false; renderMain(); };
           if (bReset) bReset.onclick = () => { if (confirm("Remettre toutes les machines dans l'ordre du process ?")) { db.plan = {}; commit(); } };
           m.querySelectorAll("[data-machine]").forEach((b) => {
-            if (!planEdit) { b.onclick = () => go("machine=" + b.dataset.machine); return; }
+            if (!planEdit) { b.onclick = () => { const u = seulDessin(b.dataset.machine); go(u ? "eq=" + u.id : "machine=" + b.dataset.machine); }; return; }
             // glisser-déposer, aimanté tous les 10 px
             b.onpointerdown = (ev) => {
               ev.preventDefault();
@@ -4017,12 +4036,7 @@
               };
             });
           }
-          const setMd = (list) => { db.machines[r.id] = Object.assign({}, db.machines[r.id], { diametres: [...new Set(list)].filter((x) => x > 0).sort((a, b) => a - b) }); commit(); };
-          m.querySelectorAll("#mDiams input[data-md]").forEach((x) => (x.onchange = () => {
-            const k = +x.dataset.md, cur = machineDiams(r.id);
-            setMd(x.checked ? [...cur, k] : cur.filter((d) => d !== k));
-          }));
-          $("#mDiamPlus").onchange = (ev) => setMd([...machineDiams(r.id), ...ev.target.value.split(/[;,\s]+/).map(Number)]);
+          bindDiamMachine(m, r.id);
           m.querySelectorAll(".draw[data-eq]").forEach((d) => (d.onclick = (ev) => {
             const t = ev.target.closest("[data-org]");
             if (t) ficheOrgane(findEq(d.dataset.eq), t.dataset.org);

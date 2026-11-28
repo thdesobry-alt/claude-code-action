@@ -135,7 +135,7 @@ Chaîne cinématique : moteur, accouplement, arbre inférieur, 2 arbres à pigno
 
 ## Page Laminoir (menu principal)
 
-L'onglet « 🏭 Laminoir » affiche toutes les machines du laminoir en tuiles, dans l'ordre du process (liste reprise de l'outil « Arrêt technique RIVA »). Chaque tuile indique le nombre de dessins rattachés et leur état (bord vert / orange / rouge). Un clic ouvre le dessin de la machine (ou la liste de ses dessins s'il y en a plusieurs, ex. Centrales, Ligne gros diamètre).
+L'onglet « 🏭 Laminoir » affiche toutes les machines du laminoir en tuiles, dans l'ordre du process (liste reprise de l'outil « Arrêt technique RIVA »). Chaque tuile indique le nombre de dessins rattachés et leur état (bord vert / orange / rouge). Une machine qui n'a qu'un dessin s'ouvre directement sur ce dessin (pas de page intermédiaire ni de bouton « Ouvrir ») : le choix des diamètres travaillés et « 🔗 Associer des dessins » y sont repris. Une machine qui a plusieurs dessins (ex. Centrales, Ligne gros diamètre) ouvre la liste de ses dessins.
 
 Chaque dessin GMAO est rattaché à une machine : soit avec « 🔗 Associer des dessins » sur la page d'une machine, soit avec le champ « Machine du laminoir » de « Modifier l'équipement ». Les dessins non rattachés sont listés en bas de la page Laminoir. Le menu de gauche ne liste plus chaque équipement : tout passe par les tuiles.
 
