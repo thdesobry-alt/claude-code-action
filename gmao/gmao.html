@@ -909,6 +909,13 @@
       .mtile .d { grid-column: 1/-1; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
       .mtile.st-ok { border-left-color: var(--ok); } .mtile.st-warn { border-left-color: var(--warn); } .mtile.st-crit { border-left-color: var(--crit); }
       .mtile.vide { border-style: dashed; border-left-width: 1px; opacity: .8; }
+      .planwrap { overflow: auto; padding-bottom: 6px; }
+      .plan { position: relative; min-width: 100%; }
+      .plan .mtile { position: absolute; overflow: hidden; min-height: 0; }
+      .plan .mtile .d, .plan .mtile .c, .plan .mtile .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+      .plan.edit { background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 20px 20px; outline: 1px dashed var(--accent); outline-offset: 4px; }
+      .plan.edit .mtile { cursor: move; touch-action: none; user-select: none; }
+      .plan .mtile.drag { z-index: 5; box-shadow: 0 8px 22px rgba(0,0,0,.22); border-color: var(--accent); }
       h3.sousens { margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--sand); font-weight: 500; }
     </style>
   </head>
@@ -1609,6 +1616,7 @@
         d.arretsVigilanceJours = +d.arretsVigilanceJours > 0 ? +d.arretsVigilanceJours : 30;
         d.production = Object.assign({ actif: false, mode: "fichier", url: "", fichier: "", laminoir: "" }, d.production);
         d.machines = d.machines && typeof d.machines === "object" ? d.machines : {};
+        d.plan = d.plan && typeof d.plan === "object" ? d.plan : {};
         d.equipements.forEach((e) => {
           e.id = e.id || uid("eq");
           e.type = TYPES[e.type] ? e.type : "generique";
@@ -3300,14 +3308,25 @@
         return s;
       }
       // une tuile par machine, dans l'ordre du laminoir
+      // disposition libre des tuiles : positions en px sur un plan (db.plan), sinon grille dans l'ordre du process
+      const TUILE = { w: 220, h: 104, gap: 12, cols: 4, pas: 10 };
+      let planEdit = false;
+      function posTuile(id) {
+        const p = (db.plan || {})[id];
+        if (p && isFinite(p.x) && isFinite(p.y)) return p;
+        const i = MACHINE[id].num - 1;
+        return { x: (i % TUILE.cols) * (TUILE.w + TUILE.gap), y: Math.floor(i / TUILE.cols) * (TUILE.h + TUILE.gap) };
+      }
       function viewLaminoir() {
+        const pos = Object.fromEntries(LAMINOIR.map(([id]) => [id, posTuile(id)]));
+        const W = Math.max(...Object.values(pos).map((p) => p.x)) + TUILE.w, H = Math.max(...Object.values(pos).map((p) => p.y)) + TUILE.h;
         const tuiles = LAMINOIR.map(([id]) => {
           const mc = MACHINE[id], eqs = eqsMachine(id), st = statutListe(eqs);
           const c = counts(eqs.flatMap((e) => e.organes.map((o) => [e, o])));
           const info = eqs.length
             ? `${eqs.length} dessin${eqs.length > 1 ? "s" : ""}${c.crit ? ` · <b style="color:var(--crit)">${c.crit} à remplacer</b>` : ""}${c.warn ? ` · <b style="color:var(--warn)">${c.warn} vigilance</b>` : ""}`
             : "aucun dessin";
-          return `<button type="button" class="mtile ${eqs.length ? "st-" + st : "vide"}" data-machine="${id}">
+          return `<button type="button" class="mtile ${eqs.length ? "st-" + st : "vide"}" data-machine="${id}" style="left:${pos[id].x}px;top:${pos[id].y}px;width:${TUILE.w}px;height:${TUILE.h}px">
       <span class="n">${String(mc.num).padStart(2, "0")}</span><span class="t">${esc(mc.nom)}</span>
       <span class="c">${info}</span>
       <span class="d" style="color:var(--accent)">${machineDiams(id).length ? "Ø " + machineDiams(id).join(", ") : "tous diamètres"}</span>
@@ -3315,8 +3334,13 @@
     </button>`;
         }).join("");
         const libres = db.equipements.filter((e) => !e.machine);
-        return `<h2>Laminoir</h2><p class="sub">${LAMINOIR.length} machines, dans l'ordre du process. Cliquez une machine pour voir ses dessins et choisir les diamètres dans lesquels elle travaille.</p>
-  <div class="mtiles">${tuiles}</div>${legend}
+        return `<h2>Laminoir</h2><p class="sub">${LAMINOIR.length} machines. ${planEdit
+          ? "<b>Mode disposition :</b> glissez les tuiles où vous voulez, puis « Terminer »."
+          : "Cliquez une machine pour voir ses dessins et choisir les diamètres dans lesquels elle travaille."}</p>
+  <div class="toolbar noprint">${planEdit
+    ? `<button class="btn pri" type="button" id="planOk">✔ Terminer</button><button class="btn" type="button" id="planReset">↺ Remettre dans l'ordre du process</button>`
+    : `<button class="btn" type="button" id="planEdit">✥ Disposer les machines</button>`}</div>
+  <div class="planwrap"><div class="plan${planEdit ? " edit" : ""}" id="plan" style="width:${W}px;height:${H}px">${tuiles}</div></div>${legend}
   ${libres.length ? `<div class="card" style="padding:12px 14px;margin-top:16px"><h3 style="margin:0 0 8px;font-size:14px;color:var(--warn)">Dessins à rattacher à une machine (${libres.length})</h3>
     <div class="chips">${libres.map((e) => `<a class="chip" href="#eq=${e.id}"><span class="dot ${eqStatus(e)}"></span>${esc(e.nom)}</a>`).join("")}</div></div>` : ""}`;
       }
@@ -3641,9 +3665,39 @@
           );
         }
         if (r.page === "laminoir") {
-          m.querySelectorAll("[data-machine]").forEach((b) => (b.onclick = () => {
-            go("machine=" + b.dataset.machine);
-          }));
+          const bEdit = $("#planEdit"), bOk = $("#planOk"), bReset = $("#planReset");
+          if (bEdit) bEdit.onclick = () => { planEdit = true; renderMain(); };
+          if (bOk) bOk.onclick = () => { planEdit = false; renderMain(); };
+          if (bReset) bReset.onclick = () => { if (confirm("Remettre toutes les machines dans l'ordre du process ?")) { db.plan = {}; commit(); } };
+          m.querySelectorAll("[data-machine]").forEach((b) => {
+            if (!planEdit) { b.onclick = () => go("machine=" + b.dataset.machine); return; }
+            // glisser-déposer, aimanté tous les 10 px
+            b.onpointerdown = (ev) => {
+              ev.preventDefault();
+              const id = b.dataset.machine, p0 = posTuile(id), x0 = ev.clientX, y0 = ev.clientY;
+              b.setPointerCapture(ev.pointerId);
+              b.classList.add("drag");
+              const snap = (v) => Math.max(0, Math.round(v / TUILE.pas) * TUILE.pas);
+              let np = p0;
+              b.onpointermove = (e2) => {
+                np = { x: snap(p0.x + e2.clientX - x0), y: snap(p0.y + e2.clientY - y0) };
+                b.style.left = np.x + "px"; b.style.top = np.y + "px";
+                const plan = $("#plan");
+                plan.style.width = Math.max(parseFloat(plan.style.width), np.x + TUILE.w) + "px";
+                plan.style.height = Math.max(parseFloat(plan.style.height), np.y + TUILE.h) + "px";
+              };
+              b.onpointerup = () => {
+                b.onpointermove = b.onpointerup = null;
+                b.classList.remove("drag");
+                if (np.x !== p0.x || np.y !== p0.y) {
+                  // la première modification fige toutes les positions actuelles
+                  db.plan = Object.fromEntries(LAMINOIR.map(([k]) => [k, posTuile(k)]));
+                  db.plan[id] = np;
+                  commit();
+                }
+              };
+            };
+          });
         }
         if (r.page === "machine" && MACHINE[r.id]) {
           $("#mAssoc").onclick = () => associer(MACHINE[r.id]);

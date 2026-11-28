@@ -164,3 +164,7 @@ Sur la page de chaque machine (clic sur sa tuile dans « 🏭 Laminoir »), le b
 ## Ligne petit diamètre : TRO 3.1 à 5.2
 
 TRO-3.1, TRO-3.2, TRO-4.1, TRO-4.2, TRO-5.1 et TRO-5.2 ont le même entraîneur que le TRO-7 (moteur, accouplement, réducteur, 2 rouleaux qui pincent la barre, EV de serrage) avec un jeu de frettes chacun. Ils sont rangés par sous-ensemble sur la page « Ligne petit diamètre ».
+
+## Disposition des machines
+
+Sur la page « 🏭 Laminoir », « ✥ Disposer les machines » passe en mode disposition : on glisse les tuiles où l'on veut (aimantation tous les 10 px), puis « ✔ Terminer ». La disposition est enregistrée dans la base GMAO (donc partagée). « ↺ Remettre dans l'ordre du process » revient à la grille d'origine.
