@@ -127,7 +127,7 @@ Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5,
 
 ## Lasers de vitesse
 
-Équipement « Lasers de vitesse » : 2 lasers pour les petits diamètres (Ø 8 à 20 par défaut) et 1 laser pour les gros diamètres (Ø 25 à 40 par défaut). Chaque laser ne compte que les tonnes de ses diamètres, modifiables dans le tableau « Diamètres par organe » de sa page.
+Le laser gros diamètre est dans la ligne gros diamètre (sous-ensemble « Laser de vitesse »), les 2 lasers petit diamètre dans la ligne petit diamètre (sous-ensemble « Lasers de vitesse »). À l'origine : 2 lasers pour les petits diamètres (Ø 8 à 20 par défaut) et 1 laser pour les gros diamètres (Ø 25 à 40 par défaut). Chaque laser ne compte que les tonnes de ses diamètres, modifiables dans le tableau « Diamètres par organe » de sa page.
 
 ## Cisaille CV5
 

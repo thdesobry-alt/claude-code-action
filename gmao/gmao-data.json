@@ -6383,8 +6383,8 @@
       "machine": "tempcore"
     },
     {
-      "id": "lasers",
-      "nom": "Lasers de vitesse",
+      "id": "lasers-gd",
+      "nom": "Laser de vitesse gros diamètre",
       "zone": "Train",
       "type": "lasers",
       "options": {},
@@ -6396,7 +6396,43 @@
       },
       "organes": [
         {
-          "id": "lasers-laser_p1",
+          "id": "lasers-gd-laser_g",
+          "nom": "Laser gros diamètre",
+          "slot": "laser_g",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "diametres": [
+            25,
+            28,
+            32,
+            40
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        }
+      ],
+      "machine": "ligne-gd",
+      "sous": "Laser de vitesse"
+    },
+    {
+      "id": "lasers-pd",
+      "nom": "Lasers de vitesse petit diamètre",
+      "zone": "Train",
+      "type": "lasers",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "lasers-pd-laser_p1",
           "nom": "Laser petit diamètre 1",
           "slot": "laser_p1",
           "mode": "tonnes",
@@ -6417,7 +6453,7 @@
           }
         },
         {
-          "id": "lasers-laser_p2",
+          "id": "lasers-pd-laser_p2",
           "nom": "Laser petit diamètre 2",
           "slot": "laser_p2",
           "mode": "tonnes",
@@ -6436,28 +6472,10 @@
             "heures": 0,
             "tonnes": 712000
           }
-        },
-        {
-          "id": "lasers-laser_g",
-          "nom": "Laser gros diamètre",
-          "slot": "laser_g",
-          "mode": "tonnes",
-          "seuilVigilance": 850000,
-          "seuilRemplacement": 1000000,
-          "diametres": [
-            25,
-            28,
-            32,
-            40
-          ],
-          "ref": {
-            "date": "2026-01-05",
-            "heures": 0,
-            "tonnes": 712000
-          }
         }
       ],
-      "machine": ""
+      "machine": "ligne-pd",
+      "sous": "Lasers de vitesse"
     },
     {
       "id": "cisaille-cv5",
@@ -7244,5 +7262,5 @@
     }
   ],
   "journal": [],
-  "schema": 35
+  "schema": 36
 }
