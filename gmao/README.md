@@ -152,3 +152,7 @@ Le train est découpé en 3 parties, toutes rattachées à la tuile « Train lam
 - cages 10 à 16 : moteur, réducteur, allonges supérieure et inférieure.
 
 Le tableau « Diamètres travaillés par cage » de chaque partie permet de cocher les diamètres de chaque cage ; tous les organes de la cage comptent alors les tonnes de ces diamètres. Une base existante convertit l'ancien « Moteurs de cage » : les moteurs gardent leur usure et leurs diamètres, les autres organes démarrent à zéro.
+
+## Ligne gros diamètre
+
+La page de la machine « Ligne gros diamètre » regroupe ses dessins par sous-ensemble : CV5 (cisaille), Curseur (vérin hydraulique + vérin pneumatique), Déviateur (vérin déviateur), Séparateur (vérin séparateur), VR1, VR2 et VR3 (20 rouleaux chacune, chaque rouleau accouplé à son moteur ; rouleaux et moteurs suivis). Le sous-ensemble d'un dessin se choisit dans « Modifier l'équipement ». Une base existante sépare automatiquement les vérins déviateur et séparateur du curseur (leur usure est conservée) et crée VR1, VR2, VR3.
