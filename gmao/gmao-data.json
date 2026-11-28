@@ -1317,6 +1317,152 @@
       "machine": "tro0"
     },
     {
+      "id": "tro1",
+      "nom": "TRO-1",
+      "zone": "Ligne",
+      "type": "tro0",
+      "machine": "tro1",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tro1-galet_sup",
+          "nom": "Galet supérieur",
+          "slot": "galet_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 229500,
+          "seuilRemplacement": 255000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-galet_inf",
+          "nom": "Galet inférieur",
+          "slot": "galet_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 229500,
+          "seuilRemplacement": 255000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-verin_1",
+          "nom": "Vérin pneumatique côté piste",
+          "slot": "verin_1",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-verin_2",
+          "nom": "Vérin pneumatique côté moteur",
+          "slot": "verin_2",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-flexible",
+          "nom": "Flexibles",
+          "slot": "flexible",
+          "mode": "tonnes",
+          "seuilVigilance": 340000,
+          "seuilRemplacement": 382500,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-allonge_sup",
+          "nom": "Allonge galet supérieur",
+          "slot": "allonge_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-allonge_inf",
+          "nom": "Allonge galet inférieur",
+          "slot": "allonge_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-reducteur",
+          "nom": "Réducteur",
+          "slot": "reducteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "tro1-ev_verins",
+          "nom": "EV des vérins pneumatiques",
+          "slot": "ev_verins",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
+    },
+    {
       "id": "soud",
       "nom": "Soudeuse",
       "zone": "Ligne",
@@ -3865,5 +4011,5 @@
     }
   ],
   "journal": [],
-  "schema": 29
+  "schema": 30
 }
