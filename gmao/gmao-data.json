@@ -80,7 +80,10 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "options": {},
+      "sous": "",
+      "diametres": []
     },
     {
       "id": "nortek",
@@ -588,7 +591,10 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "options": {},
+      "sous": "",
+      "diametres": []
     },
     {
       "id": "vr-chg",
@@ -813,7 +819,9 @@
       "options": {
         "motorise": true
       },
-      "machine": "vrl-charg"
+      "machine": "vrl-charg",
+      "sous": "",
+      "diametres": []
     },
     {
       "id": "vr-enf",
@@ -1038,7 +1046,9 @@
       "options": {
         "motorise": true
       },
-      "machine": "vrl-enf"
+      "machine": "vrl-enf",
+      "sous": "",
+      "diametres": []
     },
     {
       "id": "pous",
@@ -1078,7 +1088,10 @@
           }
         }
       ],
-      "machine": "pousseuse"
+      "machine": "pousseuse",
+      "options": {},
+      "sous": "",
+      "diametres": []
     },
     {
       "id": "defo",
@@ -1170,7 +1183,10 @@
           }
         }
       ],
-      "machine": "defourneuse"
+      "machine": "defourneuse",
+      "options": {},
+      "sous": "",
+      "diametres": []
     },
     {
       "id": "tro0",
@@ -1314,7 +1330,10 @@
           }
         }
       ],
-      "machine": "tro0"
+      "machine": "tro0",
+      "options": {},
+      "sous": "",
+      "diametres": []
     },
     {
       "id": "tro1",
@@ -1460,7 +1479,8 @@
             "tonnes": 762000
           }
         }
-      ]
+      ],
+      "sous": ""
     },
     {
       "id": "soud",
@@ -1721,7 +1741,10 @@
           }
         }
       ],
-      "machine": "soudeuse"
+      "machine": "soudeuse",
+      "options": {},
+      "sous": "",
+      "diametres": []
     },
     {
       "id": "ch-curseur",
@@ -1791,7 +1814,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "curseur",
@@ -1831,6 +1855,32 @@
             "heures": 0,
             "tonnes": 612000
           }
+        },
+        {
+          "id": "curseur-ev_hydro",
+          "nom": "EV proportionnelle vérin hydraulique curseur",
+          "slot": "ev_hydro",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-11-28",
+            "heures": 14250,
+            "tonnes": 912000
+          }
+        },
+        {
+          "id": "curseur-ev_pneu",
+          "nom": "EV vérin pneumatique curseur",
+          "slot": "ev_pneu",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-11-28",
+            "heures": 14250,
+            "tonnes": 912000
+          }
         }
       ],
       "machine": "ligne-gd",
@@ -1863,6 +1913,19 @@
             "heures": 0,
             "tonnes": 302000
           }
+        },
+        {
+          "id": "deviateur-ev",
+          "nom": "EV vérin déviateur",
+          "slot": "ev",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-11-28",
+            "heures": 14250,
+            "tonnes": 912000
+          }
         }
       ]
     },
@@ -1892,6 +1955,19 @@
             "date": "2026-01-05",
             "heures": 0,
             "tonnes": 812000
+          }
+        },
+        {
+          "id": "separateur-ev",
+          "nom": "EV vérin séparateur",
+          "slot": "ev",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-11-28",
+            "heures": 14250,
+            "tonnes": 912000
           }
         }
       ]
@@ -3550,7 +3626,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "train-1-6",
@@ -3926,7 +4003,8 @@
           "cage": 6,
           "diametres": []
         }
-      ]
+      ],
+      "sous": ""
     },
     {
       "id": "train-7-9",
@@ -4212,7 +4290,8 @@
           "cage": 9,
           "diametres": []
         }
-      ]
+      ],
+      "sous": ""
     },
     {
       "id": "train-10-16",
@@ -4648,7 +4727,8 @@
           "cage": 16,
           "diametres": []
         }
-      ]
+      ],
+      "sous": ""
     },
     {
       "id": "boucleuses",
@@ -4898,7 +4978,8 @@
             "tonnes": 762000
           }
         }
-      ]
+      ],
+      "sous": ""
     },
     {
       "id": "bruleurs",
@@ -5889,7 +5970,8 @@
           }
         }
       ],
-      "machine": "four"
+      "machine": "four",
+      "sous": ""
     },
     {
       "id": "ch-soudeuse",
@@ -5959,7 +6041,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "ch-h1-6",
@@ -6029,7 +6112,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "ch-lub1-6",
@@ -6099,7 +6183,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "ch-lub7-10",
@@ -6169,7 +6254,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "ch-lub11-14",
@@ -6239,7 +6325,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "ch-lub15-16",
@@ -6309,7 +6396,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "ch-cv4fq",
@@ -6379,7 +6467,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "ch-cv1",
@@ -6449,7 +6538,8 @@
           }
         }
       ],
-      "machine": "centrales"
+      "machine": "centrales",
+      "sous": ""
     },
     {
       "id": "cisaille-cv1",
@@ -6517,7 +6607,8 @@
           }
         }
       ],
-      "machine": "cv1"
+      "machine": "cv1",
+      "sous": ""
     },
     {
       "id": "tempcore",
@@ -6626,7 +6717,8 @@
           }
         }
       ],
-      "machine": "tempcore"
+      "machine": "tempcore",
+      "sous": ""
     },
     {
       "id": "lasers-gd",
@@ -7500,5 +7592,17 @@
     }
   ],
   "journal": [],
-  "schema": 38
+  "schema": 39,
+  "arrets": [],
+  "arretsVigilanceJours": 30,
+  "production": {
+    "actif": false,
+    "mode": "fichier",
+    "url": "",
+    "fichier": "",
+    "laminoir": ""
+  },
+  "machines": {},
+  "plan": {},
+  "planMachine": {}
 }

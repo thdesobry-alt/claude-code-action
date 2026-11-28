@@ -86,7 +86,7 @@ Le choix se fait dans la fiche de l'organe (✏️) ou sur la page 🎚 Seuils. 
 
 ## Curseur et centrale hydraulique curseur
 
-- **Curseur** : en bas, le vérin hydraulique curseur relié par un tronçon au vérin pneumatique curseur monté en sens opposé au bout ; au-dessus, décalé vers la droite, le vérin déviateur ; encore au-dessus, décalé vers la droite, le vérin séparateur.
+- **Curseur** : en bas, le vérin hydraulique curseur relié par un tronçon au vérin pneumatique curseur monté en sens opposé au bout ; au-dessus, décalé vers la droite, le vérin déviateur ; encore au-dessus, décalé vers la droite, le vérin séparateur. Sous chaque vérin, son EV reliée par deux flexibles : EV proportionnelle (flèche oblique) pour le vérin hydraulique curseur, EV simple pour le vérin pneumatique curseur, le déviateur et le séparateur. Ces EV sont suivies au tonnage (vigilance 510 000 t, remplacement 600 000 t) et peuvent passer au suivi par cycles. Une base existante les ajoute automatiquement.
 - **Centrale hydraulique curseur** : même dessin que la centrale d'enfournement (réservoir, filtre, pompes). Elle a 2 pompes ; le nombre de pompes (1 à 3) se règle dans « Modifier l'équipement ».
 
 Une base existante reçoit ces deux équipements à l'ouverture, avec un suivi qui démarre à zéro.
@@ -157,7 +157,7 @@ Le tableau « Diamètres travaillés par cage » de chaque partie permet de coch
 
 ## Ligne gros diamètre
 
-La page de la machine « Ligne gros diamètre » regroupe ses dessins par sous-ensemble : CV5 (cisaille), TRO7 (moteur, accouplement, réducteur, 2 rouleaux qui pincent la barre, EV de serrage, jeux de frettes Ø 32-40 et Ø 18-20-25-28 suivis chacun sur leurs diamètres), Curseur (vérin hydraulique + vérin pneumatique), Déviateur (vérin déviateur), Séparateur (vérin séparateur), VR1, VR2 et VR3 (20 rouleaux chacune, chaque rouleau accouplé à son moteur ; rouleaux et moteurs suivis). Le sous-ensemble d'un dessin se choisit dans « Modifier l'équipement ». Une base existante sépare automatiquement les vérins déviateur et séparateur du curseur (leur usure est conservée) et crée VR1, VR2, VR3.
+La page de la machine « Ligne gros diamètre » regroupe ses dessins par sous-ensemble : CV5 (cisaille), TRO7 (moteur, accouplement, réducteur, 2 rouleaux qui pincent la barre, EV de serrage, jeux de frettes Ø 32-40 et Ø 18-20-25-28 suivis chacun sur leurs diamètres), Curseur (vérin hydraulique piloté par une EV proportionnelle, vérin pneumatique piloté par une EV), Déviateur (vérin déviateur + son EV), Séparateur (vérin séparateur + son EV), VR1, VR2 et VR3 (20 rouleaux chacune, chaque rouleau accouplé à son moteur ; rouleaux et moteurs suivis). Le sous-ensemble d'un dessin se choisit dans « Modifier l'équipement ». Une base existante sépare automatiquement les vérins déviateur et séparateur du curseur (leur usure est conservée) et crée VR1, VR2, VR3.
 
 ## Diamètres par machine
 
