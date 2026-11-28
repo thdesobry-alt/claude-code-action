@@ -175,7 +175,7 @@ Même principe sur la page de chaque machine : « ✥ Disposer les dessins », p
 
 ## EV suivies aux cycles
 
-Chaque EV peut être suivie aux cycles au lieu des tonnes ou des arrêts techniques. Nombre de cycles = Σ (tonnes produites dans chaque diamètre depuis le dernier remplacement × facteur du diamètre), par exemple t Ø20 × 0,4 + t Ø25 × 0,8 + t Ø32 × … ; un facteur « autres Ø » couvre les diamètres non listés. Les seuils de vigilance et de remplacement sont alors en cycles.
+Chaque EV peut être suivie aux cycles au lieu des tonnes ou des arrêts techniques. Nombre de cycles = Σ (tonnes produites dans chaque diamètre depuis le dernier remplacement × facteur du diamètre), par exemple t Ø20 × 0,4 + t Ø25 × 0,8 + t Ø32 × … ; seuls les diamètres sélectionnés pour la machine (ou pour l'équipement ou l'organe, s'ils ont leur propre sélection) sont proposés et comptés. Sans sélection, tous les diamètres sont proposés et un facteur « autres Ø » couvre les diamètres non listés. Les seuils de vigilance et de remplacement sont alors en cycles.
 
 Réglage : menu « 🔁 Cycles EV » (liste de toutes les EV, réglage d'une EV ou de toutes les EV cochées en une fois), bouton « 🔁 Cycles » dans la fiche d'une EV, ou critère « Aux cycles » dans « Modifier / seuils ». Le calcul par diamètre utilise la base production ; sans elle, l'outil prend le tonnage total × le facteur moyen.
 

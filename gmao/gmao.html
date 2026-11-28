@@ -1395,11 +1395,16 @@
       const orgDiamTxt = (eq, o) => (orgDiams(eq, o).length ? "Ø " + orgDiams(eq, o).join(", ") : "tous diamètres");
       // cycles d'un organe : Σ tonnes produites par diamètre depuis le dernier remplacement × facteur du diamètre
       const facteur = (o, d) => { const f = (o.facteurs || {})[d]; return f != null && f !== "" ? +f || 0 : +((o.facteurs || {}).autres) || 0; };
+      // facteurs de cycles retenus : seulement les diamètres sélectionnés pour la machine (ou l'organe), s'il y en a
+      const facteursActifs = (eq, o) => {
+        const ds = orgDiams(eq, o).map(String), f = o.facteurs || {};
+        return Object.entries(f).filter(([k]) => (ds.length ? ds.includes(k) : k !== "autres"));
+      };
       function cyclesOrg(eq, o) {
-        const from = (o.ref || {}).date || "", init = +o.cyclesInit || 0;
+        const from = (o.ref || {}).date || "", init = +o.cyclesInit || 0, ds = orgDiams(eq, o);
         if (!PROD) {
           // sans base production : tonnage total × facteur moyen
-          const fs = Object.entries(o.facteurs || {}).filter(([k]) => k !== "autres").map(([, v]) => +v || 0);
+          const fs = facteursActifs(eq, o).map(([, v]) => +v || 0);
           const moy = fs.length ? fs.reduce((a, b) => a + b, 0) / fs.length : +((o.facteurs || {}).autres) || 0;
           return Math.max(0, ((+eq.compteurs.tonnes || 0) - (+(o.ref || {}).tonnes || 0)) * moy) + init;
         }
@@ -1407,13 +1412,14 @@
         let c = 0;
         for (const j of PROD.jours) {
           if ((from && j.date < from) || (lam && j.lam !== lam)) continue;
-          for (const k in j.d) c += j.d[k] * facteur(o, k);
+          if (ds.length) for (const k of ds) c += (j.d[k] || 0) * (+(o.facteurs || {})[k] || 0);
+          else for (const k in j.d) c += j.d[k] * facteur(o, k);
         }
         return c + init;
       }
-      const formuleCycles = (o) => {
-        const parts = Object.entries(o.facteurs || {}).filter(([k, v]) => k !== "autres" && +v).sort((a, b) => a[0] - b[0]).map(([k, v]) => `t Ø${k} × ${v}`);
-        if (+((o.facteurs || {}).autres)) parts.push(`t autres Ø × ${o.facteurs.autres}`);
+      const formuleCycles = (eq, o) => {
+        const parts = facteursActifs(eq, o).filter(([, v]) => +v).sort((a, b) => a[0] - b[0]).map(([k, v]) => `t Ø${k} × ${v}`);
+        if (!orgDiams(eq, o).length && +((o.facteurs || {}).autres)) parts.push(`t autres Ø × ${o.facteurs.autres}`);
         return parts.length ? parts.join(" + ") : "aucun facteur défini";
       };
       const eqTonnes = (e) => (prodActive() ? prodTonnes(e, "") : +e.compteurs.tonnes || 0);
@@ -3574,16 +3580,19 @@
       }
 
       // champs du critère « cycles » : seuils en cycles + facteur par diamètre
-      function champsCycles(d) {
-        const f = d.facteurs || {};
-        const ds = [...new Set([...(PROD ? PROD.diams : DIAMS_STD), ...Object.keys(f).filter((k) => k !== "autres").map(Number)])].sort((a, b) => a - b);
+      // « sel » : diamètres sélectionnés pour la machine ; s'il y en a, seuls ceux-là sont proposés
+      function champsCycles(d, sel) {
+        const f = d.facteurs || {}, restreint = !!(sel && sel.length);
+        const ds = restreint
+          ? [...new Set(sel.map(Number))].sort((a, b) => a - b)
+          : [...new Set([...(PROD ? PROD.diams : DIAMS_STD), ...Object.keys(f).filter((k) => k !== "autres").map(Number)])].sort((a, b) => a - b);
         return `<label data-crit="cycles">Seuil vigilance (cycles)<input type="number" name="cycV" min="0" step="any" value="${d.mode === "cycles" ? d.seuilVigilance : ""}"></label>
     <label data-crit="cycles">Seuil remplacement (cycles)<input type="number" name="cycR" min="0" step="any" value="${d.mode === "cycles" ? d.seuilRemplacement : ""}"></label>
     <fieldset class="full" data-crit="cycles"><legend>Cycles par tonne, selon le diamètre</legend>
-      <div class="full hint">Cycles = Σ tonnes produites dans le diamètre × facteur (ex. t Ø20 × 0,4 + t Ø25 × 0,8 + …), depuis le dernier remplacement.</div>
+      <div class="full hint">Cycles = Σ tonnes produites dans le diamètre × facteur (ex. t Ø20 × 0,4 + t Ø25 × 0,8 + …), depuis le dernier remplacement.${restreint ? " Seuls les diamètres sélectionnés pour la machine sont comptés." : ""}</div>
       <div class="full" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">
         ${ds.map((k) => `<label style="font-size:12px">Ø ${k}<input type="number" name="fac_${k}" min="0" step="any" value="${f[k] != null ? f[k] : ""}" placeholder="0"></label>`).join("")}
-        <label style="font-size:12px">autres Ø<input type="number" name="fac_autres" min="0" step="any" value="${f.autres != null ? f.autres : ""}" placeholder="0"></label>
+        ${restreint ? "" : `<label style="font-size:12px">autres Ø<input type="number" name="fac_autres" min="0" step="any" value="${f.autres != null ? f.autres : ""}" placeholder="0"></label>`}
       </div>
     </fieldset>`;
       }
@@ -3598,7 +3607,7 @@
         const d = o0.mode === "cycles" ? o0 : { mode: "cycles", facteurs: {}, seuilVigilance: "", seuilRemplacement: "" };
         modal(cibles.length > 1 ? `Cycles — ${cibles.length} EV` : "Cycles — " + esc(o0.nom), `<div class="form">
       <p class="full hint">${cibles.length > 1 ? "Les réglages s'appliquent aux EV cochées sur la page." : esc(e0.nom) + " ·"} L'EV sera suivie aux cycles : seuils en cycles, cycles calculés à partir des tonnes produites par diamètre (base production).</p>
-      ${champsCycles(d).replace(/ data-crit="cycles"/g, "")}
+      ${champsCycles(d, cibles.every(([e, o]) => orgDiams(e, o).length) ? [...new Set(cibles.flatMap(([e, o]) => orgDiams(e, o)))] : []).replace(/ data-crit="cycles"/g, "")}
       <label class="full" style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" name="tonne"> Revenir au suivi à la tonne</label></div>`, {
           onOk: (fd) => {
             if (fd.get("tonne")) { cibles.forEach(([, o]) => (o.mode = "tonnes")); commit(); return; }
@@ -3622,7 +3631,7 @@
   ${evs.map(([e, o]) => `<tr data-eq="${e.id}" data-org="${o.id}" data-q="${esc((e.nom + " " + o.nom).toLowerCase())}">
     <td><input type="checkbox" class="cycSel"></td><td>${esc(e.nom)}</td><td>${esc(o.nom)}</td>
     <td style="white-space:nowrap">${o.mode === "cycles" ? "🔁 cycles" : o.mode === "arrets" ? "🛠 arrêts" : "⚖️ tonne"}</td>
-    <td style="font-size:12px">${o.mode === "cycles" ? esc(formuleCycles(o)) : '<span class="muted">—</span>'}</td>
+    <td style="font-size:12px">${o.mode === "cycles" ? esc(formuleCycles(e, o)) : '<span class="muted">—</span>'}</td>
     <td class="num">${fmt(usage(e, o))} ${UNIT[o.mode]}</td><td class="num">${seuilTxt(o)}</td><td>${badge(status(e, o))}</td>
     <td><button class="btn sm" type="button" data-cyc>🔁 Cycles</button></td></tr>`).join("")}
   </tbody></table></div>`;
@@ -4149,7 +4158,7 @@
       ${o.mode === "arrets"
         ? `<dt>Critère</dt><dd>Remplacement tous les ${arretsInfo(o).N} arrêt(s) technique(s)</dd><dt>Arrêts depuis le remplacement</dt><dd>${arretsInfo(o).done}</dd>`
         : `<dt>Seuil vigilance</dt><dd>${fmt(o.seuilVigilance)} ${UNIT[o.mode]}</dd><dt>Seuil remplacement</dt><dd>${fmt(o.seuilRemplacement)} ${UNIT[o.mode]}</dd>`}
-      ${o.mode === "cycles" ? `<dt>Calcul des cycles</dt><dd>${esc(formuleCycles(o))}${PROD ? "" : " (sans base production : tonnage total × facteur moyen)"}</dd>` : ""}
+      ${o.mode === "cycles" ? `<dt>Calcul des cycles</dt><dd>${esc(formuleCycles(e, o))}${PROD ? "" : " (sans base production : tonnage total × facteur moyen)"}</dd>` : ""}
       <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)}${o.mode !== "tonnes" || prodActive() ? "" : ` (à ${fmt(o.ref.tonnes)} t)`}</dd>
       ${o.mode === "tonnes" && prodActive() ? `<dt>Calcul</dt><dd>Tonnes produites ${orgDiamTxt(e, o)} depuis le ${fdate(o.ref.date)} (base production)${+o.tonnesInit ? " + " + fmt(o.tonnesInit) + " t antérieures" : ""}</dd>` : ""}
     </dl>${bar(e, o)}
@@ -4268,7 +4277,7 @@
       <div class="seg"><label><input type="radio" name="mode" value="tonnes"${d.mode !== "arrets" ? " checked" : ""}>⚖️ À la tonne</label>
       <label><input type="radio" name="mode" value="arrets"${d.mode === "arrets" ? " checked" : ""}>🛠 Aux arrêts techniques</label>
       <label><input type="radio" name="mode" value="cycles"${d.mode === "cycles" ? " checked" : ""}>🔁 Aux cycles</label></div></div>
-    ${champsCycles(d)}
+    ${champsCycles(d, orgDiams(e, d))}
     <label data-crit="tonnes">Seuil vigilance (t)<input type="number" name="seuilVigilance" min="0" step="any" value="${d.mode === "tonnes" ? d.seuilVigilance : ""}"></label>
     <label data-crit="tonnes">Seuil remplacement (t)<input type="number" name="seuilRemplacement" min="0" step="any" value="${d.mode === "tonnes" ? d.seuilRemplacement : ""}"></label>
     <label class="full" data-crit="arrets">Remplacer tous les … arrêts techniques<input type="number" name="nbArrets" min="1" step="1" value="${d.mode === "arrets" ? d.seuilRemplacement : 1}"></label>
