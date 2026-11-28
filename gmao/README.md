@@ -157,7 +157,7 @@ Le tableau « Diamètres travaillés par cage » de chaque partie permet de coch
 
 ## Ligne gros diamètre
 
-La page de la machine « Ligne gros diamètre » regroupe ses dessins par sous-ensemble : CV5 (cisaille), TRO7 (moteur, accouplement, réducteur, 2 rouleaux qui pincent la barre, EV de serrage, jeux de frettes Ø 32-40 et Ø 18-20-25-28 suivis chacun sur leurs diamètres), Curseur (vérin hydraulique piloté par une EV proportionnelle, vérin pneumatique piloté par une EV), Déviateur (vérin déviateur + son EV), Séparateur (vérin séparateur + son EV), VR1, VR2 et VR3 (20 rouleaux chacune, chaque rouleau accouplé à son moteur ; rouleaux et moteurs suivis). Le sous-ensemble d'un dessin se choisit dans « Modifier l'équipement ». Une base existante sépare automatiquement les vérins déviateur et séparateur du curseur (leur usure est conservée) et crée VR1, VR2, VR3.
+La page de la machine « Ligne gros diamètre » regroupe ses dessins par sous-ensemble : CV5 (cisaille), TRO7 (moteur, accouplement, réducteur, 2 rouleaux qui pincent la barre, EV de serrage), Frettes TRO7 (suivi à part des jeux de frettes Ø 32-40 et Ø 18-20-25-28, chacun sur ses diamètres ; une base existante les sort du TRO-7 en conservant leur usure), Curseur (vérin hydraulique piloté par une EV proportionnelle, vérin pneumatique piloté par une EV), Déviateur (vérin déviateur + son EV), Séparateur (vérin séparateur + son EV), VR1, VR2 et VR3 (20 rouleaux chacune, chaque rouleau accouplé à son moteur ; rouleaux et moteurs suivis). Le sous-ensemble d'un dessin se choisit dans « Modifier l'équipement ». Une base existante sépare automatiquement les vérins déviateur et séparateur du curseur (leur usure est conservée) et crée VR1, VR2, VR3.
 
 ## Diamètres par machine
 

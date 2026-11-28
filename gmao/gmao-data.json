@@ -6981,9 +6981,26 @@
             "heures": 0,
             "tonnes": 712000
           }
-        },
+        }
+      ]
+    },
+    {
+      "id": "tro7-frettes",
+      "nom": "Frettes TRO-7",
+      "zone": "Ligne gros diamètre",
+      "type": "frettes",
+      "machine": "ligne-gd",
+      "sous": "Frettes TRO7",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
         {
-          "id": "tro7-frettes_32_40",
+          "id": "tro7-frettes-frettes_32_40",
           "nom": "Jeu de frettes Ø 32-40",
           "slot": "frettes_32_40",
           "mode": "tonnes",
@@ -7000,7 +7017,7 @@
           ]
         },
         {
-          "id": "tro7-frettes_18_28",
+          "id": "tro7-frettes-frettes_18_28",
           "nom": "Jeu de frettes Ø 18-20-25-28",
           "slot": "frettes_18_28",
           "mode": "tonnes",
@@ -7591,8 +7608,19 @@
       ]
     }
   ],
-  "journal": [],
-  "schema": 39,
+  "journal": [
+    {
+      "id": "j-avhxoy",
+      "ts": "2026-11-28T10:33:03.614Z",
+      "type": "config",
+      "date": "2026-11-28",
+      "eqId": "tro7-frettes",
+      "eqNom": "Frettes TRO-7",
+      "commentaire": "Jeux de frettes du TRO-7 suivis à part (usure conservée)",
+      "tonnes": 912000
+    }
+  ],
+  "schema": 40,
   "arrets": [],
   "arretsVigilanceJours": 30,
   "production": {
