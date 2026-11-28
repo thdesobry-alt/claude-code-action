@@ -160,3 +160,7 @@ La page de la machine « Ligne gros diamètre » regroupe ses dessins par sous-e
 ## Diamètres par machine
 
 Sur la page de chaque machine (clic sur sa tuile dans « 🏭 Laminoir »), le bandeau « Diamètres travaillés » permet de cocher les diamètres dans lesquels la machine travaille (aucun coché = tous). Tous les organes de ses dessins comptent alors les tonnes de ces diamètres. Ordre de priorité : diamètres propres à un organe (cages, ranges, lasers, frettes) > diamètres propres à un équipement (page Production) > diamètres de la machine > tous. Les tuiles affichent les diamètres de chaque machine.
+
+## Ligne petit diamètre : TRO 3.1 à 5.2
+
+TRO-3.1, TRO-3.2, TRO-4.1, TRO-4.2, TRO-5.1 et TRO-5.2 ont le même entraîneur que le TRO-7 (moteur, accouplement, réducteur, 2 rouleaux qui pincent la barre, EV de serrage) avec un jeu de frettes chacun. Ils sont rangés par sous-ensemble sur la page « Ligne petit diamètre ».

@@ -6671,8 +6671,578 @@
           ]
         }
       ]
+    },
+    {
+      "id": "tro3-1",
+      "nom": "TRO-3.1",
+      "zone": "Ligne petit diamètre",
+      "type": "tro7",
+      "machine": "ligne-pd",
+      "sous": "TRO3.1",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tro3-1-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-1-reducteur",
+          "nom": "Réducteur",
+          "slot": "reducteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-1-rouleau_sup",
+          "nom": "Rouleau supérieur",
+          "slot": "rouleau_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-1-rouleau_inf",
+          "nom": "Rouleau inférieur",
+          "slot": "rouleau_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-1-ev_serrage",
+          "nom": "EV de serrage des rouleaux",
+          "slot": "ev_serrage",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-1-frettes",
+          "nom": "Jeu de frettes",
+          "slot": "frettes",
+          "mode": "tonnes",
+          "seuilVigilance": 170000,
+          "seuilRemplacement": 200000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
+    },
+    {
+      "id": "tro3-2",
+      "nom": "TRO-3.2",
+      "zone": "Ligne petit diamètre",
+      "type": "tro7",
+      "machine": "ligne-pd",
+      "sous": "TRO3.2",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tro3-2-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-2-reducteur",
+          "nom": "Réducteur",
+          "slot": "reducteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-2-rouleau_sup",
+          "nom": "Rouleau supérieur",
+          "slot": "rouleau_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-2-rouleau_inf",
+          "nom": "Rouleau inférieur",
+          "slot": "rouleau_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-2-ev_serrage",
+          "nom": "EV de serrage des rouleaux",
+          "slot": "ev_serrage",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro3-2-frettes",
+          "nom": "Jeu de frettes",
+          "slot": "frettes",
+          "mode": "tonnes",
+          "seuilVigilance": 170000,
+          "seuilRemplacement": 200000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
+    },
+    {
+      "id": "tro4-1",
+      "nom": "TRO-4.1",
+      "zone": "Ligne petit diamètre",
+      "type": "tro7",
+      "machine": "ligne-pd",
+      "sous": "TRO4.1",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tro4-1-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-1-reducteur",
+          "nom": "Réducteur",
+          "slot": "reducteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-1-rouleau_sup",
+          "nom": "Rouleau supérieur",
+          "slot": "rouleau_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-1-rouleau_inf",
+          "nom": "Rouleau inférieur",
+          "slot": "rouleau_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-1-ev_serrage",
+          "nom": "EV de serrage des rouleaux",
+          "slot": "ev_serrage",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-1-frettes",
+          "nom": "Jeu de frettes",
+          "slot": "frettes",
+          "mode": "tonnes",
+          "seuilVigilance": 170000,
+          "seuilRemplacement": 200000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
+    },
+    {
+      "id": "tro4-2",
+      "nom": "TRO-4.2",
+      "zone": "Ligne petit diamètre",
+      "type": "tro7",
+      "machine": "ligne-pd",
+      "sous": "TRO4.2",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tro4-2-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-2-reducteur",
+          "nom": "Réducteur",
+          "slot": "reducteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-2-rouleau_sup",
+          "nom": "Rouleau supérieur",
+          "slot": "rouleau_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-2-rouleau_inf",
+          "nom": "Rouleau inférieur",
+          "slot": "rouleau_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-2-ev_serrage",
+          "nom": "EV de serrage des rouleaux",
+          "slot": "ev_serrage",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro4-2-frettes",
+          "nom": "Jeu de frettes",
+          "slot": "frettes",
+          "mode": "tonnes",
+          "seuilVigilance": 170000,
+          "seuilRemplacement": 200000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
+    },
+    {
+      "id": "tro5-1",
+      "nom": "TRO-5.1",
+      "zone": "Ligne petit diamètre",
+      "type": "tro7",
+      "machine": "ligne-pd",
+      "sous": "TRO5-1",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tro5-1-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-1-reducteur",
+          "nom": "Réducteur",
+          "slot": "reducteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-1-rouleau_sup",
+          "nom": "Rouleau supérieur",
+          "slot": "rouleau_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-1-rouleau_inf",
+          "nom": "Rouleau inférieur",
+          "slot": "rouleau_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-1-ev_serrage",
+          "nom": "EV de serrage des rouleaux",
+          "slot": "ev_serrage",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-1-frettes",
+          "nom": "Jeu de frettes",
+          "slot": "frettes",
+          "mode": "tonnes",
+          "seuilVigilance": 170000,
+          "seuilRemplacement": 200000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
+    },
+    {
+      "id": "tro5-2",
+      "nom": "TRO-5.2",
+      "zone": "Ligne petit diamètre",
+      "type": "tro7",
+      "machine": "ligne-pd",
+      "sous": "TRO5-2",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "tro5-2-moteur",
+          "nom": "Moteur",
+          "slot": "moteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-2-reducteur",
+          "nom": "Réducteur",
+          "slot": "reducteur",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-2-rouleau_sup",
+          "nom": "Rouleau supérieur",
+          "slot": "rouleau_sup",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-2-rouleau_inf",
+          "nom": "Rouleau inférieur",
+          "slot": "rouleau_inf",
+          "mode": "tonnes",
+          "seuilVigilance": 850000,
+          "seuilRemplacement": 1000000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-2-ev_serrage",
+          "nom": "EV de serrage des rouleaux",
+          "slot": "ev_serrage",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 712000
+          }
+        },
+        {
+          "id": "tro5-2-frettes",
+          "nom": "Jeu de frettes",
+          "slot": "frettes",
+          "mode": "tonnes",
+          "seuilVigilance": 170000,
+          "seuilRemplacement": 200000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
     }
   ],
   "journal": [],
-  "schema": 34
+  "schema": 35
 }
