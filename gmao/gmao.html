@@ -1074,7 +1074,10 @@
         ["frettes_32_40", "Jeu de frettes Ø 32-40", 170000, 200000, [32, 40]],
         ["frettes_18_28", "Jeu de frettes Ø 18-20-25-28", 170000, 200000, [18, 20, 25, 28]],
       ];
-      const UNIT = { heures: "h", tonnes: "t", arrets: "arrêt(s)" };
+      const UNIT = { heures: "h", tonnes: "t", arrets: "arrêt(s)", cycles: "cycles" };
+      // EV : repérées par leur nom ou leur emplacement
+      const estEV = (o) => /\bEV\b/.test(o.nom) || /(^|_)ev(_|$)/.test(o.slot || "");
+      const DIAMS_STD = [8, 10, 12, 14, 16, 20, 25, 28, 32, 40];
       // cadence moyenne du laminoir, utilisée une seule fois pour convertir les anciens seuils en heures
       const T_PAR_H = 85;
 
@@ -1252,6 +1255,7 @@
       /* ---------- calculs d'usure ---------- */
       function usage(eq, o) {
         if (o.mode === "arrets") return arretsInfo(o).done;
+        if (o.mode === "cycles") return cyclesOrg(eq, o);
         // tonnes : production des diamètres de l'équipement depuis la date du dernier remplacement
         if (o.mode === "tonnes" && prodActive())
           return Math.max(0, prodTonnes(eq, (o.ref || {}).date || "", orgDiams(eq, o)) + (+o.tonnesInit || 0));
@@ -1381,6 +1385,29 @@
       // un organe peut avoir ses propres diamètres (ex. moteur d'une cage) ; sinon il prend ceux de l'équipement
       const orgDiams = (eq, o) => (o && Array.isArray(o.diametres) && o.diametres.length ? o.diametres : eqDiams(eq));
       const orgDiamTxt = (eq, o) => (orgDiams(eq, o).length ? "Ø " + orgDiams(eq, o).join(", ") : "tous diamètres");
+      // cycles d'un organe : Σ tonnes produites par diamètre depuis le dernier remplacement × facteur du diamètre
+      const facteur = (o, d) => { const f = (o.facteurs || {})[d]; return f != null && f !== "" ? +f || 0 : +((o.facteurs || {}).autres) || 0; };
+      function cyclesOrg(eq, o) {
+        const from = (o.ref || {}).date || "", init = +o.cyclesInit || 0;
+        if (!PROD) {
+          // sans base production : tonnage total × facteur moyen
+          const fs = Object.entries(o.facteurs || {}).filter(([k]) => k !== "autres").map(([, v]) => +v || 0);
+          const moy = fs.length ? fs.reduce((a, b) => a + b, 0) / fs.length : +((o.facteurs || {}).autres) || 0;
+          return Math.max(0, ((+eq.compteurs.tonnes || 0) - (+(o.ref || {}).tonnes || 0)) * moy) + init;
+        }
+        const lam = prodCfg().laminoir;
+        let c = 0;
+        for (const j of PROD.jours) {
+          if ((from && j.date < from) || (lam && j.lam !== lam)) continue;
+          for (const k in j.d) c += j.d[k] * facteur(o, k);
+        }
+        return c + init;
+      }
+      const formuleCycles = (o) => {
+        const parts = Object.entries(o.facteurs || {}).filter(([k, v]) => k !== "autres" && +v).sort((a, b) => a[0] - b[0]).map(([k, v]) => `t Ø${k} × ${v}`);
+        if (+((o.facteurs || {}).autres)) parts.push(`t autres Ø × ${o.facteurs.autres}`);
+        return parts.length ? parts.join(" + ") : "aucun facteur défini";
+      };
       const eqTonnes = (e) => (prodActive() ? prodTonnes(e, "") : +e.compteurs.tonnes || 0);
       function useProdCache() {
         if (PROD) return;
@@ -1636,7 +1663,8 @@
           e.organes.forEach((o) => {
             o.id = o.id || uid("org");
             if (o.cage != null) o.cage = +o.cage;
-            o.mode = ["tonnes", "arrets"].includes(o.mode) ? o.mode : "heures";
+            o.mode = ["tonnes", "arrets", "cycles"].includes(o.mode) ? o.mode : "heures";
+            if (o.mode === "cycles") o.facteurs = o.facteurs && typeof o.facteurs === "object" ? o.facteurs : {};
             o.ref = Object.assign({ date: "", heures: 0, tonnes: 0 }, o.ref);
           });
         });
@@ -3158,6 +3186,7 @@
     <a href="#seuils" class="${r.page === "seuils" ? "on" : ""}">🎚 Seuils</a>
     <a href="#journal" class="${r.page === "journal" ? "on" : ""}">📒 Journal</a>
     <a href="#arrets" class="${r.page === "arrets" ? "on" : ""}">🛠 Arrêts techniques</a>
+    <a href="#cycles" class="${r.page === "cycles" ? "on" : ""}">🔁 Cycles EV</a>
     <a href="#production" class="${r.page === "production" ? "on" : ""}">📈 Production</a>
     <a href="javascript:void 0" id="addEq" class="muted">＋ Ajouter un équipement</a>`;
         $("#addEq").onclick = () => editEquip(null);
@@ -3171,6 +3200,7 @@
         else if (r.page === "journal") m.innerHTML = viewJournal();
         else if (r.page === "production") m.innerHTML = viewProduction();
         else if (r.page === "arrets") m.innerHTML = viewArrets();
+        else if (r.page === "cycles") m.innerHTML = viewCycles();
         else if (r.page === "centrales") m.innerHTML = viewCentrales();
         else if (r.page === "laminoir") m.innerHTML = viewLaminoir();
         else if (r.page === "machine" && MACHINE[r.id]) m.innerHTML = viewMachine(MACHINE[r.id]);
@@ -3180,7 +3210,7 @@
 
       // texte des seuils d'un organe
       const seuilTxt = (o) =>
-        o.mode === "arrets" ? `tous les ${arretsInfo(o).N} arrêt(s) tech.` : `${fmt(o.seuilVigilance)} / ${fmt(o.seuilRemplacement)} t`;
+        o.mode === "arrets" ? `tous les ${arretsInfo(o).N} arrêt(s) tech.` : `${fmt(o.seuilVigilance)} / ${fmt(o.seuilRemplacement)} ${o.mode === "cycles" ? "cycles" : "t"}`;
       function bar(eq, o) {
         const u = usage(eq, o),
           r = +o.seuilRemplacement || 0,
@@ -3454,6 +3484,61 @@
           } });
       }
 
+      // champs du critère « cycles » : seuils en cycles + facteur par diamètre
+      function champsCycles(d) {
+        const f = d.facteurs || {};
+        const ds = [...new Set([...(PROD ? PROD.diams : DIAMS_STD), ...Object.keys(f).filter((k) => k !== "autres").map(Number)])].sort((a, b) => a - b);
+        return `<label data-crit="cycles">Seuil vigilance (cycles)<input type="number" name="cycV" min="0" step="any" value="${d.mode === "cycles" ? d.seuilVigilance : ""}"></label>
+    <label data-crit="cycles">Seuil remplacement (cycles)<input type="number" name="cycR" min="0" step="any" value="${d.mode === "cycles" ? d.seuilRemplacement : ""}"></label>
+    <fieldset class="full" data-crit="cycles"><legend>Cycles par tonne, selon le diamètre</legend>
+      <div class="full hint">Cycles = Σ tonnes produites dans le diamètre × facteur (ex. t Ø20 × 0,4 + t Ø25 × 0,8 + …), depuis le dernier remplacement.</div>
+      <div class="full" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">
+        ${ds.map((k) => `<label style="font-size:12px">Ø ${k}<input type="number" name="fac_${k}" min="0" step="any" value="${f[k] != null ? f[k] : ""}" placeholder="0"></label>`).join("")}
+        <label style="font-size:12px">autres Ø<input type="number" name="fac_autres" min="0" step="any" value="${f.autres != null ? f.autres : ""}" placeholder="0"></label>
+      </div>
+    </fieldset>`;
+      }
+      function lireFacteurs(fd) {
+        const f = {};
+        for (const [k, v] of fd.entries()) if (k.startsWith("fac_") && v !== "" && isFinite(+v)) f[k.slice(4)] = +v;
+        return f;
+      }
+      // menu des cycles d'une EV (ou de plusieurs à la fois)
+      function menuCycles(cibles) {
+        const [e0, o0] = cibles[0];
+        const d = o0.mode === "cycles" ? o0 : { mode: "cycles", facteurs: {}, seuilVigilance: "", seuilRemplacement: "" };
+        modal(cibles.length > 1 ? `Cycles — ${cibles.length} EV` : "Cycles — " + esc(o0.nom), `<div class="form">
+      <p class="full hint">${cibles.length > 1 ? "Les réglages s'appliquent aux EV cochées sur la page." : esc(e0.nom) + " ·"} L'EV sera suivie aux cycles : seuils en cycles, cycles calculés à partir des tonnes produites par diamètre (base production).</p>
+      ${champsCycles(d).replace(/ data-crit="cycles"/g, "")}
+      <label class="full" style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" name="tonne"> Revenir au suivi à la tonne</label></div>`, {
+          onOk: (fd) => {
+            if (fd.get("tonne")) { cibles.forEach(([, o]) => (o.mode = "tonnes")); commit(); return; }
+            const v = +fd.get("cycV"), r = +fd.get("cycR");
+            if (!(r > 0)) { alert("Indiquez un seuil de remplacement en cycles."); return false; }
+            if (v > r) { alert("Le seuil de vigilance doit être inférieur ou égal au seuil de remplacement."); return false; }
+            const f = lireFacteurs(fd);
+            cibles.forEach(([, o]) => Object.assign(o, { mode: "cycles", seuilVigilance: v, seuilRemplacement: r, facteurs: Object.assign({}, f) }));
+            commit();
+            toast(cibles.length + " EV suivie(s) aux cycles");
+          },
+        });
+      }
+      function viewCycles() {
+        const evs = allOrg().filter(([, o]) => estEV(o));
+        return `<h2>Cycles des EV</h2><p class="sub">${evs.length} électrovannes. Une EV peut être suivie aux cycles : cycles = Σ tonnes produites par diamètre × facteur du diamètre, depuis son dernier remplacement.${PROD ? "" : " <b>Connectez la base production</b> (page Production) pour un calcul par diamètre."}</p>
+  <div class="toolbar"><input type="search" id="fCyc" placeholder="Filtrer (équipement, EV)…">
+    <button class="btn pri" type="button" id="cycGroupe">🔁 Régler les EV cochées</button>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" id="cycTout"> tout cocher</label></div>
+  <div class="card tablewrap"><table id="tCyc"><thead><tr><th></th><th>Équipement</th><th>EV</th><th>Suivi</th><th>Formule</th><th class="num">Usure</th><th class="num">Seuils</th><th>État</th><th></th></tr></thead><tbody>
+  ${evs.map(([e, o]) => `<tr data-eq="${e.id}" data-org="${o.id}" data-q="${esc((e.nom + " " + o.nom).toLowerCase())}">
+    <td><input type="checkbox" class="cycSel"></td><td>${esc(e.nom)}</td><td>${esc(o.nom)}</td>
+    <td style="white-space:nowrap">${o.mode === "cycles" ? "🔁 cycles" : o.mode === "arrets" ? "🛠 arrêts" : "⚖️ tonne"}</td>
+    <td style="font-size:12px">${o.mode === "cycles" ? esc(formuleCycles(o)) : '<span class="muted">—</span>'}</td>
+    <td class="num">${fmt(usage(e, o))} ${UNIT[o.mode]}</td><td class="num">${seuilTxt(o)}</td><td>${badge(status(e, o))}</td>
+    <td><button class="btn sm" type="button" data-cyc>🔁 Cycles</button></td></tr>`).join("")}
+  </tbody></table></div>`;
+      }
+
       function viewDash() {
         const all = allOrg(),
           c = counts(all);
@@ -3589,7 +3674,7 @@
         o,
       ]) => `<tr data-eq="${e.id}" data-org="${o.id}" data-q="${esc((e.nom + " " + o.nom).toLowerCase())}">
     <td>${esc(e.nom)}</td><td>${esc(o.nom)}</td>
-    <td><select class="inline-in" data-f="mode"><option value="tonnes"${o.mode !== "arrets" ? " selected" : ""}>À la tonne</option><option value="arrets"${o.mode === "arrets" ? " selected" : ""}>Aux arrêts techniques</option></select></td>
+    <td><select class="inline-in" data-f="mode"><option value="tonnes"${o.mode === "tonnes" ? " selected" : ""}>À la tonne</option><option value="arrets"${o.mode === "arrets" ? " selected" : ""}>Aux arrêts techniques</option><option value="cycles"${o.mode === "cycles" ? " selected" : ""}>Aux cycles</option></select></td>
     <td class="num">${o.mode === "arrets" ? '<span class="muted">—</span>' : `<input class="inline-in" type="number" min="0" step="any" data-f="seuilVigilance" value="${o.seuilVigilance}">`}</td>
     <td class="num"><input class="inline-in" type="number" min="0" step="any" data-f="seuilRemplacement" value="${o.seuilRemplacement}"></td>
     <td class="num" data-u>${fmt(usage(e, o))} ${UNIT[o.mode]}</td><td data-s>${badge(status(e, o))}</td></tr>`,
@@ -3819,6 +3904,18 @@
             if (t) ficheOrgane(findEq(d.dataset.eq), t.dataset.org);
           }));
         }
+        if (r.page === "cycles") {
+          const rows = () => [...m.querySelectorAll("#tCyc tbody tr")];
+          const cible = (tr) => { const e = findEq(tr.dataset.eq); return [e, findOrg(e, tr.dataset.org)]; };
+          $("#fCyc").oninput = (ev) => { const q = ev.target.value.toLowerCase(); rows().forEach((tr) => (tr.hidden = !tr.dataset.q.includes(q))); };
+          $("#cycTout").onchange = (ev) => rows().forEach((tr) => { if (!tr.hidden) tr.querySelector(".cycSel").checked = ev.target.checked; });
+          m.querySelectorAll("[data-cyc]").forEach((b) => (b.onclick = () => menuCycles([cible(b.closest("tr"))])));
+          $("#cycGroupe").onclick = () => {
+            const sel = rows().filter((tr) => tr.querySelector(".cycSel").checked).map(cible);
+            if (!sel.length) return toast("Cochez au moins une EV");
+            menuCycles(sel);
+          };
+        }
         if (r.page === "arrets") {
           $("#atForm").onsubmit = (ev) => {
             ev.preventDefault();
@@ -3874,6 +3971,7 @@
                 if (f === "mode") {
                   // changement de critère : valeurs par défaut cohérentes
                   if (o.mode === "arrets") { o.seuilRemplacement = 2; o.seuilVigilance = 1; }
+                  if (o.mode === "cycles") o.facteurs = o.facteurs || {};
                   return commit();
                 }
                 if (o.mode === "arrets") { o.seuilRemplacement = Math.max(1, Math.round(o.seuilRemplacement)); o.seuilVigilance = o.seuilRemplacement - 1; }
@@ -3954,14 +4052,15 @@
             .sort((a, b) => (b.date + b.ts).localeCompare(a.date + a.ts))
             .slice(0, 8);
         modal(
-          esc(o.nom) + " " + badge(s),
+          esc(o.nom) + " " + badge(s) + (estEV(o) ? ` <button type="button" class="btn sm" id="ficheCyc" style="margin-left:6px">🔁 Cycles</button>` : ""),
           `
     <dl class="kv">
       <dt>Équipement</dt><dd>${esc(e.nom)}</dd>
       <dt>Usure depuis remplacement</dt><dd><b>${fmt(usage(e, o))} ${UNIT[o.mode]}</b> — ${remainTxt(e, o)}</dd>
       ${o.mode === "arrets"
         ? `<dt>Critère</dt><dd>Remplacement tous les ${arretsInfo(o).N} arrêt(s) technique(s)</dd><dt>Arrêts depuis le remplacement</dt><dd>${arretsInfo(o).done}</dd>`
-        : `<dt>Seuil vigilance</dt><dd>${fmt(o.seuilVigilance)} t</dd><dt>Seuil remplacement</dt><dd>${fmt(o.seuilRemplacement)} t</dd>`}
+        : `<dt>Seuil vigilance</dt><dd>${fmt(o.seuilVigilance)} ${UNIT[o.mode]}</dd><dt>Seuil remplacement</dt><dd>${fmt(o.seuilRemplacement)} ${UNIT[o.mode]}</dd>`}
+      ${o.mode === "cycles" ? `<dt>Calcul des cycles</dt><dd>${esc(formuleCycles(o))}${PROD ? "" : " (sans base production : tonnage total × facteur moyen)"}</dd>` : ""}
       <dt>Dernier remplacement</dt><dd>${fdate(o.ref.date)}${o.mode !== "tonnes" || prodActive() ? "" : ` (à ${fmt(o.ref.tonnes)} t)`}</dd>
       ${o.mode === "tonnes" && prodActive() ? `<dt>Calcul</dt><dd>Tonnes produites ${orgDiamTxt(e, o)} depuis le ${fdate(o.ref.date)} (base production)${+o.tonnesInit ? " + " + fmt(o.tonnesInit) + " t antérieures" : ""}</dd>` : ""}
     </dl>${bar(e, o)}
@@ -3991,6 +4090,8 @@
             },
           },
         );
+        const fc = $("#ficheCyc");
+        if (fc) fc.onclick = (ev) => { ev.preventDefault(); closeModal(); menuCycles([[e, o]]); };
       }
 
       function remplacement(e, o) {
@@ -4076,9 +4177,11 @@
     <label class="full">Emplacement sur le dessin<select name="slot">${slotOptions(e, d.slot)}</select></label>
     <div class="full"><div class="hint" style="margin-bottom:4px">Remplacement</div>
       <div class="seg"><label><input type="radio" name="mode" value="tonnes"${d.mode !== "arrets" ? " checked" : ""}>⚖️ À la tonne</label>
-      <label><input type="radio" name="mode" value="arrets"${d.mode === "arrets" ? " checked" : ""}>🛠 Aux arrêts techniques</label></div></div>
-    <label data-crit="tonnes">Seuil vigilance (t)<input type="number" name="seuilVigilance" min="0" step="any" value="${d.mode === "arrets" ? "" : d.seuilVigilance}"></label>
-    <label data-crit="tonnes">Seuil remplacement (t)<input type="number" name="seuilRemplacement" min="0" step="any" value="${d.mode === "arrets" ? "" : d.seuilRemplacement}"></label>
+      <label><input type="radio" name="mode" value="arrets"${d.mode === "arrets" ? " checked" : ""}>🛠 Aux arrêts techniques</label>
+      <label><input type="radio" name="mode" value="cycles"${d.mode === "cycles" ? " checked" : ""}>🔁 Aux cycles</label></div></div>
+    ${champsCycles(d)}
+    <label data-crit="tonnes">Seuil vigilance (t)<input type="number" name="seuilVigilance" min="0" step="any" value="${d.mode === "tonnes" ? d.seuilVigilance : ""}"></label>
+    <label data-crit="tonnes">Seuil remplacement (t)<input type="number" name="seuilRemplacement" min="0" step="any" value="${d.mode === "tonnes" ? d.seuilRemplacement : ""}"></label>
     <label class="full" data-crit="arrets">Remplacer tous les … arrêts techniques<input type="number" name="nbArrets" min="1" step="1" value="${d.mode === "arrets" ? d.seuilRemplacement : 1}"></label>
     <p class="full hint" data-crit="arrets">Ex. 2 = remplacement un arrêt technique sur deux. L'organe passe en orange ${db.arretsVigilanceJours} jours avant l'arrêt où il doit être remplacé, en rouge si cet arrêt est passé sans remplacement. Les arrêts se planifient dans la page 🛠 Arrêts techniques.</p>
     <fieldset class="full"><legend>Dernier remplacement (point zéro de l'usure)</legend>
@@ -4119,12 +4222,12 @@
               }
             },
             onOk: (fd) => {
-              const parArrets = fd.get("mode") === "arrets";
+              const parArrets = fd.get("mode") === "arrets", parCycles = fd.get("mode") === "cycles";
               const nA = Math.max(1, Math.round(+fd.get("nbArrets") || 1));
-              const v = parArrets ? nA - 1 : +fd.get("seuilVigilance"),
-                r = parArrets ? nA : +fd.get("seuilRemplacement");
+              const v = parArrets ? nA - 1 : parCycles ? +fd.get("cycV") : +fd.get("seuilVigilance"),
+                r = parArrets ? nA : parCycles ? +fd.get("cycR") : +fd.get("seuilRemplacement");
               if (!parArrets && !(r > 0)) {
-                alert("Indiquez un seuil de remplacement en tonnes.");
+                alert(parCycles ? "Indiquez un seuil de remplacement en cycles." : "Indiquez un seuil de remplacement en tonnes.");
                 return false;
               }
               if (v > r) {
@@ -4147,6 +4250,7 @@
                 },
               });
               if (fd.has("tinit")) t.tonnesInit = Math.max(0, +fd.get("tinit") || 0);
+              if (parCycles) t.facteurs = lireFacteurs(fd);
               if (isNew) {
                 e.organes.push(t);
                 log({

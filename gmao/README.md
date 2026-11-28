@@ -170,3 +170,9 @@ TRO-3.1, TRO-3.2, TRO-4.1, TRO-4.2, TRO-5.1 et TRO-5.2 ont le même entraîneur 
 Sur la page « 🏭 Laminoir », « ✥ Disposer les machines » passe en mode disposition : on glisse les tuiles où l'on veut (aimantation tous les 10 px), puis « ✔ Terminer ». La disposition est enregistrée dans la base GMAO (donc partagée). « ↺ Remettre dans l'ordre du process » revient à la grille d'origine.
 
 Même principe sur la page de chaque machine : « ✥ Disposer les dessins », puis glisser chaque dessin par son titre ; « ✔ Terminer » enregistre la disposition de cette machine, « ↺ Disposition automatique » revient au rangement par sous-ensemble.
+
+## EV suivies aux cycles
+
+Chaque EV peut être suivie aux cycles au lieu des tonnes ou des arrêts techniques. Nombre de cycles = Σ (tonnes produites dans chaque diamètre depuis le dernier remplacement × facteur du diamètre), par exemple t Ø20 × 0,4 + t Ø25 × 0,8 + t Ø32 × … ; un facteur « autres Ø » couvre les diamètres non listés. Les seuils de vigilance et de remplacement sont alors en cycles.
+
+Réglage : menu « 🔁 Cycles EV » (liste de toutes les EV, réglage d'une EV ou de toutes les EV cochées en une fois), bouton « 🔁 Cycles » dans la fiche d'une EV, ou critère « Aux cycles » dans « Modifier / seuils ». Le calcul par diamètre utilise la base production ; sans elle, l'outil prend le tonnage total × le facteur moyen.
