@@ -4677,6 +4677,46 @@
           }
         },
         {
+          "id": "tempcore-vanne_barrage_r3",
+          "nom": "Range 3 – Vanne de barrage",
+          "slot": "vanne_barrage_r3",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "diametres": [
+            18,
+            20,
+            22,
+            25,
+            28
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
+          "id": "tempcore-ev_barrage_r3",
+          "nom": "Range 3 – EV pneumatique vanne de barrage",
+          "slot": "ev_barrage_r3",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "diametres": [
+            18,
+            20,
+            22,
+            25,
+            28
+          ],
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 812000
+          }
+        },
+        {
           "id": "tempcore-range_r4",
           "nom": "Range 4",
           "slot": "range_r4",
@@ -4869,5 +4909,5 @@
     }
   ],
   "journal": [],
-  "schema": 31
+  "schema": 32
 }
