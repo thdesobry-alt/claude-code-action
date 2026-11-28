@@ -123,11 +123,11 @@ Les centrales (hydraulique enfournement, Nortek, hydraulique curseur, TRO-7 CV5,
 
 ## Tempcore
 
-Équipement « Tempcore » avec 3 ranges : range 2 (petits diamètres, Ø 8 à 16 par défaut), range 3 (Ø 18 à 28), range 4 (Ø 32 et 40). Au bout de la range 3 : une vanne de barrage et son EV pneumatique, suivies sur les diamètres de la range 3. Chaque range est suivie comme un organe et ne compte que les tonnes de ses diamètres ; ces diamètres se modifient dans le tableau « Diamètres par organe » de la page Tempcore.
+Équipement « Tempcore » avec 3 ranges : range 2 (Ø 16), range 3 (Ø 18 à 28), range 4 (Ø 32 et 40). Au bout de la range 3 : une vanne de barrage et son EV pneumatique, suivies sur les diamètres de la range 3. Chaque range est suivie comme un organe et ne compte que les tonnes de ses diamètres ; ces diamètres se modifient dans le tableau « Diamètres par organe » de la page Tempcore.
 
 ## Lasers de vitesse
 
-Le laser gros diamètre est dans la ligne gros diamètre (sous-ensemble « Laser de vitesse »), les 2 lasers petit diamètre dans la ligne petit diamètre (sous-ensemble « Lasers de vitesse »). À l'origine : 2 lasers pour les petits diamètres (Ø 8 à 20 par défaut) et 1 laser pour les gros diamètres (Ø 25 à 40 par défaut). Chaque laser ne compte que les tonnes de ses diamètres, modifiables dans le tableau « Diamètres par organe » de sa page.
+Le laser gros diamètre est dans la ligne gros diamètre (sous-ensemble « Laser de vitesse »), les 2 lasers petit diamètre dans la ligne petit diamètre (sous-ensemble « Lasers de vitesse »). À l'origine : 2 lasers pour les petits diamètres (Ø 16 et 20 par défaut) et 1 laser pour les gros diamètres (Ø 25 à 40 par défaut). Chaque laser ne compte que les tonnes de ses diamètres, modifiables dans le tableau « Diamètres par organe » de sa page.
 
 ## Cisaille CV5
 
@@ -178,3 +178,5 @@ Même principe sur la page de chaque machine : « ✥ Disposer les dessins », p
 Chaque EV peut être suivie aux cycles au lieu des tonnes ou des arrêts techniques. Nombre de cycles = Σ (tonnes produites dans chaque diamètre depuis le dernier remplacement × facteur du diamètre), par exemple t Ø20 × 0,4 + t Ø25 × 0,8 + t Ø32 × … ; un facteur « autres Ø » couvre les diamètres non listés. Les seuils de vigilance et de remplacement sont alors en cycles.
 
 Réglage : menu « 🔁 Cycles EV » (liste de toutes les EV, réglage d'une EV ou de toutes les EV cochées en une fois), bouton « 🔁 Cycles » dans la fiche d'une EV, ou critère « Aux cycles » dans « Modifier / seuils ». Le calcul par diamètre utilise la base production ; sans elle, l'outil prend le tonnage total × le facteur moyen.
+
+Les diamètres 8, 10, 12 et 14 ne sont pas laminés : ils ne sont plus proposés nulle part, et une base existante les retire des diamètres déjà cochés.

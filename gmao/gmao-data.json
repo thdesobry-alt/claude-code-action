@@ -6540,10 +6540,6 @@
           "seuilVigilance": 850000,
           "seuilRemplacement": 1000000,
           "diametres": [
-            8,
-            10,
-            12,
-            14,
             16
           ],
           "ref": {
@@ -6689,10 +6685,6 @@
           "seuilVigilance": 850000,
           "seuilRemplacement": 1000000,
           "diametres": [
-            8,
-            10,
-            12,
-            14,
             16,
             20
           ],
@@ -6710,10 +6702,6 @@
           "seuilVigilance": 850000,
           "seuilRemplacement": 1000000,
           "diametres": [
-            8,
-            10,
-            12,
-            14,
             16,
             20
           ],
@@ -7512,5 +7500,5 @@
     }
   ],
   "journal": [],
-  "schema": 37
+  "schema": 38
 }
