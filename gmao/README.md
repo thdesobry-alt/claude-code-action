@@ -142,3 +142,13 @@ Chaque dessin GMAO est rattaché à une machine : soit avec « 🔗 Associer des
 ## TRO-1
 
 Le TRO-1 reprend le schéma et les organes du TRO-0 (galets, vérins, flexibles et EV, allonges, réducteur, moteur), avec son propre suivi. Il est rattaché à la tuile TRO1 du laminoir.
+
+## Train de laminage
+
+Le train est découpé en 3 parties, toutes rattachées à la tuile « Train laminage » :
+
+- cages 1 à 6 : moteur, réducteur, allonge, cage ;
+- cages 7 à 9 : moteur, réducteur primaire, réducteur secondaire, allonges supérieure et inférieure, cage ;
+- cages 10 à 16 : moteur, réducteur, allonges supérieure et inférieure.
+
+Le tableau « Diamètres travaillés par cage » de chaque partie permet de cocher les diamètres de chaque cage ; tous les organes de la cage comptent alors les tonnes de ces diamètres. Une base existante convertit l'ancien « Moteurs de cage » : les moteurs gardent leur usure et leurs diamètres, les autres organes démarrent à zéro.
