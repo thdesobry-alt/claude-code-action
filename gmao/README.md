@@ -156,3 +156,7 @@ Le tableau « Diamètres travaillés par cage » de chaque partie permet de coch
 ## Ligne gros diamètre
 
 La page de la machine « Ligne gros diamètre » regroupe ses dessins par sous-ensemble : CV5 (cisaille), TRO7 (moteur, accouplement, réducteur, 2 rouleaux qui pincent la barre, EV de serrage, jeux de frettes Ø 32-40 et Ø 18-20-25-28 suivis chacun sur leurs diamètres), Curseur (vérin hydraulique + vérin pneumatique), Déviateur (vérin déviateur), Séparateur (vérin séparateur), VR1, VR2 et VR3 (20 rouleaux chacune, chaque rouleau accouplé à son moteur ; rouleaux et moteurs suivis). Le sous-ensemble d'un dessin se choisit dans « Modifier l'équipement ». Une base existante sépare automatiquement les vérins déviateur et séparateur du curseur (leur usure est conservée) et crée VR1, VR2, VR3.
+
+## Diamètres par machine
+
+Sur la page de chaque machine (clic sur sa tuile dans « 🏭 Laminoir »), le bandeau « Diamètres travaillés » permet de cocher les diamètres dans lesquels la machine travaille (aucun coché = tous). Tous les organes de ses dessins comptent alors les tonnes de ces diamètres. Ordre de priorité : diamètres propres à un organe (cages, ranges, lasers, frettes) > diamètres propres à un équipement (page Production) > diamètres de la machine > tous. Les tuiles affichent les diamètres de chaque machine.

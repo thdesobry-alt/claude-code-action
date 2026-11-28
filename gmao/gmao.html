@@ -1328,7 +1328,10 @@
       };
       const prodCfg = () => db.production;
       const prodActive = () => !!(db.production && db.production.actif && PROD);
-      const eqDiams = (eq) => (Array.isArray(eq.diametres) ? eq.diametres : []);
+      // diamètres d'une machine du laminoir (vide = tous)
+      const machineDiams = (id) => ((db.machines || {})[id] || {}).diametres || [];
+      // diamètres d'un équipement : les siens s'il en a, sinon ceux de sa machine
+      const eqDiams = (eq) => (Array.isArray(eq.diametres) && eq.diametres.length ? eq.diametres : machineDiams(eq.machine));
       const diamTxt = (eq) => (eqDiams(eq).length ? "Ø " + eqDiams(eq).join(", ") : "tous diamètres");
       function aggregateProd(json, source, modif) {
         if (!json || !Array.isArray(json.rapports))
@@ -1366,7 +1369,7 @@
         return s;
       }
       // un organe peut avoir ses propres diamètres (ex. moteur d'une cage) ; sinon il prend ceux de l'équipement
-      const orgDiams = (eq, o) => (o && Array.isArray(o.diametres) ? o.diametres : eqDiams(eq));
+      const orgDiams = (eq, o) => (o && Array.isArray(o.diametres) && o.diametres.length ? o.diametres : eqDiams(eq));
       const orgDiamTxt = (eq, o) => (orgDiams(eq, o).length ? "Ø " + orgDiams(eq, o).join(", ") : "tous diamètres");
       const eqTonnes = (e) => (prodActive() ? prodTonnes(e, "") : +e.compteurs.tonnes || 0);
       function useProdCache() {
@@ -1602,6 +1605,7 @@
         d.arrets.forEach((a) => (a.id = a.id || uid("at")));
         d.arretsVigilanceJours = +d.arretsVigilanceJours > 0 ? +d.arretsVigilanceJours : 30;
         d.production = Object.assign({ actif: false, mode: "fichier", url: "", fichier: "", laminoir: "" }, d.production);
+        d.machines = d.machines && typeof d.machines === "object" ? d.machines : {};
         d.equipements.forEach((e) => {
           e.id = e.id || uid("eq");
           e.type = TYPES[e.type] ? e.type : "generique";
@@ -3285,11 +3289,12 @@
           return `<button type="button" class="mtile ${eqs.length ? "st-" + st : "vide"}" data-machine="${id}">
       <span class="n">${String(mc.num).padStart(2, "0")}</span><span class="t">${esc(mc.nom)}</span>
       <span class="c">${info}</span>
+      <span class="d" style="color:var(--accent)">${machineDiams(id).length ? "Ø " + machineDiams(id).join(", ") : "tous diamètres"}</span>
       ${mc.sous.length ? `<span class="d">${esc(mc.sous.join(" · "))}</span>` : ""}
     </button>`;
         }).join("");
         const libres = db.equipements.filter((e) => !e.machine);
-        return `<h2>Laminoir</h2><p class="sub">${LAMINOIR.length} machines, dans l'ordre du process. Cliquez une machine pour voir ses dessins ; « Modifier l'équipement » permet de rattacher un dessin à une autre machine.</p>
+        return `<h2>Laminoir</h2><p class="sub">${LAMINOIR.length} machines, dans l'ordre du process. Cliquez une machine pour voir ses dessins et choisir les diamètres dans lesquels elle travaille.</p>
   <div class="mtiles">${tuiles}</div>${legend}
   ${libres.length ? `<div class="card" style="padding:12px 14px;margin-top:16px"><h3 style="margin:0 0 8px;font-size:14px;color:var(--warn)">Dessins à rattacher à une machine (${libres.length})</h3>
     <div class="chips">${libres.map((e) => `<a class="chip" href="#eq=${e.id}"><span class="dot ${eqStatus(e)}"></span>${esc(e.nom)}</a>`).join("")}</div></div>` : ""}`;
@@ -3316,6 +3321,7 @@
           return `<p style="margin:0 0 6px"><a href="#laminoir">← Laminoir</a></p>
   <h2>${String(mc.num).padStart(2, "0")} · ${esc(mc.nom)}</h2>
   <p class="sub">${eqs.length} dessin(s) rattaché(s)${vides.length ? " · sans dessin : " + esc(vides.join(", ")) : ""}</p>
+  ${diamMachine(mc)}
   <div class="toolbar"><button class="btn pri" type="button" id="mAssoc">🔗 Associer des dessins</button></div>
   ${mc.sous.filter((n) => eqs.some((e) => e.sous === n)).map((n) => `<h3 class="sousens">${esc(n)}</h3>${grilleDessins(eqs.filter((e) => e.sous === n))}`).join("")}
   ${autres.length ? `<h3 class="sousens">Autres</h3>${grilleDessins(autres)}` : ""}${legend}`;
@@ -3323,9 +3329,25 @@
         return `<p style="margin:0 0 6px"><a href="#laminoir">← Laminoir</a></p>
   <h2>${String(mc.num).padStart(2, "0")} · ${esc(mc.nom)}</h2>
   <p class="sub">${mc.sous.length ? esc(mc.sous.join(" · ")) + " · " : ""}${eqs.length} dessin(s) rattaché(s)</p>
+  ${diamMachine(mc)}
   <div class="toolbar"><button class="btn pri" type="button" id="mAssoc">🔗 Associer des dessins</button></div>
   ${eqs.length ? `${grilleDessins(eqs)}${legend}`
           : `<div class="card empty">Aucun dessin rattaché à cette machine pour l'instant.<br><br>Faites « 🔗 Associer des dessins » pour choisir parmi les dessins existants.</div>`}`;
+      }
+      // choix des diamètres dans lesquels la machine travaille
+      function diamMachine(mc) {
+        const cur = machineDiams(mc.id);
+        const ds = [...new Set([...(PROD ? PROD.diams : []), ...cur])].sort((a, b) => a - b);
+        const perso = eqsMachine(mc.id).filter((e) => Array.isArray(e.diametres) && e.diametres.length);
+        return `<div class="card" style="padding:12px 14px;margin-bottom:12px">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px">
+      <b style="font-size:13px;color:var(--accent)">Diamètres travaillés</b>
+      <div class="chips" id="mDiams">${ds.map((k) => `<label class="chip" style="flex-direction:row;color:var(--text)"><input type="checkbox" data-md="${k}"${cur.includes(k) ? " checked" : ""}> Ø ${k}</label>`).join("") || '<span class="muted" style="font-size:12px">Connectez la base production pour voir ses diamètres.</span>'}</div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">autres <input id="mDiamPlus" class="inline-in" style="width:90px;text-align:left" placeholder="ex. 12;14"></label>
+      <span class="muted" style="font-size:12px">${cur.length ? "Ø " + cur.join(", ") : "aucun coché = tous les diamètres"}</span>
+    </div>
+    <p class="hint" style="font-size:12px;color:var(--muted);margin:6px 0 0">Les organes de la machine comptent les tonnes produites dans ces diamètres.${perso.length ? " Exception : " + esc(perso.map((e) => e.nom).join(", ")) + " garde(nt) ses propres diamètres (page Production)." : ""} Les organes qui ont leurs propres diamètres (cages, ranges, lasers, frettes) les gardent.</p>
+  </div>`;
       }
       function associer(mc) {
         const list = db.equipements.map((e) => `<label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
@@ -3408,7 +3430,7 @@
           })
           .join("");
         const mc = MACHINE[e.machine], nbm = mc ? eqsMachine(mc.id).length : 0;
-        return `<p style="margin:0 0 6px"><a href="#laminoir">← Laminoir</a>${mc ? ` › <a href="#${nbm > 1 ? "machine=" + mc.id : "laminoir"}">${esc(mc.nom)}</a>` : ""}</p><div class="eqhead"><div class="t"><h2>${esc(e.nom)}</h2><p class="sub" style="margin:0">${esc(e.zone || "")} · ${esc(TYPES[e.type].label)} · ${badge(eqStatus(e))}</p></div>
+        return `<p style="margin:0 0 6px"><a href="#laminoir">← Laminoir</a>${mc ? ` › <a href="#machine=${mc.id}">${esc(mc.nom)}</a>` : ""}</p><div class="eqhead"><div class="t"><h2>${esc(e.nom)}</h2><p class="sub" style="margin:0">${esc(e.zone || "")} · ${esc(TYPES[e.type].label)} · ${badge(eqStatus(e))}</p></div>
     <div class="counters">
       ${prodActive()
         ? `<div class="card counter" title="Tonnes produites dans la base production (${diamTxt(e)})"><div class="k">Tonnage produit · ${diamTxt(e)}</div><div class="v">${fmt(prodTonnes(e, ""))} t</div></div>`
@@ -3599,12 +3621,17 @@
         }
         if (r.page === "laminoir") {
           m.querySelectorAll("[data-machine]").forEach((b) => (b.onclick = () => {
-            const eqs = eqsMachine(b.dataset.machine);
-            go(eqs.length === 1 ? "eq=" + eqs[0].id : "machine=" + b.dataset.machine);
+            go("machine=" + b.dataset.machine);
           }));
         }
         if (r.page === "machine" && MACHINE[r.id]) {
           $("#mAssoc").onclick = () => associer(MACHINE[r.id]);
+          const setMd = (list) => { db.machines[r.id] = Object.assign({}, db.machines[r.id], { diametres: [...new Set(list)].filter((x) => x > 0).sort((a, b) => a - b) }); commit(); };
+          m.querySelectorAll("#mDiams input[data-md]").forEach((x) => (x.onchange = () => {
+            const k = +x.dataset.md, cur = machineDiams(r.id);
+            setMd(x.checked ? [...cur, k] : cur.filter((d) => d !== k));
+          }));
+          $("#mDiamPlus").onchange = (ev) => setMd([...machineDiams(r.id), ...ev.target.value.split(/[;,\s]+/).map(Number)]);
           m.querySelectorAll(".draw[data-eq]").forEach((d) => (d.onclick = (ev) => {
             const t = ev.target.closest("[data-org]");
             if (t) ficheOrgane(findEq(d.dataset.eq), t.dataset.org);
