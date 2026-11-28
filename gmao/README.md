@@ -168,3 +168,5 @@ TRO-3.1, TRO-3.2, TRO-4.1, TRO-4.2, TRO-5.1 et TRO-5.2 ont le même entraîneur 
 ## Disposition des machines
 
 Sur la page « 🏭 Laminoir », « ✥ Disposer les machines » passe en mode disposition : on glisse les tuiles où l'on veut (aimantation tous les 10 px), puis « ✔ Terminer ». La disposition est enregistrée dans la base GMAO (donc partagée). « ↺ Remettre dans l'ordre du process » revient à la grille d'origine.
+
+Même principe sur la page de chaque machine : « ✥ Disposer les dessins », puis glisser chaque dessin par son titre ; « ✔ Terminer » enregistre la disposition de cette machine, « ↺ Disposition automatique » revient au rangement par sous-ensemble.

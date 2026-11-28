@@ -915,6 +915,9 @@
       .plan .mtile .d, .plan .mtile .c, .plan .mtile .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
       .plan.edit { background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 20px 20px; outline: 1px dashed var(--accent); outline-offset: 4px; }
       .plan.edit .mtile { cursor: move; touch-action: none; user-select: none; }
+      .mplan > .card { position: absolute; width: 440px; }
+      .mplan.edit > .card .chead { cursor: move; touch-action: none; user-select: none; background: var(--panel2); margin: -12px -12px 0; padding: 8px 12px; }
+      .mplan > .card.drag { z-index: 5; box-shadow: 0 10px 26px rgba(0,0,0,.25); }
       .plan .mtile.drag { z-index: 5; box-shadow: 0 8px 22px rgba(0,0,0,.22); border-color: var(--accent); }
       h3.sousens { margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--sand); font-weight: 500; }
     </style>
@@ -1617,6 +1620,7 @@
         d.production = Object.assign({ actif: false, mode: "fichier", url: "", fichier: "", laminoir: "" }, d.production);
         d.machines = d.machines && typeof d.machines === "object" ? d.machines : {};
         d.plan = d.plan && typeof d.plan === "object" ? d.plan : {};
+        d.planMachine = d.planMachine && typeof d.planMachine === "object" ? d.planMachine : {};
         d.equipements.forEach((e) => {
           e.id = e.id || uid("eq");
           e.type = TYPES[e.type] ? e.type : "generique";
@@ -3129,6 +3133,7 @@
         location.hash = h;
       }
       window.addEventListener("hashchange", () => {
+        machEdit = null; machTmp = null;
         selOrg = null;
         render();
         window.scrollTo(0, 0);
@@ -3360,10 +3365,10 @@
     <div class="chips">${libres.map((e) => `<a class="chip" href="#eq=${e.id}"><span class="dot ${eqStatus(e)}"></span>${esc(e.nom)}</a>`).join("")}</div></div>` : ""}`;
       }
       // page d'une machine : ses dessins
-      function carteDessin(e) {
+      function carteDessin(e, pos) {
         const cc = counts(e.organes.map((o) => [e, o]));
-        return `<div class="card" style="padding:12px;display:flex;flex-direction:column;gap:8px;border-top:4px solid var(--${eqStatus(e)})">
-      <div style="display:flex;align-items:center;gap:8px"><span class="dot ${eqStatus(e)}"></span><b style="flex:1">${esc(e.nom)}</b>${badge(eqStatus(e))}
+        return `<div class="card" data-card="${e.id}" style="padding:12px;display:flex;flex-direction:column;gap:8px;border-top:4px solid var(--${eqStatus(e)})${pos ? `;left:${pos.x}px;top:${pos.y}px` : ""}">
+      <div class="chead" style="display:flex;align-items:center;gap:8px"><span class="dot ${eqStatus(e)}"></span><b style="flex:1">${pos && e.sous ? `<span class="muted" style="font-weight:400">${esc(e.sous)} · </span>` : ""}${esc(e.nom)}</b>${badge(eqStatus(e))}
         <a class="btn sm" href="#eq=${e.id}">Ouvrir</a></div>
       ${drawing(e)}
       <div class="meta" style="font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"><span>${e.organes.length} organe(s)</span>
@@ -3372,8 +3377,32 @@
     </div>`;
       }
       const grilleDessins = (eqs) => `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(420px,1fr))">${eqs.map(carteDessin).join("")}</div>`;
+      // disposition libre des dessins d'une machine : db.planMachine[machine][équipement] = {x, y}
+      let machEdit = null, machTmp = null;
+      const CARTE_W = 440;
+      function planMachine(mc, eqs) {
+        const plan = machEdit === mc.id ? machTmp : db.planMachine[mc.id];
+        if (!plan || !eqs.length || !eqs.every((e) => plan[e.id])) return null;
+        return plan;
+      }
+      function barreDisposition(mc, eqs) {
+        if (!eqs.length) return "";
+        return machEdit === mc.id
+          ? `<button class="btn pri" type="button" id="mPlanOk">✔ Terminer</button><button class="btn" type="button" id="mPlanReset">↺ Disposition automatique</button>
+             <span class="muted" style="font-size:12px">Glissez chaque dessin par son titre.</span>`
+          : `<button class="btn" type="button" id="mPlanEdit">✥ Disposer les dessins</button>`;
+      }
       function viewMachine(mc) {
         const eqs = eqsMachine(mc.id);
+        const plan = planMachine(mc, eqs);
+        if (plan) {
+          return `<p style="margin:0 0 6px"><a href="#laminoir">← Laminoir</a></p>
+  <h2>${String(mc.num).padStart(2, "0")} · ${esc(mc.nom)}</h2>
+  <p class="sub">${eqs.length} dessin(s) rattaché(s)</p>
+  ${diamMachine(mc)}
+  <div class="toolbar"><button class="btn pri" type="button" id="mAssoc">🔗 Associer des dessins</button>${barreDisposition(mc, eqs)}</div>
+  <div class="planwrap"><div class="plan mplan${machEdit === mc.id ? " edit" : ""}" id="mplan">${eqs.map((e) => carteDessin(e, plan[e.id])).join("")}</div></div>${legend}`;
+        }
         // machine à sous-ensembles (ex. ligne gros diamètre) : un titre par sous-ensemble
         if (mc.sous.length && eqs.some((e) => e.sous)) {
           const autres = eqs.filter((e) => !mc.sous.includes(e.sous));
@@ -3382,16 +3411,16 @@
   <h2>${String(mc.num).padStart(2, "0")} · ${esc(mc.nom)}</h2>
   <p class="sub">${eqs.length} dessin(s) rattaché(s)${vides.length ? " · sans dessin : " + esc(vides.join(", ")) : ""}</p>
   ${diamMachine(mc)}
-  <div class="toolbar"><button class="btn pri" type="button" id="mAssoc">🔗 Associer des dessins</button></div>
-  ${mc.sous.filter((n) => eqs.some((e) => e.sous === n)).map((n) => `<h3 class="sousens">${esc(n)}</h3>${grilleDessins(eqs.filter((e) => e.sous === n))}`).join("")}
-  ${autres.length ? `<h3 class="sousens">Autres</h3>${grilleDessins(autres)}` : ""}${legend}`;
+  <div class="toolbar"><button class="btn pri" type="button" id="mAssoc">🔗 Associer des dessins</button>${barreDisposition(mc, eqs)}</div>
+  <div id="mcards">${mc.sous.filter((n) => eqs.some((e) => e.sous === n)).map((n) => `<h3 class="sousens">${esc(n)}</h3>${grilleDessins(eqs.filter((e) => e.sous === n))}`).join("")}
+  ${autres.length ? `<h3 class="sousens">Autres</h3>${grilleDessins(autres)}` : ""}</div>${legend}`;
         }
         return `<p style="margin:0 0 6px"><a href="#laminoir">← Laminoir</a></p>
   <h2>${String(mc.num).padStart(2, "0")} · ${esc(mc.nom)}</h2>
   <p class="sub">${mc.sous.length ? esc(mc.sous.join(" · ")) + " · " : ""}${eqs.length} dessin(s) rattaché(s)</p>
   ${diamMachine(mc)}
-  <div class="toolbar"><button class="btn pri" type="button" id="mAssoc">🔗 Associer des dessins</button></div>
-  ${eqs.length ? `${grilleDessins(eqs)}${legend}`
+  <div class="toolbar"><button class="btn pri" type="button" id="mAssoc">🔗 Associer des dessins</button>${barreDisposition(mc, eqs)}</div>
+  ${eqs.length ? `<div id="mcards">${grilleDessins(eqs)}</div>${legend}`
           : `<div class="card empty">Aucun dessin rattaché à cette machine pour l'instant.<br><br>Faites « 🔗 Associer des dessins » pour choisir parmi les dessins existants.</div>`}`;
       }
       // choix des diamètres dans lesquels la machine travaille
@@ -3716,6 +3745,63 @@
         }
         if (r.page === "machine" && MACHINE[r.id]) {
           $("#mAssoc").onclick = () => associer(MACHINE[r.id]);
+          const mid = r.id;
+          // entrer en mode disposition : on part des positions actuelles à l'écran
+          const bE = $("#mPlanEdit");
+          if (bE) bE.onclick = () => {
+            const base = db.planMachine[mid];
+            const eqs = eqsMachine(mid);
+            if (base && eqs.every((e) => base[e.id])) machTmp = JSON.parse(JSON.stringify(base));
+            else {
+              const ref = $("#mcards").getBoundingClientRect();
+              machTmp = {};
+              m.querySelectorAll("#mcards [data-card]").forEach((c) => {
+                const b = c.getBoundingClientRect();
+                machTmp[c.dataset.card] = { x: Math.round((b.left - ref.left) / 10) * 10, y: Math.round((b.top - ref.top) / 10) * 10 };
+              });
+            }
+            machEdit = mid;
+            renderMain();
+          };
+          const bOk = $("#mPlanOk");
+          if (bOk) bOk.onclick = () => { machEdit = null; machTmp = null; renderMain(); };
+          const bR = $("#mPlanReset");
+          if (bR) bR.onclick = () => { delete db.planMachine[mid]; machEdit = null; machTmp = null; commit(); };
+          const mp = $("#mplan");
+          if (mp) {
+            // taille du plan d'après les cartes posées
+            const fit = () => {
+              let w = 0, h = 0;
+              mp.querySelectorAll("[data-card]").forEach((c) => { w = Math.max(w, c.offsetLeft + c.offsetWidth); h = Math.max(h, c.offsetTop + c.offsetHeight); });
+              mp.style.width = w + "px"; mp.style.height = h + 10 + "px";
+            };
+            fit();
+            if (machEdit === mid) mp.querySelectorAll("[data-card]").forEach((c) => {
+              const h = c.querySelector(".chead");
+              h.onpointerdown = (ev) => {
+                if (ev.target.closest("a,button")) return;
+                ev.preventDefault();
+                const id = c.dataset.card, p0 = machTmp[id], x0 = ev.clientX, y0 = ev.clientY;
+                const snap = (v) => Math.max(0, Math.round(v / 10) * 10);
+                h.setPointerCapture(ev.pointerId);
+                c.classList.add("drag");
+                let np = p0;
+                h.onpointermove = (e2) => {
+                  np = { x: snap(p0.x + e2.clientX - x0), y: snap(p0.y + e2.clientY - y0) };
+                  c.style.left = np.x + "px"; c.style.top = np.y + "px"; fit();
+                };
+                h.onpointerup = () => {
+                  h.onpointermove = h.onpointerup = null;
+                  c.classList.remove("drag");
+                  if (np.x !== p0.x || np.y !== p0.y) {
+                    machTmp[id] = np;
+                    db.planMachine[mid] = JSON.parse(JSON.stringify(machTmp));
+                    commit(true);
+                  }
+                };
+              };
+            });
+          }
           const setMd = (list) => { db.machines[r.id] = Object.assign({}, db.machines[r.id], { diametres: [...new Set(list)].filter((x) => x > 0).sort((a, b) => a - b) }); commit(); };
           m.querySelectorAll("#mDiams input[data-md]").forEach((x) => (x.onchange = () => {
             const k = +x.dataset.md, cur = machineDiams(r.id);
