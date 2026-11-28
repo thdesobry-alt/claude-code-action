@@ -145,6 +145,8 @@ Le TRO-1 reprend le schéma et les organes du TRO-0 (galets, vérins, flexibles 
 
 ## Train de laminage
 
+La tuile « Train laminage » contient aussi les boucleuses A00 (cages 6-7), A01 (8-9), A02 (10-11), A03 (12-13), A04.1 et A04.2 (14-15) : chacune a une rotasonde de mesure et un vérin piloté par une EV, tous suivis.
+
 Le train est découpé en 3 parties, toutes rattachées à la tuile « Train laminage » :
 
 - cages 1 à 6 : moteur, réducteur, allonge, cage ;

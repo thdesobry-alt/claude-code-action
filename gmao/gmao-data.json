@@ -4651,6 +4651,256 @@
       ]
     },
     {
+      "id": "boucleuses",
+      "nom": "Boucleuses",
+      "zone": "Train",
+      "type": "boucleuses",
+      "machine": "train",
+      "options": {},
+      "diametres": [],
+      "compteurs": {
+        "heures": 14250,
+        "tonnes": 912000,
+        "date": "2026-11-03"
+      },
+      "organes": [
+        {
+          "id": "boucleuses-rotasonde_a00",
+          "nom": "Boucleuse A00 – Rotasonde de mesure",
+          "slot": "rotasonde_a00",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-verin_a00",
+          "nom": "Boucleuse A00 – Vérin",
+          "slot": "verin_a00",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-ev_a00",
+          "nom": "Boucleuse A00 – EV du vérin",
+          "slot": "ev_a00",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-rotasonde_a01",
+          "nom": "Boucleuse A01 – Rotasonde de mesure",
+          "slot": "rotasonde_a01",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-verin_a01",
+          "nom": "Boucleuse A01 – Vérin",
+          "slot": "verin_a01",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-ev_a01",
+          "nom": "Boucleuse A01 – EV du vérin",
+          "slot": "ev_a01",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-rotasonde_a02",
+          "nom": "Boucleuse A02 – Rotasonde de mesure",
+          "slot": "rotasonde_a02",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-verin_a02",
+          "nom": "Boucleuse A02 – Vérin",
+          "slot": "verin_a02",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-ev_a02",
+          "nom": "Boucleuse A02 – EV du vérin",
+          "slot": "ev_a02",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 352000
+          }
+        },
+        {
+          "id": "boucleuses-rotasonde_a03",
+          "nom": "Boucleuse A03 – Rotasonde de mesure",
+          "slot": "rotasonde_a03",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-verin_a03",
+          "nom": "Boucleuse A03 – Vérin",
+          "slot": "verin_a03",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-ev_a03",
+          "nom": "Boucleuse A03 – EV du vérin",
+          "slot": "ev_a03",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-rotasonde_a04-1",
+          "nom": "Boucleuse A04.1 – Rotasonde de mesure",
+          "slot": "rotasonde_a04-1",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-verin_a04-1",
+          "nom": "Boucleuse A04.1 – Vérin",
+          "slot": "verin_a04-1",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-ev_a04-1",
+          "nom": "Boucleuse A04.1 – EV du vérin",
+          "slot": "ev_a04-1",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-rotasonde_a04-2",
+          "nom": "Boucleuse A04.2 – Rotasonde de mesure",
+          "slot": "rotasonde_a04-2",
+          "mode": "tonnes",
+          "seuilVigilance": 1530000,
+          "seuilRemplacement": 1700000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-verin_a04-2",
+          "nom": "Boucleuse A04.2 – Vérin",
+          "slot": "verin_a04-2",
+          "mode": "tonnes",
+          "seuilVigilance": 595000,
+          "seuilRemplacement": 680000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        },
+        {
+          "id": "boucleuses-ev_a04-2",
+          "nom": "Boucleuse A04.2 – EV du vérin",
+          "slot": "ev_a04-2",
+          "mode": "tonnes",
+          "seuilVigilance": 510000,
+          "seuilRemplacement": 600000,
+          "ref": {
+            "date": "2026-01-05",
+            "heures": 0,
+            "tonnes": 762000
+          }
+        }
+      ]
+    },
+    {
       "id": "bruleurs",
       "nom": "Four",
       "zone": "Four",
@@ -7262,5 +7512,5 @@
     }
   ],
   "journal": [],
-  "schema": 36
+  "schema": 37
 }
